@@ -46,7 +46,7 @@ export function upcomingByTable(orders) {
   }
   return [...byTable].map(([table, list]) => ({
     table,
-    courses: list.sort((a, b) => a.course_seq - b.course_seq || a.id - b.id).map(o => o.course_name ?? 'Subito'),
+    courses: list.sort((a, b) => a.course_seq - b.course_seq || a.id - b.id).map(o => o.course_name ?? 'Bevande e altro'),
   }));
 }
 

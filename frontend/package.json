@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "test": "node --test \"src/**/*.test.js\"",
     "mock:epos": "node scripts/mock-epos.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "e2e": "NODE_ENV=production vite build && playwright test"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
+    "@playwright/test": "^1.64.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",

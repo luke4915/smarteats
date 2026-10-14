@@ -7,6 +7,7 @@ import CheckMenu from './CheckMenu';
 import CheckOrders from './CheckOrders';
 import { formatEuro } from './checkMath';
 import { printFired } from './printFired';
+import { NO_COURSE_NAME } from './courses';
 import { canCash, canDiscount as roleCanDiscount } from './permissions';
 import { btn, btnPrimary, btnDanger, label, row } from './ui';
 
@@ -115,7 +116,7 @@ const CheckView = ({ detail, user, service, onBack, onOrder, onPay, onAdjust, on
         <div className="flex items-center gap-3 p-3 rounded-lg border border-[var(--accent)]/40 bg-[var(--accent)]/5">
           <div className="min-w-0 flex-1">
             <p className="text-xs text-[var(--text-muted)]">Prossima portata</p>
-            <p className="text-sm font-semibold text-[var(--text-main)] truncate">{next.map(o => o.course_name ?? 'Subito').join(' + ')}</p>
+            <p className="text-sm font-semibold text-[var(--text-main)] truncate">{next.map(o => o.course_name ?? NO_COURSE_NAME).join(' + ')}</p>
           </div>
           <button className={`${btnPrimary} !h-10`} disabled={busy} onClick={fireNext}><Send size={15} /> Manda</button>
         </div>

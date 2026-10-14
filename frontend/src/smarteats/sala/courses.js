@@ -2,9 +2,9 @@
 // insieme. È solo l'anteprima della comanda: ordine d'uscita e totali veri li fissa il server (POST /checks/:id/courses).
 //
 // `plan` = { order: [chiavi] | null, together: { [chiave]: true } }. La chiave di un gruppo è l'id della portata,
-// 0 per i piatti senza portata («Subito»: bevande, pane…). Senza `order` vale quello del locale, «Subito» per primo.
+// 0 per i piatti senza portata («Bevande e altro»: bevande, pane…). Senza `order` vale quello del locale, le bevande per prime.
 
-export const NO_COURSE_NAME = 'Subito';
+export const NO_COURSE_NAME = 'Bevande e altro';
 export const emptyPlan = () => ({ order: null, together: {} });
 
 const keyOf = (courseId) => courseId ?? 0;
@@ -18,13 +18,22 @@ export function orderedKeys(cart, courses, plan) {
 }
 
 // Gruppi pronti da mostrare e da inviare. `seq` è il numero d'uscita: un gruppo «insieme» al precedente ha lo stesso.
+// «Bevande e altro» (piatti senza portata) se sta in testa esce insieme alla prima portata vera, non da sole:
+// altrimenti il cameriere manderebbe le bevande e farebbe aspettare gli antipasti.
 export function buildGroups(cart, courses, plan) {
+  const keys = orderedKeys(cart, courses, plan);
+  const leadingSubito = keys.length > 1 && keys[0] === 0;
   let seq = 0;
-  return orderedKeys(cart, courses, plan).map((key, i) => {
-    const together = i > 0 && !!plan.together[key];
-    if (!together) seq += 1;
+  return keys.map((key, i) => {
+    const firstReal = leadingSubito ? i === 1 : i === 0;
+    // «insieme» ha senso solo dalla seconda portata vera in poi
+    const together = !firstReal && i > 0 && !(leadingSubito && i === 1) && !!plan.together[key];
+    if (leadingSubito && i === 0) seq = 1;
+    else if (!together) seq = Math.max(seq, leadingSubito && i === 1 ? 1 : seq + 1);
     return {
       key, course_id: key || null, seq, together,
+      // la prima portata vera che esce con le bevande: non si sposta da sola
+      withSubito: leadingSubito && i === 1,
       name: key ? (courses.find(c => c.id === key)?.name ?? 'Portata') : NO_COURSE_NAME,
       lines: cart.filter(l => keyOf(l.course_id) === key),
     };

@@ -9,7 +9,7 @@ import { segment, segmentBox } from './ui';
 const minutesSince = (iso) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
 
 const STATE_STYLE = {
-  free: 'border-[var(--border)] bg-[var(--bg-card-2)] text-[var(--text-muted)]',
+  free: 'border-[var(--border-hover)] bg-[var(--bg-card-2)] text-[var(--text-muted)]',
   busy: 'border-[var(--accent)]/70 bg-[var(--accent)]/10 text-[var(--text-main)]',
   bill: 'border-amber-500/80 bg-amber-500/10 text-[var(--text-main)]',
 };

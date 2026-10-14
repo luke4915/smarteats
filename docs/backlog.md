@@ -22,4 +22,4 @@ Elenco verificato sul codice. Quando ne risolvi una, toglila da qui nello stesso
 - Dati: `audit_logs` senza retention. Cassa e cucina scaricano ancora tutti gli ordini della sessione aperta (fino a 2000): se serve, filtrare per stato.
 - Frontend: file troppo grandi (`ProductConfig.jsx`, `PrintProfiles.jsx`).
 - Operatività: i log vanno su stdout, manca un raccoglitore (dipende dall'hosting); il backup è su disco locale, la copia fuori dal server è da configurare; nessun monitoraggio esterno dell'health check.
-- Qualità: nessun test end-to-end (browser) e nessun test del frontend oltre la logica pura; TypeScript non adottato.
+- Qualità: i test nel browser (`frontend/e2e`) coprono solo il giro principale di ristorante e sagra; il frontend ha test unitari solo sulla logica pura; TypeScript non adottato.

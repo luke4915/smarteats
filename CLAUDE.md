@@ -58,6 +58,7 @@ Comandi:
 | frontend | `npm test` | test (`node --test`) del motore di stampa in `src/print/`, anche contro la stampante simulata |
 | frontend | `npm run mock:epos` | stampante Epson simulata su https://localhost:9443: disegna le copie nel terminale e può rifiutare i lavori (`-- --fail EPTR_COVER_OPEN`) |
 | frontend | `npm run build` | build di produzione |
+| frontend | `npm run e2e` | test nel browser (Playwright): costruisce il frontend, avvia `backend/scripts/e2e-server.js` (HTTPS autogenerato, locali di prova nel database di test) e fa il giro del ristorante e della sagra, anche da telefono; screenshot in `frontend/e2e/.run/schermate`. Prima volta: `npx playwright install chromium` |
 
 Lo sviluppo locale usa certificati mkcert per `*.standmanager.local` e un sottodominio per tenant (es. `default.standmanager.local`). Gli script in `backend/scripts/*.ps1` configurano host e wildcard su Windows.
 
@@ -183,6 +184,7 @@ La stampa è **del client**: la cassa che batte l'ordine stampa direttamente sul
 2. Modifiche piccole e focalizzate. Niente refactoring non richiesti mescolati alla feature: segnalali a parte.
 3. Riusa i pattern esistenti (vedi `routes/products.js` e il POST in `routes/orders.js` come riferimento).
 4. Dopo ogni modifica: `npm run lint` nel frontend e verifica che il backend parta. Se tocchi una migrazione, eseguila su un DB locale.
+5. Test nel browser: `frontend/e2e/*.spec.js`, uno per giro completo (non una scheda per schermata). Dopo una modifica all'interfaccia lancia `npm run e2e` e **guarda gli screenshot**: i test sulla logica non vedono layout, contrasti o testi sbagliati. In CI è il job `e2e` (non obbligatorio per l'unione).
 5. Test: unitari in `backend/tests/` (`npm test`), di integrazione in `backend/tests/integration/` (`npm run test:integration`). Quelli di integrazione avviano l'app in memoria su un database locale vero (con RLS), creano tenant di prova con nomi casuali e li cancellano alla fine. Quando aggiungi logica critica (prezzi, stock, RLS) aggiungi test mirati: la logica pura va in funzioni separate con test unitari, i flussi tra API e database nei test di integrazione. Il frontend ha test solo per la logica pura (`frontend/src/**/*.test.js`, moduli senza dipendenze dal browser).
 6. Commit in italiano, all'imperativo, con un ambito: `feat(orders): …`, `fix(rls): …`, `chore: …`.
 7. Se una richiesta contraddice queste regole (soprattutto §3 e §4), fermati e chiedi.
