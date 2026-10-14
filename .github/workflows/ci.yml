@@ -80,3 +80,67 @@ jobs:
             npm run db:baseline
 
       - run: npm run test:integration
+
+  # Test nel browser: l'app vera (backend + frontend compilato) con locali di prova, un browser automatico che fa il
+  # giro del ristorante e della sagra (anche da telefono). Segnala le regressioni di interfaccia che i test sulla
+  # logica non vedono. Gli screenshot restano come allegato per guardarli a occhio.
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: standmanager_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installa backend e frontend
+        run: |
+          npm ci --prefix backend
+          npm ci --prefix frontend
+      - name: Prepara il database di prova
+        working-directory: backend
+        run: |
+          psql -h localhost -U postgres -c "CREATE ROLE colettas SUPERUSER LOGIN"
+          psql -h localhost -U postgres -c "CREATE ROLE standmanager_app LOGIN PASSWORD 'ci-password'"
+          psql -h localhost -U postgres -c "CREATE ROLE standmanager_master LOGIN PASSWORD 'ci-master-password'"
+          psql -h localhost -U postgres -d standmanager_test -q -f schema.sql
+          cat > .env.test <<'EOT'
+          PG_USER=standmanager_app
+          PG_PASSWORD=ci-password
+          PG_HOST=localhost
+          PG_PORT=5432
+          PG_DATABASE=standmanager_test
+          PG_MASTER_USER=standmanager_master
+          PG_MASTER_PASSWORD=ci-master-password
+          TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/standmanager_test
+          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/standmanager_test
+          JWT_SECRET=una-stringa-di-prova-lunga-almeno-32-caratteri
+          LOG_LEVEL=silent
+          EOT
+          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/standmanager_test \
+          PG_USER=standmanager_app PG_PASSWORD=ci-password PG_HOST=localhost PG_DATABASE=standmanager_test \
+            npm run db:baseline
+      - name: Browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Costruisce il frontend e lancia i test nel browser
+        working-directory: frontend
+        run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: schermate-e-risultati
+          path: frontend/e2e/.run
+          retention-days: 7

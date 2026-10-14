@@ -5,10 +5,11 @@ import { emptyPlan, orderedKeys, buildGroups, moveGroup, toggleTogether, toPaylo
 const courses = [{ id: 10, name: 'Antipasti' }, { id: 20, name: 'Primi' }, { id: 30, name: 'Dolci' }];
 const line = (id, course_id, quantity = 1) => ({ id, name: `P${id}`, quantity, note: '', print_destination: 'both', course_id });
 
-test('i gruppi seguono l\'ordine del locale, «Subito» per primo, anche se il carrello è in disordine', () => {
+test('i gruppi seguono l\'ordine del locale, «Bevande e altro» per primo, anche se il carrello è in disordine', () => {
   const cart = [line(1, 30), line(2, 20), line(3, null), line(4, 10), line(5, 20)];
   const groups = buildGroups(cart, courses, emptyPlan());
-  assert.deepEqual(groups.map(g => [g.name, g.seq, g.lines.length]), [['Subito', 1, 1], ['Antipasti', 2, 1], ['Primi', 3, 2], ['Dolci', 4, 1]]);
+  assert.deepEqual(groups.map(g => [g.name, g.seq, g.lines.length]), [['Bevande e altro', 1, 1], ['Antipasti', 1, 1], ['Primi', 2, 2], ['Dolci', 3, 1]]);
+  assert.deepEqual(groups.map(g => g.withSubito), [false, true, false, false]);
 });
 
 test('«insieme» dà lo stesso numero d\'uscita al precedente; sul primo gruppo non ha effetto', () => {
@@ -64,4 +65,23 @@ test('riepilogo invio: esce il primo numero d\'uscita, il resto aspetta', () => 
   assert.deepEqual([s.now.map(g => g.name), s.later.map(g => g.name)], [['Antipasti', 'Primi'], ['Dolci']]);
   assert.deepEqual(sendSummary(groups, false).now, []);
   assert.deepEqual(sendSummary([], true), { now: [], later: [] });
+});
+
+test('«Bevande e altro» da solo esce con il numero 1; con altre portate esce insieme alla prima', () => {
+  assert.deepEqual(buildGroups([line(1, null)], courses, emptyPlan()).map(g => g.seq), [1]);
+  const plan = toggleTogether(emptyPlan(), 10);                 // «insieme» sulla prima portata vera: non cambia nulla
+  const groups = buildGroups([line(1, null), line(2, 10), line(3, 20)], courses, plan);
+  assert.deepEqual(groups.map(g => g.seq), [1, 1, 2]);
+});
+
+test('«Bevande e altro» spostato dopo una portata si comporta come ogni altro gruppo', () => {
+  const cart = [line(1, null), line(2, 10), line(3, 20)];
+  const plan = moveGroup(cart, courses, emptyPlan(), 0, 1);     // Antipasti, Subito, Primi
+  assert.deepEqual(buildGroups(cart, courses, plan).map(g => [g.name, g.seq, g.withSubito]), [['Antipasti', 1, false], ['Bevande e altro', 2, false], ['Primi', 3, false]]);
+});
+
+test('invio: il primo numero d\'uscita comprende «Bevande e altro» e la prima portata', () => {
+  const groups = buildGroups([line(1, null), line(2, 10), line(3, 20)], courses, emptyPlan());
+  const s = sendSummary(groups, true);
+  assert.deepEqual([s.now.map(g => g.name), s.later.map(g => g.name)], [['Bevande e altro', 'Antipasti'], ['Primi']]);
 });

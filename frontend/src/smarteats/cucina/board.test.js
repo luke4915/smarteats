@@ -62,7 +62,7 @@ test('le portate in arrivo si raggruppano per tavolo, nell\'ordine d\'uscita', (
     order(3, 'scheduled', 1, [], { table_name: 'T7', course_seq: 2, course_name: null }),
     order(4, 'pending', 1, [], { table_name: 'T4' }),
   ];
-  assert.deepEqual(upcomingByTable(list), [{ table: 'T4', courses: ['Primi', 'Dolci'] }, { table: 'T7', courses: ['Subito'] }]);
+  assert.deepEqual(upcomingByTable(list), [{ table: 'T4', courses: ['Primi', 'Dolci'] }, { table: 'T7', courses: ['Bevande e altro'] }]);
 });
 
 test('l\'aggiornamento a schermo tocca solo le righe indicate di quella comanda', () => {

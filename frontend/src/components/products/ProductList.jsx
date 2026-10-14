@@ -248,10 +248,7 @@ const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThresh
                     {product.name}
                   </h3>
 
-                  <div className="w-full mt-auto pt-1 border-t border-[var(--border)] flex justify-between items-center">
-                    <span className="text-[11px] font-bold text-[var(--text-muted)] leading-none">
-                      Prezzo
-                    </span>
+                  <div className="w-full mt-auto pt-1 border-t border-[var(--border)] flex justify-end items-center">
                     <span className="text-sm font-semibold tabular-nums leading-none" style={{ color }}>
                       {product.price.toFixed(2)}€
                     </span>

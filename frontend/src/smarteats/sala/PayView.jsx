@@ -17,7 +17,8 @@ const PayView = ({ detail, onBack, onClosed, onPaid, onPrint }) => {
   const lines = useMemo(() => payableLines(detail), [detail]);
   const [mode, setMode] = useState(lines.length ? 'items' : 'amount');
   const [method, setMethod] = useState('cash');
-  const [selection, setSelection] = useState({});          // { line_id: quantità }
+  // { line_id: quantità }: di partenza si paga tutto il conto (il caso più comune); chi divide deseleziona o sceglie «Alla romana»
+  const [selection, setSelection] = useState(() => Object.fromEntries(lines.map(l => [l.line_id, l.remaining_quantity])));
   const [amount, setAmount] = useState(detail.due.toFixed(2));
   const [people, setPeople] = useState(1);
   const [tendered, setTendered] = useState('');

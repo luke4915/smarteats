@@ -5,7 +5,7 @@ import { useToast } from '../../context/useToast';
 import { printFired } from './printFired';
 import PanelFrame from './PanelFrame';
 import { cartTotal, formatEuro } from './checkMath';
-import { buildGroups, moveGroup, toggleTogether, toPayload, sendSummary } from './courses';
+import { buildGroups, moveGroup, toggleTogether, toPayload, sendSummary, NO_COURSE_NAME } from './courses';
 import { btnPrimary, iconBtn, input, label } from './ui';
 
 const names = (groups) => groups.map(g => g.name).join(', ');
@@ -91,7 +91,9 @@ const DraftOrder = ({ detail, service, cart, setCart, products, courses, plan, s
               <h3 className="text-sm font-semibold text-[var(--text-main)]">{group.name}</h3>
               {gi === 0
                 ? <span className="text-xs text-[var(--text-muted)]">{holdAll ? 'in attesa' : 'esce subito'}</span>
-                : (
+                : group.withSubito
+                  ? <span className="text-xs text-[var(--text-muted)]">{holdAll ? 'in attesa' : 'esce con le bevande'}</span>
+                  : (
                   <button onClick={() => setPlan(p => toggleTogether(p, group.key))} title="Cambia: esce dopo la portata precedente, o insieme"
                     className={`h-6 px-2 rounded-full text-xs font-medium border transition cursor-pointer ${group.together ? 'border-[var(--accent)] text-[var(--accent)] bg-[var(--accent)]/10' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>
                     {group.together ? 'insieme alla precedente' : 'dopo la precedente'}
@@ -127,7 +129,7 @@ const DraftOrder = ({ detail, service, cart, setCart, products, courses, plan, s
                       value={line.note} onChange={e => patch(line, { note: e.target.value })} onKeyDown={e => e.key === 'Enter' && setOpenLine(null)} />
                     {courses.length > 0 && (
                       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Portata">
-                        {[{ id: null, name: 'Subito' }, ...courses].map(c => (
+                        {[{ id: null, name: NO_COURSE_NAME }, ...courses].map(c => (
                           <button key={c.id ?? 0} onClick={() => patch(line, { course_id: c.id })}
                             className={`h-7 px-2.5 rounded-full text-xs font-medium border transition cursor-pointer ${(line.course_id ?? null) === c.id ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>{c.name}</button>
                         ))}

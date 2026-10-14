@@ -146,7 +146,9 @@ const CartMobileView = ({
                     </label>
                     <div className="bg-[var(--bg-card)] px-3 py-1.5 rounded-lg border border-[var(--border)] flex flex-col">
                         <span className="text-xs text-[var(--text-muted)]">Resto</span>
-                        <span className={`text-lg font-semibold tabular-nums ${change < 0 ? 'text-red-500' : 'text-green-500'}`}>{change >= 0 ? change.toFixed(2) : '0.00'} €</span>
+                        {amountReceived === ''
+                            ? <span className="text-lg font-semibold tabular-nums text-[var(--text-muted)]">—</span>
+                            : <span className={`text-lg font-semibold tabular-nums ${change < 0 ? 'text-red-500' : 'text-green-500'}`}>{change >= 0 ? change.toFixed(2) : `mancano ${Math.abs(change).toFixed(2)}`} €</span>}
                     </div>
                 </div>
                 <div className="flex gap-2 overflow-x-auto no-scrollbar">
