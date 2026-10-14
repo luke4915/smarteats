@@ -81,6 +81,8 @@ Disegno completo e decisioni in `docs/design-tavoli.md`. Un passo alla volta; i 
 
 ## Fase 4: prenotazioni (P2)
 
+Disegno e decisioni in `docs/design-prenotazioni.md` (turni fissi, richiesta dal portale e conferma del personale, assegnazione dei tavoli sulla pianta; email e piattaforme dopo).
+
 | Id | Requisito | Stato |
 |---|---|---|
 | 4-1 | Agenda delle prenotazioni per servizio, con coperti e orario. | `[ ]` |
