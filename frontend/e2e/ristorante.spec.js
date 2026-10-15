@@ -10,8 +10,9 @@ async function segnaTuttoPronto(page) {
   await expect(pronta.first()).toBeVisible();
   for (let i = 0; i < 6 && await pronta.count(); i++) {
     const before = await pronta.count();
-    await pronta.first().click();
-    await expect(pronta).toHaveCount(before - 1, { timeout: 8000 });
+    // La cucina si aggiorna da sola: se la comanda sparisce un attimo prima del tocco, non è un errore
+    const done = await pronta.first().click({ timeout: 3000 }).then(() => true, () => false);
+    if (done) await expect(pronta).toHaveCount(before - 1, { timeout: 8000 });
   }
 }
 
@@ -35,8 +36,17 @@ test('ristorante: apro un tavolo, ordino per portate, la cucina segna pronto, in
   await sala.getByRole('button', { name: /Spaghetti alle vongole/ }).click();
   await sala.getByRole('button', { name: /Acqua/ }).click();
   await shot(sala, 'ristorante-03-comanda');
-  await expect(sala.getByRole('heading', { name: 'Antipasti' })).toBeVisible();
-  await expect(sala.getByRole('heading', { name: 'Primi' })).toBeVisible();
+  await expect(sala.getByText('Esce subito')).toBeVisible();
+  await expect(sala.locator('ol').getByText('Antipasti', { exact: true })).toBeVisible();
+  await expect(sala.locator('ol').getByText('Primi', { exact: true })).toBeVisible();
+
+  // Un piatto si apre per intero: la nota resta mentre si scrive (maiuscole come nella cassa), e si sposta di uscita
+  await sala.getByRole('button', { name: 'Modifica Acqua' }).click();
+  await sala.getByLabel('Nota per la cucina').pressSequentially('senza ghiaccio', { delay: 20 });
+  await expect(sala.getByLabel('Nota per la cucina')).toHaveValue('SENZA GHIACCIO');
+  await shot(sala, 'ristorante-03b-piatto');
+  await sala.getByRole('button', { name: 'Fatto' }).click();
+  await expect(sala.getByText('SENZA GHIACCIO')).toBeVisible();
 
   await sala.getByRole('button', { name: 'Invia in cucina' }).click();
   await expect(sala.getByRole('button', { name: 'Incassa' })).toBeVisible();   // si è tornati al conto

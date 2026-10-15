@@ -10,7 +10,7 @@ import { useProducts } from './sala/useProducts';
 import { useCourses } from './sala/useCourses';
 import { useModifiers } from './sala/useModifiers';
 import ModifierPicker from './sala/ModifierPicker';
-import { emptyPlan, courseOfProduct } from './sala/courses';
+import { courseOfProduct } from './sala/courses';
 import { nextByTable, todayLocal } from './prenotazioni/rules';
 import { addToCart, cartTotal, formatEuro } from './sala/checkMath';
 import { btnPrimary } from './sala/ui';
@@ -29,7 +29,6 @@ const SalaPage = ({ user, service, event }) => {
   const [ordering, setOrdering] = useState(false);
   const [draftOpen, setDraftOpen] = useState(false);  // solo su schermo stretto: la comanda sopra la carta
   const [cart, setCart] = useState([]);
-  const [plan, setPlan] = useState(emptyPlan);    // ordine d'uscita delle portate della comanda
   const products = useProducts(ordering);
   const courses = useCourses();
   const modifiers = useModifiers();
@@ -56,7 +55,7 @@ const SalaPage = ({ user, service, event }) => {
   useEffect(() => { if (event?.type === 'check_updated' || event?.type === 'reservation_updated') load(); }, [event, load]);
   const reserved = nextByTable(reservations);
 
-  const reset = () => { setPicking(null); setOrdering(false); setDraftOpen(false); setCart([]); setPlan(emptyPlan()); };
+  const reset = () => { setPicking(null); setOrdering(false); setDraftOpen(false); setCart([]); };
   const close = () => { reset(); setSelection(null); load(); };
   const select = (table, check) => {
     if (!check && !service) return showToast('Apri il servizio per aprire i tavoli', 'warning');
@@ -75,7 +74,7 @@ const SalaPage = ({ user, service, event }) => {
 
   const side = (
     <SidePanel selection={selection} reservation={selection ? reserved.get(selection.table.id) : null} user={user} service={service} event={event} ordering={ordering}
-      cart={cart} setCart={setCart} products={products} courses={courses} plan={plan} setPlan={setPlan}
+      cart={cart} setCart={setCart} products={products} courses={courses}
       onBack={close} onOpened={(check) => { setSelection(s => ({ ...s, checkId: check.id })); load(); }} onBusy={close}
       onOrder={() => setOrdering(true)} onDraftBack={() => (narrow ? setDraftOpen(false) : setOrdering(false))}
       onSent={() => { reset(); load(); }} onChanged={load}
