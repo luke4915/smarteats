@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { conflictIds, moveBy, resizeBy, defaultSize, findFreeSpot, lineBetween } from './geometry.js';
+import { conflictIds, moveBy, resizeBy, defaultSize, findFreeSpot, lineBetween, resizeFrom } from './geometry.js';
 
 const t = (id, x, y, w, h) => ({ id, x, y, w, h });
 
@@ -47,4 +47,15 @@ test('la linea tracciata segue l\'asse prevalente', () => {
   assert.deepEqual(lineBetween({ x: 6, y: 3 }, { x: 2, y: 3 }), { x: 2, y: 3, w: 5, h: 1 }, 'verso sinistra');
   assert.deepEqual(lineBetween({ x: 2, y: 5 }, { x: 3, y: 1 }), { x: 2, y: 1, w: 1, h: 5 }, 'verso l\'alto');
   assert.deepEqual(lineBetween({ x: 4, y: 4 }, { x: 4, y: 4 }), { x: 4, y: 4, w: 1, h: 1 });
+});
+
+test('maniglie: il lato opposto resta fermo, minimo una cella, mai fuori dalla sala', () => {
+  const o = { x: 4, y: 3, w: 4, h: 2 };
+  assert.deepEqual(resizeFrom(o, 'se', 2, 1, 20, 10), { x: 4, y: 3, w: 6, h: 3 });
+  assert.deepEqual(resizeFrom(o, 'nw', -2, -1, 20, 10), { x: 2, y: 2, w: 6, h: 3 }, 'si allarga verso l\'alto e a sinistra');
+  assert.deepEqual(resizeFrom(o, 'e', 3, 5, 20, 10), { x: 4, y: 3, w: 7, h: 2 }, 'un lato solo: l\'altra misura non cambia');
+  assert.deepEqual(resizeFrom(o, 'w', 9, 0, 20, 10), { x: 7, y: 3, w: 1, h: 2 }, 'non si può chiudere oltre una cella');
+  assert.deepEqual(resizeFrom(o, 'nw', -50, -50, 20, 10), { x: 0, y: 0, w: 8, h: 5 }, 'si ferma al bordo');
+  assert.deepEqual(resizeFrom(o, 'se', 50, 50, 20, 10), { x: 4, y: 3, w: 16, h: 7 });
+  assert.deepEqual(resizeFrom({ x: 0, y: 0, w: 2, h: 1 }, 'e', 100, 0, 60, 60, 60), { x: 0, y: 0, w: 60, h: 1 }, 'un separatore può essere lungo quanto la sala');
 });

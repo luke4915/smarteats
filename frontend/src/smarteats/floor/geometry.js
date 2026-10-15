@@ -56,3 +56,16 @@ export function lineBetween(from, to) {
     ? { x: Math.min(from.x, to.x), y: from.y, w: Math.abs(dx) + 1, h: 1 }
     : { x: from.x, y: Math.min(from.y, to.y), w: 1, h: Math.abs(dy) + 1 };
 }
+
+// Ridimensiona trascinando una maniglia (`nw`, `n`, `ne`, `e`, `se`, `s`, `sw`, `w`): il lato opposto resta fermo,
+// la misura minima è una cella e non si esce dalla sala. Vale per tavoli e separatori allo stesso modo.
+export function resizeFrom(o, handle, dx, dy, gridW, gridH, max = MAX_TABLE_SIDE) {
+  let x1 = o.x, y1 = o.y, x2 = o.x + o.w, y2 = o.y + o.h;
+  if (handle.includes('w')) x1 = clamp(o.x + dx, Math.max(0, x2 - max), x2 - 1);
+  if (handle.includes('e')) x2 = clamp(o.x + o.w + dx, x1 + 1, Math.min(gridW, x1 + max));
+  if (handle.includes('n')) y1 = clamp(o.y + dy, Math.max(0, y2 - max), y2 - 1);
+  if (handle.includes('s')) y2 = clamp(o.y + o.h + dy, y1 + 1, Math.min(gridH, y1 + max));
+  return { x: x1, y: y1, w: x2 - x1, h: y2 - y1 };
+}
+
+export const HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
