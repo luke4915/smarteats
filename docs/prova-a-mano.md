@@ -247,6 +247,16 @@ Nel file `.env` del backend metti `WHATSAPP_DRIVER=mock`: i messaggi non escono,
 - [ ] Asporto: accetta → «Confermato»; la cucina segna «Pronta» → «Pronto»; annulla → «Annullato».
 - [ ] Una richiesta lasciata senza risposta: scade (asporto a 10 minuti dal ritiro) e si vede «Scaduto»?
 
+## Q. WhatsApp: stato, STOP, fidelizzazione, pagine pubbliche
+
+- [ ] `/privacy` e `/terms` si aprono da telefono, senza accesso, e si leggono bene?
+- [ ] Nella pagina di prenotazione compare la casella facoltativa per ringraziamenti e novità, separata dal consenso?
+- [ ] Master → WhatsApp: «Grazie dopo la visita» è segnato «marketing · solo con consenso».
+- [ ] Prenotazione con la casella spuntata → «Arrivato» → incassa: nel Master compare l'avviso «grazie» in coda per il giorno dopo mattina o 2 ore dopo il turno?
+- [ ] Senza la casella: nessun «grazie».
+- [ ] (Con Meta collegato) rispondi STOP a un avviso: un'altra prenotazione con lo stesso numero non invia nulla («ha scritto STOP»)? RIPRENDI riattiva?
+- [ ] (Con Meta collegato) in Prenotazioni, nel dettaglio, lo stato passa a «consegnato» e «letto»?
+
 ## Dopo la prova
 
 Mandami le righe `[~]` e `[!]`. Per ogni problema mi bastano:

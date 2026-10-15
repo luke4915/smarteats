@@ -7,10 +7,10 @@ import { useAuth } from '../../context/useAuth';
 // 19:02». Se un invio è fallito, il personale può rimandarlo. Compare solo nei locali con il modulo acceso.
 const EVENT = {
   received: 'Ricevuta', confirmed: 'Confermata', reminder: 'Promemoria', declined: 'Rifiutata', cancelled: 'Annullata', kept: 'Annullo non accettato',
-  expired: 'Scaduta', accepted: 'Confermato', ready: 'Pronto', picked_up: 'Ritirato', rejected: 'Non accettato',
+  expired: 'Scaduta', thanks: 'Grazie dopo la visita', accepted: 'Confermato', ready: 'Pronto', picked_up: 'Ritirato', rejected: 'Non accettato',
 };
 const STATUS = { queued: 'in coda', sent: 'inviato', delivered: 'consegnato', read: 'letto', failed: 'non inviato', skipped: 'non inviato' };
-const REASON = { NUMERO_NON_VALIDO: 'numero non valido', TETTO_MENSILE: 'tetto raggiunto', GIA_GESTITA: 'già gestita', STATO_CAMBIATO: 'non più necessario', TURNO_PASSATO: 'turno passato' };
+const REASON = { NUMERO_NON_VALIDO: 'numero non valido', TETTO_MENSILE: 'tetto raggiunto', GIA_GESTITA: 'già gestita', STATO_CAMBIATO: 'non più necessario', TURNO_PASSATO: 'turno passato', DISISCRITTO: 'ha scritto STOP', SENZA_CONSENSO: 'senza consenso' };
 
 const WhatsAppStatus = ({ refType, refId, version = 0 }) => {
   const { user } = useAuth();
@@ -19,7 +19,7 @@ const WhatsAppStatus = ({ refType, refId, version = 0 }) => {
   const load = useCallback(() => fetchWithAuth(`/whatsapp/messages?ref_type=${refType}&ref_id=${refId}`).then(setItems).catch(() => setItems([])), [refType, refId]);
   useEffect(() => { if (enabled) load(); }, [enabled, load, version]);
 
-  const visible = (items ?? []).filter(m => m.status !== 'skipped' || ['NUMERO_NON_VALIDO', 'TETTO_MENSILE'].includes(m.error));
+  const visible = (items ?? []).filter(m => m.status !== 'skipped' || ['NUMERO_NON_VALIDO', 'TETTO_MENSILE', 'DISISCRITTO'].includes(m.error));
   if (!enabled || !visible.length) return null;
   return (
     <section className="rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] p-3" aria-label="Avvisi WhatsApp">

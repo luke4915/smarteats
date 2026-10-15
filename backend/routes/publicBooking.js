@@ -121,9 +121,9 @@ export default function (broadcast) {
         throw err;
       }
       const { rows: [r] } = await tx.query(
-        `INSERT INTO reservations (date, shift_id, party_size, status, customer_name, phone, email, notes, source, public_token, consent_at)
-         VALUES ($1, $2, $3, 'requested', $4, $5, $6, $7, 'portal', $8, now()) RETURNING id`,
-        [b.date, b.shift_id, b.party_size, b.customer_name, b.phone, b.email, b.notes, token]);
+        `INSERT INTO reservations (date, shift_id, party_size, status, customer_name, phone, email, notes, source, public_token, consent_at, marketing_consent_at)
+         VALUES ($1, $2, $3, 'requested', $4, $5, $6, $7, 'portal', $8, now(), CASE WHEN $9::boolean THEN now() END) RETURNING id`,
+        [b.date, b.shift_id, b.party_size, b.customer_name, b.phone, b.email, b.notes, token, b.marketing]);
       await enqueue(tx, 'reservation', r.id, 'received');
       return r.id;
     });

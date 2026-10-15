@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 0XIGlYhdz1SSm4R7eQIQIcogkmFL5J4yK3h59yEy3GnZJeH31YgfpFv8mHPvxF8
+\restrict q6zdAwXbbrP30lntmIehXkdmAj8Cfvyno7NSpEW4aSQ5KRNKVnBopdjaV2b81av
 
 -- Dumped from database version 17.10 (Homebrew)
 -- Dumped by pg_dump version 17.10 (Homebrew)
@@ -889,6 +889,7 @@ CREATE TABLE public.reservations (
     consent_at timestamp with time zone,
     personal_data_purged_at timestamp with time zone,
     cancel_requested_at timestamp with time zone,
+    marketing_consent_at timestamp with time zone,
     CONSTRAINT reservations_customer_name_check CHECK ((length(btrim(customer_name)) > 0)),
     CONSTRAINT reservations_party_size_check CHECK (((party_size >= 1) AND (party_size <= 99))),
     CONSTRAINT reservations_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'confirmed'::text, 'declined'::text, 'cancelled'::text, 'seated'::text, 'completed'::text, 'no_show'::text, 'expired'::text])))
@@ -1258,6 +1259,20 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: whatsapp_message_tenants; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.whatsapp_message_tenants (
+    wa_message_id text NOT NULL,
+    tenant_id integer NOT NULL,
+    to_phone text NOT NULL,
+    sent_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.whatsapp_message_tenants OWNER TO colettas;
+
+--
 -- Name: whatsapp_messages; Type: TABLE; Schema: public; Owner: colettas
 --
 
@@ -1309,6 +1324,18 @@ ALTER SEQUENCE public.whatsapp_messages_id_seq OWNER TO colettas;
 
 ALTER SEQUENCE public.whatsapp_messages_id_seq OWNED BY public.whatsapp_messages.id;
 
+
+--
+-- Name: whatsapp_optouts; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.whatsapp_optouts (
+    phone text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.whatsapp_optouts OWNER TO colettas;
 
 --
 -- Name: _migrations id; Type: DEFAULT; Schema: public; Owner: colettas
@@ -1764,11 +1791,27 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: whatsapp_message_tenants whatsapp_message_tenants_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.whatsapp_message_tenants
+    ADD CONSTRAINT whatsapp_message_tenants_pkey PRIMARY KEY (wa_message_id);
+
+
+--
 -- Name: whatsapp_messages whatsapp_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
 --
 
 ALTER TABLE ONLY public.whatsapp_messages
     ADD CONSTRAINT whatsapp_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: whatsapp_optouts whatsapp_optouts_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.whatsapp_optouts
+    ADD CONSTRAINT whatsapp_optouts_pkey PRIMARY KEY (phone);
 
 
 --
@@ -2056,6 +2099,13 @@ CREATE INDEX idx_takeaway_orders_pickup ON public.takeaway_orders USING btree (t
 --
 
 CREATE INDEX idx_users_tenant ON public.users USING btree (tenant_id);
+
+
+--
+-- Name: idx_wa_msg_tenants_phone; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_wa_msg_tenants_phone ON public.whatsapp_message_tenants USING btree (to_phone, sent_at DESC);
 
 
 --
@@ -2674,6 +2724,14 @@ ALTER TABLE ONLY public.takeaway_orders
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: whatsapp_message_tenants whatsapp_message_tenants_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.whatsapp_message_tenants
+    ADD CONSTRAINT whatsapp_message_tenants_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
 
 
 --
@@ -3518,6 +3576,14 @@ GRANT SELECT,USAGE ON SEQUENCE public.users_id_seq TO standmanager_master;
 
 
 --
+-- Name: TABLE whatsapp_message_tenants; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_message_tenants TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_message_tenants TO standmanager_master;
+
+
+--
 -- Name: TABLE whatsapp_messages; Type: ACL; Schema: public; Owner: colettas
 --
 
@@ -3531,6 +3597,14 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_messages TO standmana
 
 GRANT ALL ON SEQUENCE public.whatsapp_messages_id_seq TO standmanager_app;
 GRANT SELECT,USAGE ON SEQUENCE public.whatsapp_messages_id_seq TO standmanager_master;
+
+
+--
+-- Name: TABLE whatsapp_optouts; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_optouts TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_optouts TO standmanager_master;
 
 
 --
@@ -3553,5 +3627,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 0XIGlYhdz1SSm4R7eQIQIcogkmFL5J4yK3h59yEy3GnZJeH31YgfpFv8mHPvxF8
+\unrestrict q6zdAwXbbrP30lntmIehXkdmAj8Cfvyno7NSpEW4aSQ5KRNKVnBopdjaV2b81av
 

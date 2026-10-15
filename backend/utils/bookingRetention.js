@@ -21,6 +21,9 @@ export async function purgeAllTenants() {
     try { total += await withTenantClient(id, purgePersonalData); }
     catch (err) { logger.error({ err, tenantId: id }, 'Errore pulizia dati prenotazioni'); }
   }
+  // gli indici globali di WhatsApp (messaggio → locale, con il numero) non si tengono oltre i 90 giorni
+  try { await pool.query(`DELETE FROM whatsapp_message_tenants WHERE sent_at < now() - interval '90 days'`); }
+  catch (err) { logger.error({ err }, 'Errore pulizia indice WhatsApp'); }
   if (total) logger.info({ purged: total }, 'Dati personali delle prenotazioni svuotati');
   return total;
 }

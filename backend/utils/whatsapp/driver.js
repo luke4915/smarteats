@@ -3,7 +3,8 @@ import crypto from 'crypto';
 // Chi spedisce davvero i messaggi. `WHATSAPP_DRIVER`: `mock` (sviluppo e test: non esce nulla, risponde bene), `meta`
 // (WhatsApp Business Platform, credenziali della piattaforma in variabili d'ambiente), `off` (modulo inattivo: la coda
 // non si riempie). Un driver con le credenziali del singolo locale si aggiunge qui senza toccare coda ed eventi.
-// Un driver ha `send({ to, template, header, params, buttonToken })` → `{ id }` oppure lancia `SendError`.
+// Un driver ha `send({ to, template, header, params, buttonToken })` → `{ id }` e `sendText({ to, body })` (risposta libera,
+// ammessa dentro le 24 ore dall'ultimo messaggio del cliente) oppure lancia `SendError`.
 
 export class SendError extends Error {
   constructor(message, { permanent = false, code = '' } = {}) { super(message); this.permanent = permanent; this.code = code; }
@@ -11,11 +12,30 @@ export class SendError extends Error {
 
 const GRAPH = 'https://graph.facebook.com';
 
+// La firma che Meta mette nel webhook: `X-Hub-Signature-256: sha256=<HMAC-SHA256 del corpo con il segreto dell'app>`
+export function verifySignature(rawBody, header, secret) {
+  if (!secret || !header || !Buffer.isBuffer(rawBody)) return false;
+  const expected = `sha256=${crypto.createHmac('sha256', secret).update(rawBody).digest('hex')}`;
+  const a = Buffer.from(expected), b = Buffer.from(String(header));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 export function metaDriver(env = process.env, fetchImpl = globalThis.fetch) {
   const { WHATSAPP_TOKEN: token, WHATSAPP_PHONE_NUMBER_ID: phoneId, WHATSAPP_API_VERSION: version = 'v21.0' } = env;
   return {
     id: 'meta',
     configured: !!(token && phoneId),
+    async sendText({ to, body }) {
+      if (!token || !phoneId) throw new SendError('Credenziali WhatsApp non configurate', { permanent: true, code: 'NOT_CONFIGURED' });
+      const res = await fetchImpl(`${GRAPH}/${version}/${phoneId}/messages`, {
+        method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messaging_product: 'whatsapp', to, type: 'text', text: { body, preview_url: false } }),
+        signal: AbortSignal.timeout(10_000),
+      }).catch(err => { throw new SendError(`Rete: ${err.message}`, { code: 'NETWORK' }); });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.messages?.[0]?.id) return { id: data.messages[0].id };
+      throw new SendError(data.error?.message ?? `HTTP ${res.status}`, { permanent: !(res.status === 429 || res.status >= 500), code: String(data.error?.code ?? res.status) });
+    },
     async send({ to, template, header, params, buttonToken }) {
       if (!token || !phoneId) throw new SendError('Credenziali WhatsApp non configurate', { permanent: true, code: 'NOT_CONFIGURED' });
       const components = [
@@ -46,8 +66,10 @@ export function metaDriver(env = process.env, fetchImpl = globalThis.fetch) {
 
 export function mockDriver() {
   const sent = [];
+  const texts = [];
   return {
-    id: 'mock', configured: true, sent,
+    id: 'mock', configured: true, sent, texts,
+    async sendText(message) { texts.push(message); return { id: `mock-text-${crypto.randomUUID()}` }; },
     async send(message) {
       // un numero che finisce per 0000 simula un rifiuto definitivo, uno per 9999 un errore temporaneo (per i test)
       if (message.to.endsWith('0000')) throw new SendError('Numero non su WhatsApp', { permanent: true, code: '131026' });

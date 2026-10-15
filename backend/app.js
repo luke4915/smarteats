@@ -19,6 +19,8 @@ import publicBookingRoutes from './routes/publicBooking.js';
 import takeawayRoutes from './routes/takeaway.js';
 import feedbackRoutes from './routes/feedback.js';
 import whatsappRoutes from './routes/whatsapp.js';
+import whatsappWebhookRoutes from './routes/whatsappWebhook.js';
+import legalRoutes from './routes/legal.js';
 import publicTakeawayRoutes from './routes/publicTakeaway.js';
 import { modifierGroupsRouter, productModifiersRouter } from './routes/modifierGroups.js';
 import checkRoutes from './routes/checks.js';
@@ -64,7 +66,8 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use(cors({ origin: true, credentials: true }));
   app.use('/api/health', healthRoutes); // prima di limiti e log: lo interroga il monitoraggio ogni pochi secondi
   if (logRequests) app.use('/api', requestLogger);
-  app.use(express.json({ limit: '1mb' }));
+  // Il webhook di Meta è firmato sul corpo grezzo: lo si conserva solo per quel percorso
+  app.use(express.json({ limit: '1mb', verify: (req, _res, buf) => { if (req.originalUrl.startsWith('/api/webhooks/')) req.rawBody = buf; } }));
   // Dalla cartella assets si servono solo i suoni: lì stanno anche loghi che non devono essere pubblici.
   app.use('/api/assets', (req, res, next) => (req.path.endsWith('.mp3') ? next() : res.status(404).json({ error: 'Non trovato' })),
     express.static(path.join(__dirname, 'assets'), { index: false, dotfiles: 'deny' }));
@@ -99,6 +102,8 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/takeaway', takeawayRoutes(broadcast));
   app.use('/api/feedback', feedbackRoutes);
   app.use('/api/whatsapp', whatsappRoutes);
+  app.use('/api/webhooks/whatsapp', whatsappWebhookRoutes);
+  app.use('/api/public/legal', legalRoutes);
   app.use('/api/public/takeaway', publicTakeawayRoutes(broadcast));
   app.use('/api/checks', checkRoutes(broadcast));
   app.use('/api/settings', settingsRoutes);

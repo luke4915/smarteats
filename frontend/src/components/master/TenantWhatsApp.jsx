@@ -11,7 +11,7 @@ const STATUS = {
 };
 const REASON = {
   NUMERO_NON_VALIDO: 'numero non valido', TETTO_MENSILE: 'tetto mensile raggiunto', GIA_GESTITA: 'già gestita', STATO_CAMBIATO: 'stato cambiato',
-  EVENTO_SPENTO: 'evento spento', TURNO_PASSATO: 'turno passato', TROPPI_AVVISI: 'troppi avvisi', PRATICA_NON_TROVATA: 'pratica non trovata',
+  EVENTO_SPENTO: 'evento spento', DISISCRITTO: 'ha scritto STOP', SENZA_CONSENSO: 'senza consenso', TURNO_PASSATO: 'turno passato', TROPPI_AVVISI: 'troppi avvisi', PRATICA_NON_TROVATA: 'pratica non trovata',
 };
 
 const TenantWhatsApp = ({ tenant, onClose }) => {
@@ -79,7 +79,7 @@ const TenantWhatsApp = ({ tenant, onClose }) => {
                       <li key={e.id} className="flex items-start gap-3 px-3 py-2.5">
                         <input id={e.id} type="checkbox" className="mt-1 w-4 h-4 accent-[var(--accent)] cursor-pointer" checked={!!events[e.id]} onChange={ev => setEvents(x => ({ ...x, [e.id]: ev.target.checked }))} />
                         <label htmlFor={e.id} className="min-w-0 flex-1 cursor-pointer">
-                          <span className="block text-sm font-medium text-[var(--text-main)]">{e.label}</span>
+                          <span className="block text-sm font-medium text-[var(--text-main)]">{e.label}{e.category === 'marketing' && <span className="ml-2 text-[11px] font-medium px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-500">marketing · solo con consenso</span>}</span>
                           <span className="block text-xs text-[var(--text-muted)]">{e.body.replace(/\{\{(\d+)\}\}/g, '…')}</span>
                         </label>
                       </li>
