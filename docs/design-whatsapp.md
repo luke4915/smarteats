@@ -1,6 +1,6 @@
 # WhatsApp: disegno
 
-Stato: **approvato nelle linee generali** (nessun codice scritto). Decisioni di Luca, 15 ottobre 2026: avvisi **automatici** da un **numero unico** della piattaforma (nessuna burocrazia a carico dei locali); il numero del singolo locale è un'evoluzione; niente funzione «manuale» a sé (resta solo come rete di sicurezza).
+Stato: **approvato** (W1 in corso). Decisioni di Luca, 15 ottobre 2026: avvisi **automatici** da un **numero unico** della piattaforma (nessuna burocrazia a carico dei locali); il numero del singolo locale è un'evoluzione; niente funzione «manuale» a sé (resta solo come rete di sicurezza).
 Corrisponde al modulo `whatsapp`, a pagamento come gli altri. Per le regole di sviluppo vale `CLAUDE.md`
 (RLS, validazione zod, audit, nomenclatura inglese, endpoint pubblici).
 
@@ -47,33 +47,61 @@ e log. È la stessa idea dei driver di stampa.
 **Rete di sicurezza.** Se un invio fallisce, il pannello della prenotazione/ordine mostra «WhatsApp non inviato: motivo» e
 il pulsante col messaggio già pronto per mandarlo a mano (i link esistono già).
 
-## 4. Messaggi: eventi e modelli
+## 4. Messaggi: eventi, tempi, modelli
 
-I messaggi a clienti che non ci hanno scritto devono usare **modelli (template) approvati da Meta**. Li scriviamo noi, in
-italiano, **uguali per tutti i locali**, versionati (`se_reservation_confirmed_v1`), e li sottoponiamo a Meta per ogni
-account in automatico all'attivazione. Restano rigorosamente transazionali (niente promozioni: Meta li riclassificherebbe
-come marketing, più costosi e con più vincoli).
+Ogni messaggio ha l'intestazione **«SmartEats × NomeLocale»** (variabile) e il nome del locale nel testo. Uno solo per
+evento e per pratica; rispetta il «STOP». Gli interruttori per evento li gestisce **solo il Master**, mai il locale.
 
-| Evento | Quando parte | Variabili | Bottone |
-|---|---|---|---|
-| **Prenotazione ricevuta** | arriva una richiesta dal portale | nome, giorno, ora, persone, locale | «Vedi richiesta» (link alla pagina di stato) |
-| **Prenotazione confermata** | il personale conferma | nome, giorno, ora, persone, locale | «Vedi prenotazione» |
-| **Prenotazione rifiutata** | il personale rifiuta | nome, giorno, ora, locale | «Chiama» (telefono del locale) |
-| **Prenotazione annullata** | il locale conferma l'annullo chiesto dal cliente, o annulla lui | nome, giorno, ora, locale | — |
-| **Asporto inviato (in attesa)** | arriva l'ordine dal sito | nome, ritiro, totale, locale | «Vedi ordine» |
-| **Asporto confermato** | il locale accetta | nome, ritiro (anche se cambiato), totale, locale | «Vedi ordine» |
-| **Asporto pronto** | la cucina ha finito | nome, locale | — |
-| **Asporto ritirato** | consegnato | nome, locale | — |
-| **Asporto annullato** | annullato dal locale | nome, locale | «Chiama» |
-| **Asporto rifiutato** | non accettato | nome, motivo, locale | «Chiama» |
+### Prenotazione ristorante
+```
+richiesta ──► confermata ──► (arrivato, concluso)             nessun messaggio
+    │             ├──► annullata dal locale ─────────────────► «annullata»
+    │             └──► il cliente chiede l'annullo ──► il locale decide
+    ├──► rifiutata ──────────────────────────────────────────► «rifiutata»
+    └──► scaduta ────────────────────────────────────────────► «scaduta»
+```
+| Evento | Quando | Testo (sintesi) |
+|---|---|---|
+| **Ricevuta** | 2 minuti dopo la richiesta dal sito, **saltata** se nel frattempo è già gestita | abbiamo ricevuto la richiesta, ti confermiamo a breve |
+| **Confermata** | il personale conferma, o la inserisce già confermata | giorno, ora, persone, link alla pagina di stato |
+| **Promemoria** | **3 ore prima** dell'inizio del turno (solo se la prenotazione è ancora confermata e mancano più di 3 ore alla conferma) | ti aspettiamo oggi alle … |
+| **Rifiutata** | il personale rifiuta | non possiamo accettare: invia una nuova richiesta o chiamaci |
+| **Annullata** | annullata dal locale, o annullo chiesto dal cliente e confermato | la prenotazione è annullata |
+| **Annullo non accettato** | il locale mantiene una prenotazione di cui il cliente aveva chiesto l'annullo | la prenotazione resta valida: per cambiare chiamaci |
+| **Scaduta** | richiesta non gestita per 24 ore **o arrivato l'inizio del turno** | non siamo riusciti a confermare: **invia una nuova richiesta o chiamaci** |
+| **Grazie** (fidelizzazione, W2) | **2 ore dopo la fine del turno**, mai dopo le 22:30 (allora la mattina dopo alle 10:00) | grazie della visita, tornaci a trovare presto; link per una recensione se il locale lo imposta |
 
-Proposte mie, da confermare:
-- **«Asporto rifiutato»** aggiunto: un ordine non accettato non può restare muto. Se preferisci puoi usare lo stesso
-  testo di «annullato».
-- **«Ritirato» spento di partenza:** costa come gli altri e dice poco («grazie, buon appetito»). Ogni evento si
-  accende/spegne per locale; quelli utili (ricevuta, confermata, pronto, annullata, rifiutata) sono accesi.
-- **Prenotazioni inserite dal personale** (telefono, di persona): nessun messaggio automatico, a meno che il personale
-  spunti «Invia conferma su WhatsApp» nel modulo (il consenso c'è, l'ha dato a voce al telefono).
+Una richiesta **scaduta libera subito i posti**: già oggi una richiesta non decisa smette di tenerli, e da ora scade al
+più tardi all'inizio del turno.
+
+### Asporto
+```
+inviato ──► accettato ──► pronto ──► ritirato
+   │            └──► annullato dal locale ───────────────────► «annullato»
+   ├──► rifiutato ──────────────────────────────────────────► «rifiutato»
+   └──► scaduto (non gestito entro 10 minuti dal ritiro) ───► «scaduto»
+```
+| Evento | Quando | Testo (sintesi) |
+|---|---|---|
+| **Inviato** | 2 minuti dopo, saltato se già gestito | ordine ricevuto, ritiro alle …, totale, ti confermiamo a breve |
+| **Accettato** | il locale accetta (orario **attuale**, anche se cambiato) | confermato, ritiro alle …, paghi al ritiro |
+| **Pronto** | la cucina ha finito | è pronto, ti aspettiamo |
+| **Ritirato** | consegnato | grazie, buon appetito — **spento** di partenza |
+| **Rifiutato** | il locale non accetta | non abbiamo potuto accettare: ordina per un altro orario o chiamaci |
+| **Annullato** | annullato dal locale | il tuo ordine è annullato, ci scusiamo: chiamaci |
+| **Scaduto** | nessuna risposta entro 10 minuti dal ritiro | non siamo riusciti a confermare: invia una nuova richiesta o chiamaci |
+Il cliente che ritira la richiesta da solo non riceve nulla. Un ordine **veloce** al banco, senza telefono, non genera
+messaggi: è come un registratore di cassa.
+
+### Regole comuni
+- **Chi riceve:** chi ha lasciato un **cellulare** (dal sito, al banco o al telefono). Non c'è nessuna spunta: se il
+  modulo è acceso dal Master e c'è un cellulare valido, gli avvisi partono. Un fisso o un numero non valido si salta.
+- **Pratiche, non messaggi:** il tetto mensile del locale conta le **pratiche** (prenotazioni o ordini con almeno un
+  avviso); una pratica manda al massimo 6 messaggi. Superato il tetto gli avvisi si fermano e il Master lo vede.
+- **Marketing a parte:** il «Grazie» è un messaggio di fidelizzazione (per Meta e per la legge è *marketing*, costa di più
+  e vuole un **consenso separato**): parte solo per chi lo ha dato con una casella dedicata nelle pagine pubbliche. Gli
+  avvisi sull'ordine invece sono transazionali.
+- **Testi:** uguali per tutti i locali (modelli approvati da Meta), versionati; nessuna modifica dal locale.
 
 ## 5. Come funziona dentro (flusso e best practice)
 
@@ -97,9 +125,10 @@ Il pannello della prenotazione/ordine mostra una riga: «WhatsApp: consegnato al
 **Numeri.** Si normalizzano in formato internazionale (`+39…`); un fisso o un numero non valido si salta con motivo
 «numero non raggiungibile» (nessun costo, nessun errore).
 
-**Consenso.** Nelle pagine `/book` e `/order` la casella già presente diventa due frasi distinte: trattamento dei dati per
-la prenotazione/ordine (obbligatoria) e **«Voglio ricevere aggiornamenti su WhatsApp»** (facoltativa, salvata con data).
-Senza consenso non si invia.
+**Consenso.** Chi inserisce il proprio cellulare in `/book` o `/order` vede nella casella di consenso esistente che
+riceverà **aggiornamenti su WhatsApp** su quella prenotazione/ordine. Al banco o al telefono il personale scrive il
+cellulare perché il cliente vuole essere avvisato (il modulo lo dice sotto il campo). La **fidelizzazione** ha una casella
+a parte, facoltativa, sulle pagine pubbliche.
 
 **Sicurezza.** Token di accesso **cifrati a riposo** (AES-GCM, chiave in variabile d'ambiente, mai restituiti dalle API né
 scritti nei log); tabelle con RLS e in `TENANT_SCOPED_TABLES`; log degli invii con numero **svuotato dopo 90 giorni**
@@ -119,11 +148,11 @@ scritti nei log); tabelle con RLS e in `TENANT_SCOPED_TABLES`; log degli invii c
 
 ## 7. Interfaccia
 
-- **Impostazioni → WhatsApp** (admin): interruttori per evento con **anteprima del testo**, telefono del locale mostrato
-  nelle risposte, **messaggio di prova** al proprio numero, elenco degli ultimi invii con esito e contatore del mese.
-- **Prenotazione / ordine**: riga di stato dell'ultimo messaggio («consegnato alle 19:02») e «Invia di nuovo» /
-  «Invia a mano» se fallito.
-- **Master**: accensione del modulo per locale e, per assistenza, lo stato degli ultimi invii.
+- **Master → locale → WhatsApp** (solo qui si configura): modulo acceso/spento, interruttore per evento con **anteprima
+  del testo**, tetto mensile di pratiche, contatore del mese, **messaggio di prova**, elenco degli ultimi invii con esito.
+- **Locale** (sola lettura): nella prenotazione e nell'ordine una riga «WhatsApp: consegnato alle 19:02», e «Invia a mano»
+  se è fallito. Nessuna impostazione.
+- **Pagine pubbliche**: testo del consenso aggiornato; casella facoltativa per la fidelizzazione (W2).
 
 ## 8. Fasi
 
@@ -136,9 +165,11 @@ scritti nei log); tabelle con RLS e in `TENANT_SCOPED_TABLES`; log degli invii c
 
 W1-W2 non dipendono da Meta: li costruiamo e proviamo mentre fai W0.
 
-## 9. Da decidere
+## 9. Decisioni prese (15 ottobre 2026)
 
-1. **Eventi** (§4): tabella confermata? In particolare «asporto rifiutato» aggiunto e «ritirato» spento di partenza.
-2. **Prenotazioni inserite dal personale**: nessun messaggio, salvo una spunta esplicita «Invia conferma su WhatsApp»?
-3. **Tetto di messaggi per locale** nel canone: lo decidi tu; il sistema lo conta e lo mostra.
-4. **Nome visualizzato** del numero: «SmartEats» o un altro nome di prodotto?
+1. Eventi e flussi come in §4, con promemoria a 3 ore, ritardo di 2 minuti sulla «ricevuta», scaduta con invito a una
+   nuova richiesta, annullo non accettato, messaggio di fidelizzazione dopo il turno.
+2. Nessuna spunta: il cellulare inserito implica gli avvisi; l'ordine veloce senza cellulare non manda nulla.
+3. Tetto in **pratiche** al mese, per locale.
+4. Intestazione dei messaggi «SmartEats × NomeLocale»; nome visualizzato del numero «SmartEats».
+5. Tutta la gestione è del **Master**, non del locale.
