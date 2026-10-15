@@ -20,8 +20,8 @@ export default defineConfig({
     launchOptions: { args: ['--host-resolver-rules=MAP *.standmanager.local 127.0.0.1'] },
   },
   projects: [
-    { name: 'desktop', testIgnore: /\.telefono\.spec\.js/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
-    { name: 'telefono', testMatch: /\.telefono\.spec\.js/, use: { ...devices['Pixel 7'], launchOptions: { args: ['--host-resolver-rules=MAP *.standmanager.local 127.0.0.1'] } } },
+    { name: 'desktop', testIgnore: /\.phone\.spec\.js/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+    { name: 'phone', testMatch: /\.phone\.spec\.js/, use: { ...devices['Pixel 7'], launchOptions: { args: ['--host-resolver-rules=MAP *.standmanager.local 127.0.0.1'] } } },
   ],
   webServer: {
     command: 'node ../backend/scripts/e2e-server.js',

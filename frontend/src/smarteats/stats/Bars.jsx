@@ -1,4 +1,4 @@
-import { formatEuro } from '../sala/checkMath';
+import { formatEuro } from '../floor/checkMath';
 import { barPercent } from './chartData';
 
 export { HBars } from '../../components/shared/charts';

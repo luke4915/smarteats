@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import { formatEuro } from '../sala/checkMath';
-import { segment, segmentBox, input } from '../sala/ui';
+import { formatEuro } from '../floor/checkMath';
+import { segment, segmentBox, input } from '../floor/ui';
 import { HBars, HourBars, HourTable } from './Bars';
 import { Columns } from '../../components/shared/charts';
 import { PageHeader, PageBody } from '../../components/shared/PageHeader';
@@ -31,7 +31,7 @@ const Empty = ({ children }) => <p className="text-sm text-[var(--text-muted)] p
 
 // Statistiche del ristorante: coperti, scontrino medio per coperto, durata e rotazione dei conti, andamento per ora,
 // portate, piatti più venduti, tempi di cucina, sconti e incassi per metodo. Un servizio alla volta, o tutti insieme.
-const StatistichePage = () => {
+const StatsPage = () => {
   const { showToast } = useToast();
   const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState(undefined);  // null = tutti i servizi; undefined finché non si sa
@@ -160,4 +160,4 @@ const StatistichePage = () => {
   );
 };
 
-export default StatistichePage;
+export default StatsPage;

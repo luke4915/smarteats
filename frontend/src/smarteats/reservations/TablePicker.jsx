@@ -2,10 +2,10 @@ import { useState, useMemo } from 'react';
 import { Check } from 'lucide-react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import FloorCanvas from '../floor/FloorCanvas';
-import { isPlaced } from '../floor/geometry';
-import PanelFrame from '../sala/PanelFrame';
-import { btnPrimary, segment, segmentBox } from '../sala/ui';
+import FloorCanvas from '../floorplan/FloorCanvas';
+import { isPlaced } from '../floorplan/geometry';
+import PanelFrame from '../floor/PanelFrame';
+import { btnPrimary, segment, segmentBox } from '../floor/ui';
 import { tableTakenBy } from './rules';
 
 // Assegna uno o più tavoli a una prenotazione, sulla pianta della sala. Quelli già presi da un'altra prenotazione con

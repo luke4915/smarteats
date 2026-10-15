@@ -5,7 +5,7 @@ Non cambia nulla di quanto il personale usa già (P1): aggiunge un ingresso per 
 
 ## 1. Cosa vede il cliente
 
-Un solo indirizzo, `nome-locale.dominio/prenota`, pensato per il telefono (si apre da un QR sul tavolo, dal sito o da Instagram).
+Un solo indirizzo, `nome-locale.dominio/book`, pensato per il telefono (si apre da un QR sul tavolo, dal sito o da Instagram).
 Quattro passi, tutti nella stessa pagina, uno alla volta:
 
 1. **Quando**: scelta del giorno (prossimi N giorni, i chiusi sono grigi) e del turno. Un turno senza posto non compare
@@ -67,7 +67,7 @@ Sono endpoint pubblici: valgono le regole di `CLAUDE.md` §3.4 e §4.
   nessuna colonna interna nelle risposte.
 
 **Frontend**
-- Pagina `/prenota` (route pubblica, stile sobrio come il resto, senza menu né login), con i quattro passi e la pagina di stato.
+- Pagina `/book` (route pubblica, stile sobrio come il resto, senza menu né login), con i quattro passi e la pagina di stato.
 - In Impostazioni → Prenotazioni: interruttore del portale, testi, limiti, link e **QR da stampare**.
 - In agenda: la provenienza «Portale» (già prevista) e un indicatore delle richieste nuove.
 - Test nel browser: richiesta dal telefono → conferma in agenda → il cliente vede «Confermata» → annullo.

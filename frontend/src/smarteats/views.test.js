@@ -6,28 +6,28 @@ const ids = (role, modules) => visibleViews(role, modules).map(v => v.id);
 
 test('ogni ruolo vede le sue pagine', () => {
   const all = ['kds', 'stats', 'tables'];
-  assert.deepEqual(ids('admin', all), ['sala', 'cucina', 'carta', 'statistiche', 'impostazioni']);
-  assert.deepEqual(ids('admin', [...all, 'bookings']), ['sala', 'prenotazioni', 'cucina', 'carta', 'statistiche', 'impostazioni']);
-  assert.deepEqual(ids('cameriere', [...all, 'bookings']), ['sala', 'prenotazioni']);
-  assert.deepEqual(ids('responsabile', all), ['sala', 'statistiche']);
-  assert.deepEqual(ids('cassa', all), ['sala']);
-  assert.deepEqual(ids('cameriere', all), ['sala']);
-  assert.deepEqual(ids('cucina', all), ['cucina']);
+  assert.deepEqual(ids('admin', all), ['floor', 'kitchen', 'catalog', 'stats', 'settings']);
+  assert.deepEqual(ids('admin', [...all, 'bookings']), ['floor', 'reservations', 'kitchen', 'catalog', 'stats', 'settings']);
+  assert.deepEqual(ids('cameriere', [...all, 'bookings']), ['floor', 'reservations']);
+  assert.deepEqual(ids('responsabile', all), ['floor', 'stats']);
+  assert.deepEqual(ids('cassa', all), ['floor']);
+  assert.deepEqual(ids('cameriere', all), ['floor']);
+  assert.deepEqual(ids('cucina', all), ['kitchen']);
 });
 
 test('i moduli spenti nascondono le pagine', () => {
-  assert.deepEqual(ids('admin', ['tables']), ['sala', 'carta', 'impostazioni']);
-  assert.equal(canViewSmartEats('cucina', 'cucina', ['stats']), false);
+  assert.deepEqual(ids('admin', ['tables']), ['floor', 'catalog', 'settings']);
+  assert.equal(canViewSmartEats('cucina', 'kitchen', ['stats']), false);
   assert.equal(smartEatsHome('cucina', ['stats']), null);
 });
 
 test('senza elenco dei moduli (cache offline) non si nasconde nulla', () => {
-  assert.equal(canViewSmartEats('cucina', 'cucina', undefined), true);
+  assert.equal(canViewSmartEats('cucina', 'kitchen', undefined), true);
 });
 
 test('la home è la prima pagina visibile', () => {
-  assert.equal(smartEatsHome('admin', ['kds']), 'sala');
-  assert.equal(smartEatsHome('cucina', ['kds']), 'cucina');
+  assert.equal(smartEatsHome('admin', ['kds']), 'floor');
+  assert.equal(smartEatsHome('cucina', ['kds']), 'kitchen');
 });
 
 test('solo il tipo ristorante usa SmartEats', () => {

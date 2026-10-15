@@ -115,7 +115,7 @@ const App = () => {
   useEffect(() => {
     if (!user?.role || checkedRole.current === user.role) return;
     // La pagina pubblica di prenotazione non è una vista di lavoro: non si rimanda alla pagina iniziale
-    if (window.location.pathname === '/prenota' || window.location.pathname.startsWith('/prenota/')) return;
+    if (window.location.pathname === '/book' || window.location.pathname.startsWith('/book/')) return;
     checkedRole.current = user.role;
     const path = window.location.pathname.replace('/', '') || 'dashboard';
     if (canView(user.role, path, user.modules)) return setView(path);
@@ -171,7 +171,7 @@ const App = () => {
   };
 
   // Prenotazione dei clienti: pubblica, anche per chi ha una sessione aperta in questo browser
-  if (window.location.pathname === '/prenota' || window.location.pathname.startsWith('/prenota/')) return <Suspense fallback={<PageLoading />}><BookingPage /></Suspense>;
+  if (window.location.pathname === '/book' || window.location.pathname.startsWith('/book/')) return <Suspense fallback={<PageLoading />}><BookingPage /></Suspense>;
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">Caricamento...</div>;
 

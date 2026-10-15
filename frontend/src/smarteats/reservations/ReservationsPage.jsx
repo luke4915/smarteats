@@ -8,7 +8,7 @@ import ReservationPanel from './ReservationPanel';
 import ReservationForm from './ReservationForm';
 import TablePicker from './TablePicker';
 import StatusChip from './StatusChip';
-import { btnPrimary, iconBtn, btn } from '../sala/ui';
+import { btnPrimary, iconBtn, btn } from '../floor/ui';
 
 const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
 
@@ -21,7 +21,7 @@ const Empty = () => (
 
 // L'agenda delle prenotazioni: una giornata alla volta, divisa per turno e per cosa serve fare. Come la Sala: a sinistra
 // l'elenco, a destra un solo pannello che cambia (dettaglio, nuova, tavoli); su schermo stretto il pannello è a tutto schermo.
-const PrenotazioniPage = ({ event }) => {
+const ReservationsPage = ({ event }) => {
   const navigate = useNavigate();
   const narrow = useIsMobile(900);
   const [date, setDate] = useState(todayLocal);
@@ -116,7 +116,7 @@ const PrenotazioniPage = ({ event }) => {
     : <ReservationPanel key={current.id + current.status} reservation={current} tableNames={tableNames} onBack={close}
         onChanged={async () => { await reload(); }}
         onTables={() => setPanel({ kind: 'tables', id: current.id })} onEdit={() => setPanel({ kind: 'edit', id: current.id })}
-        onOpenCheck={() => navigate('/sala', { state: { tableId: current.table_ids[0] ?? null, checkId: current.check_id } })} />;
+        onOpenCheck={() => navigate('/floor', { state: { tableId: current.table_ids[0] ?? null, checkId: current.check_id } })} />;
 
   if (!narrow) {
     return (
@@ -136,4 +136,4 @@ const PrenotazioniPage = ({ event }) => {
   );
 };
 
-export default PrenotazioniPage;
+export default ReservationsPage;

@@ -4,23 +4,23 @@ import { ShoppingBag } from 'lucide-react';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { useIsMobile } from '../hooks/useBreakpoint';
-import FloorView from './sala/FloorView';
-import SidePanel from './sala/SidePanel';
-import OrderMenu from './sala/OrderMenu';
-import { useProducts } from './sala/useProducts';
-import { useCourses } from './sala/useCourses';
-import { useModifiers } from './sala/useModifiers';
-import ModifierPicker from './sala/ModifierPicker';
-import { courseOfProduct } from './sala/courses';
-import { nextByTable, todayLocal } from './prenotazioni/rules';
-import { addToCart, cartTotal, formatEuro } from './sala/checkMath';
-import { btnPrimary } from './sala/ui';
+import FloorView from './floor/FloorView';
+import SidePanel from './floor/SidePanel';
+import OrderMenu from './floor/OrderMenu';
+import { useProducts } from './floor/useProducts';
+import { useCourses } from './floor/useCourses';
+import { useModifiers } from './floor/useModifiers';
+import ModifierPicker from './floor/ModifierPicker';
+import { courseOfProduct } from './floor/courses';
+import { nextByTable, todayLocal } from './reservations/rules';
+import { addToCart, cartTotal, formatEuro } from './floor/checkMath';
+import { btnPrimary } from './floor/ui';
 
 const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
 
 // La Sala come la cassa: a sinistra l'area di lavoro (i tavoli, oppure la carta quando si fa una comanda), a destra un
 // solo pannello che cambia contenuto (apri tavolo, conto, incasso, comanda). Sotto i 1280 px il pannello è a tutto schermo.
-const SalaPage = ({ user, service, event }) => {
+const FloorPage = ({ user, service, event }) => {
   const { showToast } = useToast();
   const narrow = useIsMobile(900);          // sotto 900 px (telefono, tablet in verticale) il pannello è a tutto schermo
   const [rooms, setRooms] = useState(null);
@@ -127,4 +127,4 @@ const SalaPage = ({ user, service, event }) => {
   );
 };
 
-export default SalaPage;
+export default FloorPage;

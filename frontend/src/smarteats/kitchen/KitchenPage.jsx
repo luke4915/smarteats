@@ -63,7 +63,7 @@ const Ticket = ({ order, fresh, onLines }) => {
   );
 };
 
-const CucinaPage = ({ event }) => {
+const KitchenPage = ({ event }) => {
   const { orders, setLines } = useKitchenOrders(event);
   const [station, setStation] = useState('all');
   const [now, setNow] = useState(() => Date.now());
@@ -134,4 +134,4 @@ const CucinaPage = ({ event }) => {
   );
 };
 
-export default CucinaPage;
+export default KitchenPage;

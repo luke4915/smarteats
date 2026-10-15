@@ -9,7 +9,7 @@ import { visibleViews, canViewSmartEats, smartEatsHome } from './views';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
 import { useService } from './useService';
 import ServiceControl from './ServiceControl';
-import SalaPage from './SalaPage';
+import FloorPage from './FloorPage';
 import NoViewAvailable from '../components/layout/NoViewAvailable';
 import UserProfile from '../components/shared/UserProfile';
 import ProductConfig from '../components/products/ProductConfig';
@@ -17,16 +17,16 @@ import RoomsSettings from '../components/setup/RoomsSettings';
 import UsersSettings from '../components/setup/UsersSettings';
 import CoverSettings from './CoverSettings';
 import BookingSettings from './BookingSettings';
-import PrenotazioniPage from './prenotazioni/PrenotazioniPage';
+import ReservationsPage from './reservations/ReservationsPage';
 import CourseSettings from './CourseSettings';
 import ModifierSettings from './ModifierSettings';
 import { PageHeader, PageBody } from '../components/shared/PageHeader';
-import { useModifiers } from './sala/useModifiers';
+import { useModifiers } from './floor/useModifiers';
 
-const CucinaPage = lazy(() => import('./cucina/CucinaPage'));
-const StatistichePage = lazy(() => import('./statistiche/StatistichePage'));
+const KitchenPage = lazy(() => import('./kitchen/KitchenPage'));
+const StatsPage = lazy(() => import('./stats/StatsPage'));
 
-const ICONS = { sala: LayoutGrid, prenotazioni: CalendarDays, cucina: UtensilsCrossed, carta: BookOpen, statistiche: BarChart3, impostazioni: Settings };
+const ICONS = { floor: LayoutGrid, reservations: CalendarDays, kitchen: UtensilsCrossed, catalog: BookOpen, stats: BarChart3, settings: Settings };
 const NAV_CLASS = ({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium
   ${isActive ? 'bg-[var(--bg-card-2)] text-[var(--text-main)] [&>svg]:text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--bg-card-2)] hover:text-[var(--text-main)]'}`;
 
@@ -46,7 +46,7 @@ const Page = ({ children }) => (
 );
 
 // Carta (prodotti): per ora lo stesso editor della cassa; la carta di un ristorante avrà portate e categorie sue.
-const CartaPage = () => {
+const CatalogPage = () => {
   const { showToast } = useToast();
   const [products, setProducts] = useState(null);
   const [courses, setCourses] = useState(null);
@@ -133,12 +133,12 @@ const SmartEatsApp = () => {
         <div className="flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
           <Suspense fallback={<Page><p className="text-[var(--text-muted)]">Caricamento…</p></Page>}>
             <Routes>
-              <Route path="/sala" element={guard('sala', <SalaPage user={user} service={service} event={event} />)} />
-              <Route path="/prenotazioni" element={guard('prenotazioni', <PrenotazioniPage event={event} />)} />
-              <Route path="/cucina" element={guard('cucina', <Page><CucinaPage event={event} /></Page>)} />
-              <Route path="/carta" element={guard('carta', <Page><CartaPage /></Page>)} />
-              <Route path="/statistiche" element={guard('statistiche', <Page><StatistichePage /></Page>)} />
-              <Route path="/impostazioni" element={guard('impostazioni', <Page><SettingsPage user={user} /></Page>)} />
+              <Route path="/floor" element={guard('floor', <FloorPage user={user} service={service} event={event} />)} />
+              <Route path="/reservations" element={guard('reservations', <ReservationsPage event={event} />)} />
+              <Route path="/kitchen" element={guard('kitchen', <Page><KitchenPage event={event} /></Page>)} />
+              <Route path="/catalog" element={guard('catalog', <Page><CatalogPage /></Page>)} />
+              <Route path="/stats" element={guard('stats', <Page><StatsPage /></Page>)} />
+              <Route path="/settings" element={guard('settings', <Page><SettingsPage user={user} /></Page>)} />
               <Route path="*" element={<Navigate to={`/${home}`} replace />} />
             </Routes>
           </Suspense>

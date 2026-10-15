@@ -1,12 +1,12 @@
 // Pagine dell'app SmartEats (ristoranti e pizzerie): chi le vede dipende dal ruolo e dai moduli del locale.
 // Come in components/layout/viewRoles.js, vale per il menu e per le route; le autorizzazioni vere sono sul server.
 export const VIEWS = [
-  { id: 'sala', label: 'Sala', roles: ['admin', 'responsabile', 'cassa', 'cameriere'] },
-  { id: 'prenotazioni', label: 'Prenotazioni', roles: ['admin', 'responsabile', 'cassa', 'cameriere'], module: 'bookings' },
-  { id: 'cucina', label: 'Cucina', roles: ['admin', 'cucina'], module: 'kds' },
-  { id: 'carta', label: 'Carta', roles: ['admin'] },
-  { id: 'statistiche', label: 'Statistiche', roles: ['admin', 'responsabile'], module: 'stats' },
-  { id: 'impostazioni', label: 'Impostazioni', roles: ['admin'] },
+  { id: 'floor', label: 'Sala', roles: ['admin', 'responsabile', 'cassa', 'cameriere'] },
+  { id: 'reservations', label: 'Prenotazioni', roles: ['admin', 'responsabile', 'cassa', 'cameriere'], module: 'bookings' },
+  { id: 'kitchen', label: 'Cucina', roles: ['admin', 'cucina'], module: 'kds' },
+  { id: 'catalog', label: 'Carta', roles: ['admin'] },
+  { id: 'stats', label: 'Statistiche', roles: ['admin', 'responsabile'], module: 'stats' },
+  { id: 'settings', label: 'Impostazioni', roles: ['admin'] },
 ];
 
 // `modules` mancante = utente salvato in cache offline: non si nasconde nulla finché il server non risponde.

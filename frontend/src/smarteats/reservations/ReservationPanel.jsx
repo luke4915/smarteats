@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Phone, MessageCircle, Mail, Users, Clock, StickyNote, MoreVertical } from 'lucide-react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import PanelFrame from '../sala/PanelFrame';
-import CheckMenu from '../sala/CheckMenu';
-import { btn, btnPrimary, btnDanger, input, label } from '../sala/ui';
+import PanelFrame from '../floor/PanelFrame';
+import CheckMenu from '../floor/CheckMenu';
+import { btn, btnPrimary, btnDanger, input, label } from '../floor/ui';
 import { STATUS, formatDay, whatsappLink, mailLink, telLink } from './rules';
 import StatusChip from './StatusChip';
 

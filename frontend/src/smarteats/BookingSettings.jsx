@@ -3,8 +3,8 @@ import { Trash2, Plus, Copy, ExternalLink } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
-import { btn, btnPrimary, iconBtn, input, label } from './sala/ui';
-import { formatDay } from './prenotazioni/rules';
+import { btn, btnPrimary, iconBtn, input, label } from './floor/ui';
+import { formatDay } from './reservations/rules';
 
 const DAYS = [[1, 'Lun'], [2, 'Mar'], [3, 'Mer'], [4, 'Gio'], [5, 'Ven'], [6, 'Sab'], [0, 'Dom']];
 const EMPTY = { name: '', start_time: '19:30', duration_minutes: 90, weekdays: [0, 1, 2, 3, 4, 5, 6], capacity: 30, active: true };
@@ -18,7 +18,7 @@ const BookingSettings = () => {
   const [draft, setDraft] = useState(null);
   const [closure, setClosure] = useState({ date_from: '', date_to: '', shift_id: '', reason: '' });
   const [portal, setPortal] = useState(null);   // { enabled, phone, welcome }: impostazioni del portale dei clienti
-  const link = `${window.location.origin}/prenota`;
+  const link = `${window.location.origin}/book`;
 
   const load = useCallback(async () => {
     try {

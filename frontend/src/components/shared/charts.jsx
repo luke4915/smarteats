@@ -1,4 +1,4 @@
-import { barPercent } from '../../smarteats/statistiche/chartData';
+import { barPercent } from '../../smarteats/stats/chartData';
 
 // I grafici comuni a sagre e ristoranti: una sola serie nel colore d'accento, barre sottili, valore al passaggio del
 // mouse (o del dito). Sono gli stessi in tutte le statistiche, così i due prodotti si riconoscono.

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import PanelFrame from '../sala/PanelFrame';
-import CoversStepper from '../sala/CoversStepper';
-import { btnPrimary, btn, input, label } from '../sala/ui';
+import PanelFrame from '../floor/PanelFrame';
+import CoversStepper from '../floor/CoversStepper';
+import { btnPrimary, btn, input, label } from '../floor/ui';
 import { formatDay } from './rules';
 
 // Nuova prenotazione a mano (telefonata, di persona) o modifica di una esistente. Nasce confermata. Se il turno non ha

@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Minus, Plus, Phone, Check, CalendarDays, Clock, Users } from 'lucide-react';
 import { apiFetch } from '../utils/apiClient';
-import { formatDay } from '../smarteats/prenotazioni/rules';
-import { btnPrimary, btn, input } from '../smarteats/sala/ui';
+import { formatDay } from '../smarteats/reservations/rules';
+import { btnPrimary, btn, input } from '../smarteats/floor/ui';
 
-// Pagina pubblica di prenotazione (`/prenota`): il cliente sceglie quanti siete, il giorno e il turno, lascia i suoi
-// dati e invia una *richiesta*: il locale la conferma. `/prenota/<codice>` è la pagina di stato con l'annullo.
+// Pagina pubblica di prenotazione (`/book`): il cliente sceglie quanti siete, il giorno e il turno, lascia i suoi
+// dati e invia una *richiesta*: il locale la conferma. `/book/<codice>` è la pagina di stato con l'annullo.
 // Nessun accesso, nessun menu: pensata per il telefono. Le regole (posti, anticipo, tetti) le applica il server.
 
 const STATUS_TEXT = {
@@ -112,7 +112,7 @@ const Status = ({ token, info }) => {
 
 const BookingPage = () => {
   useSystemTheme();
-  const token = window.location.pathname.split('/').filter(Boolean)[1] ?? null;   // /prenota/<codice>
+  const token = window.location.pathname.split('/').filter(Boolean)[1] ?? null;   // /book/<codice>
   const [info, setInfo] = useState(null);
   const [error, setError] = useState('');
   const [party, setParty] = useState(2);
@@ -158,7 +158,7 @@ const BookingPage = () => {
     setSending(true); setError('');
     try {
       const res = await apiFetch('/public/booking/requests', { method: 'POST', body: { date, shift_id: shiftId, party_size: party, ...form, opened_at: openedAt.current } });
-      window.location.assign(`/prenota/${res.token}`);
+      window.location.assign(`/book/${res.token}`);
     } catch (err) {
       setError(err.message);
       if (err.code === 'NO_CAPACITY') { setShiftId(null); apiFetch(`/public/booking/availability?date=${date}&party=${party}`).then(r => setShifts(r.shifts)).catch(() => {}); }

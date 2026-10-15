@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useIsMobile } from '../../hooks/useBreakpoint';
 import { Users, Receipt } from 'lucide-react';
-import FloorCanvas from '../floor/FloorCanvas';
-import { isPlaced } from '../floor/geometry';
+import FloorCanvas from '../floorplan/FloorCanvas';
+import { isPlaced } from '../floorplan/geometry';
 import { tableState, formatEuro } from './checkMath';
 import { segment, segmentBox } from './ui';
 

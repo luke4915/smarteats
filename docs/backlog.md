@@ -3,6 +3,12 @@
 Elenco verificato sul codice. Quando ne risolvi una, toglila da qui nello stesso commit.
 
 
+**Nomenclatura (da portare in inglese, con migrazione e test)**
+- Ruoli salvati in `users.role`, nel JWT e nelle API: `cassa` → `cashier`, `cameriere` → `waiter`, `cucina` → `kitchen`, `responsabile` → `manager` (`admin` resta). Tocca autenticazione: i token già emessi (8 ore) vanno gestiti.
+- Tipi di locale in `tenants.business_type`: `sagra` → `festival`, `paninaro` → `street_food`, `ristorante` → `restaurant` (`utils/modules.js`, master, catalogo, frontend e test).
+- Dati di prova e test con chiavi italiane (`seed().ristorante`, `.sagra`) seguono i tipi di locale.
+- Nomi di file italiani rimasti nel frontend e nel backend: si cercano con `grep -ril "sala\|cucina\|prenot" src` e si rinominano insieme ai test.
+
 **Stampa**
 - La ristampa offline copre solo gli ordini battuti da questa cassa nella sessione aperta (non quelli di altre casse).
 - Gli indirizzi stampante si salvano ancora come `printer_address` con `printer_type` `'network'`; il valore `'usb'` della colonna non si usa più.

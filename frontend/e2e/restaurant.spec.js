@@ -78,7 +78,7 @@ test('ristorante: apro un tavolo, ordino per portate, la cucina segna pronto, in
   await shot(sala, 'ristorante-07-tavolo-libero');
 
   // Statistiche: il conto appena pagato compare, con l'occupazione dei posti e la curva del servizio
-  await sala.locator('a[href="/statistiche"]').first().click();
+  await sala.locator('a[href="/stats"]').first().click();
   await expect(sala.getByText('Posti occupati', { exact: true })).toBeVisible();
   await expect(sala.getByText('Abbinamento gruppo-tavolo')).toBeVisible();
   await shot(sala, 'ristorante-10-statistiche');

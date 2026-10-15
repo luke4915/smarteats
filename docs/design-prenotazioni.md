@@ -26,7 +26,7 @@ sulla pianta, e quando il cliente arriva, il tavolo si apre con i coperti già p
 
 ## 3. Come funziona, dal punto di vista di chi lo usa
 
-**Il cliente** (dal telefono, sul sito del locale `nome.miodominio.it/prenota`):
+**Il cliente** (dal telefono, sul sito del locale `nome.miodominio.it/book`):
 
 1. sceglie la **data** e il **turno** (vede solo quelli con posto), il **numero di persone**;
 2. scrive nome, telefono, (email facoltativa), eventuali note (allergie, seggiolone);
@@ -151,9 +151,9 @@ Ogni fase va in produzione da sola e si prova con la scaletta (`docs/prova-a-man
 ## 9. Impatto sul codice esistente
 
 - `backend/utils/modules.js`: nuovo modulo `bookings` (solo ristorante); catalogo e master panel lo mostrano.
-- Sala (`smarteats/sala/FloorView.jsx`): segno sul tavolo prenotato; `GET /checks` non cambia.
+- Sala (`smarteats/floor/FloorView.jsx`): segno sul tavolo prenotato; `GET /checks` non cambia.
 - Nuove route: `routes/bookings.js` (staff), `routes/publicBooking.js` (pubbliche), schemi in `schemas/bookingSchema.js`.
-- Nuova vista in SmartEats: `smarteats/prenotazioni/` (agenda, dettaglio, assegnazione sulla pianta, riuso di `floor/FloorCanvas`).
+- Nuova vista in SmartEats: `smarteats/reservations/` (agenda, dettaglio, assegnazione sulla pianta, riuso di `floorplan/FloorCanvas`).
 - Rete di sicurezza: un test nel browser per il giro (richiesta dal portale → conferma → assegna tavolo → arrivato → incasso).
 
 ## 10. Domande aperte
