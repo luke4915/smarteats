@@ -142,10 +142,11 @@ describe('moduli per tenant', () => {
   it('catalogo per il pannello master', async () => {
     assert.equal((await master.get('/master/catalog')).status, 401);
     const { body } = await master.request('GET', '/master/catalog', undefined, masterCookie);
-    assert.deepEqual(body.modules.map(m => m.id), ['kds', 'stats', 'qr_menu', 'tables', 'bookings']);
+    assert.deepEqual(body.modules.map(m => m.id), ['kds', 'stats', 'qr_menu', 'tables', 'bookings', 'takeaway']);
     assert.deepEqual(body.businessTypes.map(b => b.id), ['street_food', 'restaurant']);
     assert.ok(body.businessTypes.every(b => b.label && Array.isArray(b.modules)));
     assert.deepEqual(body.modules.find(m => m.id === 'tables').types, ['restaurant']);
     assert.deepEqual(body.modules.find(m => m.id === 'bookings').types, ['restaurant']);
+    assert.deepEqual(body.modules.find(m => m.id === 'takeaway').types.slice().sort(), ['restaurant', 'street_food']);
   });
 });

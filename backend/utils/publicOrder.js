@@ -11,6 +11,8 @@ export function toPublicOrder(order) {
     // Tavolo e coperti (solo per le comande dei tavoli): nessun importo
     table_name: order.table_name ?? null,
     covers: order.covers ?? null,
+    // Asporto: solo l'orario di ritiro (il nome del cliente non esce dal personale)
+    pickup_at: order.pickup_at ?? null,
     items: items.map(i => ({
       id: i.id,
       name: i.name,

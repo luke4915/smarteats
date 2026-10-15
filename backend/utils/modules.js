@@ -12,6 +12,7 @@ export const MODULES = {
   qr_menu: { label: 'Menu pubblico con QR', types: ['street_food'] },
   tables: { label: 'Sala e tavoli', types: ['restaurant'] },
   bookings: { label: 'Prenotazioni', types: ['restaurant'] },
+  takeaway: { label: 'Asporto', types: ['restaurant', 'street_food'] },
 };
 
 // Il tipo di attività propone i moduli di partenza; poi il master può accendere o spegnere quelli che esistono per il tipo.

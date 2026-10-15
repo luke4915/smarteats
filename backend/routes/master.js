@@ -10,6 +10,7 @@ import { SIGN_OPTIONS } from '../utils/jwtConfig.js';
 import { hashPassword } from '../utils/password.js';
 import { validate } from '../middleware/validate.js';
 import { idParamsSchema } from '../schemas/common.js';
+import { feedbackStatusSchema } from '../schemas/feedbackSchema.js';
 import { masterLoginSchema, createTenantSchema, extendLicenseSchema, tenantActiveSchema, deleteTenantSchema, receiptCustomizationSchema, tenantUserParamsSchema, tenantModulesSchema } from '../schemas/masterSchema.js';
 import { createUserSchema, resetPasswordSchema, updateUserSchema } from '../schemas/authSchema.js';
 import { catalog, normalizeModules, firstModuleNotAllowed, BUSINESS_TYPES } from '../utils/modules.js';
@@ -161,6 +162,32 @@ router.patch('/tenants/:id/active', authenticateMaster, validate({ params: idPar
   }
 });
 
+// FEEDBACK — i suggerimenti e le segnalazioni lasciati dagli utenti dei locali (più recenti per primi).
+// La lettura trasversale passa dalla policy `master_read`; la modifica dello stato dal contesto del locale.
+router.get('/feedback', authenticateMaster, async (_req, res) => {
+  try {
+    const { rows } = await masterPool.query(
+      `SELECT f.id, f.tenant_id, t.name AS tenant_name, f.username, f.module, f.message, f.status, f.created_at
+       FROM app_feedback f JOIN tenants t ON t.id = f.tenant_id ORDER BY f.created_at DESC LIMIT 200`);
+    res.json(rows);
+  } catch (err) {
+    logger.error({ err }, 'Errore GET /api/master/feedback');
+    res.status(500).json({ error: 'Errore caricamento feedback' });
+  }
+});
+
+router.patch('/feedback/:id', authenticateMaster, validate({ params: idParamsSchema, body: feedbackStatusSchema }), async (req, res) => {
+  try {
+    const { rows } = await masterPool.query('SELECT tenant_id FROM app_feedback WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Feedback non trovato' });
+    await withTenantClient(rows[0].tenant_id, (db) => db.query('UPDATE app_feedback SET status = $2 WHERE id = $1', [req.params.id, req.body.status]), masterPool);
+    res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, 'Errore PATCH /api/master/feedback/:id');
+    res.status(500).json({ error: 'Errore aggiornamento feedback' });
+  }
+});
+
 // PERSONALIZZAZIONE SCONTRINI — testi e immagini delle copie di un tenant (solo master).
 // Le tabelle del tenant si toccano solo con la sua connessione scoped (withTenantClient), mai con masterPool.query.
 // `masterPool` è il pool del ruolo master (vedi db.js e migrazione 025), non quello applicativo.
@@ -288,7 +315,7 @@ router.post('/tenants/:id/users/:userId/reset-password', authenticateMaster, val
 // Richiede conferma esplicita (slug ripetuto) lato client prima di chiamarla.
 // Tutto in un'unica transazione sulla connessione scoped al tenant: o sparisce
 // tutto o non sparisce niente. L'ordine rispetta le foreign key (audit_logs → users).
-const TENANT_SCOPED_TABLES = ['reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
+const TENANT_SCOPED_TABLES = ['app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
 router.delete('/tenants/:id', authenticateMaster, validate({ params: idParamsSchema, body: deleteTenantSchema }), async (req, res) => {
   const { id } = req.params;
   try {
