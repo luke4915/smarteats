@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import jwt from 'jsonwebtoken';
 import { startServer, createTenant, deleteTenants, closePools, apiClient, adminDb } from './helpers.js';
 
+// In CI non c'è un .env: il segreto del Master di prova si imposta qui (come negli altri test)
+process.env.MASTER_JWT_SECRET ||= 'segreto-master-di-prova-lungo-almeno-32-caratteri';
 describe('feedback', () => {
   let server, t, other, admin, otherApi, master;
   const masterCookie = () => ({ cookie: `master_token=${jwt.sign({ master: true }, process.env.MASTER_JWT_SECRET)}` });
