@@ -74,23 +74,50 @@ export function whatsappLink(phone, text) {
 export const mailLink = (email, subject, text) => (email ? `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}` : null);
 export const telLink = (phone) => (String(phone ?? '').trim() ? `tel:${String(phone).replace(/[^\d+]/g, '')}` : null);
 
-// Il tavolo (o i tavoli) migliori per un gruppo: meno posti sprecati possibile, meno tavoli possibile, nella stessa sala.
-// `candidates` = [{ id, seats, roomId }] già liberi per quel turno. Un solo tavolo che basta vince sempre su due
-// tavoli uniti; a parità di posti sprecati si preferisce la sala `preferRoomId`, poi l'ordine dei tavoli. Si uniscono
-// al massimo tre tavoli, tutti della stessa sala. Ritorna { ids, seats, waste } oppure null se nulla basta.
+// ─── Tavoli da unire: vicini, non solo «a sufficienza» ─────────────────────────────────────────────────────────────
+// Due tavoli si possono unire se, sulla pianta, il vuoto tra i loro bordi è al massimo di MAX_GAP celle (in
+// orizzontale più in verticale). Un insieme è unibile se è «connesso»: ogni tavolo è vicino ad almeno un altro e,
+// seguendo i vicini, si arriva da uno qualsiasi a tutti. Un tavolo non piazzato sulla pianta non si unisce a nessuno.
+export const MAX_GAP = 2;
+
+const placed = (t) => [t.x, t.y, t.w, t.h].every(v => Number.isFinite(v));
+export function gapBetween(a, b) {
+  if (!placed(a) || !placed(b)) return Infinity;
+  const dx = Math.max(0, Math.max(a.x, b.x) - Math.min(a.x + a.w, b.x + b.w));
+  const dy = Math.max(0, Math.max(a.y, b.y) - Math.min(a.y + a.h, b.y + b.h));
+  return dx + dy;
+}
+
+// `tables` con x, y, w, h (in celle). Un solo tavolo è sempre «connesso».
+export function tablesConnected(tables, maxGap = MAX_GAP) {
+  if (tables.length <= 1) return true;
+  const seen = new Set([0]);
+  const queue = [0];
+  while (queue.length) {
+    const i = queue.shift();
+    tables.forEach((t, j) => { if (!seen.has(j) && gapBetween(tables[i], t) <= maxGap) { seen.add(j); queue.push(j); } });
+  }
+  return seen.size === tables.length;
+}
+
+// Il tavolo (o i tavoli) migliori per un gruppo: pochi tavoli, vicini fra loro, meno posti sprecati possibile, nella
+// stessa sala. `candidates` = [{ id, seats, roomId, x, y, w, h }] già liberi per quel turno. Un solo tavolo che basta
+// vince sempre su due uniti; fra più tavoli contano nell'ordine: quanti sono, i posti sprecati, la sala indicata
+// (`preferRoomId`) e la distanza complessiva. Si uniscono al massimo tre tavoli, tutti vicini. Ritorna
+// { ids, seats, waste } oppure null se nulla basta (allora si sceglie a mano).
 export function suggestTables(party, candidates, { preferRoomId = null, maxTables = 3 } = {}) {
-  const usable = candidates.filter(c => c.seats > 0);
   let best = null;
   const consider = (combo) => {
     const seats = combo.reduce((n, c) => n + c.seats, 0);
-    if (seats < party) return;
-    // una combinazione con un tavolo di troppo (basta anche senza) non è mai la migliore: la scarta il confronto sui posti
-    const candidate = { combo, seats, waste: seats - party, count: combo.length, room: combo[0].roomId === preferRoomId ? 0 : 1 };
-    if (!best || candidate.count < best.count || (candidate.count === best.count && (candidate.waste < best.waste
-      || (candidate.waste === best.waste && candidate.room < best.room)))) best = candidate;
+    if (seats < party || !tablesConnected(combo)) return;
+    let spread = 0;
+    for (let i = 0; i < combo.length; i++) for (let j = i + 1; j < combo.length; j++) spread += gapBetween(combo[i], combo[j]);
+    const candidate = { combo, seats, waste: seats - party, count: combo.length, room: combo[0].roomId === preferRoomId ? 0 : 1, spread };
+    const keys = ['count', 'waste', 'room', 'spread'];
+    if (!best || keys.some((k, n) => candidate[k] !== best[k] && keys.slice(0, n).every(p => candidate[p] === best[p]) && candidate[k] < best[k])) best = candidate;
   };
   const byRoom = new Map();
-  for (const c of usable) byRoom.set(c.roomId, [...(byRoom.get(c.roomId) ?? []), c]);
+  for (const c of candidates.filter(c => c.seats > 0)) byRoom.set(c.roomId, [...(byRoom.get(c.roomId) ?? []), c]);
   for (const list of byRoom.values()) {
     const n = list.length;
     for (let i = 0; i < n; i++) {

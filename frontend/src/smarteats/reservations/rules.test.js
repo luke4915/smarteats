@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { todayLocal, addDays, formatDay, agendaGroups, tableTakenBy, suggestTables, nextByTable, whatsappLink, mailLink, telLink, isActive } from './rules.js';
+import { todayLocal, addDays, formatDay, agendaGroups, tableTakenBy, suggestTables, gapBetween, tablesConnected, nextByTable, whatsappLink, mailLink, telLink, isActive } from './rules.js';
 
 const res = (id, status, start, extra = {}) => ({ id, status, date: '2026-10-23', start_time: start, duration_minutes: 90, table_ids: [], ...extra });
 
@@ -50,24 +50,39 @@ test('collegamenti per il messaggio', () => {
   assert.equal(mailLink('', 's', 't'), null);
 });
 
+const at = (id, seats, x, y, extra = {}) => ({ id, seats, roomId: 1, x, y, w: 2, h: 2, ...extra });
+
 test('tavolo consigliato: il più piccolo che basta (meno posti sprecati)', () => {
-  const free = [{ id: 1, seats: 2, roomId: 1 }, { id: 2, seats: 6, roomId: 1 }, { id: 3, seats: 4, roomId: 1 }, { id: 4, seats: 5, roomId: 1 }];
+  const free = [at(1, 2, 0, 0), at(2, 6, 4, 0), at(3, 4, 8, 0), at(4, 5, 12, 0)];
   assert.deepEqual(suggestTables(4, free), { ids: [3], seats: 4, waste: 0 });
   assert.deepEqual(suggestTables(3, free), { ids: [3], seats: 4, waste: 1 }, 'tre persone: il da 4, non il da 6');
   assert.deepEqual(suggestTables(1, free), { ids: [1], seats: 2, waste: 1 });
 });
 
-test('tavolo consigliato: se nessuno basta da solo si uniscono i meno possibili, nella stessa sala', () => {
-  const free = [{ id: 1, seats: 4, roomId: 1 }, { id: 2, seats: 4, roomId: 1 }, { id: 3, seats: 2, roomId: 1 }, { id: 4, seats: 6, roomId: 2 }];
+test('tavoli vicini: si uniscono solo se sono a pochi passi, non agli antipodi della sala', () => {
+  // T1 e T4 hanno i posti giusti ma sono in capi opposti della sala; T1 e T2 sono affiancati
+  const free = [at(1, 4, 0, 0), at(2, 4, 3, 0), at(3, 4, 20, 0), at(4, 4, 20, 8)];
   assert.deepEqual(suggestTables(8, free), { ids: [1, 2], seats: 8, waste: 0 });
-  assert.deepEqual(suggestTables(7, free), { ids: [1, 2], seats: 8, waste: 1 });
-  assert.deepEqual(suggestTables(9, free), { ids: [1, 2, 3], seats: 10, waste: 1 }, 'tre tavoli, mai di sale diverse');
-  assert.equal(suggestTables(11, free), null, 'oltre i tre tavoli della stessa sala non si suggerisce nulla');
-  assert.equal(suggestTables(2, []), null);
+  // senza una coppia vicina non si suggerisce nulla (si sceglie a mano)
+  assert.equal(suggestTables(8, [at(1, 4, 0, 0), at(3, 4, 20, 0)]), null);
+  // tra due coppie vicine vince quella con meno posti sprecati
+  assert.deepEqual(suggestTables(7, [at(1, 4, 0, 0), at(2, 4, 3, 0), at(3, 6, 10, 0), at(4, 4, 13, 0)]), { ids: [1, 2], seats: 8, waste: 1 });
 });
 
-test('tavolo consigliato: a parità di sprechi vince la sala indicata', () => {
-  const free = [{ id: 1, seats: 4, roomId: 1 }, { id: 2, seats: 4, roomId: 2 }];
+test('tavoli vicini: gap, connessione e tavoli non piazzati', () => {
+  assert.equal(gapBetween({ x: 0, y: 0, w: 2, h: 2 }, { x: 2, y: 0, w: 2, h: 2 }), 0, 'affiancati');
+  assert.equal(gapBetween({ x: 0, y: 0, w: 2, h: 2 }, { x: 4, y: 3, w: 2, h: 2 }), 3);
+  assert.equal(gapBetween({ x: null, y: null, w: null, h: null }, { x: 0, y: 0, w: 2, h: 2 }), Infinity);
+  const row = [at(1, 4, 0, 0), at(2, 4, 3, 0), at(3, 4, 6, 0)];
+  assert.equal(tablesConnected(row), true, 'a catena: 1-2 e 2-3 sono vicini');
+  assert.equal(tablesConnected([row[0], row[2]]), false, 'il primo e il terzo da soli sono troppo lontani');
+  assert.equal(tablesConnected([row[0]]), true);
+  assert.equal(suggestTables(4, [at(1, 4, null, null, { w: null, h: null })]).ids[0], 1, 'un tavolo non piazzato va bene da solo');
+  assert.equal(suggestTables(8, [at(1, 4, null, null, { w: null, h: null }), at(2, 4, 0, 0)]), null, 'ma non si unisce');
+});
+
+test('tavolo consigliato: a parità di tutto vince la sala indicata', () => {
+  const free = [at(1, 4, 0, 0), { ...at(2, 4, 0, 0), roomId: 2 }];
   assert.deepEqual(suggestTables(4, free, { preferRoomId: 2 }).ids, [2]);
   assert.deepEqual(suggestTables(4, free).ids, [1]);
 });

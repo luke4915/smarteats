@@ -6,7 +6,7 @@ import FloorCanvas from '../floorplan/FloorCanvas';
 import { isPlaced } from '../floorplan/geometry';
 import PanelFrame from '../floor/PanelFrame';
 import { btnPrimary, segment, segmentBox } from '../floor/ui';
-import { tableTakenBy, suggestTables } from './rules';
+import { tableTakenBy, suggestTables, tablesConnected } from './rules';
 
 // Assegna uno o più tavoli a una prenotazione, sulla pianta della sala. Ogni tavolo mostra i suoi posti. Quelli già presi
 // da un'altra prenotazione con orario sovrapposto sono bloccati e dicono da chi. Se la prenotazione non ha ancora
@@ -24,13 +24,15 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
   const takenBy = (tableId) => tableTakenBy(tableId, reservation, all);
   // Il consigliato: tra i tavoli liberi per quel turno, quello che spreca meno posti (o i pochi da unire)
   const suggestion = useMemo(
-    () => suggestTables(party, everyTable.filter(t => !tableTakenBy(t.id, reservation, all)).map(t => ({ id: t.id, seats: t.seats, roomId: t.roomId })), { preferRoomId: roomId }),
+    () => suggestTables(party, everyTable.filter(t => !tableTakenBy(t.id, reservation, all)).map(t => ({ id: t.id, seats: t.seats, roomId: t.roomId, x: t.x, y: t.y, w: t.w, h: t.h })), { preferRoomId: roomId }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [everyTable, party, reservation, all]);
   const [selected, setSelected] = useState(() => (reservation.table_ids.length ? reservation.table_ids : suggestion?.ids ?? []));
   const [auto, setAuto] = useState(() => reservation.table_ids.length === 0 && !!suggestion);
   const seats = selected.reduce((s, id) => s + (everyTable.find(t => t.id === id)?.seats ?? 0), 0);
   const enough = seats >= party;
+  const chosen = selected.map(id => everyTable.find(t => t.id === id)).filter(Boolean);
+  const together = chosen.length < 2 || chosen.every(t => t.roomId === chosen[0].roomId) && tablesConnected(chosen);
   const useSuggestion = () => { if (suggestion) { setSelected(suggestion.ids); setAuto(true); setRoomId(everyTable.find(t => t.id === suggestion.ids[0])?.roomId ?? roomId); } };
 
   const toggle = (table) => {
@@ -71,8 +73,8 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
   const crop = useMemo(() => {
     if (!room || !placed.length) return null;
     const items = [...placed, ...(room.elements ?? [])];
-    const x0 = Math.min(...items.map(i => i.x)), y0 = Math.min(...items.map(i => i.y));
-    const x1 = Math.max(...items.map(i => i.x + i.w)), y1 = Math.max(...items.map(i => i.y + i.h));
+    const x0 = Math.max(0, Math.min(...items.map(i => i.x)) - 1), y0 = Math.max(0, Math.min(...items.map(i => i.y)) - 1);
+    const x1 = Math.min(room.grid_w, Math.max(...items.map(i => i.x + i.w)) + 1), y1 = Math.min(room.grid_h, Math.max(...items.map(i => i.y + i.h)) + 1);
     const move = (i) => ({ ...i, x: i.x - x0, y: i.y - y0 });
     return { w: x1 - x0, h: y1 - y0, tables: placed.map(move), elements: (room.elements ?? []).map(move) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,6 +93,7 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
               <Sparkles size={13} /> Usa il consigliato ({suggestion.ids.map(id => everyTable.find(t => t.id === id)?.name).join(' + ')} · {suggestion.seats} posti)
             </button>
           )}
+          {!together && <p className="text-sm text-amber-500" role="status">I tavoli scelti sono lontani tra loro: difficile servirli come un gruppo.</p>}
           <p className={`text-sm ${selected.length && !enough ? 'text-amber-500' : 'text-[var(--text-muted)]'}`} role="status">
             {selected.length === 0 ? 'Tocca i tavoli da assegnare'
               : !enough ? `${seats} ${seats === 1 ? 'posto' : 'posti'} per ${party} persone: ne servono ancora ${party - seats}`
@@ -106,7 +109,7 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
       )}
       {!room && <p className="text-sm text-[var(--text-muted)] p-2">Nessuna sala: creala in Impostazioni.</p>}
       {room && crop && (
-        <FloorCanvas minCell={28} gridW={crop.w} gridH={crop.h} tables={crop.tables} elements={crop.elements}
+        <FloorCanvas minCell={24} maxCell={34} gridW={crop.w} gridH={crop.h} tables={crop.tables} elements={crop.elements}
           renderTable={(table, style, cell) => tableButton(table, style, cell)} />
       )}
       {loose.length > 0 && <div className="grid grid-cols-3 gap-2 pt-2">{loose.map(t => tableButton(t))}</div>}

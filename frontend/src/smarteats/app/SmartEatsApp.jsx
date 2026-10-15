@@ -1,0 +1,88 @@
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+
+import { useAuth } from '../../context/useAuth';
+import { useToast } from '../../context/useToast';
+import { visibleViews, canViewSmartEats, smartEatsHome } from './views';
+import { useLiveUpdates } from '../../hooks/useLiveUpdates';
+import { useService } from './useService';
+import AppHeader from './AppHeader';
+import { SideNav, BottomNav } from './SideNav';
+import NoViewAvailable from '../../components/layout/NoViewAvailable';
+import FloorPage from '../floor/FloorPage';
+import ReservationsPage from '../reservations/ReservationsPage';
+import CatalogPage from '../catalog/CatalogPage';
+import SettingsPage from '../settings/SettingsPage';
+import { useInbox } from '../notifications/useInbox';
+
+const KitchenPage = lazy(() => import('../kitchen/KitchenPage'));
+const StatsPage = lazy(() => import('../stats/StatsPage'));
+
+// Pagina a tutta larghezza (la Sala e le prenotazioni gestiscono da sé le loro due colonne)
+const Page = ({ children }) => (
+  <div className="flex-1 overflow-y-auto no-scrollbar bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-6 min-w-0">{children}</div>
+);
+
+// App dei ristoranti e delle pizzerie (SmartEats): una shell e una dashboard proprie, separate da quelle della cassa
+// delle sagre. Qui sta solo il guscio: testata, navigazione e route; ogni pagina vive nella cartella del suo modulo.
+const SmartEatsApp = () => {
+  const { user, logout, refreshSession } = useAuth();
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+  const { service, start, closingInfo, end, onEvent } = useService();
+  const [event, setEvent] = useState(null);
+  const [theme, setTheme] = useState('dark');
+
+  useEffect(() => { document.documentElement.classList.toggle('dark', theme === 'dark'); }, [theme]);
+
+  const handleMessage = useCallback((msg) => { onEvent(msg); setEvent(msg); }, [onEvent]);
+  useLiveUpdates(handleMessage, { enabled: !!user, onUnauthorized: refreshSession });
+
+  // Notifiche per il personale di sala: richieste di prenotazione e annulli da decidere
+  const hasInbox = !!user.modules?.includes('bookings') && ['admin', 'manager', 'cashier', 'waiter'].includes(user.role);
+  const inbox = useInbox({ enabled: hasInbox, event });
+  // Con la scheda in secondo piano il numero si vede comunque nel titolo («(2) SmartEats»)
+  useEffect(() => {
+    const base = document.title.replace(/^\(\d+\)\s*/, '');
+    document.title = inbox.items.length ? `(${inbox.items.length}) ${base}` : base;
+    return () => { document.title = base; };
+  }, [inbox.items.length]);
+
+  const views = visibleViews(user.role, user.modules);
+  const home = smartEatsHome(user.role, user.modules);
+  if (!home) return <NoViewAvailable onLogout={logout} />;
+
+  const guard = (id, element) => (canViewSmartEats(user.role, id, user.modules) ? element : <Navigate to={`/${home}`} replace />);
+  const doLogout = async () => { try { await logout(); showToast('Sessione chiusa', 'info'); navigate('/login'); } catch (err) { console.error(err); } };
+  const canManageService = ['admin', 'manager', 'cashier'].includes(user.role);
+
+  return (
+    <div className="se-app flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
+      <SideNav views={views} />
+
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <AppHeader user={user} service={service} canManageService={canManageService} serviceActions={{ start, closingInfo, end }}
+          inbox={hasInbox ? inbox : null} onOpenNotification={(i) => navigate('/reservations', { state: { reservationId: i.id, date: i.date } })}
+          theme={theme} onToggleTheme={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))} onLogout={doLogout} />
+
+        <div className="flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
+          <Suspense fallback={<Page><p className="text-[var(--text-muted)]">Caricamento…</p></Page>}>
+            <Routes>
+              <Route path="/floor" element={guard('floor', <FloorPage user={user} service={service} event={event} />)} />
+              <Route path="/reservations" element={guard('reservations', <ReservationsPage event={event} />)} />
+              <Route path="/kitchen" element={guard('kitchen', <Page><KitchenPage event={event} /></Page>)} />
+              <Route path="/catalog" element={guard('catalog', <Page><CatalogPage /></Page>)} />
+              <Route path="/stats" element={guard('stats', <Page><StatsPage /></Page>)} />
+              <Route path="/settings" element={guard('settings', <Page><SettingsPage user={user} /></Page>)} />
+              <Route path="*" element={<Navigate to={`/${home}`} replace />} />
+            </Routes>
+          </Suspense>
+        </div>
+
+        <BottomNav views={views} />
+      </main>
+    </div>
+  );
+};
+
+export default SmartEatsApp;

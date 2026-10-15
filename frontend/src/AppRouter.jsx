@@ -1,9 +1,9 @@
 import { lazy, Suspense } from 'react';
 import App from './App';
 import { useAuth } from './context/useAuth';
-import { usesSmartEats } from './smarteats/views';
+import { usesSmartEats } from './smarteats/app/views';
 
-const SmartEatsApp = lazy(() => import('./smarteats/SmartEatsApp'));
+const SmartEatsApp = lazy(() => import('./smarteats/app/SmartEatsApp'));
 
 // Pagine pubbliche e master: valgono per tutti i locali e le gestisce App.
 const SHARED_PATHS = ['/kds', '/menu', '/master'];

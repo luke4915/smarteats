@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { GripVertical, Trash2, Plus, CornerDownRight } from 'lucide-react';
-import { fetchWithAuth } from '../utils/apiClient';
-import { useToast } from '../context/useToast';
-import SortableList from '../components/shared/SortableList';
-import { btn, iconBtn, input } from './floor/ui';
+import { fetchWithAuth } from '../../utils/apiClient';
+import { useToast } from '../../context/useToast';
+import SortableList from '../../components/shared/SortableList';
+import { btn, iconBtn, input } from '../floor/ui';
 
 // Le portate del locale nell'ordine in cui di solito escono. Si riordinano trascinando. Una portata può uscire
 // «insieme alla precedente» (secondi e contorni): in comanda ha già lo stesso numero d'uscita, e il cameriere può

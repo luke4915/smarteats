@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
-import { fetchWithAuth } from '../utils/apiClient';
-import { useToast } from '../context/useToast';
-import { useIsMobile } from '../hooks/useBreakpoint';
-import FloorView from './floor/FloorView';
-import SidePanel from './floor/SidePanel';
-import OrderMenu from './floor/OrderMenu';
-import { useProducts } from './floor/useProducts';
-import { useCourses } from './floor/useCourses';
-import { useModifiers } from './floor/useModifiers';
-import ModifierPicker from './floor/ModifierPicker';
-import { courseOfProduct } from './floor/courses';
-import { nextByTable, todayLocal } from './reservations/rules';
-import { addToCart, cartTotal, formatEuro } from './floor/checkMath';
-import { btnPrimary } from './floor/ui';
+import { fetchWithAuth } from '../../utils/apiClient';
+import { useToast } from '../../context/useToast';
+import { useIsMobile } from '../../hooks/useBreakpoint';
+import FloorView from './FloorView';
+import SidePanel from './SidePanel';
+import OrderMenu from './OrderMenu';
+import { useProducts } from './useProducts';
+import { useCourses } from './useCourses';
+import { useModifiers } from './useModifiers';
+import ModifierPicker from './ModifierPicker';
+import { courseOfProduct } from './courses';
+import { nextByTable, todayLocal } from '../reservations/rules';
+import { addToCart, cartTotal, formatEuro } from './checkMath';
+import { btnPrimary } from './ui';
 
 const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
 

@@ -12,7 +12,7 @@ const MIN_CELL = 14;
 const MAX_CELL = 56;
 const MIN_FIT_CELL = 8;
 
-const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderElement, showGrid = false, fit = false, minCell = MIN_CELL, onBackgroundPointerDown, onBackgroundPointerMove, onBackgroundPointerUp, canvasRef }) => {
+const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderElement, showGrid = false, fit = false, minCell = MIN_CELL, maxCell = MAX_CELL, onBackgroundPointerDown, onBackgroundPointerMove, onBackgroundPointerUp, canvasRef }) => {
   const box = useRef(null);
   const [cell, setCell] = useState(32);
 
@@ -20,13 +20,13 @@ const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderE
     const el = box.current;
     const measure = () => {
       if (fit) setCell(Math.max(MIN_FIT_CELL, Math.floor(Math.min(el.clientWidth / gridW, el.clientHeight / gridH))));
-      else setCell(clamp(Math.floor(el.clientWidth / gridW), minCell, MAX_CELL));
+      else setCell(clamp(Math.floor(el.clientWidth / gridW), minCell, maxCell));
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [gridW, gridH, fit, minCell]);
+  }, [gridW, gridH, fit, minCell, maxCell]);
 
   return (
     <div ref={box} className={fit ? 'w-full h-full flex items-center justify-center overflow-hidden' : 'w-full overflow-x-auto no-scrollbar'}>

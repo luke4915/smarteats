@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Power } from 'lucide-react';
-import { useToast } from '../context/useToast';
-import EndSessionModal from '../components/shared/EndSessionModal';
-import CashCountModal from '../components/shared/CashCountModal';
-import { termsFor } from '../utils/terms';
-import { btn, btnPrimary, input } from './floor/ui';
+import { useToast } from '../../context/useToast';
+import EndSessionModal from '../../components/shared/EndSessionModal';
+import CashCountModal from '../../components/shared/CashCountModal';
+import { termsFor } from '../../utils/terms';
+import { btn, btnPrimary, input } from '../floor/ui';
 
 // Proposta di nome in base all'ora: pranzo fino alle 16, poi cena.
 const suggestedName = () => {

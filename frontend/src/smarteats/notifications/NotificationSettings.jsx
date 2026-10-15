@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
-import { isNotifySoundOn, setNotifySound } from '../utils/notifySettings';
-import { playChime } from '../utils/chime';
+import { isNotifySoundOn, setNotifySound } from '../../utils/notifySettings';
+import { playChime } from '../../utils/chime';
 
 // Suono delle notifiche: vale per questo dispositivo (ogni telefono o tablet sceglie per sé).
 const NotificationSettings = () => {

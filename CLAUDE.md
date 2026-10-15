@@ -66,9 +66,11 @@ frontend/           React 19 + Vite 7 + Tailwind v4 + react-router-dom 7 + PWA (
   src/hooks/        useCart, useProducts, useWorkSession (serata), useSound, useLiveUpdates (WebSocket), useBreakpoint
   src/pages/        pagine pubbliche/di livello alto (Login, Menu, KDS, Master)
   src/components/   per dominio: cart/, kitchen/, products/, setup/, shared/, layout/
-  src/smarteats/    app dei ristoranti (SmartEatsApp, FloorPage, views.js): shell e dashboard proprie, scelte da AppRouter.jsx dal tipo del locale;
-                    floor/ = la Sala: pannello unico a destra come la cassa (SidePanel: apri tavolo, CheckView, PayView, AdjustView, DraftOrder; niente modali; anteprime in checkMath.js, lo stesso calcolo del server); floorplan/ = pianta (editor e disegno);
-                    kitchen/ = monitor di cucina; reservations/ = agenda delle prenotazioni; stats/ = statistiche; le pagine pubbliche dei clienti stanno in pages/ (BookingPage su `/book`)
+  src/smarteats/    app dei ristoranti e delle pizzerie, **una cartella per modulo**: app/ (guscio: SmartEatsApp, AppHeader, SideNav, ServiceControl, useService, views.js),
+                    floor/ (la Sala: pannello unico a destra come la cassa — SidePanel, CheckView, PayView, AdjustView, DraftOrder; niente modali; anteprime in checkMath.js, lo stesso calcolo del server),
+                    floorplan/ (pianta: editor e disegno), kitchen/ (monitor di cucina), reservations/ (agenda e impostazioni delle prenotazioni), notifications/ (campanella, suono),
+                    stats/, catalog/ (carta e opzioni), settings/ (coperto, portate); le pagine pubbliche dei clienti stanno in pages/ (BookingPage su `/book`).
+                    Una pagina o un componente nuovo va nella cartella del suo modulo, non in app/; app/ non contiene logica di dominio.
   src/context/      AuthProvider + useAuth (login, refresh), ToastProvider + useToast
   src/config/api.js API_URL / WS_URL derivati dal sottodominio corrente
   src/offline/      db Dexie, coda ordini offline, hook useOfflineSync, catalogo offline, ultimi valori noti, dispositivo e numerazione (device.js)

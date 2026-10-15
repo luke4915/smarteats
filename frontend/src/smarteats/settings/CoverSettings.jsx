@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { fetchWithAuth } from '../utils/apiClient';
-import { useToast } from '../context/useToast';
+import { fetchWithAuth } from '../../utils/apiClient';
+import { useToast } from '../../context/useToast';
 
 // Coperto per persona (euro). Si fissa su ogni conto all'apertura: cambiarlo qui non tocca i conti già aperti.
 const CoverSettings = () => {

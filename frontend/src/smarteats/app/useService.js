@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchWithAuth } from '../utils/apiClient';
+import { fetchWithAuth } from '../../utils/apiClient';
 
 // Il "servizio" (pranzo, cena…) è la sessione di lavoro del locale: serve aperto per avere conti e comande.
 // Lato server è la stessa `sessions` delle sagre; il passo 2-10 lo rifinirà per i ristoranti.
