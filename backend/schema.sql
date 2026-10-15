@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WHuTkIznnBzGbY2TUh5kCDsDMm5vwD3d5cEKBVvWvMUWafKdcmT6ab3qOd1zsKp
+\restrict taLgC5TOGTECYE0Ttf08VM5mVKxmeiwbBifHa55clUaKRyeN45D84Xgk8DFnGTg
 
 -- Dumped from database version 17.10 (Homebrew)
 -- Dumped by pg_dump version 17.10 (Homebrew)
@@ -1188,7 +1188,7 @@ CREATE TABLE public.tenants (
     active boolean DEFAULT true NOT NULL,
     business_type text DEFAULT 'street_food'::text NOT NULL,
     modules text[] DEFAULT ARRAY['kds'::text, 'stats'::text, 'qr_menu'::text] NOT NULL,
-    CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['street_food'::text, 'restaurant'::text])))
+    CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['street_food'::text, 'restaurant'::text, 'takeaway_shop'::text])))
 );
 
 
@@ -3413,5 +3413,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WHuTkIznnBzGbY2TUh5kCDsDMm5vwD3d5cEKBVvWvMUWafKdcmT6ab3qOd1zsKp
+\unrestrict taLgC5TOGTECYE0Ttf08VM5mVKxmeiwbBifHa55clUaKRyeN45D84Xgk8DFnGTg
 

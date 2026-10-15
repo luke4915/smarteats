@@ -12,20 +12,22 @@ import ModifierSettings from './ModifierSettings';
 const CatalogPage = () => {
   const { showToast } = useToast();
   const { user } = useAuth();
+  const hasTables = !!user.modules?.includes('tables');
   const [products, setProducts] = useState(null);
   const [courses, setCourses] = useState(null);
   const modifiers = useModifiers();
   useEffect(() => {
-    Promise.all([fetchWithAuth('/products'), fetchWithAuth('/courses')])
-      .then(([list, courseList]) => { setProducts(list.map(p => ({ ...p, price: parseFloat(p.price) }))); setCourses(courseList.filter(c => c.active)); })
+    // Le portate e le opzioni esistono solo con il modulo dei tavoli: un locale di solo asporto ha la carta semplice
+    Promise.all([fetchWithAuth('/products'), hasTables ? fetchWithAuth('/courses') : []])
+      .then(([list, courseList]) => { setProducts(list.map(p => ({ ...p, price: parseFloat(p.price) }))); setCourses(hasTables ? courseList.filter(c => c.active) : null); })
       .catch(err => showToast(err.message || 'Errore caricamento carta', 'error'));
-  }, [showToast]);
-  if (!products || !courses) return <p className="text-[var(--text-muted)]">Caricamento carta…</p>;
+  }, [showToast, hasTables]);
+  if (!products || (hasTables && !courses)) return <p className="text-[var(--text-muted)]">Caricamento carta…</p>;
   return (
     <PageBody>
-      <PageHeader title="Carta" subtitle="Piatti, prezzi, portate e opzioni." />
-      <ProductConfig hideHeader takeawayEnabled={!!user.modules?.includes('takeaway')} products={products} setProducts={setProducts} courses={courses} modifierGroups={modifiers.groups} onModifiersSaved={modifiers.reload} />
-      <ModifierSettings groups={modifiers.groups} onChanged={modifiers.reload} />
+      <PageHeader title="Carta" subtitle={hasTables ? 'Piatti, prezzi, portate e opzioni.' : 'Prodotti e prezzi.'} />
+      <ProductConfig hideHeader takeawayEnabled={!!user.modules?.includes('takeaway')} products={products} setProducts={setProducts} courses={courses} modifierGroups={hasTables ? modifiers.groups : null} onModifiersSaved={modifiers.reload} />
+      {hasTables && <ModifierSettings groups={modifiers.groups} onChanged={modifiers.reload} />}
     </PageBody>
   );
 };

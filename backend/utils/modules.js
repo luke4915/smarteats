@@ -5,20 +5,21 @@
 
 // Un locale è di un solo tipo, deciso alla creazione: street food (sagre, paninari, food truck) e ristorante sono due prodotti distinti (due app,
 // stesso backend). Ogni modulo dichiara per quali tipi esiste; un tipo non può accendere i moduli degli altri.
-const ALL_TYPES = ['street_food', 'restaurant'];
+const ALL_TYPES = ['street_food', 'restaurant', 'takeaway_shop'];
 export const MODULES = {
   kds: { label: 'Schermo cucina (KDS)', types: ALL_TYPES },
   stats: { label: 'Statistiche', types: ALL_TYPES },
   qr_menu: { label: 'Menu pubblico con QR', types: ['street_food'] },
   tables: { label: 'Sala e tavoli', types: ['restaurant'] },
   bookings: { label: 'Prenotazioni', types: ['restaurant'] },
-  takeaway: { label: 'Asporto', types: ['restaurant', 'street_food'] },
+  takeaway: { label: 'Asporto', types: ALL_TYPES },
 };
 
 // Il tipo di attività propone i moduli di partenza; poi il master può accendere o spegnere quelli che esistono per il tipo.
 export const BUSINESS_TYPES = {
   street_food: { label: 'Sagra, paninaro o food truck', modules: ['kds', 'stats', 'qr_menu'] },
   restaurant: { label: 'Ristorante o pizzeria', modules: ['kds', 'stats', 'tables'] },
+  takeaway_shop: { label: 'Solo asporto (pizzeria da taglio, forno, rosticceria)', modules: ['kds', 'stats', 'takeaway'] },
 };
 
 export const MODULE_IDS = Object.keys(MODULES);

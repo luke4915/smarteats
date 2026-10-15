@@ -220,6 +220,8 @@ imposta l'indirizzo `https://localhost:9443`.
 
 ## N. Asporto
 
+- [ ] Master → Nuovo locale → tipo «Solo asporto»: entrando vedi solo Asporto, Cucina, Carta, Statistiche e Impostazioni (niente Sala né Prenotazioni)?
+
 - [ ] Impostazioni → Asporto: scrivi gli orari (per esempio 18:30–22:00), la capienza per fascia (12), accendi gli ordini online. Il QR compare?
 - [ ] Nella Carta, un prodotto ha «Asporto: quanto impegna il forno»: la bibita a «Niente», la pizza a «Una porzione».
 - [ ] Dal telefono apri `/order`: scegli prodotti, giorno e fascia, invia. In «Asporto» e nella campanella compare con il suono?

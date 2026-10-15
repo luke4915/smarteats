@@ -26,13 +26,16 @@ test('senza elenco dei moduli (cache offline) non si nasconde nulla', () => {
 });
 
 test('la home è la prima pagina visibile', () => {
-  assert.equal(smartEatsHome('admin', ['kds']), 'floor');
+  assert.equal(smartEatsHome('admin', ['kds', 'tables']), 'floor');
+  assert.equal(smartEatsHome('admin', ['kds', 'takeaway']), 'takeaway', 'solo asporto: si parte dall\'asporto');
   assert.equal(smartEatsHome('kitchen', ['kds']), 'kitchen');
 });
 
-test('solo il tipo ristorante usa SmartEats', () => {
+test('ristoranti e solo asporto usano SmartEats; lo street food ha la sua cassa', () => {
   assert.equal(usesSmartEats({ businessType: 'restaurant' }), true);
+  assert.equal(usesSmartEats({ businessType: 'takeaway_shop' }), true, 'anche il solo asporto');
   assert.equal(usesSmartEats({ businessType: 'street_food' }), false);
+  assert.equal(usesSmartEats({ businessType: 'takeaway_shop' }), true, 'anche il solo asporto');
   assert.equal(usesSmartEats({ businessType: 'street_food' }), false);
   assert.equal(usesSmartEats(null), false);
 });

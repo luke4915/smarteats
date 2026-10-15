@@ -1,7 +1,7 @@
 // Pagine dell'app SmartEats (ristoranti e pizzerie): chi le vede dipende dal ruolo e dai moduli del locale.
 // Come in components/layout/viewRoles.js, vale per il menu e per le route; le autorizzazioni vere sono sul server.
 export const VIEWS = [
-  { id: 'floor', label: 'Sala', roles: ['admin', 'manager', 'cashier', 'waiter'] },
+  { id: 'floor', label: 'Sala', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'tables' },
   { id: 'reservations', label: 'Prenotazioni', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'bookings' },
   { id: 'takeaway', label: 'Asporto', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'takeaway' },
   { id: 'kitchen', label: 'Cucina', roles: ['admin', 'kitchen'], module: 'kds' },
@@ -19,5 +19,5 @@ export const canViewSmartEats = (role, viewId, modules) => visibleViews(role, mo
 // Prima pagina disponibile, o null se il ruolo non ne ha (es. cucina senza il modulo KDS).
 export const smartEatsHome = (role, modules) => visibleViews(role, modules)[0]?.id ?? null;
 
-// Solo i locali di tipo ristorante usano questa app; le sagre e i paninari usano quella della cassa.
-export const usesSmartEats = (user) => user?.businessType === 'restaurant';
+// Ristoranti e attività di solo asporto usano questa app (i moduli accesi decidono quali pagine vedono); le sagre e i paninari usano quella della cassa.
+export const usesSmartEats = (user) => ['restaurant', 'takeaway_shop'].includes(user?.businessType);

@@ -18,6 +18,8 @@ import { useInbox } from '../notifications/useInbox';
 
 const KitchenPage = lazy(() => import('../kitchen/KitchenPage'));
 const StatsPage = lazy(() => import('../stats/StatsPage'));
+// Senza tavoli (solo asporto) valgono le statistiche della cassa: incasso, prodotti, fasce orarie
+const CounterStats = lazy(() => import('../../components/shared/Statistics'));
 
 // Pagina a tutta larghezza (la Sala e le prenotazioni gestiscono da sé le loro due colonne)
 const Page = ({ children }) => (
@@ -83,7 +85,7 @@ const SmartEatsApp = () => {
               <Route path="/takeaway" element={guard('takeaway', <TakeawayPage event={event} />)} />
               <Route path="/kitchen" element={guard('kitchen', <Page><KitchenPage event={event} /></Page>)} />
               <Route path="/catalog" element={guard('catalog', <Page><CatalogPage /></Page>)} />
-              <Route path="/stats" element={guard('stats', <Page><StatsPage /></Page>)} />
+              <Route path="/stats" element={guard('stats', <Page>{user.modules?.includes('tables') ? <StatsPage /> : <CounterStats />}</Page>)} />
               <Route path="/settings" element={guard('settings', <Page><SettingsPage user={user} /></Page>)} />
               <Route path="*" element={<Navigate to={`/${home}`} replace />} />
             </Routes>

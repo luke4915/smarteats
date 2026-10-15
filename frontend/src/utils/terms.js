@@ -15,5 +15,5 @@ const TERMS = {
   },
 };
 
-export const termsFor = (businessType) => (businessType === 'restaurant' ? TERMS.service : TERMS.evening);
+export const termsFor = (businessType) => (['restaurant', 'takeaway_shop'].includes(businessType) ? TERMS.service : TERMS.evening);
 export const TERM_SETS = TERMS;

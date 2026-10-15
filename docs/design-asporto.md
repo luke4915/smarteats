@@ -8,7 +8,7 @@ Una pizzeria (o un ristorante, o una sagra) prende ordini da portare via: dal te
 su un foglietto. Qui diventano ordini veri: con un **orario di ritiro a fasce**, un **limite di pizze per fascia** (il forno
 ha una capacità), l'**approvazione** del locale, la coda in cucina ordinata per ritiro, la consegna con l'incasso.
 
-È un **modulo** (`takeaway`) che vale per ristoranti **e** sagre/street food: stessa pagina, stessi dati, stessa cucina.
+È un **modulo** (`takeaway`) che vale per tutti i tipi di locale: stessa pagina, stessi dati, stessa cucina. Chi fa **solo asporto** (pizzeria da taglio, forno, rosticceria) ha un tipo di locale suo, `takeaway_shop`: l'app SmartEats mostra solo Asporto, Cucina, Carta, Statistiche e Impostazioni, senza sala, tavoli né prenotazioni; la carta è semplice (niente portate né opzioni) e le statistiche sono quelle della cassa.
 
 ## 2. Come funziona
 

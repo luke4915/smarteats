@@ -74,8 +74,16 @@ for (const [name, price, category] of [['Panino con salsiccia', 5, 'Panini'], ['
   await addProduct(sagra, name, price, category);
 const sagraSeed = { host: `${sagra.slug}.standmanager.local`, admin: sagra.username, kitchen: await addUser(sagra, 'kitchen') };
 
+// ── Pizzeria di solo asporto: nessun tavolo, nessuna prenotazione ──
+const shop = await createTenant({ businessType: 'takeaway_shop' });
+for (const [name, price, category] of [['Margherita', 6, 'Pizze'], ['Diavola', 8, 'Pizze'], ['Acqua', 1.5, 'Bevande']])
+  await addProduct(shop, name, price, category);
+for (let weekday = 0; weekday < 7; weekday += 1)
+  await adminDb.query(`INSERT INTO takeaway_hours (weekday, open_time, close_time, tenant_id) VALUES ($1, '00:00', '23:45', $2)`, [weekday, shop.id]);
+const shopSeed = { host: `${shop.slug}.standmanager.local`, admin: shop.username, kitchen: await addUser(shop, 'kitchen') };
+
 fs.mkdirSync(path.dirname(seedFile), { recursive: true });
-fs.writeFileSync(seedFile, JSON.stringify({ port, password: PASSWORD, restaurant: ristoSeed, festival: sagraSeed }, null, 2));
+fs.writeFileSync(seedFile, JSON.stringify({ port, password: PASSWORD, restaurant: ristoSeed, festival: sagraSeed, shop: shopSeed }, null, 2));
 
 const hub = createWebSocketHub();
 const inner = createApp({ broadcast: hub.broadcast, rateLimit: false });
