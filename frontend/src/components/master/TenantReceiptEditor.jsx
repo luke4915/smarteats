@@ -37,9 +37,9 @@ const IMAGES = [
 const LEGAL = { key: 'receipt_legal_text', max: 2000 };
 const ALL_KEYS = [...SECTIONS.flatMap(s => s.fields.map(f => f.key)), ...IMAGES.map(i => i.key), LEGAL.key];
 
-const inputClass = 'w-full px-3 py-2.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm focus:ring-2 focus:ring-[var(--accent)] outline-none placeholder:text-[var(--text-muted)]/70';
-const labelClass = 'text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]';
-const ghostBtn = 'flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-main)] hover:bg-[var(--bg-card-2)] transition-colors cursor-pointer';
+const inputClass = 'w-full px-3 py-2.5 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm focus:ring-2 focus:ring-[var(--accent)] outline-none placeholder:text-[var(--text-muted)]/70';
+const labelClass = 'text-xs font-semibold text-[var(--text-muted)]';
+const ghostBtn = 'flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[var(--border)] text-xs font-semibold text-[var(--text-main)] hover:bg-[var(--bg-card-2)] transition-colors cursor-pointer';
 
 // Un valore vuoto e uno assente sono la stessa cosa: tornano al predefinito.
 const snapshotOf = (values) => JSON.stringify(ALL_KEYS.map(k => String(values?.[k] ?? '').trim() || null));
@@ -73,9 +73,9 @@ const Section = ({ icon, title, hint, children }) => {
   return (
     <section className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-5">
       <div className="flex items-start gap-3 mb-4">
-        <span className="p-2 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)]"><Icon size={16} /></span>
+        <span className="p-2 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)]"><Icon size={16} /></span>
         <div>
-          <h3 className="text-sm font-black text-[var(--text-main)]">{title}</h3>
+          <h3 className="text-sm font-semibold text-[var(--text-main)]">{title}</h3>
           <p className="text-xs text-[var(--text-muted)]">{hint}</p>
         </div>
       </div>
@@ -90,7 +90,7 @@ const TextField = ({ field, value, onChange }) => (
       <label htmlFor={field.key} className={labelClass}>{field.label}</label>
       {value && (
         <button type="button" onClick={() => onChange('')} title="Ripristina il predefinito"
-          className="flex items-center gap-1 text-[10px] font-bold text-[var(--text-muted)] hover:text-[var(--accent)]">
+          className="flex items-center gap-1 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--accent)]">
           <RotateCcw size={10} /> Predefinito
         </button>
       )}
@@ -172,10 +172,10 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
     <div className="fixed inset-0 z-50 bg-[var(--bg-main)] flex flex-col">
       <header className="shrink-0 border-b border-[var(--border)] bg-[var(--bg-card)]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
-          <span className="p-2 rounded-xl bg-[var(--accent)]/10 text-[var(--accent)] hidden sm:block"><Printer size={18} /></span>
+          <span className="p-2 rounded-lg bg-[var(--accent)]/10 text-[var(--accent)] hidden sm:block"><Printer size={18} /></span>
           <div className="min-w-0 flex-1">
             <p className={labelClass}>Personalizza scontrini</p>
-            <h2 className="text-base sm:text-lg font-black text-[var(--text-main)] truncate">
+            <h2 className="text-base sm:text-lg font-semibold text-[var(--text-main)] truncate">
               {tenant.name} <span className="text-sm font-normal text-[var(--text-muted)]">({tenant.slug})</span>
             </h2>
           </div>
@@ -183,12 +183,12 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
             {StatusIcon && <StatusIcon size={13} />} {status.label}
           </span>
           <button onClick={handleSave} disabled={!dirty || saving}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl font-black text-xs uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+            className="flex items-center gap-2 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all">
             <Save size={14} /> {saving ? 'Salvo…' : 'Salva'}
           </button>
-          <button onClick={requestClose} aria-label="Chiudi" className="p-2.5 rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]"><X size={16} /></button>
+          <button onClick={requestClose} aria-label="Chiudi" className="p-2.5 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]"><X size={16} /></button>
         </div>
-        {error && values && <p className="max-w-6xl mx-auto px-4 sm:px-6 pb-3 text-red-500 text-xs font-black">{error}</p>}
+        {error && values && <p className="max-w-6xl mx-auto px-4 sm:px-6 pb-3 text-red-500 text-xs font-semibold">{error}</p>}
       </header>
 
       <div className="flex-1 overflow-y-auto">
@@ -212,7 +212,7 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
               <Section icon={ImageIcon} title="Immagini" hint="Si convertono in bianco e nero, come le vedrà la stampante.">
                 <div className="grid gap-3 sm:grid-cols-2">
                   {IMAGES.map(({ key, label, hint, maxWidth }) => (
-                    <div key={key} className="p-3 rounded-xl border border-dashed border-[var(--border)] bg-[var(--bg-card-2)]">
+                    <div key={key} className="p-3 rounded-lg border border-dashed border-[var(--border)] bg-[var(--bg-card-2)]">
                       <p className={labelClass}>{label}</p>
                       <p className="text-[11px] text-[var(--text-muted)] mb-3">{hint}</p>
                       <div className="h-24 mb-3 rounded-lg bg-white border border-[var(--border)] flex items-center justify-center overflow-hidden">
@@ -227,10 +227,10 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
                         </label>
                         {values[key] && (
                           <>
-                            <button onClick={() => set(key, null)} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-500/30 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10">
+                            <button onClick={() => set(key, null)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-red-500/30 text-red-500 text-xs font-semibold hover:bg-red-500/10">
                               <Trash2 size={12} /> Togli
                             </button>
-                            <span className="ml-auto text-[10px] text-[var(--text-muted)]">{kb(values[key])} KB</span>
+                            <span className="ml-auto text-xs text-[var(--text-muted)]">{kb(values[key])} KB</span>
                           </>
                         )}
                       </div>
@@ -252,12 +252,12 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
             <aside className="lg:sticky lg:top-6">
               <div className="flex items-center justify-between mb-2">
                 <span className={labelClass}>Anteprima</span>
-                <span className="text-[10px] text-[var(--text-muted)]">Ordine di esempio</span>
+                <span className="text-xs text-[var(--text-muted)]">Ordine di esempio</span>
               </div>
               <div className="flex flex-wrap gap-1.5 mb-3" role="tablist">
                 {previews.map((p, i) => (
                   <button key={p.name} role="tab" aria-selected={i === activeCopy} onClick={() => setActiveCopy(i)}
-                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-colors ${i === activeCopy ? 'bg-[var(--accent)] text-white border-transparent' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${i === activeCopy ? 'bg-[var(--accent)] text-white border-transparent' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>
                     {p.name}
                   </button>
                 ))}
@@ -277,12 +277,12 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
       {confirmClose && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setConfirmClose(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative w-full max-w-sm bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-            <p className="font-black text-[var(--text-main)] mb-1 text-center">Uscire senza salvare?</p>
+          <div className="relative w-full max-w-sm bg-[var(--bg-card)] rounded-lg border border-[var(--border)] shadow-2xl p-6" onClick={e => e.stopPropagation()}>
+            <p className="font-semibold text-[var(--text-main)] mb-1 text-center">Uscire senza salvare?</p>
             <p className="text-xs text-[var(--text-muted)] mb-4 text-center">Le modifiche a testi e immagini andranno perse.</p>
             <div className="flex gap-3">
-              <button onClick={() => setConfirmClose(false)} className="flex-1 h-10 rounded-xl border border-[var(--border)] text-[var(--text-main)] font-black text-xs uppercase tracking-widest hover:bg-[var(--bg-card-2)]">Continua</button>
-              <button onClick={onClose} className="flex-1 h-10 rounded-xl bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-widest">Esci</button>
+              <button onClick={() => setConfirmClose(false)} className="flex-1 h-10 rounded-lg border border-[var(--border)] text-[var(--text-main)] font-semibold text-xs hover:bg-[var(--bg-card-2)]">Continua</button>
+              <button onClick={onClose} className="flex-1 h-10 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold text-xs">Esci</button>
             </div>
           </div>
         </div>

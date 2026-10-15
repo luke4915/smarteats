@@ -20,6 +20,7 @@ import BookingSettings from './BookingSettings';
 import PrenotazioniPage from './prenotazioni/PrenotazioniPage';
 import CourseSettings from './CourseSettings';
 import ModifierSettings from './ModifierSettings';
+import { PageHeader, PageBody } from '../components/shared/PageHeader';
 import { useModifiers } from './sala/useModifiers';
 
 const CucinaPage = lazy(() => import('./cucina/CucinaPage'));
@@ -57,20 +58,21 @@ const CartaPage = () => {
   }, [showToast]);
   if (!products || !courses) return <p className="text-[var(--text-muted)]">Caricamento carta…</p>;
   return (
-    <div className="space-y-6">
+    <PageBody>
+      <PageHeader title="Carta" subtitle="Piatti, prezzi, portate e opzioni." />
+      <ProductConfig hideHeader products={products} setProducts={setProducts} courses={courses} modifierGroups={modifiers.groups} onModifiersSaved={modifiers.reload} />
       <ModifierSettings groups={modifiers.groups} onChanged={modifiers.reload} />
-      <ProductConfig products={products} setProducts={setProducts} courses={courses} modifierGroups={modifiers.groups} onModifiersSaved={modifiers.reload} />
-    </div>
+    </PageBody>
   );
 };
 
 const SettingsPage = ({ user }) => (
-  <div className="space-y-6">
-    <h2 className="text-2xl font-semibold tracking-tight text-[var(--text-main)]">Impostazioni</h2>
+  <PageBody>
+    <PageHeader title="Impostazioni" subtitle="Come lavora il locale: coperto, portate, sale, prenotazioni e personale." />
     {user.modules?.includes('tables') && <><CoverSettings /><CourseSettings /><RoomsSettings /></>}
     {user.modules?.includes('bookings') && <BookingSettings />}
     <UsersSettings />
-  </div>
+  </PageBody>
 );
 
 // App dei ristoranti e delle pizzerie (SmartEats): una shell e una dashboard proprie, separate da quelle della cassa

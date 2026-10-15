@@ -4,6 +4,7 @@ import { useToast } from '../../context/useToast';
 import { formatEuro } from '../sala/checkMath';
 import { segment, segmentBox, input } from '../sala/ui';
 import { HBars, HourBars, HourTable } from './Bars';
+import { PageHeader, PageBody } from '../../components/shared/PageHeader';
 import { fillHours, peakHour, hourLabel, formatDuration, METHOD_LABEL } from './chartData';
 
 const dateLabel = (iso) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
@@ -51,17 +52,13 @@ const StatistichePage = () => {
   const t = stats?.totals;
 
   return (
-    <div className="space-y-5 pb-4">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-[var(--text-main)]">Statistiche</h2>
-          <p className="text-sm text-[var(--text-muted)]">Contano i conti pagati.</p>
-        </div>
+    <PageBody>
+      <PageHeader title="Statistiche" subtitle="Contano i conti pagati.">
         <select className={`${input} !w-64`} aria-label="Servizio" value={sessionId ?? ''} onChange={e => setSessionId(e.target.value ? Number(e.target.value) : null)}>
           <option value="">Tutti i servizi</option>
           {sessions.map(s => <option key={s.id} value={s.id}>{s.name} · {dateLabel(s.start_time)}</option>)}
         </select>
-      </header>
+      </PageHeader>
 
       {!stats && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
       {stats && t.checks === 0 && <Empty>Nessun conto pagato in questo periodo.</Empty>}
@@ -123,7 +120,7 @@ const StatistichePage = () => {
           </div>
         </>
       )}
-    </div>
+    </PageBody>
   );
 };
 

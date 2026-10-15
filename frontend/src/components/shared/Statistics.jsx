@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { Download, X, Check, FileText } from 'lucide-react';
 
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import StatCard from './statistics/StatCard';
 import ChartCard from './statistics/ChartCard';
-import { tooltipStyle, axis, grid, cursor } from './statistics/chartStyles';
+import { HBars, Columns } from './charts';
 import { useStatistics, formatEuro, formatMin, activeHours, reorderHours } from './statistics/useStatistics';
 import { exportStatsPdf } from './statistics/pdfExport';
 import { useAuth } from '../../context/useAuth';
 import { termsFor } from '../../utils/terms';
+import { PageHeader, PageBody } from './PageHeader';
+
+// Le fasce orarie attive (da prima a ultima con valori), riordinate dalle 12:00 come nel resto dell'app.
+const hourItems = (data, key) => activeHours(reorderHours(data), key).map(d => ({ key: d.ora, label: `${d.ora}`, short: String(d.ora).slice(0, 2), value: d[key] ?? 0 }));
+const peakOf = (data, key) => activeHours(reorderHours(data), key).reduce((b, d) => (d[key] > (b?.[key] ?? 0) ? d : b), null)?.ora;
 
 const Statistics = () => {
   const { showToast } = useToast();
@@ -59,15 +63,8 @@ const Statistics = () => {
   const closedSessions = sessions.filter(s => !!s.end_time);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 pb-8">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-[var(--text-main)]">Statistiche</h2>
-          <p className="text-sm text-[var(--text-muted)]">
-            {selectedSessionIds.length > 0 ? `${selectedSessionIds.length} ${selectedSessionIds.length === 1 ? 'sessione selezionata' : 'sessioni selezionate'}` : 'Tutte le sessioni'}
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <PageBody>
+      <PageHeader title="Statistiche" subtitle={selectedSessionIds.length > 0 ? `${selectedSessionIds.length} ${selectedSessionIds.length === 1 ? 'sessione selezionata' : 'sessioni selezionate'}` : 'Tutte le sessioni'}>
           <button onClick={() => setIsExportModalOpen(true)}
             className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-main)] hover:bg-[var(--bg-card-2)] cursor-pointer transition-colors">
             <Download size={15} /> Esporta CSV
@@ -76,8 +73,7 @@ const Statistics = () => {
             className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-main)] hover:bg-[var(--bg-card-2)] cursor-pointer transition-colors">
             <FileText size={15} /> Esporta PDF
           </button>
-        </div>
-      </div>
+      </PageHeader>
 
       {sessions.length > 0 && (
         <ChartCard title={terms.filter}>
@@ -147,144 +143,78 @@ const Statistics = () => {
         <>
           {stats.incassoPerCategoria.length > 0 && (
             <ChartCard title="Incasso per categoria">
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={stats.incassoPerCategoria}>
-                  <CartesianGrid {...grid} />
-                  <XAxis dataKey="categoria" {...axis} />
-                  <YAxis {...axis} />
-                  <Tooltip cursor={cursor} contentStyle={tooltipStyle} formatter={(v) => formatEuro(v)} />
-                  <Bar maxBarSize={28} dataKey="totale" fill="var(--accent)" name="Incasso" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <HBars rows={stats.incassoPerCategoria.map(c => ({ key: c.categoria, label: c.categoria, ...c }))} valueOf={r => r.totale} format={formatEuro} />
             </ChartCard>
           )}
 
-          <ChartCard title="Ordini per fascia oraria">
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={activeHours(reorderHours(stats.ordiniPerFasciaOraria), 'count')}>
-                  <CartesianGrid {...grid} />
-                <XAxis dataKey="ora" {...axis} />
-                <YAxis {...axis} />
-                <Tooltip cursor={cursor} contentStyle={tooltipStyle} />
-                <Bar maxBarSize={28} dataKey="count" fill="var(--accent)" name="Ordini" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <ChartCard title="Ordini per fascia oraria">
+              <Columns ariaLabel="Ordini per fascia oraria" items={hourItems(stats.ordiniPerFasciaOraria, 'count')} format={v => `${v} ${v === 1 ? 'ordine' : 'ordini'}`} peak={peakOf(stats.ordiniPerFasciaOraria, 'count')} />
+            </ChartCard>
+            <ChartCard title="Prezzo medio ordine per fascia oraria">
+              <Columns ariaLabel="Prezzo medio per fascia oraria" items={hourItems(stats.prezzoMedioPerFasciaOraria, 'prezzoMedio')} format={formatEuro} />
+            </ChartCard>
+          </div>
 
           <ChartCard
-            title="Top 10 prodotti"
+            title="Prodotti più venduti"
             action={
               <div className="flex gap-1 p-1 rounded-lg bg-[var(--bg-main)] border border-[var(--border)]" role="tablist" aria-label="Metrica">
                 {[['count', 'Quantità'], ['revenue', 'Incasso']].map(([id, name]) => (
                   <button key={id} role="tab" aria-selected={topProductsMetric === id} onClick={() => setTopProductsMetric(id)}
-                    className={`h-8 px-3 rounded-md text-sm font-medium transition cursor-pointer ${topProductsMetric === id ? 'bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>{name}</button>
+                    className={`h-8 px-3 rounded-md text-sm font-medium transition cursor-pointer ${topProductsMetric === id ? 'bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm' : 'text-[var(--text-muted)]'}`}>{name}</button>
                 ))}
               </div>
             }
           >
-            <ResponsiveContainer width="100%" height={450}>
-              <BarChart data={sortedTopProdotti} layout="vertical">
-                <XAxis type="number" {...axis} />
-                <YAxis type="category" dataKey="prodotto" {...axis} width={180} />
-                <Tooltip cursor={cursor} contentStyle={tooltipStyle} formatter={(v) => (topProductsMetric === 'revenue' ? formatEuro(v) : v)} />
-                <Bar maxBarSize={28} dataKey={topProductsMetric} fill="var(--accent)" name={topProductsMetric === 'revenue' ? 'Incasso' : 'Quantità'} radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <HBars rows={sortedTopProdotti.map(p => ({ key: p.prodotto, label: p.prodotto, ...p }))} valueOf={r => r[topProductsMetric]}
+              format={v => (topProductsMetric === 'revenue' ? formatEuro(v) : `${v} pz`)} />
+          </ChartCard>
+
+          <ChartCard title="Andamento dell'incasso nella serata">
+            <Columns ariaLabel="Incasso cumulato per ora" items={hourItems(stats.andamentoFatturato, 'totale')} format={formatEuro} />
           </ChartCard>
 
           {sessions.length > 1 && (
             <ChartCard title={terms.h2h}>
               <div className="flex flex-wrap gap-2 mb-4">
-                <select value={h2hSessionA} onChange={e => setH2hSessionA(e.target.value)}
-                  className="h-10 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] text-sm text-[var(--text-main)]">
-                  <option value="">{terms.pickA}</option>
-                  {sessions.map(s => <option key={s.id} value={s.id}>{s.name || new Date(s.start_time).toLocaleDateString('it-IT')}</option>)}
-                </select>
-                <select value={h2hSessionB} onChange={e => setH2hSessionB(e.target.value)}
-                  className="h-10 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] text-sm text-[var(--text-main)]">
-                  <option value="">{terms.pickB}</option>
-                  {sessions.map(s => <option key={s.id} value={s.id}>{s.name || new Date(s.start_time).toLocaleDateString('it-IT')}</option>)}
-                </select>
-                <select value={h2hProduct} onChange={e => setH2hProduct(e.target.value)}
-                  className="h-10 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] text-sm text-[var(--text-main)]">
+                {[[h2hSessionA, setH2hSessionA, terms.pickA], [h2hSessionB, setH2hSessionB, terms.pickB]].map(([value, set, placeholder], n) => (
+                  <select key={n} value={value} onChange={e => set(e.target.value)} className="h-10 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] text-sm text-[var(--text-main)]">
+                    <option value="">{placeholder}</option>
+                    {sessions.map(s => <option key={s.id} value={s.id}>{s.name || new Date(s.start_time).toLocaleDateString('it-IT')}</option>)}
+                  </select>
+                ))}
+                <select value={h2hProduct} onChange={e => setH2hProduct(e.target.value)} className="h-10 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] text-sm text-[var(--text-main)]">
                   <option value="">Seleziona prodotto…</option>
                   {availableProducts.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
                 </select>
               </div>
-
               {h2hData ? (
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={h2hData}>
-                  <CartesianGrid {...grid} />
-                    <XAxis dataKey="metric" {...axis} />
-                    <YAxis {...axis} />
-                    <Tooltip cursor={cursor} contentStyle={tooltipStyle} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar maxBarSize={28} dataKey="A" name={sessionAName} fill="var(--accent)" radius={[4, 4, 0, 0]} />
-                    <Bar maxBarSize={28} dataKey="B" name={sessionBName} fill="var(--text-muted)" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <table className="w-full text-sm">
+                  <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-1.5 font-medium" /><th className="font-medium text-right">{sessionAName}</th><th className="font-medium text-right">{sessionBName}</th></tr></thead>
+                  <tbody className="tabular-nums text-[var(--text-main)]">
+                    {h2hData.map(r => <tr key={r.metric} className="border-t border-[var(--border)]"><td className="py-2">{r.metric}</td><td className="text-right">{r.A}</td><td className="text-right">{r.B}</td></tr>)}
+                  </tbody>
+                </table>
               ) : (
-                <p className="text-xs text-[var(--text-muted)] text-center py-8">{terms.selectTwo}</p>
+                <p className="text-sm text-[var(--text-muted)] py-4">{terms.selectTwo}</p>
               )}
             </ChartCard>
           )}
 
-          <ChartCard title="Prezzo medio ordine per fascia oraria">
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={activeHours(reorderHours(stats.prezzoMedioPerFasciaOraria), 'prezzoMedio')}>
-                  <CartesianGrid {...grid} />
-                <XAxis dataKey="ora" {...axis} />
-                <YAxis {...axis} />
-                <Tooltip cursor={cursor} contentStyle={tooltipStyle} formatter={(v) => formatEuro(v)} />
-                <Bar maxBarSize={28} dataKey="prezzoMedio" fill="var(--accent)" name="Prezzo medio" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          <ChartCard title="Andamento fatturato cumulativo">
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={activeHours(reorderHours(stats.andamentoFatturato), 'totale')}>
-                  <CartesianGrid {...grid} />
-                <XAxis dataKey="ora" {...axis} />
-                <YAxis {...axis} />
-                <Tooltip cursor={cursor} contentStyle={tooltipStyle} formatter={(v) => formatEuro(v)} />
-                <Line type="monotone" dataKey="totale" stroke="var(--accent)" name="Fatturato" dot={false} strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
           {stats.topGiftProducts.length > 0 && (
-            <ChartCard title="Mancato incasso per omaggi (per prodotto)">
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={stats.topGiftProducts} layout="vertical">
-                  <XAxis type="number" {...axis} />
-                  <YAxis type="category" dataKey="product" {...axis} width={120} />
-                  <Tooltip cursor={cursor} contentStyle={tooltipStyle} formatter={(v) => formatEuro(v)} />
-                  <Bar maxBarSize={28} dataKey="missedRevenue" fill="var(--accent)" name="Mancato incasso" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <ChartCard title="Mancato incasso per omaggi">
+              <HBars rows={stats.topGiftProducts.map(g => ({ key: g.product, label: g.product, ...g }))} valueOf={r => r.missedRevenue} format={formatEuro} />
             </ChartCard>
           )}
 
-          <ChartCard title={`Tempo medio completamento ordini — ${formatMin(stats.tempoMedioCompletamento)}`}>
+          <ChartCard title={`Tempo medio di completamento — ${formatMin(stats.tempoMedioCompletamento)}`}>
             {stats.tempoMedioCompletamento === 0 ? (
-              <p className="text-xs text-[var(--text-muted)] text-center py-8">
-                Nessun ordine con tempo di completamento registrato. I tempi vengono registrati solo in modalità ordini avanzata.
-              </p>
+              <p className="text-sm text-[var(--text-muted)] py-4">Nessun ordine con tempo registrato. I tempi si registrano solo in modalità ordini avanzata.</p>
             ) : (
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={activeHours(reorderHours(stats.tempiCompletamento), 'media')}>
-                  <CartesianGrid {...grid} />
-                  <XAxis dataKey="ora" {...axis} />
-                  <YAxis {...axis} />
-                  <Tooltip cursor={cursor} contentStyle={tooltipStyle} formatter={(v) => formatMin(v)} />
-                  <Bar maxBarSize={28} dataKey="media" fill="var(--accent)" name="Tempo medio (min)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              <Columns ariaLabel="Tempo medio per fascia oraria" items={hourItems(stats.tempiCompletamento, 'media')} format={formatMin} />
             )}
           </ChartCard>
-
         </>
       )}
 
@@ -320,7 +250,7 @@ const Statistics = () => {
           </div>
         </div>
       )}
-    </div>
+    </PageBody>
   );
 };
 

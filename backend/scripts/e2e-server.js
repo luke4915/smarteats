@@ -33,6 +33,9 @@ execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyo
   '-subj', '/CN=standmanager.local', '-addext', 'subjectAltName=DNS:*.standmanager.local,DNS:standmanager.local'], { stdio: 'ignore' });
 
 const hash = await bcrypt.hash(PASSWORD, 4);
+// Console master: stessa password di prova (serve MASTER_JWT_SECRET, diverso da JWT_SECRET)
+process.env.MASTER_PASSWORD_HASH = hash;
+process.env.MASTER_JWT_SECRET ||= `${process.env.JWT_SECRET ?? 'e2e'}-master-console-prova-0123456789`;
 const addUser = async (tenant, role) => {
   const username = `${role}-${tenant.slug}`;
   await adminDb.query('INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, $3, $4)', [username, hash, role, tenant.id]);

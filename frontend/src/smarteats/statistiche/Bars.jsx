@@ -1,24 +1,7 @@
 import { formatEuro } from '../sala/checkMath';
 import { barPercent } from './chartData';
 
-// Barre orizzontali (portate, piatti): etichetta a sinistra, valore a destra, una sola serie nel colore d'accento. Barre
-// sottili ancorate a sinistra con l'estremità arrotondata; l'etichetta e il valore restano in colore del testo.
-export const HBars = ({ rows, valueOf, format = (v) => v, hint }) => {
-  const max = Math.max(0, ...rows.map(valueOf));
-  return (
-    <ul className="space-y-2.5">
-      {rows.map(row => (
-        <li key={row.key} title={hint?.(row)} className="grid grid-cols-[minmax(0,10rem)_1fr_auto] items-center gap-3 text-sm">
-          <span className="truncate text-[var(--text-main)]">{row.label}</span>
-          <span className="h-2 rounded-full bg-[var(--bg-card-2)]" aria-hidden="true">
-            <span className="block h-2 rounded-r-full rounded-l-sm bg-[var(--accent)]" style={{ width: `${barPercent(valueOf(row), max)}%` }} />
-          </span>
-          <span className="tabular-nums text-[var(--text-muted)] w-20 text-right">{format(valueOf(row))}</span>
-        </li>
-      ))}
-    </ul>
-  );
-};
+export { HBars } from '../../components/shared/charts';
 
 // Incasso per ora: barre verticali sottili sulla stessa linea di base, griglia appena visibile, valore al passaggio del
 // mouse (o del dito) e l'ora di punta evidenziata; la stessa serie si legge anche come tabella.

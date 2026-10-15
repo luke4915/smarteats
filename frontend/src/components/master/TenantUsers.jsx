@@ -23,10 +23,10 @@ const TenantUsers = ({ tenant, onClose, onChanged }) => {
       <div className="max-w-2xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">Utenti</p>
-            <h2 className="text-xl font-black text-[var(--text-main)]">{tenant.name} <span className="text-sm font-normal text-[var(--text-muted)]">({tenant.slug})</span></h2>
+            <p className="text-xs font-semibold text-[var(--text-muted)]">Utenti</p>
+            <h2 className="text-xl font-semibold text-[var(--text-main)]">{tenant.name} <span className="text-sm font-normal text-[var(--text-muted)]">({tenant.slug})</span></h2>
           </div>
-          <button onClick={onClose} aria-label="Chiudi" className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]"><X size={16} /></button>
+          <button onClick={onClose} aria-label="Chiudi" className="p-2 rounded-lg border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]"><X size={16} /></button>
         </div>
         <UsersPanel api={api} />
       </div>

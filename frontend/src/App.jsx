@@ -32,6 +32,7 @@ import UserProfile from './components/shared/UserProfile';
 import StartSessionModal from './components/shared/StartSessionModal';
 import CloseSessionFlow from './components/shared/CloseSessionFlow';
 import Login from './pages/LoginPage';
+import { PageBody } from './components/shared/PageHeader';
 
 // Ruoli abilitati ad applicare sconti/omaggi (specchio di DISCOUNT_ROLES nel backend)
 const DISCOUNT_ROLES = ['admin', 'responsabile'];
@@ -255,13 +256,13 @@ const App = () => {
                   <Route path="/statistics" element={canView(user.role, 'statistics', user.modules) ? <Statistics /> : <Navigate to={`/${home}`} replace />} />
                   <Route path="/config" element={canView(user.role, 'config', user.modules) ? <ProductConfig products={products} setProducts={setProducts} /> : <Navigate to={`/${home}`} replace />} />
                   <Route path="/setup" element={!canView(user.role, 'setup', user.modules) ? <Navigate to={`/${home}`} replace /> :
-                    <div className="space-y-6">
+                    <PageBody>
                       <AppearanceSettings theme={theme} setTheme={setTheme} isSoundEnabled={isSoundEnabled} setIsSoundEnabled={setIsSoundEnabled} />
                       <MenuSettings />
                       <OrderSettings orderMode={orderMode} setOrderMode={setOrderMode} />
                       <PrintProfiles />
                       {user.role === 'admin' && <UsersSettings />}
-                    </div>
+                    </PageBody>
                   } />
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />

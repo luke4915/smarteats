@@ -3,6 +3,7 @@ import { X, Edit, Trash2, Search, Plus, CheckSquare, Square, Eye, EyeOff } from 
 
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
+import { PageHeader } from '../shared/PageHeader';
 
 const Combobox = ({ name, value, onChange, options, placeholder }) => {
   const [open, setOpen] = useState(false);
@@ -60,7 +61,7 @@ const Combobox = ({ name, value, onChange, options, placeholder }) => {
 
 // `courses` (solo ristoranti): le portate del locale; con la lista il prodotto ne sceglie una.
 // `modifierGroups` (solo ristoranti): i gruppi di modificatori; il prodotto sceglie quali chiedere. `onModifiersSaved` li rilegge.
-const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved }) => {
+const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved, hideHeader = false }) => {
   const { showToast } = useToast();
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({ 
@@ -331,12 +332,8 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
   );
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5 relative">
-      {/* Header Titolo */}
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-[var(--text-main)]">Menu</h2>
-        <p className="text-xs font-semibold text-gray-400 mt-1">Gestione prodotti</p>
-      </div>
+    <div className="max-w-5xl mx-auto w-full space-y-5 relative">
+      {!hideHeader && <PageHeader title="Menu" subtitle="Gestione prodotti" />}
 
       {/* Top Bar Unificata */}
       <div className="flex items-center justify-between flex-wrap gap-2.5 w-full">
