@@ -1,0 +1,51 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { todayLocal, addDays, formatDay, agendaGroups, tableTakenBy, nextByTable, whatsappLink, mailLink, telLink, isActive } from './rules.js';
+
+const res = (id, status, start, extra = {}) => ({ id, status, date: '2026-10-23', start_time: start, duration_minutes: 90, table_ids: [], ...extra });
+
+test('date: oggi, giorni avanti e indietro, formato', () => {
+  assert.equal(todayLocal(new Date(2026, 9, 5)), '2026-10-05');
+  assert.equal(addDays('2026-10-31', 1), '2026-11-01');
+  assert.equal(addDays('2026-01-01', -1), '2025-12-31');
+  assert.equal(formatDay('2026-10-23'), 'venerdì 23 ottobre');
+});
+
+test('agenda: prima da confermare, poi confermate, sedute, chiuse; i gruppi vuoti non compaiono', () => {
+  const list = [res(1, 'confirmed', '19:30'), res(2, 'requested', '19:30'), res(3, 'cancelled', '21:00'), res(4, 'seated', '19:30'), res(5, 'expired', '19:30')];
+  const groups = agendaGroups(list);
+  assert.deepEqual(groups.map(g => [g.key, g.items.map(r => r.id)]), [['requested', [2]], ['confirmed', [1]], ['seated', [4]], ['closed', [3, 5]]]);
+  assert.deepEqual(agendaGroups([res(1, 'confirmed', '19:30')]).map(g => g.key), ['confirmed']);
+  assert.deepEqual(agendaGroups([]), []);
+  assert.deepEqual(['requested', 'confirmed', 'seated', 'declined'].map(isActive), [true, true, true, false]);
+});
+
+test('tavoli: occupato solo da una prenotazione attiva con orario sovrapposto', () => {
+  const mine = res(1, 'confirmed', '21:00');
+  const others = [res(2, 'confirmed', '19:30', { table_ids: [5] }), res(3, 'cancelled', '21:00', { table_ids: [6] }), res(4, 'confirmed', '20:30', { table_ids: [7] }), res(5, 'confirmed', '21:00', { table_ids: [8], date: '2026-10-24' })];
+  assert.equal(tableTakenBy(5, mine, others), null, '19:30 + 90 minuti finisce alle 21:00: il tavolo è libero');
+  assert.equal(tableTakenBy(6, mine, others), null, 'annullata');
+  assert.equal(tableTakenBy(7, mine, others)?.id, 4, 'orari che si accavallano');
+  assert.equal(tableTakenBy(8, mine, others), null, 'altro giorno');
+  assert.equal(tableTakenBy(7, res(4, 'confirmed', '20:30', { table_ids: [7] }), others), null, 'non confligge con se stessa');
+});
+
+test('Sala: per ogni tavolo la prossima prenotazione confermata', () => {
+  const list = [res(1, 'confirmed', '21:00', { table_ids: [5, 6] }), res(2, 'confirmed', '19:30', { table_ids: [5] }), res(3, 'seated', '19:00', { table_ids: [7] }), res(4, 'requested', '19:00', { table_ids: [8] })];
+  const map = nextByTable(list);
+  assert.equal(map.get(5).id, 2);
+  assert.equal(map.get(6).id, 1);
+  assert.equal(map.has(7), false, 'già seduta');
+  assert.equal(map.has(8), false, 'solo una richiesta');
+});
+
+test('collegamenti per il messaggio', () => {
+  assert.equal(whatsappLink('333 123 4567', 'Ciao a tutti'), 'https://wa.me/393331234567?text=Ciao%20a%20tutti');
+  assert.equal(whatsappLink('+44 20 7946 0958', 'x'), 'https://wa.me/442079460958?text=x');
+  assert.equal(whatsappLink('0039 333 1', 'x'), 'https://wa.me/393331?text=x');
+  assert.equal(whatsappLink('', 'x'), null);
+  assert.equal(telLink('333 123 4567'), 'tel:3331234567');
+  assert.equal(telLink(' '), null);
+  assert.equal(mailLink('a@b.it', 'Conferma', 'Ciao & grazie'), 'mailto:a@b.it?subject=Conferma&body=Ciao%20%26%20grazie');
+  assert.equal(mailLink('', 's', 't'), null);
+});

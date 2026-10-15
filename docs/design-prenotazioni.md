@@ -1,6 +1,6 @@
 # Prenotazioni: disegno
 
-Stato: **da approvare, nessun codice scritto.** Decisioni già prese con Luca il 14 ottobre 2026, poi domande aperte in fondo.
+Stato: **P1 realizzata** (15 ottobre 2026, migrazione 044). P2 in poi da fare. Decisioni prese con Luca il 14-15 ottobre 2026.
 
 Corrisponde alla Fase 4 di `docs/requirements.md` (4-1 … 4-6). Per le regole di sviluppo vale `CLAUDE.md`
 (RLS, validazione zod, audit, endpoint pubblici).
@@ -78,7 +78,7 @@ Tutte le tabelle sono per locale (RLS, `tenant_id`, policy `tenant_isolation`, v
 | `external_id` | identificativo nella piattaforma (nullo per le nostre); unico per locale e provenienza |
 | `public_token` | stringa casuale lunga per il link del cliente; non si può indovinare |
 | `requested_at`, `decided_by`, `decided_at`, `decline_reason` | chi ha deciso e quando |
-| `check_id` | il conto aperto all'arrivo (nullo prima) |
+| `check_id` | il conto aperto all'arrivo (nullo prima); sta sulla prenotazione, non su `checks` |
 
 **`reservation_tables`**: i tavoli assegnati (`reservation_id`, `table_id`), uno o più.
 
@@ -140,7 +140,7 @@ anche nel calendario del telefono.
 
 | Fase | Contenuto | Stato |
 |---|---|---|
-| **P1** | Modello (migrazioni 044+), turni e chiusure, inserimento a mano, **agenda**, conferma/rifiuto, **assegnazione sulla pianta**, **«Arrivato» → conto**, segno nella Sala. Modulo `bookings`. | da fare |
+| **P1** | Modello (migrazione 044), turni e chiusure, inserimento a mano, **agenda**, conferma/rifiuto, **assegnazione sulla pianta**, **«Arrivato» → conto**, segno nella Sala, messaggio pronto (WhatsApp/chiama/email). Modulo `bookings`. | **fatta** |
 | **P2** | **Portale pubblico** con richieste, pagina di stato con link, annullo, anti-spam, informativa. | da fare |
 | **P3** | Messaggi pronti (WhatsApp/email/chiama), **foglio stampabile** del turno con la pianta, lista d'attesa semplice. | da fare |
 | **P4** | **Email automatiche** (conferma, promemoria): funzione aggiuntiva, con servizio di invio e consenso. | dopo |
@@ -151,7 +151,6 @@ Ogni fase va in produzione da sola e si prova con la scaletta (`docs/prova-a-man
 ## 9. Impatto sul codice esistente
 
 - `backend/utils/modules.js`: nuovo modulo `bookings` (solo ristorante); catalogo e master panel lo mostrano.
-- `checks`: colonna `reservation_id` (nulla) per il legame con il conto.
 - Sala (`smarteats/sala/FloorView.jsx`): segno sul tavolo prenotato; `GET /checks` non cambia.
 - Nuove route: `routes/bookings.js` (staff), `routes/publicBooking.js` (pubbliche), schemi in `schemas/bookingSchema.js`.
 - Nuova vista in SmartEats: `smarteats/prenotazioni/` (agenda, dettaglio, assegnazione sulla pianta, riuso di `floor/FloorCanvas`).
@@ -159,13 +158,14 @@ Ogni fase va in produzione da sola e si prova con la scaletta (`docs/prova-a-man
 
 ## 10. Domande aperte
 
-1. **Durata del tavolo:** con i turni fissi un tavolo prenotato è «occupato» per tutto il turno. Va bene, o a un tavolo
-   si prenotano due turni di fila (19:30 e 21:30) e serve sapere se il primo ha finito?
-2. **Le richieste in attesa tengono il posto** (come sopra): per quanto? Proposta: **24 ore**, poi decadono da sole e il
-   posto torna libero.
-3. **Chi può confermare:** admin e responsabile sì; la **cassa** e il **cameriere**? Proposta: tutti i ruoli di sala,
-   perché al telefono risponde chiunque.
-4. **Gruppi grandi:** oltre quante persone il portale dice «telefona» (proposta: 10)?
-5. **Capienza per turno:** una sola (i posti della sala), o separata per sala (interna/esterna) e quindi una scelta
-   per il cliente?
-6. **Lingua del portale:** solo italiano per ora?
+Decise:
+
+1. **Durata del tavolo:** personalizzabile **per turno** (`duration_minutes`, 90 minuti di partenza). Un tavolo si può
+   assegnare a due turni di fila se il secondo comincia quando il primo è finito (19:30 + 90' = 21:00).
+2. **Le richieste in attesa tengono il posto 24 ore**, poi decadono da sole.
+3. **Chi può confermare:** tutti i ruoli di sala (admin, responsabile, cassa, cameriere).
+4. **Gruppi grandi:** oltre 10 persone il portale (P2) dice «telefona».
+5. **Capienza:** una sola per turno (i posti della sala).
+6. **Lingua:** solo italiano.
+
+Da decidere con la P2: soglia anti-spam delle richieste per telefono, per quanti giorni si conservano i dati dei clienti.

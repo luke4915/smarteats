@@ -18,7 +18,7 @@ const interactive = 'cursor-pointer hover:brightness-110 active:scale-[0.98] tra
 const ring = 'ring-2 ring-offset-2 ring-offset-[var(--bg-card)] ring-[var(--text-main)]';
 
 // Scheda di un tavolo (per i tavoli non ancora piazzati sulla pianta)
-const TableCard = ({ table, check, selected, onSelect }) => {
+const TableCard = ({ table, check, reservation, selected, onSelect }) => {
   const state = tableState(check);
   return (
     <button disabled={!table.active} onClick={() => onSelect(table, check)} aria-label={`${table.name}: ${STATE_LABEL[state]}`}
@@ -30,6 +30,7 @@ const TableCard = ({ table, check, selected, onSelect }) => {
       <div className="text-xs">
         <p className="font-semibold">{table.active ? STATE_LABEL[state] : 'Non in uso'}</p>
         {check && <p className="mt-0.5 flex items-center gap-1.5 text-[var(--text-muted)]"><Receipt size={12} /> {formatEuro(check.total)} · {minutesSince(check.opened_at)} min</p>}
+        {!check && reservation && <p className="mt-0.5 font-medium text-[var(--accent)] truncate">{reservation.start_time} · {reservation.customer_name} · {reservation.party_size}</p>}
         {check?.ready_items > 0 && <p className="mt-0.5 font-semibold text-emerald-500">{check.ready_items} {check.ready_items === 1 ? "pronto" : "pronti"}</p>}
       </div>
     </button>
@@ -37,8 +38,9 @@ const TableCard = ({ table, check, selected, onSelect }) => {
 };
 
 // Un tavolo sulla pianta: forma e misura scelte dall'admin, colore dallo stato.
-const mapTable = (checkOf, selectedId, onSelect) => (table, style, cell) => {
+const mapTable = (checkOf, reservedOf, selectedId, onSelect) => (table, style, cell) => {
   const check = checkOf(table);
+  const reservation = !check ? reservedOf(table) : null;
   const state = tableState(check);
   return (
     <button key={table.id} style={style} disabled={!table.active} onClick={() => onSelect(table, check)}
@@ -50,7 +52,7 @@ const mapTable = (checkOf, selectedId, onSelect) => (table, style, cell) => {
       )}
       {cell >= 24 && table.h > 1 && (
         <span className="leading-none mt-0.5 text-[var(--text-muted)]" style={{ fontSize: Math.max(9, cell * 0.3) }}>
-          {check ? `${check.covers}/${table.seats} · ${formatEuro(check.total)}` : `${table.seats} posti`}
+          {check ? `${check.covers}/${table.seats} · ${formatEuro(check.total)}` : reservation ? `${reservation.start_time} ${reservation.customer_name}` : `${table.seats} posti`}
         </span>
       )}
     </button>
@@ -61,7 +63,7 @@ const mapTable = (checkOf, selectedId, onSelect) => (table, style, cell) => {
 // (scalata per starci intera) e mostra lo stato dal vivo. I tavoli non ancora piazzati restano schede sotto la pianta.
 const FILTERS = [{ id: 'all', label: 'Tutti' }, { id: 'busy', label: 'Occupati' }, { id: 'ready', label: 'Pronti' }];
 
-const FloorView = ({ rooms, checks, service, selectedTableId, onSelect }) => {
+const FloorView = ({ rooms, checks, reserved = new Map(), service, selectedTableId, onSelect }) => {
   const phone = useIsMobile(640);                 // sul telefono i tavoli sono schede, non la pianta
   const [filter, setFilter] = useState('all');
   const byTable = new Map(checks.map(c => [c.table_id, c]));
@@ -101,19 +103,19 @@ const FloorView = ({ rooms, checks, service, selectedTableId, onSelect }) => {
           <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
             {shown.length === 0 && <p className="text-sm text-[var(--text-muted)] py-6 text-center">Nessun tavolo</p>}
             <div className="grid grid-cols-2 gap-2.5 pb-2">
-              {shown.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} selected={t.id === selectedTableId} onSelect={onSelect} />)}
+              {shown.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} reservation={reserved.get(t.id)} selected={t.id === selectedTableId} onSelect={onSelect} />)}
             </div>
           </div>
         </>
       )}
       {!phone && room && room.tables.some(isPlaced) && (
         <div className="flex-1 min-h-[200px]">
-          <FloorCanvas fit gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements} renderTable={mapTable(checkOf, selectedTableId, onSelect)} />
+          <FloorCanvas fit gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements} renderTable={mapTable(checkOf, (t) => reserved.get(t.id), selectedTableId, onSelect)} />
         </div>
       )}
       {!phone && loose.length > 0 && (
         <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 shrink-0 max-h-[40%] overflow-y-auto no-scrollbar">
-          {loose.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} selected={t.id === selectedTableId} onSelect={onSelect} />)}
+          {loose.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} reservation={reserved.get(t.id)} selected={t.id === selectedTableId} onSelect={onSelect} />)}
         </div>
       )}
       {room && !room.tables.length && <p className="text-sm text-[var(--text-muted)]">Nessun tavolo in questa sala.</p>}

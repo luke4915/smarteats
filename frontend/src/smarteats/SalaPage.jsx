@@ -11,6 +11,7 @@ import { useCourses } from './sala/useCourses';
 import { useModifiers } from './sala/useModifiers';
 import ModifierPicker from './sala/ModifierPicker';
 import { emptyPlan, courseOfProduct } from './sala/courses';
+import { nextByTable, todayLocal } from './prenotazioni/rules';
 import { addToCart, cartTotal, formatEuro } from './sala/checkMath';
 import { btnPrimary } from './sala/ui';
 
@@ -23,6 +24,7 @@ const SalaPage = ({ user, service, event }) => {
   const narrow = useIsMobile(1280);
   const [rooms, setRooms] = useState(null);
   const [checks, setChecks] = useState([]);
+  const [reservations, setReservations] = useState([]);   // prenotazioni di oggi (modulo bookings): per segnare i tavoli prenotati
   const [selection, setSelection] = useState(null);   // { table, checkId|null }
   const [ordering, setOrdering] = useState(false);
   const [draftOpen, setDraftOpen] = useState(false);  // solo su schermo stretto: la comanda sopra la carta
@@ -35,10 +37,12 @@ const SalaPage = ({ user, service, event }) => {
 
   const load = useCallback(async () => {
     try {
-      const [r, c] = await Promise.all([fetchWithAuth('/rooms'), fetchWithAuth('/checks?status=open')]);
-      setRooms(r); setChecks(c);
+      const withBookings = user.modules?.includes('bookings');
+      const [r, c, b] = await Promise.all([fetchWithAuth('/rooms'), fetchWithAuth('/checks?status=open'),
+        withBookings ? fetchWithAuth(`/bookings/reservations?date=${todayLocal()}`) : []]);
+      setRooms(r); setChecks(c); setReservations(b);
     } catch (err) { showToast(err.message || 'Errore caricamento sala', 'error'); }
-  }, [showToast]);
+  }, [showToast, user.modules]);
 
   useEffect(() => { load(); }, [load, service?.id]);
   // La cucina segna pronta una portata: lo si dice a chi è in sala, così la porta al tavolo (niente da confermare)
@@ -48,7 +52,8 @@ const SalaPage = ({ user, service, event }) => {
       showToast(`${o.table_name ? `Tavolo ${o.table_name}` : 'Conto'}: ${o.course_name ?? 'piatti'} pronti`, 'success');
   }, [event, showToast]);
   // Un conto cambia su un altro dispositivo
-  useEffect(() => { if (event?.type === 'check_updated') load(); }, [event, load]);
+  useEffect(() => { if (event?.type === 'check_updated' || event?.type === 'reservation_updated') load(); }, [event, load]);
+  const reserved = nextByTable(reservations);
 
   const reset = () => { setPicking(null); setOrdering(false); setDraftOpen(false); setCart([]); setPlan(emptyPlan()); };
   const close = () => { reset(); setSelection(null); load(); };
@@ -68,14 +73,14 @@ const SalaPage = ({ user, service, event }) => {
   if (!rooms) return <div className={`${card} flex-1`}><p className="text-[var(--text-muted)]">Caricamento sala…</p></div>;
 
   const side = (
-    <SidePanel selection={selection} user={user} service={service} event={event} ordering={ordering}
+    <SidePanel selection={selection} reservation={selection ? reserved.get(selection.table.id) : null} user={user} service={service} event={event} ordering={ordering}
       cart={cart} setCart={setCart} products={products} courses={courses} plan={plan} setPlan={setPlan}
       onBack={close} onOpened={(check) => { setSelection(s => ({ ...s, checkId: check.id })); load(); }} onBusy={close}
       onOrder={() => setOrdering(true)} onDraftBack={() => (narrow ? setDraftOpen(false) : setOrdering(false))}
       onSent={() => { reset(); load(); }} onChanged={load}
       onSwitch={(check) => { reset(); setSelection({ table: rooms.flatMap(r => r.tables).find(t => t.id === check.table_id), checkId: check.id }); load(); }} />
   );
-  const floor = <FloorView rooms={rooms} checks={checks} service={service} selectedTableId={selection?.table.id} onSelect={select} />;
+  const floor = <FloorView rooms={rooms} checks={checks} reserved={reserved} service={service} selectedTableId={selection?.table.id} onSelect={select} />;
   const menu = picking
     ? <ModifierPicker key={picking.id} product={picking} groups={modifiers.forProduct(picking)} onCancel={() => setPicking(null)} onAdd={(chosen) => { addWith(picking, chosen); setPicking(null); }} />
     : <OrderMenu products={products} cart={cart} tableName={selection?.table.name} onAdd={add} onBack={() => { setOrdering(false); setDraftOpen(false); }} />;

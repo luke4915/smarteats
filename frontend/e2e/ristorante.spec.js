@@ -60,7 +60,7 @@ test('ristorante: apro un tavolo, ordino per portate, la cucina segna pronto, in
 test('ristorante: il cameriere non vede incassa e sconti', async ({ page }) => {
   const { ristorante: r } = seed();
   await login(page, r.host, r.cameriere);
-  await page.getByRole('button', { name: /^T2: Libero/ }).click();
+  await page.getByRole('button', { name: /^T3: Libero/ }).click();   // T1 è del giro principale, T2 delle prenotazioni
   await page.getByRole('button', { name: 'Apri tavolo' }).click();
   await expect(page.getByRole('button', { name: 'Aggiungi' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Incassa' })).toHaveCount(0);

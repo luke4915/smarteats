@@ -123,6 +123,23 @@ Come `cameriere`:
 
 ---
 
+## G2. Le prenotazioni (admin, e poi cameriere)
+
+Serve il modulo **Prenotazioni** acceso per il ristorante (dal pannello master).
+
+- [ ] **Impostazioni → Turni delle prenotazioni**: crea «Cena 19:30» (90 minuti, 30 coperti) e «Cena 21:00». Cambia giorni e capienza.
+- [ ] **Chiusure**: chiudi un giorno (es. domani). Nell'agenda quel giorno i turni risultano chiusi?
+- [ ] **Prenotazioni → Nuova**: inserisci «Rossi, 4 persone, 19:30». Compare nell'agenda con i coperti del turno che salgono?
+- [ ] Inserisci prenotazioni fino a superare la capienza: ti dice che non ci sono posti e ti lascia **accettare comunque**?
+- [ ] Apri la prenotazione: **Avvisa il cliente** mostra il messaggio. WhatsApp/Chiama/Email si aprono con il testo giusto?
+- [ ] **Assegna un tavolo** sulla pianta: i tavoli già presi da un'altra prenotazione con orario sovrapposto sono bloccati?
+      Un secondo turno (21:00) può prendere lo stesso tavolo del primo (19:30 + 90')?
+- [ ] Gruppo di 8: assegna due tavoli. Il messaggio sotto dice se i posti non bastano?
+- [ ] In **Sala**, i tavoli prenotati mostrano ora e nome? Tocca il tavolo: compare «Prenotato» con **Arrivato**?
+- [ ] **Arrivato**: si apre il conto con i coperti giusti, e la prenotazione risulta «Al tavolo»?
+- [ ] **Non si è presentato** e **Annulla**: la prenotazione esce dai coperti del turno?
+- [ ] Da telefono 📱: l'agenda si legge? Il pannello della prenotazione occupa lo schermo e si torna indietro?
+
 ## H. La sagra (admin)
 
 **Su PC o tablet in orizzontale**

@@ -7,6 +7,8 @@ const ids = (role, modules) => visibleViews(role, modules).map(v => v.id);
 test('ogni ruolo vede le sue pagine', () => {
   const all = ['kds', 'stats', 'tables'];
   assert.deepEqual(ids('admin', all), ['sala', 'cucina', 'carta', 'statistiche', 'impostazioni']);
+  assert.deepEqual(ids('admin', [...all, 'bookings']), ['sala', 'prenotazioni', 'cucina', 'carta', 'statistiche', 'impostazioni']);
+  assert.deepEqual(ids('cameriere', [...all, 'bookings']), ['sala', 'prenotazioni']);
   assert.deepEqual(ids('responsabile', all), ['sala', 'statistiche']);
   assert.deepEqual(ids('cassa', all), ['sala']);
   assert.deepEqual(ids('cameriere', all), ['sala']);
