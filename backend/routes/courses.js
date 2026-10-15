@@ -13,7 +13,7 @@ import { createCourseSchema, updateCourseSchema, reorderCoursesSchema } from '..
 // Portate del locale (modulo `tables`): antipasto, primo, secondo… in ordine di uscita. Si leggono con i ruoli di
 // cassa, si modificano solo da admin, con audit.
 const router = express.Router();
-const COLUMNS = 'id, name, position, active';
+const COLUMNS = 'id, name, position, active, with_previous';
 const UNIQUE = 'Esiste già una portata con questo nome';
 
 router.get('/', authenticate, requireModule('tables'), authorizeWaiter, tenantScope, async (req, res) => {
@@ -30,7 +30,8 @@ router.get('/', authenticate, requireModule('tables'), authorizeWaiter, tenantSc
 router.post('/', authenticate, requireModule('tables'), authorizeAdmin, validate({ body: createCourseSchema }), tenantScope, async (req, res) => {
   try {
     const { rows } = await req.db.query(
-      `INSERT INTO courses (name, position) VALUES ($1, COALESCE((SELECT MAX(position) + 1 FROM courses), 0)) RETURNING ${COLUMNS}`, [req.body.name]);
+      `INSERT INTO courses (name, position, with_previous) VALUES ($1, COALESCE((SELECT MAX(position) + 1 FROM courses), 0), $2) RETURNING ${COLUMNS}`,
+      [req.body.name, req.body.with_previous]);
     await logAudit(req.db, req.user.id, 'CREATE_COURSE', { courseId: rows[0].id, name: rows[0].name });
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -62,10 +63,10 @@ router.put('/order', authenticate, requireModule('tables'), authorizeAdmin, vali
 
 router.put('/:id', authenticate, requireModule('tables'), authorizeAdmin, validate({ params: idParamsSchema, body: updateCourseSchema }), tenantScope, async (req, res) => {
   try {
-    const { name, active } = req.body;
+    const { name, active, with_previous: withPrevious } = req.body;
     const { rows } = await req.db.query(
-      `UPDATE courses SET name = COALESCE($1, name), active = COALESCE($2, active) WHERE id = $3 RETURNING ${COLUMNS}`,
-      [name ?? null, active ?? null, req.params.id]);
+      `UPDATE courses SET name = COALESCE($1, name), active = COALESCE($2, active), with_previous = COALESCE($3, with_previous) WHERE id = $4 RETURNING ${COLUMNS}`,
+      [name ?? null, active ?? null, withPrevious ?? null, req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Portata non trovata' });
     await logAudit(req.db, req.user.id, 'UPDATE_COURSE', { courseId: rows[0].id, ...req.body });
     res.json(rows[0]);

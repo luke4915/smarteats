@@ -284,6 +284,7 @@ CREATE TABLE public.courses (
     name text NOT NULL,
     "position" integer DEFAULT 0 NOT NULL,
     active boolean DEFAULT true NOT NULL,
+    with_previous boolean DEFAULT false NOT NULL,
     CONSTRAINT courses_name_check CHECK ((length(btrim(name)) > 0))
 );
 

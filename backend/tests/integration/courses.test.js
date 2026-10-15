@@ -61,6 +61,22 @@ describe('portate', () => {
     assert.equal((await sagraApi.get('/courses')).status, 403, 'una sagra non ha le portate');
   });
 
+  it('una portata può uscire insieme alla precedente; il riordino conserva l\'opzione', async () => {
+    const side = await admin.post('/courses', { name: 'Contorni', with_previous: true });
+    assert.equal(side.status, 201);
+    assert.equal(side.body.with_previous, true);
+    assert.equal(starter.with_previous, false, 'di partenza no');
+    const off = await admin.put(`/courses/${side.body.id}`, { with_previous: false });
+    assert.equal(off.body.with_previous, false);
+    assert.equal((await admin.put(`/courses/${side.body.id}`, { with_previous: true })).body.with_previous, true);
+    const ids = (await admin.get('/courses')).body.map(c => c.id).reverse();
+    const reordered = await admin.put('/courses/order', { ids });
+    assert.equal(reordered.body.find(c => c.id === side.body.id).with_previous, true);
+    assert.equal((await admin.request('DELETE', `/courses/${side.body.id}`)).status, 200);
+    assert.deepEqual((await admin.get('/courses')).body.map(c => c.id).sort(), [starter.id, main.id, dessert.id].sort());
+    await admin.put('/courses/order', { ids: [starter.id, main.id, dessert.id] });
+  });
+
   it('un prodotto ha una portata del suo locale', async () => {
     const product = (await admin.get('/products')).body.find(p => p.id === t.productId);
     const save = (course_id) => admin.put(`/products/${t.productId}`, { name: product.name, price: Number(product.price), category: product.category, ...(course_id !== undefined && { course_id }) });
