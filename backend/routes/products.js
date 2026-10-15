@@ -75,12 +75,12 @@ const courseMissing = async (db, courseId) =>
 
 // POST /api/products
 router.post('/', authenticate, authorizeAdmin, validate({ body: productSchema }), tenantScope, async (req, res) => {
-  const { name, price, category, color, visible, print_destination, course_id } = req.body;
+  const { name, price, category, color, visible, print_destination, course_id, takeaway_load } = req.body;
   try {
     if (await courseMissing(req.db, course_id)) return res.status(400).json({ error: 'Portata non valida', code: 'INVALID_COURSE' });
     const { rows } = await req.db.query(
-      'INSERT INTO products (name, price, category, color, visible, print_destination, course_id) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *',
-      [name, price, category, color, visible, print_destination, course_id ?? null]
+      'INSERT INTO products (name, price, category, color, visible, print_destination, course_id, takeaway_load) VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8, 1)) RETURNING *',
+      [name, price, category, color, visible, print_destination, course_id ?? null, takeaway_load ?? null]
     );
     await logAudit(req.db, req.user.id, 'CREATE_PRODUCT', { productId: rows[0].id, name });
     res.status(201).json(rows[0]);
@@ -92,14 +92,15 @@ router.post('/', authenticate, authorizeAdmin, validate({ body: productSchema })
 
 // PUT /api/products/:id
 router.put('/:id', authenticate, authorizeAdmin, validate({ params: idParamsSchema, body: productSchema }), tenantScope, async (req, res) => {
-  const { name, price, category, color, visible, print_destination, course_id } = req.body;
+  const { name, price, category, color, visible, print_destination, course_id, takeaway_load } = req.body;
   try {
     if (await courseMissing(req.db, course_id)) return res.status(400).json({ error: 'Portata non valida', code: 'INVALID_COURSE' });
     // course_id assente = non si cambia (le sagre non lo mandano); null lo toglie
     const { rows } = await req.db.query(
       `UPDATE products SET name=$1, price=$2, category=$3, color=$4, visible=$5, print_destination=$6,
-         course_id = CASE WHEN $8::boolean THEN $9::int ELSE course_id END WHERE id=$7 RETURNING *`,
-      [name, price, category, color, visible, print_destination, req.params.id, course_id !== undefined, course_id ?? null]
+         course_id = CASE WHEN $8::boolean THEN $9::int ELSE course_id END,
+         takeaway_load = COALESCE($10::int, takeaway_load) WHERE id=$7 RETURNING *`,
+      [name, price, category, color, visible, print_destination, req.params.id, course_id !== undefined, course_id ?? null, takeaway_load ?? null]
     );
     if (!rows.length) return res.status(404).json({ error: 'Prodotto non trovato' });
     await logAudit(req.db, req.user.id, 'UPDATE_PRODUCT', { productId: req.params.id, name, price, visible });

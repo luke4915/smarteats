@@ -4,6 +4,7 @@
 export const VIEW_ROLES = {
   dashboard: ['admin', 'manager', 'cashier'],
   kitchen: ['admin', 'kitchen'],
+  takeaway: ['admin', 'manager', 'cashier'],
   statistics: ['admin', 'manager'],
   config: ['admin'],
   setup: ['admin', 'manager', 'cashier', 'kitchen'],
@@ -12,6 +13,7 @@ export const VIEW_ROLES = {
 // Pagine che dipendono da un modulo; le altre fanno parte del nucleo e ci sono sempre.
 export const VIEW_MODULES = {
   kitchen: 'kds',
+  takeaway: 'takeaway',
   statistics: 'stats',
 };
 

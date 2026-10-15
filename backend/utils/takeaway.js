@@ -36,12 +36,14 @@ export function slotWithinWindow(date, time, now, minLeadMinutes = DEFAULTS.minL
 export const orderLoad = (items, loadOf) => items.reduce((sum, i) => sum + Number(i.quantity) * (loadOf(i.id) ?? 1), 0);
 
 // Stato di ogni fascia di un giorno. `loadByTime` = Map «HH:MM» → carico già preso (ordini vivi); `capacity` per fascia.
-// `available` dice se un nuovo ordine di `load` unità ci sta ancora (e la fascia è nella finestra).
+// `available` dice se un nuovo ordine di `load` unità ci sta ancora (e la fascia è nella finestra);
+// `status`: 'open' (c'è posto), 'full' (carico al limite), 'closed' (già passata o troppo vicina).
 export function slotStates({ date, hours, slotMinutes, capacity, loadByTime, now, minLeadMinutes, load = 1 }) {
   return slotsOn(date, hours, slotMinutes).map(time => {
     const taken = loadByTime.get(time) ?? 0;
     const within = slotWithinWindow(date, time, now, minLeadMinutes).ok;
-    return { time, load: taken, capacity, available: within && taken + load <= capacity };
+    const fits = taken + load <= capacity;
+    return { time, load: taken, capacity, available: within && fits, status: !within ? 'closed' : fits ? 'open' : 'full' };
   });
 }
 

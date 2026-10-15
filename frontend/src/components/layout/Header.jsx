@@ -3,8 +3,9 @@ import { LogOut, Menu, CloudOff, RefreshCw, AlertTriangle, Printer } from "lucid
 import { useOfflineSync } from "../../offline/useOfflineSync";
 import { usePrintQueue } from "../../print/usePrintQueue";
 import FailedOrdersModal from "../shared/FailedOrdersModal";
+import NotificationBell from "../../smarteats/notifications/NotificationBell";
 
-const Header = ({ toggleSidebar, currentUser, onLogoutClick, sessionName, wsConnected }) => {
+const Header = ({ toggleSidebar, currentUser, onLogoutClick, sessionName, wsConnected, inbox = null, onOpenNotification }) => {
   const { online, pending, failed, syncNow, refreshCounts } = useOfflineSync();
   const [showFailed, setShowFailed] = useState(false);
   const { pending: printPending, retryNow: retryPrint } = usePrintQueue();
@@ -72,6 +73,7 @@ const Header = ({ toggleSidebar, currentUser, onLogoutClick, sessionName, wsConn
               <span className="text-xs font-semibold">{failed}</span>
             </button>
           )}
+          {inbox && <NotificationBell items={inbox.items} onOpen={onOpenNotification} />}
           <div className="flex items-center gap-2 h-9 px-2 rounded-lg">
             <div className="w-7 h-7 rounded-full bg-[var(--accent)] flex items-center justify-center text-xs text-white font-semibold shrink-0">
               {currentUser.username[0].toUpperCase()}

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { ChefHat, Clock, Check, Volume2, VolumeX } from 'lucide-react';
 import { useKitchenOrders } from './useKitchenOrders';
 import { playChime } from '../../utils/chime';
-import { boardOrders, upcomingByTable, urgency, ticketAction, toggleLineStatus, isDone, hasBarWork, newOrderIds, STATIONS } from './board';
+import { boardOrders, upcomingByTable, orderUrgency, ticketAction, toggleLineStatus, isDone, hasBarWork, newOrderIds, STATIONS } from './board';
 
 // Il monitor della cucina: fatto per essere letto da lontano e premuto con le mani sporche. Testi grandi, l'attesa
 // colora tutta l'intestazione (verde, ambra, rosso), un solo pulsante enorme per comanda, le più vecchie per prime.
@@ -12,17 +12,19 @@ const HEAD = { ok: 'bg-emerald-600 text-white', warn: 'bg-amber-500 text-black',
 const beep = () => { playChime(); };
 
 const Ticket = ({ order, fresh, onLines }) => {
-  const level = urgency(order.minutes);
+  const level = orderUrgency(order);
+  const takeaway = order.pickup_at != null;
+  const pickupTime = takeaway ? new Date(order.pickup_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : null;
   const action = ticketAction(order);
-  const where = order.table_name ? `Tavolo ${order.table_name}` : order.is_takeaway ? 'Asporto' : 'Banco';
+  const where = order.table_name ? `Tavolo ${order.table_name}` : takeaway ? `Ritiro ${pickupTime}` : order.is_takeaway ? 'Asporto' : 'Banco';
   return (
     <article className={`flex flex-col rounded-xl overflow-hidden bg-[var(--bg-card)] border-2 ${fresh ? 'border-[var(--accent)] ring-4 ring-[var(--accent)]/30' : 'border-[var(--border)]'}`}>
       <header className={`flex items-center justify-between gap-3 px-4 py-3 ${HEAD[level]}`}>
         <div className="min-w-0">
           <h3 className="text-3xl font-bold leading-none truncate">{where}</h3>
-          <p className="mt-1 text-base font-medium opacity-90 truncate">{[order.course_name, order.covers > 0 && `${order.covers} cop.`, `#${order.display_code}`].filter(Boolean).join(' · ')}</p>
+          <p className="mt-1 text-base font-medium opacity-90 truncate">{[order.pickup_name, order.course_name, order.covers > 0 && `${order.covers} cop.`, `#${order.display_code}`].filter(Boolean).join(' · ')}</p>
         </div>
-        <span className="flex items-center gap-1.5 text-2xl font-bold tabular-nums shrink-0"><Clock size={22} />{order.minutes}<span className="text-base font-medium">min</span></span>
+        <span className="flex items-center gap-1.5 text-2xl font-bold tabular-nums shrink-0"><Clock size={22} />{takeaway ? Math.abs(order.pickupIn) : order.minutes}<span className="text-base font-medium">{takeaway ? (order.pickupIn < 0 ? 'min fa' : 'min al ritiro') : 'min'}</span></span>
       </header>
       <ul className="p-2 flex-1">
         {order.items.map(item => {

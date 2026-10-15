@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
+import { useAuth } from '../../context/useAuth';
 import ProductConfig from '../../components/products/ProductConfig';
 import { PageHeader, PageBody } from '../../components/shared/PageHeader';
 import { useModifiers } from '../floor/useModifiers';
@@ -10,6 +11,7 @@ import ModifierSettings from './ModifierSettings';
 // i gruppi di opzioni del ristorante.
 const CatalogPage = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [products, setProducts] = useState(null);
   const [courses, setCourses] = useState(null);
   const modifiers = useModifiers();
@@ -22,7 +24,7 @@ const CatalogPage = () => {
   return (
     <PageBody>
       <PageHeader title="Carta" subtitle="Piatti, prezzi, portate e opzioni." />
-      <ProductConfig hideHeader products={products} setProducts={setProducts} courses={courses} modifierGroups={modifiers.groups} onModifiersSaved={modifiers.reload} />
+      <ProductConfig hideHeader takeawayEnabled={!!user.modules?.includes('takeaway')} products={products} setProducts={setProducts} courses={courses} modifierGroups={modifiers.groups} onModifiersSaved={modifiers.reload} />
       <ModifierSettings groups={modifiers.groups} onChanged={modifiers.reload} />
     </PageBody>
   );

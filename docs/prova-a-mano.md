@@ -218,6 +218,21 @@ imposta l'indirizzo `https://localhost:9443`.
 - [ ] Annulla dal link: il posto torna libero?
 - [ ] Segna «Arrivato», incassa il conto: la prenotazione diventa «Conclusa» e il tavolo si libera?
 
+## N. Asporto
+
+- [ ] Impostazioni → Asporto: scrivi gli orari (per esempio 18:30–22:00), la capienza per fascia (12), accendi gli ordini online. Il QR compare?
+- [ ] Nella Carta, un prodotto ha «Asporto: quanto impegna il forno»: la bibita a «Niente», la pizza a «Una porzione».
+- [ ] Dal telefono apri `/order`: scegli prodotti, giorno e fascia, invia. In «Asporto» e nella campanella compare con il suono?
+- [ ] Accetta: in cucina compare con «Ritiro hh:mm», il nome e il numero? Il cliente vede «Ordine confermato» da solo?
+- [ ] Cucina «Pronta» → in lista «Pronto» → «Consegna e incassa»: il cliente vede «Ordine ritirato»?
+- [ ] «Nuovo ordine» al banco e al telefono: la prima fascia libera è già scelta? Una fascia piena lo dice e chiede se forzare?
+- [ ] Ordina 13 pizze in una fascia da 12: il sito dice che non c'è più posto?
+- [ ] Rifiuta con un motivo: il cliente lo legge?
+
+## O. Feedback
+
+- [ ] Impostazioni → «Dicci cosa migliorare»: scrivi un messaggio per un modulo. Nel Master → Feedback compare?
+
 ## Dopo la prova
 
 Mandami le righe `[~]` e `[!]`. Per ogni problema mi bastano:

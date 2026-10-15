@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, CalendarPlus, CalendarX2, CheckCheck } from 'lucide-react';
+import { Bell, CalendarPlus, CalendarX2, CheckCheck, ShoppingBag } from 'lucide-react';
 import { formatDay } from '../reservations/rules';
 
 // La campanella in testata: il numero di cose da fare e, al tocco, l'elenco. Ogni voce porta direttamente alla
@@ -7,6 +7,7 @@ import { formatDay } from '../reservations/rules';
 const KIND = {
   request: { icon: CalendarPlus, title: (i) => `Nuova richiesta · ${i.customer_name}`, tone: 'text-amber-500 bg-amber-500/15' },
   cancel_request: { icon: CalendarX2, title: (i) => `Chiede di annullare · ${i.customer_name}`, tone: 'text-red-500 bg-red-500/15' },
+  takeaway_request: { icon: ShoppingBag, title: (i) => `Ordine da asporto · ${i.customer_name}`, tone: 'text-[var(--accent)] bg-[var(--accent)]/15' },
 };
 
 const NotificationBell = ({ items, onOpen }) => {
@@ -54,8 +55,12 @@ const NotificationBell = ({ items, onOpen }) => {
                       <span className={`mt-0.5 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${k.tone}`}><Icon size={16} /></span>
                       <span className="min-w-0">
                         <span className="block text-sm font-medium text-[var(--text-main)] truncate">{k.title(i)}</span>
-                        <span className="block text-xs text-[var(--text-muted)]">{formatDay(i.date, { short: true })} · {i.start_time} · {i.party_size} {i.party_size === 1 ? 'persona' : 'persone'}</span>
-                        <span className="block text-xs text-[var(--accent)] mt-0.5">{i.kind === 'request' ? 'Tocca per confermare o rifiutare' : 'Tocca per decidere sull\'annullo'}</span>
+                        <span className="block text-xs text-[var(--text-muted)]">
+                          {i.kind === 'takeaway_request'
+                            ? `Ritiro ${formatDay(i.date, { short: true })} alle ${i.start_time} · ${Number(i.total).toFixed(2).replace('.', ',')} €`
+                            : `${formatDay(i.date, { short: true })} · ${i.start_time} · ${i.party_size} ${i.party_size === 1 ? 'persona' : 'persone'}`}
+                        </span>
+                        <span className="block text-xs text-[var(--accent)] mt-0.5">{i.kind === 'cancel_request' ? 'Tocca per decidere sull\'annullo' : 'Tocca per approvare o rifiutare'}</span>
                       </span>
                     </button>
                   </li>

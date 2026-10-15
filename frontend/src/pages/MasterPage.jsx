@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ShieldCheck, LogOut, Users, Clock, Power, Trash2, Plus, Printer, Blocks, Search, ExternalLink, X } from 'lucide-react';
+import { ShieldCheck, LogOut, Users, Clock, Power, Trash2, Plus, Printer, Blocks, Search, ExternalLink, X, MessageSquare, Check } from 'lucide-react';
 import { apiFetch, ApiError } from '../utils/apiClient';
 import TenantReceiptEditor from '../components/master/TenantReceiptEditor';
 import TenantUsers from '../components/master/TenantUsers';
@@ -88,6 +88,8 @@ const MasterPage = () => {
   const [form, setForm] = useState(emptyForm);
   const [creating, setCreating] = useState(false);
   const [creatingOpen, setCreatingOpen] = useState(false);
+  const [feedback, setFeedback] = useState([]);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [slugTouched, setSlugTouched] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
@@ -105,6 +107,7 @@ const MasterPage = () => {
     if (!authed) return;
     loadTenants();
     apiFetch('/master/catalog').then(setCatalog).catch(err => setError(err.message));
+    apiFetch('/master/feedback').then(setFeedback).catch(() => {});
   }, [authed, loadTenants]);
 
   const handleLogin = async () => {
@@ -114,6 +117,11 @@ const MasterPage = () => {
       setAuthed(true);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
+  };
+
+  const markFeedback = async (f, status) => {
+    try { await apiFetch(`/master/feedback/${f.id}`, { method: 'PATCH', body: { status } }); setFeedback(list => list.map(x => (x.id === f.id ? { ...x, status } : x))); }
+    catch (err) { setError(err.message); }
   };
 
   const handleLogout = async () => {
@@ -206,6 +214,29 @@ const MasterPage = () => {
         </div>
 
         {error && !creatingOpen && <p className="text-sm text-red-500">{error}</p>}
+
+        <section className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)]">
+          <button className="w-full flex items-center gap-2 px-4 py-3 text-left cursor-pointer" aria-expanded={showFeedback} onClick={() => setShowFeedback(v => !v)}>
+            <MessageSquare size={16} className="text-[var(--accent)]" />
+            <span className="text-sm font-medium text-[var(--text-main)] flex-1">Feedback dai locali</span>
+            {feedback.some(f => f.status === 'new') && <span className="px-2 h-5 rounded-full bg-[var(--accent)] text-white text-xs font-semibold flex items-center tabular-nums">{feedback.filter(f => f.status === 'new').length} nuovi</span>}
+            <span className="text-xs text-[var(--text-muted)]">{showFeedback ? 'Chiudi' : 'Apri'}</span>
+          </button>
+          {showFeedback && (
+            <ul className="border-t border-[var(--border)] divide-y divide-[var(--border)] max-h-96 overflow-y-auto">
+              {feedback.length === 0 && <li className="px-4 py-6 text-sm text-center text-[var(--text-muted)]">Nessun feedback per ora.</li>}
+              {feedback.map(f => (
+                <li key={f.id} className={`px-4 py-3 flex gap-3 ${f.status === 'read' ? 'opacity-60' : ''}`}>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-[var(--text-main)] whitespace-pre-wrap">{f.message}</p>
+                    <p className="text-xs text-[var(--text-muted)] mt-1">{f.tenant_name} · {f.username} · {f.module} · {new Date(f.created_at).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                  <button className={btn} onClick={() => markFeedback(f, f.status === 'new' ? 'read' : 'new')}>{f.status === 'new' ? <><Check size={14} /> Letto</> : 'Da rileggere'}</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         <section className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">

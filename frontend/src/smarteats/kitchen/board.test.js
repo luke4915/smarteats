@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { minutesSince, urgency, boardOrders, ticketAction, toggleLineStatus, upcomingByTable, withLineStatus, stationOf, hasBarWork, newOrderIds } from './board.js';
+import { minutesSince, urgency, boardOrders, ticketAction, toggleLineStatus, upcomingByTable, withLineStatus, stationOf, hasBarWork, newOrderIds, orderUrgency, pickupIn } from './board.js';
 
 const NOW = new Date('2026-10-05T20:00:00Z').getTime();
 const ago = (min) => new Date(NOW - min * 60000).toISOString();
@@ -77,4 +77,17 @@ test('le comande nuove: dopo la prima lettura, solo quelle mai viste', () => {
   assert.deepEqual(newOrderIds(null, list), [], 'la prima lettura non avvisa');
   assert.deepEqual(newOrderIds(new Set([1]), list), [2]);
   assert.deepEqual(newOrderIds(new Set([1, 2]), list), []);
+});
+
+test('asporto: urgenza dal ritiro, e l\'ordine si inizia 15 minuti prima', () => {
+  const now = Date.parse('2026-10-23T19:00:00Z');
+  const at = (min) => new Date(now + min * 60000).toISOString();
+  const take = (id, minToPickup) => ({ id, status: 'pending', order_type: 'sale', created_at: at(-1), pickup_at: at(minToPickup), items: [{ line_id: id, prep_status: 'new' }] });
+  const table = { id: 9, status: 'pending', order_type: 'sale', created_at: at(-30), fired_at: at(-5), items: [{ line_id: 9, prep_status: 'new' }] };
+  const board = boardOrders([take(1, 60), take(2, 10), take(3, -5), table], 'all', now);
+  // ordine: dovuti per primi (ritiro tra 10 min → già da iniziare; in ritardo; poi il tavolo uscito 5 min fa; poi il ritiro tra un'ora)
+  assert.deepEqual(board.map(o => o.id), [3, 2, 9, 1]);
+  assert.deepEqual(board.map(orderUrgency), ['late', 'warn', 'ok', 'ok']);
+  assert.equal(board.find(o => o.id === 1).pickupIn, 60);
+  assert.equal(pickupIn({}, now), null);
 });

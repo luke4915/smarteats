@@ -40,6 +40,7 @@ test('stato delle fasce: piena quando il carico non ci sta, fuori finestra non d
   });
   const by = Object.fromEntries(states.map(s => [s.time, s]));
   assert.equal(by['12:00'].available, false, 'già passata');
+  assert.deepEqual([by['12:00'].status, by['18:30'].status, by['19:30'].status], ['closed', 'full', 'open']);
   assert.equal(by['12:30'].available, false, 'meno di 30 minuti');
   assert.deepEqual([by['18:30'].load, by['18:30'].available], [8, false], '8 + 3 supera 10');
   assert.equal(by['19:00'].available, false, 'piena');

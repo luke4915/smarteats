@@ -91,6 +91,7 @@ Disegno e decisioni in `docs/design-prenotazioni.md` (turni fissi, richiesta dal
 | 4-4 | Pagina pubblica di prenotazione per ogni locale (sottodominio del tenant): richieste, link personale con annullo, anti-spam, conservazione dei dati (migrazione 047). | `[x]` |
 | 4-5 | Conferma e promemoria al cliente (email o messaggio). | `[ ]` |
 | 4-6 | Lista d'attesa. | `[ ]` |
+| 4-7 | Asporto con fasce di ritiro, carico del forno, approvazione, coda in cucina e pagina clienti (`docs/design-asporto.md`, migrazione 050). | `[x]` |
 
 ## Più avanti (P3)
 

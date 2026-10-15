@@ -10,6 +10,16 @@ export const WARN_MINUTES = 10;
 export const LATE_MINUTES = 20;
 export const urgency = (minutes) => (minutes >= LATE_MINUTES ? 'late' : minutes >= WARN_MINUTES ? 'warn' : 'ok');
 
+// Asporto: l'ordine ha un orario di ritiro. Minuti da adesso al ritiro (negativi = in ritardo); `null` per gli altri.
+export const pickupIn = (order, now = Date.now()) =>
+  (order.pickup_at ? Math.round((new Date(order.pickup_at).getTime() - now) / 60000) : null);
+// Per l'asporto l'urgenza è quanto manca al ritiro: in ritardo se è già passato, da sbrigare se manca poco.
+export const PICKUP_WARN_MINUTES = 15;
+export const orderUrgency = (order) => (order.pickupIn === null || order.pickupIn === undefined ? urgency(order.minutes)
+  : order.pickupIn < 0 ? 'late' : order.pickupIn <= PICKUP_WARN_MINUTES ? 'warn' : 'ok');
+// Quando va iniziata una comanda: dall'uscita (tavoli) o 15 minuti prima del ritiro (asporto)
+const dueAt = (o) => (o.pickup_at ? new Date(o.pickup_at).getTime() - PICKUP_WARN_MINUTES * 60000 : new Date(o.fired_at ?? o.created_at).getTime());
+
 // Postazioni: una riga è del bar se si stampa solo al bar, altrimenti della cucina (anche «bar + cucina»).
 export const STATIONS = [{ id: 'all', label: 'Tutto' }, { id: 'kitchen', label: 'Cucina' }, { id: 'bar', label: 'Bar' }];
 export const stationOf = (item) => (item.print_destination === 'bar' ? 'bar' : 'kitchen');
@@ -20,9 +30,9 @@ export const isDone = (item) => item.prep_status === 'ready' || item.prep_status
 export function boardOrders(orders, station = 'all', now = Date.now()) {
   return orders
     .filter(o => ['pending', 'preparing'].includes(o.status) && o.order_type !== 'cover')
-    .map(o => ({ ...o, items: station === 'all' ? o.items : o.items.filter(i => stationOf(i) === station), minutes: minutesSince(o, now) }))
+    .map(o => ({ ...o, items: station === 'all' ? o.items : o.items.filter(i => stationOf(i) === station), minutes: minutesSince(o, now), pickupIn: pickupIn(o, now) }))
     .filter(o => o.items.some(i => !isDone(i)))
-    .sort((a, b) => new Date(a.fired_at ?? a.created_at) - new Date(b.fired_at ?? b.created_at) || a.id - b.id);
+    .sort((a, b) => dueAt(a) - dueAt(b) || a.id - b.id);
 }
 
 // Il pulsante della comanda: segna pronte tutte le righe ancora da fare. Un solo gesto: la cucina non gestisce stati

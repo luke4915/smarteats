@@ -12,6 +12,7 @@ import NoViewAvailable from '../../components/layout/NoViewAvailable';
 import FloorPage from '../floor/FloorPage';
 import ReservationsPage from '../reservations/ReservationsPage';
 import CatalogPage from '../catalog/CatalogPage';
+import TakeawayPage from '../takeaway/TakeawayPage';
 import SettingsPage from '../settings/SettingsPage';
 import { useInbox } from '../notifications/useInbox';
 
@@ -39,8 +40,15 @@ const SmartEatsApp = () => {
   useLiveUpdates(handleMessage, { enabled: !!user, onUnauthorized: refreshSession });
 
   // Notifiche per il personale di sala: richieste di prenotazione e annulli da decidere
-  const hasInbox = !!user.modules?.includes('bookings') && ['admin', 'manager', 'cashier', 'waiter'].includes(user.role);
-  const inbox = useInbox({ enabled: hasInbox, event });
+  const staff = ['admin', 'manager', 'cashier', 'waiter'].includes(user.role);
+  const hasBookings = staff && !!user.modules?.includes('bookings');
+  const hasTakeaway = staff && !!user.modules?.includes('takeaway');
+  const hasInbox = hasBookings || hasTakeaway;
+  const inbox = useInbox({ bookings: hasBookings, takeaway: hasTakeaway, event });
+  const badges = {
+    reservations: inbox.items.filter(i => i.kind !== 'takeaway_request').length,
+    takeaway: inbox.items.filter(i => i.kind === 'takeaway_request').length,
+  };
   // Con la scheda in secondo piano il numero si vede comunque nel titolo («(2) SmartEats»)
   useEffect(() => {
     const base = document.title.replace(/^\(\d+\)\s*/, '');
@@ -58,11 +66,13 @@ const SmartEatsApp = () => {
 
   return (
     <div className="se-app flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
-      <SideNav views={views} />
+      <SideNav views={views} badges={badges} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <AppHeader user={user} service={service} canManageService={canManageService} serviceActions={{ start, closingInfo, end }}
-          inbox={hasInbox ? inbox : null} onOpenNotification={(i) => navigate('/reservations', { state: { reservationId: i.id, date: i.date } })}
+          inbox={hasInbox ? inbox : null} onOpenNotification={(i) => (i.kind === 'takeaway_request'
+            ? navigate('/takeaway', { state: { orderId: i.id, date: i.date } })
+            : navigate('/reservations', { state: { reservationId: i.id, date: i.date } }))}
           theme={theme} onToggleTheme={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))} onLogout={doLogout} />
 
         <div className="flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
@@ -70,6 +80,7 @@ const SmartEatsApp = () => {
             <Routes>
               <Route path="/floor" element={guard('floor', <FloorPage user={user} service={service} event={event} />)} />
               <Route path="/reservations" element={guard('reservations', <ReservationsPage event={event} />)} />
+              <Route path="/takeaway" element={guard('takeaway', <TakeawayPage event={event} />)} />
               <Route path="/kitchen" element={guard('kitchen', <Page><KitchenPage event={event} /></Page>)} />
               <Route path="/catalog" element={guard('catalog', <Page><CatalogPage /></Page>)} />
               <Route path="/stats" element={guard('stats', <Page><StatsPage /></Page>)} />
@@ -79,7 +90,7 @@ const SmartEatsApp = () => {
           </Suspense>
         </div>
 
-        <BottomNav views={views} />
+        <BottomNav views={views} badges={badges} />
       </main>
     </div>
   );

@@ -3,6 +3,7 @@
 export const VIEWS = [
   { id: 'floor', label: 'Sala', roles: ['admin', 'manager', 'cashier', 'waiter'] },
   { id: 'reservations', label: 'Prenotazioni', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'bookings' },
+  { id: 'takeaway', label: 'Asporto', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'takeaway' },
   { id: 'kitchen', label: 'Cucina', roles: ['admin', 'kitchen'], module: 'kds' },
   { id: 'catalog', label: 'Carta', roles: ['admin'] },
   { id: 'stats', label: 'Statistiche', roles: ['admin', 'manager'], module: 'stats' },

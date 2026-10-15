@@ -14,7 +14,7 @@ const NotificationSettings = () => {
   return (
     <section className="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)]" aria-label="Notifiche">
       <h2 className="text-sm font-semibold text-[var(--text-main)] mb-1">Notifiche</h2>
-      <p className="text-xs text-[var(--text-muted)] mb-4">Una nuova richiesta di prenotazione compare nella campanella in alto; qui scegli se deve anche suonare. Vale solo per questo dispositivo.</p>
+      <p className="text-xs text-[var(--text-muted)] mb-4">Una nuova richiesta di prenotazione o un ordine da asporto compare nella campanella in alto; qui scegli se deve anche suonare. Vale solo per questo dispositivo.</p>
       <div className="flex items-center gap-3">
         <button type="button" role="switch" aria-checked={on} aria-label="Suono delle notifiche" onClick={toggle}
           className={`shrink-0 w-11 h-6 p-0.5 rounded-full flex items-center cursor-pointer transition-colors ${on ? 'bg-[var(--accent)] justify-end' : 'bg-[var(--border-hover)] justify-start'}`}>

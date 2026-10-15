@@ -61,7 +61,10 @@ await addProduct(risto, 'Spaghetti alle vongole', 14, 'Primi', { courseId: primi
 await addProduct(risto, 'Vino della casa', 18, 'Bevande', { destination: 'bar' });
 await addProduct(risto, 'Acqua', 2, 'Bevande', { destination: 'bar' });
 // Prenotazioni: modulo acceso e due turni fissi, tutti i giorni
-await adminDb.query(`UPDATE tenants SET modules = array_append(modules, 'bookings') WHERE id = $1`, [risto.id]);
+await adminDb.query(`UPDATE tenants SET modules = array_cat(modules, ARRAY['bookings', 'takeaway']) WHERE id = $1`, [risto.id]);
+// Asporto: aperto tutti i giorni dalle 12:00 alle 23:30, fasce da 15 minuti, 12 porzioni per fascia
+for (let weekday = 0; weekday < 7; weekday += 1)
+  await adminDb.query(`INSERT INTO takeaway_hours (weekday, open_time, close_time, tenant_id) VALUES ($1, '00:00', '23:45', $2)`, [weekday, risto.id]);
 await adminDb.query(`INSERT INTO booking_shifts (name, start_time, duration_minutes, capacity, position, tenant_id) VALUES ('Cena 19:30', '19:30', 90, 30, 0, $1), ('Cena 21:00', '21:00', 90, 20, 1, $1)`, [risto.id]);
 const ristoSeed = { host: `${risto.slug}.standmanager.local`, admin: risto.username, kitchen: await addUser(risto, 'kitchen'), waiter: await addUser(risto, 'waiter'), cashier: await addUser(risto, 'cashier') };
 

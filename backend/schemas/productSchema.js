@@ -13,6 +13,8 @@ export const productSchema = z.object({
   print_destination: z.enum(['bar', 'kitchen', 'both']).default('both'),
   // Portata (modulo tavoli). Assente = non si cambia; null = nessuna portata.
   course_id: z.number().int().positive().nullable().optional(),
+  // Carico sul forno (modulo asporto): quante unità di capienza occupa una porzione. Assente = non si cambia.
+  takeaway_load: z.number().int().min(0).max(20).optional(),
 });
 
 export const bulkVisibilitySchema = z.object({

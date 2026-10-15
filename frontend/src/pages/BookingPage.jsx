@@ -3,6 +3,8 @@ import { Minus, Plus, Phone, Check, CalendarDays, Clock, Users } from 'lucide-re
 import { apiFetch } from '../utils/apiClient';
 import { formatDay } from '../smarteats/reservations/rules';
 import { btnPrimary, btn, input } from '../smarteats/floor/ui';
+import { PublicShell, StepSection } from '../components/public/PublicShell';
+import { useSystemTheme } from '../hooks/useSystemTheme';
 
 // Pagina pubblica di prenotazione (`/book`): il cliente sceglie quanti siete, il giorno e il turno, lascia i suoi
 // dati e invia una *richiesta*: il locale la conferma. `/book/<codice>` è la pagina di stato con l'annullo.
@@ -19,44 +21,8 @@ const STATUS_TEXT = {
   no_show: { title: 'Non vi abbiamo visti', body: 'Se è un errore, chiamateci.' },
 };
 
-const useSystemTheme = () => useEffect(() => {
-  const media = window.matchMedia?.('(prefers-color-scheme: dark)');
-  const apply = () => document.documentElement.classList.toggle('dark', !!media?.matches);
-  apply();
-  media?.addEventListener?.('change', apply);
-  return () => media?.removeEventListener?.('change', apply);
-}, []);
-
-const Shell = ({ info, children }) => (
-  // Il body dell'app è bloccato (`overflow: hidden`): questa pagina scorre dentro il proprio contenitore.
-  <div className="se-app fixed inset-0 overflow-y-auto overscroll-contain bg-[var(--bg-main)] text-[var(--text-main)]" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
-    <main className="max-w-md sm:max-w-3xl mx-auto px-4 pt-6 sm:pt-8 space-y-6" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
-      {info && (
-        <header className="space-y-1">
-          <p className="text-sm text-[var(--text-muted)]">Prenota un tavolo</p>
-          <h1 className="text-2xl font-semibold tracking-tight">{info.name}</h1>
-          {info.welcome && <p className="text-sm text-[var(--text-muted)] pt-1">{info.welcome}</p>}
-        </header>
-      )}
-      {children}
-      {info?.phone && (
-        <p className="text-sm text-[var(--text-muted)] text-center pt-2">
-          Preferite telefonare? <a className="inline-block py-2 text-[var(--accent)] font-medium" href={`tel:${info.phone.replace(/[^\d+]/g, '')}`}>{info.phone}</a>
-        </p>
-      )}
-      <div aria-hidden="true" style={{ height: 'env(safe-area-inset-bottom)' }} />
-    </main>
-  </div>
-);
-
-const Section = ({ n, title, children }) => (
-  <section className="space-y-3">
-    <h2 className="text-base font-semibold flex items-center gap-2">
-      <span className="w-6 h-6 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] text-sm flex items-center justify-center tabular-nums">{n}</span>{title}
-    </h2>
-    {children}
-  </section>
-);
+const Shell = ({ info, children }) => <PublicShell info={info} kicker="Prenota un tavolo">{children}</PublicShell>;
+const Section = StepSection;
 
 // Pagina di stato di una richiesta, dal link personale
 const Status = ({ token, info }) => {
