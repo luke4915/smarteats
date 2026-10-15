@@ -53,3 +53,10 @@ export function upcomingByTable(orders) {
 // Aggiorna a schermo lo stato di alcune righe, in attesa che il server risponda.
 export const withLineStatus = (orders, orderId, lineIds, status) =>
   orders.map(o => (o.id === orderId ? { ...o, items: o.items.map(i => (lineIds.includes(i.line_id) ? { ...i, prep_status: status } : i)) } : o));
+
+// Gli id delle comande comparse rispetto alla volta prima (per evidenziarle e far suonare un segnale). La prima
+// lettura non conta: chi apre la pagina non deve essere avvisato di tutto quello che c'era già.
+export const newOrderIds = (previous, orders) => {
+  if (previous === null) return [];
+  return orders.filter(o => !previous.has(o.id)).map(o => o.id);
+};
