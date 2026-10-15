@@ -49,7 +49,7 @@ const OrderMenu = ({ products, cart, tableName, onAdd, onBack }) => {
                 <span className="flex items-start gap-2 font-medium text-sm leading-tight text-[var(--text-main)]"><span className="mt-1 w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} aria-hidden="true" />{p.name}</span>
                 <span className="flex items-baseline justify-between w-full mt-2">
                   <span className="text-xs font-semibold tabular-nums text-[var(--text-muted)]">{formatEuro(p.price)}</span>
-                  {remaining !== null && remaining <= 10 && <span className="text-[11px] font-semibold text-orange-500">{out ? 'Esaurito' : `${remaining} rimasti`}</span>}
+                  {remaining !== null && remaining <= 10 && <span className="text-xs font-semibold text-orange-500">{out ? 'Esaurito' : `${remaining} rimasti`}</span>}
                 </span>
                 {inCart > 0 && <span className="absolute top-2 right-2 min-w-5 h-5 px-1 rounded-full bg-[var(--accent)] text-white text-xs font-semibold flex items-center justify-center">{inCart}</span>}
               </button>

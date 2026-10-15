@@ -25,7 +25,7 @@ const TableCard = ({ table, check, reservation, selected, onSelect }) => {
       className={`text-left rounded-lg border p-3 min-h-[92px] flex flex-col justify-between ${STATE_STYLE[state]} ${table.active ? interactive : 'opacity-40'} ${selected ? ring : ''}`}>
       <div className="flex items-start justify-between gap-2 w-full">
         <span className="text-lg font-semibold leading-none">{table.name}</span>
-        <span className="flex items-center gap-1 text-xs font-bold text-[var(--text-muted)]"><Users size={12} />{check ? check.covers : table.seats}</span>
+        <span className="flex items-center gap-1 text-sm font-medium text-[var(--text-muted)]"><Users size={12} />{check ? check.covers : table.seats}</span>
       </div>
       <div className="text-xs">
         <p className="font-semibold">{table.active ? STATE_LABEL[state] : 'Non in uso'}</p>
@@ -48,7 +48,7 @@ const mapTable = (checkOf, reservedOf, selectedId, onSelect) => (table, style, c
       className={`flex flex-col items-center justify-center border box-border overflow-hidden text-center ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${STATE_STYLE[state]} ${table.active ? interactive : 'opacity-40'} ${table.id === selectedId ? `${ring} z-10` : ''}`}>
       <span className="font-semibold leading-none text-[var(--text-main)] truncate max-w-full px-1" style={{ fontSize: Math.max(10, Math.min(cell * 0.45, 18)) }}>{table.name}</span>
       {check?.ready_items > 0 && (
-        <span title={`${check.ready_items} ${check.ready_items === 1 ? 'pronto' : 'pronti'}`} className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-emerald-500 text-white text-[11px] font-semibold leading-none flex items-center justify-center">{check.ready_items}</span>
+        <span title={`${check.ready_items} ${check.ready_items === 1 ? 'pronto' : 'pronti'}`} className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-emerald-500 text-white text-xs font-semibold leading-none flex items-center justify-center">{check.ready_items}</span>
       )}
       {cell >= 24 && table.h > 1 && (
         <span className="leading-none mt-0.5 text-[var(--text-muted)]" style={{ fontSize: Math.max(9, cell * 0.3) }}>
@@ -87,10 +87,10 @@ const FloorView = ({ rooms, checks, reserved = new Map(), service, selectedTable
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-4 text-xs font-bold text-[var(--text-muted)]">
+        <div className="flex items-center gap-4 text-sm font-medium text-[var(--text-muted)]">
           <span className={service ? 'text-green-500' : 'text-red-400'}>● {service ? service.name : 'Servizio chiuso'}</span>
-          <span>{checks.length} tavoli</span>
-          <span>{covers} coperti</span>
+          <span>{checks.length} {checks.length === 1 ? 'tavolo occupato' : 'tavoli occupati'}</span>
+          <span>{covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
         </div>
       </div>
 

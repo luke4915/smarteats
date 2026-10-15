@@ -59,8 +59,8 @@ const AdjustView = ({ detail, onBack, onDone }) => {
             className={`${row} w-full flex items-center gap-2.5 text-left disabled:opacity-50 disabled:cursor-not-allowed ${on ? '!border-[var(--accent)]' : ''}`}>
             <span className={`text-xs font-semibold w-5 h-5 flex items-center justify-center rounded shrink-0 ${on ? 'bg-[var(--accent)] text-white' : 'bg-[var(--border)] text-[var(--text-muted)]'}`}>{line.quantity}</span>
             <span className="flex-1 min-w-0 font-bold text-xs text-[var(--text-main)] truncate">{line.name}</span>
-            {locked && <span className="text-[11px] font-semibold text-[var(--text-muted)]">pagata</span>}
-            {!locked && line.type !== 'sale' && <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${line.type === 'gift' ? 'bg-purple-500/10 text-purple-500' : 'bg-orange-500/10 text-orange-500'}`}>{line.type === 'gift' ? 'Omaggio' : 'Sconto'}</span>}
+            {locked && <span className="text-xs font-semibold text-[var(--text-muted)]">pagata</span>}
+            {!locked && line.type !== 'sale' && <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${line.type === 'gift' ? 'bg-purple-500/10 text-purple-500' : 'bg-orange-500/10 text-orange-500'}`}>{line.type === 'gift' ? 'Omaggio' : 'Sconto'}</span>}
             <span className="font-semibold text-xs tabular-nums text-[var(--text-main)] shrink-0">{formatEuro(line.line_total)}</span>
           </button>
         );

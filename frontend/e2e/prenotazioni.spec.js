@@ -44,4 +44,10 @@ test('prenotazioni: inserisco, assegno il tavolo, la Sala lo segna, arrivato apr
   await page.getByRole('button', { name: /Arrivato · Rossi/ }).click();
   await expect(page.getByRole('button', { name: /^T2: Occupato/ })).toContainText('4/');
   await shot(page, 'prenotazioni-06-conto-aperto');
+
+  // Dall'agenda, «Vai al tavolo» porta sul tavolo giusto (non solo alla Sala)
+  await page.getByRole('link', { name: 'Prenotazioni' }).click();
+  await page.getByRole('button', { name: /Rossi/ }).first().click();
+  await page.getByRole('button', { name: 'Vai al tavolo' }).click();
+  await expect(page.getByRole('heading', { name: 'T2', exact: true })).toBeVisible();
 });

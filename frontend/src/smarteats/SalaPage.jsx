@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
@@ -26,6 +27,8 @@ const SalaPage = ({ user, service, event }) => {
   const [checks, setChecks] = useState([]);
   const [reservations, setReservations] = useState([]);   // prenotazioni di oggi (modulo bookings): per segnare i tavoli prenotati
   const [selection, setSelection] = useState(null);   // { table, checkId|null }
+  const location = useLocation();
+  const navigate = useNavigate();
   const [ordering, setOrdering] = useState(false);
   const [draftOpen, setDraftOpen] = useState(false);  // solo su schermo stretto: la comanda sopra la carta
   const [cart, setCart] = useState([]);
@@ -44,6 +47,15 @@ const SalaPage = ({ user, service, event }) => {
   }, [showToast, user.modules]);
 
   useEffect(() => { load(); }, [load, service?.id]);
+
+  // Si arriva da «Vai al tavolo» delle prenotazioni: si apre quel tavolo, poi lo stato di navigazione si butta
+  useEffect(() => {
+    const target = location.state;
+    if (!rooms || !target?.tableId) return;
+    const table = rooms.flatMap(r => r.tables).find(t => t.id === target.tableId);
+    if (table) setSelection({ table, checkId: target.checkId ?? null });
+    navigate(location.pathname, { replace: true, state: null });
+  }, [rooms, location, navigate]);
   // La cucina segna pronta una portata: lo si dice a chi è in sala, così la porta al tavolo (niente da confermare)
   useEffect(() => {
     const o = event?.type === 'order_updated' ? event.order : null;

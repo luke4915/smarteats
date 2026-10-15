@@ -116,7 +116,7 @@ const PrenotazioniPage = ({ event }) => {
     : <ReservationPanel key={current.id + current.status} reservation={current} tableNames={tableNames} onBack={close}
         onChanged={async () => { await reload(); }}
         onTables={() => setPanel({ kind: 'tables', id: current.id })} onEdit={() => setPanel({ kind: 'edit', id: current.id })}
-        onOpenCheck={() => navigate('/sala')} />;
+        onOpenCheck={() => navigate('/sala', { state: { tableId: current.table_ids[0] ?? null, checkId: current.check_id } })} />;
 
   if (!narrow) {
     return (

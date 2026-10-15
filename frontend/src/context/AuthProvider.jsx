@@ -80,6 +80,22 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(refreshTimer.current);
   }, [executeRefresh, startRefreshTimer, clearSession]);
 
+  // Il cookie di sessione è uno solo per sottodominio: se in un'altra scheda ci si collega con un altro utente,
+  // questa continuerebbe a mostrare quello vecchio mentre le richieste partono con il nuovo (permessi «sbagliati»).
+  // Al ritorno sulla scheda si controlla chi è davvero collegato.
+  useEffect(() => {
+    const check = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const actual = await fetchWithAuth('/auth/me');
+        setUser(u => (u && actual?.id !== u.id ? actual : u));
+      } catch { /* offline o sessione scaduta: ci pensano le richieste normali */ }
+    };
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('focus', check);
+    return () => { document.removeEventListener('visibilitychange', check); window.removeEventListener('focus', check); };
+  }, []);
+
   const login = (userData) => {
     setUser(userData);
     remember('user', userData);

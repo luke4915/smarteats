@@ -64,7 +64,7 @@ const ReservationPanel = ({ reservation: r, tableNames, onBack, onChanged, onTab
             ? <button className={`${btnPrimary} w-full !h-12`} disabled={busy} onClick={() => act('arrived')}>Arrivato · apri il conto</button>
             : <button className={`${btnPrimary} w-full !h-12`} onClick={onTables}>Assegna un tavolo</button>
         ) : r.status === 'seated' && r.check_id ? (
-          <button className={`${btn} w-full`} onClick={onOpenCheck}>Vai al conto</button>
+          <button className={`${btn} w-full`} onClick={onOpenCheck}>Vai al tavolo</button>
         ) : null
       }>
       <div className="px-1 space-y-4 pb-2">

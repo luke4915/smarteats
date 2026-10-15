@@ -42,7 +42,7 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
         onClick={() => toggle(table)} title={other ? `${other.customer_name} · ${other.start_time}` : `${table.seats} posti`}
         className={`flex flex-col items-center justify-center border box-border overflow-hidden text-center transition ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${base} ${style ? '' : 'min-h-14 px-2'}`}>
         <span className="font-semibold leading-none truncate max-w-full px-1" style={style ? { fontSize: Math.max(12, Math.min(cell * 0.5, 18)) } : undefined}>{table.name}</span>
-        {(!style || cell >= 22) && <span className="text-[11px] leading-none mt-0.5 opacity-80 truncate max-w-full px-1">{other ? other.customer_name : `${table.seats} posti`}</span>}
+        {(!style || cell >= 22) && <span className="text-xs leading-none mt-0.5 opacity-80 truncate max-w-full px-1">{other ? other.customer_name : `${table.seats} posti`}</span>}
         {on && <Check size={12} className="mt-0.5" />}
       </button>
     );

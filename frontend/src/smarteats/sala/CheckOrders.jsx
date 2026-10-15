@@ -59,14 +59,14 @@ const CheckOrders = ({ detail, user, onChanged }) => {
                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                   <span className="bg-[var(--accent)] text-white text-xs font-semibold w-5 h-5 flex items-center justify-center rounded shrink-0">{item.quantity}</span>
                   <span className={`font-bold text-xs text-[var(--text-main)] leading-tight truncate ${canceled ? 'line-through' : ''}`}>{item.name}</span>
-                  {!canceled && item.type !== 'sale' && <span className={`shrink-0 text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${item.type === 'gift' ? 'bg-purple-500/10 text-purple-500' : 'bg-orange-500/10 text-orange-500'}`}>{item.type === 'gift' ? 'Omaggio' : 'Sconto'}</span>}
+                  {!canceled && item.type !== 'sale' && <span className={`shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-full ${item.type === 'gift' ? 'bg-purple-500/10 text-purple-500' : 'bg-orange-500/10 text-orange-500'}`}>{item.type === 'gift' ? 'Omaggio' : 'Sconto'}</span>}
                   {!canceled && !isCover && order.status !== 'completed' && (item.prep_status === 'ready' || item.prep_status === 'served') && <Check size={14} className="shrink-0 text-emerald-500" aria-label="Pronto" />}
-                  {!canceled && paid && <span className="shrink-0 text-[11px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">{item.remaining_quantity === 0 ? 'Pagata' : `${item.paid_quantity}/${item.quantity} pagate`}</span>}
+                  {!canceled && paid && <span className="shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500">{item.remaining_quantity === 0 ? 'Pagata' : `${item.paid_quantity}/${item.quantity} pagate`}</span>}
                 </div>
                 <span className="font-semibold text-xs tabular-nums text-[var(--text-main)] shrink-0">{formatEuro(item.line_total)}</span>
               </div>
               {item.modifiers?.length > 0 && <p className="mt-0.5 ml-7 text-xs text-[var(--text-muted)]">{item.modifiers.map(m => m.name).join(', ')}</p>}
-              {item.note && <p className="mt-1 ml-7 text-[11px] text-[var(--text-muted)]">» {item.note}</p>}
+              {item.note && <p className="mt-1 ml-7 text-xs text-[var(--text-muted)]">» {item.note}</p>}
             </div>
           );
         })}

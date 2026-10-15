@@ -8,7 +8,7 @@ const PanelFrame = ({ title, subtitle, subtitleClass = 'text-[var(--text-muted)]
       {onBack && <button onClick={onBack} aria-label="Indietro" className="p-1.5 -ml-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-2)]"><ChevronLeft size={22} /></button>}
       <div className="min-w-0 flex-1">
         <h2 className="text-xl font-semibold text-[var(--text-main)] truncate">{title}</h2>
-        {subtitle && <span className={`text-[11px] font-semibold ${subtitleClass}`}>{subtitle}</span>}
+        {subtitle && <span className={`text-sm font-medium ${subtitleClass}`}>{subtitle}</span>}
       </div>
       {actions}
     </header>
