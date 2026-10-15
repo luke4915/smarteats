@@ -16,6 +16,10 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
   await shot(page, 'portale-01-impostazioni');
 
+  // Anche chi è già dentro (il titolare che prova la pagina) la vede, non viene rimandato alla Sala
+  await page.goto(`${urlOf(r.host)}/prenota`);
+  await expect(page.getByText('Quanti siete?')).toBeVisible();
+
   // Il cliente: telefono, nessun accesso
   const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, ignoreHTTPSErrors: true })).newPage();
   await phone.goto(`${urlOf(r.host)}/prenota`);

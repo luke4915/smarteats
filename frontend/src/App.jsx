@@ -114,6 +114,8 @@ const App = () => {
   const checkedRole = useRef(null);
   useEffect(() => {
     if (!user?.role || checkedRole.current === user.role) return;
+    // La pagina pubblica di prenotazione non è una vista di lavoro: non si rimanda alla pagina iniziale
+    if (window.location.pathname === '/prenota' || window.location.pathname.startsWith('/prenota/')) return;
     checkedRole.current = user.role;
     const path = window.location.pathname.replace('/', '') || 'dashboard';
     if (canView(user.role, path, user.modules)) return setView(path);
