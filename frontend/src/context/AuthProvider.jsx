@@ -10,6 +10,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const refreshTimer = useRef(null);
+  const userRef = useRef(null);
+  userRef.current = user;
 
   // Sessione chiusa (logout, rinnovo rifiutato, licenza scaduta): si torna al login.
   const clearSession = useCallback(() => {
@@ -85,7 +87,7 @@ export const AuthProvider = ({ children }) => {
   // Al ritorno sulla scheda si controlla chi è davvero collegato.
   useEffect(() => {
     const check = async () => {
-      if (document.visibilityState !== 'visible') return;
+      if (document.visibilityState !== 'visible' || !userRef.current) return;
       try {
         const actual = await fetchWithAuth('/auth/me');
         setUser(u => (u && actual?.id !== u.id ? actual : u));

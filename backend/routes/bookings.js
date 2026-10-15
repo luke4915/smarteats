@@ -14,6 +14,7 @@ import {
   reservationTablesSchema, arrivedSchema, reservationsQuerySchema, availabilityQuerySchema,
 } from '../schemas/bookingSchema.js';
 import { canTransition, freeSeats, shiftOpenOn, tableConflicts, confirmationMessage, REQUEST_TTL_HOURS } from '../utils/bookings.js';
+import { SHIFT_COLUMNS, CLOSURE_COLUMNS, lockShift, closuresOn, assertBookable } from '../utils/bookingDb.js';
 import { openCheckOnTable } from '../utils/openCheck.js';
 import { getCheckSummary } from '../utils/checks.js';
 
@@ -21,8 +22,6 @@ import { getCheckSummary } from '../utils/checks.js';
 // li scrive solo l'admin. Disegno e regole: docs/design-prenotazioni.md. Evento: `reservation_updated` al personale.
 const router = express.Router();
 const guard = [authenticate, requireModule('bookings')];
-const SHIFT_COLUMNS = `id, name, to_char(start_time, 'HH24:MI') AS start_time, duration_minutes, weekdays, capacity, active, position`;
-const CLOSURE_COLUMNS = `id, to_char(date_from, 'YYYY-MM-DD') AS date_from, to_char(date_to, 'YYYY-MM-DD') AS date_to, shift_id, reason`;
 const RESERVATION_SQL = `
   SELECT r.id, to_char(r.date, 'YYYY-MM-DD') AS date, r.shift_id, r.party_size, r.status, r.customer_name, r.phone, r.email,
          r.notes, r.source, r.external_id, r.public_token, r.requested_at, r.decided_by, r.decided_at, r.decline_reason, r.check_id,
@@ -53,27 +52,6 @@ export default function (broadcast) {
     const r = await loadOne(db, id);
     return { ...r, confirmation_message: confirmationMessage({ restaurant: await restaurantName(db, tenantId), date: r.date, shift: r.shift, party_size: r.party_size, customer_name: r.customer_name }) };
   };
-
-  // Blocca il turno (serializza chi prenota lo stesso turno) e lo ritorna.
-  const lockShift = async (db, shiftId) => {
-    const { rows } = await db.query(`SELECT ${SHIFT_COLUMNS} FROM booking_shifts WHERE id = $1 FOR UPDATE`, [shiftId]);
-    if (!rows.length) throw new HttpError(404, 'Turno non trovato');
-    return rows[0];
-  };
-  const closuresOn = async (db, date) =>
-    (await db.query(`SELECT ${CLOSURE_COLUMNS} FROM booking_closures WHERE date_from <= $1 AND date_to >= $1`, [date])).rows;
-
-  // Il turno è prenotabile in quella data e i posti bastano (a meno che il personale non accetti di proposito).
-  async function assertBookable(db, shift, date, partySize, { ignoreCapacity = false, excludeId = null } = {}) {
-    const open = shiftOpenOn(shift, date, await closuresOn(db, date));
-    if (!open.open) throw new HttpError(409, `Il turno non è prenotabile: ${open.reason}`, 'SHIFT_CLOSED');
-    const { rows } = await db.query(
-      `SELECT status, party_size, requested_at FROM reservations WHERE date = $1 AND shift_id = $2 AND ($3::int IS NULL OR id <> $3)`,
-      [date, shift.id, excludeId]);
-    const { free } = freeSeats(shift.capacity, rows);
-    if (!ignoreCapacity && free < partySize)
-      throw new HttpError(409, free > 0 ? `Posti insufficienti: ne restano ${free}` : 'Il turno è al completo', 'NO_CAPACITY');
-  }
 
   // Assegna i tavoli (sostituisce quelli di prima) controllando che esistano, siano attivi e non siano già impegnati da
   // un'altra prenotazione attiva con orario sovrapposto.

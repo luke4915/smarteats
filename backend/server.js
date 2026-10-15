@@ -9,6 +9,7 @@ import { createWebSocketHub } from './ws.js';
 import { pool } from './db.js';
 import logger from './logger.js';
 import { checkSecrets } from './utils/jwtConfig.js';
+import { purgeAllTenants } from './utils/bookingRetention.js';
 
 dotenv.config();
 
@@ -58,3 +59,7 @@ process.on('unhandledRejection', (err) => { logger.fatal({ err }, 'Promise rifiu
 
 const PORT = parseInt(process.env.PORT) || 3000;
 server.listen(PORT, '0.0.0.0', () => logger.info(`API e WSS in ascolto su https://0.0.0.0:${PORT}`));
+
+// Conservazione dei dati dei clienti: una pulizia all'avvio e poi una al giorno
+purgeAllTenants().catch(err => logger.error({ err }, 'Pulizia dati prenotazioni non riuscita'));
+setInterval(() => purgeAllTenants().catch(err => logger.error({ err }, 'Pulizia dati prenotazioni non riuscita')), 24 * 60 * 60 * 1000).unref();

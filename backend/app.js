@@ -15,6 +15,7 @@ import statsRoutes from './routes/stats.js';
 import { roomsRouter, tablesRouter } from './routes/rooms.js';
 import coursesRouter from './routes/courses.js';
 import bookingRoutes from './routes/bookings.js';
+import publicBookingRoutes from './routes/publicBooking.js';
 import { modifierGroupsRouter, productModifiersRouter } from './routes/modifierGroups.js';
 import checkRoutes from './routes/checks.js';
 import healthRoutes from './routes/health.js';
@@ -23,7 +24,7 @@ import exportRoutes from './routes/exports.js';
 import printSettingsRoutes from './routes/printSettings.js';
 import settingsRoutes from './routes/settings.js';
 import masterRoutes from './routes/master.js';
-import { loginLimiter, apiLimiter, ordersLimiter, devicesLimiter, exportsLimiter } from './middleware/rateLimiter.js';
+import { loginLimiter, apiLimiter, ordersLimiter, devicesLimiter, exportsLimiter, publicBookingReadLimiter, publicBookingWriteLimiter } from './middleware/rateLimiter.js';
 import { isAllowedOrigin } from './utils/origins.js';
 import logger from './logger.js';
 
@@ -71,6 +72,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
     app.use('/api/orders', ordersLimiter);
     app.use('/api/devices', devicesLimiter);
     app.use('/api/exports', exportsLimiter);
+    app.use('/api/public/booking', (req, res, next) => (req.method === 'POST' ? publicBookingWriteLimiter : publicBookingReadLimiter)(req, res, next));
   }
 
   app.use('/api/auth', authRoutes);
@@ -88,6 +90,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/tables', tablesRouter);
   app.use('/api/courses', coursesRouter);
   app.use('/api/bookings', bookingRoutes(broadcast));
+  app.use('/api/public/booking', publicBookingRoutes(broadcast));
   app.use('/api/checks', checkRoutes(broadcast));
   app.use('/api/settings', settingsRoutes);
   app.use('/api/master', masterRoutes);
