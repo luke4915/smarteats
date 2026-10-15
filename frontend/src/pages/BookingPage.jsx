@@ -28,8 +28,9 @@ const useSystemTheme = () => useEffect(() => {
 }, []);
 
 const Shell = ({ info, children }) => (
-  <div className="se-app min-h-[100dvh] bg-[var(--bg-main)] text-[var(--text-main)]">
-    <main className="max-w-md mx-auto px-4 py-8 space-y-6">
+  // Il body dell'app è bloccato (`overflow: hidden`): questa pagina scorre dentro il proprio contenitore.
+  <div className="se-app fixed inset-0 overflow-y-auto overscroll-contain bg-[var(--bg-main)] text-[var(--text-main)]" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+    <main className="max-w-md sm:max-w-3xl mx-auto px-4 pt-6 sm:pt-8 space-y-6" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
       {info && (
         <header className="space-y-1">
           <p className="text-sm text-[var(--text-muted)]">Prenota un tavolo</p>
@@ -40,9 +41,10 @@ const Shell = ({ info, children }) => (
       {children}
       {info?.phone && (
         <p className="text-sm text-[var(--text-muted)] text-center pt-2">
-          Preferite telefonare? <a className="text-[var(--accent)] font-medium" href={`tel:${info.phone.replace(/[^\d+]/g, '')}`}>{info.phone}</a>
+          Preferite telefonare? <a className="inline-block py-2 text-[var(--accent)] font-medium" href={`tel:${info.phone.replace(/[^\d+]/g, '')}`}>{info.phone}</a>
         </p>
       )}
+      <div aria-hidden="true" style={{ height: 'env(safe-area-inset-bottom)' }} />
     </main>
   </div>
 );
@@ -171,7 +173,8 @@ const BookingPage = () => {
 
   return (
     <Shell info={info}>
-      <form className="space-y-7" onSubmit={send} noValidate>
+      <form className="space-y-7 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-x-10 sm:items-start" onSubmit={send} noValidate>
+        <div className="space-y-7">
         <Section n={1} title="Quanti siete?">
           <div className="flex items-center gap-4">
             <button type="button" className={`${btn} !w-12 !px-0`} aria-label="Una persona in meno" disabled={party <= 1} onClick={() => setParty(p => p - 1)}><Minus size={18} /></button>
@@ -213,17 +216,21 @@ const BookingPage = () => {
           </Section>
         )}
 
+        </div>
+
+        <div className="mt-7 sm:mt-0 space-y-7">
+        {!shiftId && <p className="hidden sm:block text-sm text-[var(--text-muted)] rounded-xl border border-dashed border-[var(--border)] p-5">Scegliete giorno e ora: qui compaiono i campi per i vostri dati.</p>}
         {shiftId && (
           <Section n={4} title="I vostri dati">
             <div className="space-y-3">
               <label className="block"><span className="text-sm font-medium">Nome</span>
-                <input className={`${input} mt-1`} autoComplete="name" value={form.customer_name} onChange={setField('customer_name')} maxLength={80} required /></label>
+                <input className={`${input} !text-base !h-12 mt-1`} autoComplete="name" value={form.customer_name} onChange={setField('customer_name')} maxLength={80} required /></label>
               <label className="block"><span className="text-sm font-medium">Telefono</span>
-                <input className={`${input} mt-1`} type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={setField('phone')} maxLength={40} required /></label>
+                <input className={`${input} !text-base !h-12 mt-1`} type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={setField('phone')} maxLength={40} required /></label>
               <label className="block"><span className="text-sm font-medium">Email <span className="text-[var(--text-muted)] font-normal">(facoltativa)</span></span>
-                <input className={`${input} mt-1`} type="email" inputMode="email" autoComplete="email" value={form.email} onChange={setField('email')} maxLength={120} /></label>
+                <input className={`${input} !text-base !h-12 mt-1`} type="email" inputMode="email" autoComplete="email" value={form.email} onChange={setField('email')} maxLength={120} /></label>
               <label className="block"><span className="text-sm font-medium">Note <span className="text-[var(--text-muted)] font-normal">(allergie, seggiolone…)</span></span>
-                <textarea className={`${input} mt-1 !h-20 py-2`} value={form.notes} onChange={setField('notes')} maxLength={500} /></label>
+                <textarea className={`${input} !text-base mt-1 !h-24 py-2`} value={form.notes} onChange={setField('notes')} maxLength={500} /></label>
               {/* Campo trappola: le persone non lo vedono */}
               <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, overflow: 'hidden' }}>
                 <label>Sito web<input tabIndex={-1} autoComplete="off" value={form.website} onChange={setField('website')} /></label>
@@ -239,10 +246,14 @@ const BookingPage = () => {
               <span><b>{formatDay(date)}</b> · {shift?.start_time} · {party} {party === 1 ? 'persona' : 'persone'}</span>
             </div>
             {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
-            <button type="submit" className={`${btnPrimary} w-full !h-12 !text-base`} disabled={!valid || sending}>{sending ? 'Invio…' : 'Invia richiesta'}</button>
-            <p className="text-xs text-[var(--text-muted)] text-center">Non è ancora una prenotazione: il locale la conferma a breve.</p>
+            {/* Il pulsante resta sempre a portata di pollice, anche scorrendo il modulo */}
+            <div className="sticky bottom-0 -mx-4 px-4 pt-3 bg-[var(--bg-main)] border-t border-[var(--border)] space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+              <button type="submit" className={`${btnPrimary} w-full !h-12 !text-base`} disabled={!valid || sending}>{sending ? 'Invio…' : 'Invia richiesta'}</button>
+              <p className="text-xs text-[var(--text-muted)] text-center">Non è ancora una prenotazione: il locale la conferma a breve.</p>
+            </div>
           </Section>
         )}
+        </div>
         {error && !shiftId && <p className="text-sm text-red-500" role="alert">{error}</p>}
       </form>
     </Shell>
