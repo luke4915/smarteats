@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { EVENTS, EVENT_IDS, templateName, renderBody, normalizeMobile, sendAtFor, nextAttempt, staleReason, dayLabel, euro } from '../utils/whatsapp.js';
+import { EVENTS, EVENT_IDS, templateName, renderBody, normalizeMobile, sendAtFor, nextAttempt, staleReason, dayLabel, euro, thanksSendAt, classifyInbound, inboundReply, needsMarketingConsent } from '../utils/whatsapp.js';
 
 test('numeri: cellulari italiani in vari modi, fissi e numeri non validi', () => {
   for (const n of ['333 123 4567', '3331234567', '+39 333 1234567', '0039 333 123 4567', '39 333 1234567', '(+39) 333-123-4567'])
@@ -14,7 +14,7 @@ test('numeri: cellulari italiani in vari modi, fissi e numeri non validi', () =>
 });
 
 test('ogni evento ha testo, variabili coerenti e un nome di modello', () => {
-  assert.equal(EVENT_IDS.length, 14);
+  assert.equal(EVENT_IDS.length, 15);
   for (const id of EVENT_IDS) {
     const e = EVENTS[id];
     const placeholders = [...e.body.matchAll(/\{\{(\d+)\}\}/g)].map(m => Number(m[1]));
@@ -56,4 +56,33 @@ test('un avviso non parte se la pratica nel frattempo è cambiata', () => {
   assert.equal(staleReason('takeaway.received', { status: 'accepted' }), 'GIA_GESTITA');
   assert.equal(staleReason('takeaway.ready', { status: 'picked_up' }), 'STATO_CAMBIATO');
   assert.equal(staleReason('takeaway.accepted', { status: 'picked_up' }), null);
+});
+
+test('«grazie»: 2 ore dopo la fine del turno; dopo le 22:30 la mattina dopo alle 10:00', () => {
+  // d'estate Roma è UTC+2: fine turno 21:00 locale = 19:00Z → 23:00 locale: troppo tardi → il giorno dopo alle 10:00 (08:00Z)
+  assert.equal(thanksSendAt(new Date('2026-07-10T19:00:00Z')).toISOString(), '2026-07-11T08:00:00.000Z');
+  // fine turno 14:30 locale = 12:30Z → 16:30 locale = 14:30Z
+  assert.equal(thanksSendAt(new Date('2026-07-10T12:30:00Z')).toISOString(), '2026-07-10T14:30:00.000Z');
+  // fine turno 20:30 locale (18:30Z) → 22:30 locale esatto: si manda
+  assert.equal(thanksSendAt(new Date('2026-07-10T18:30:00Z')).toISOString(), '2026-07-10T20:30:00.000Z');
+  // d'inverno (UTC+1): fine turno 22:00 locale = 21:00Z → 00:00 locale: aspetta le 10:00 dello stesso giorno (09:00Z)
+  assert.equal(thanksSendAt(new Date('2026-01-14T21:00:00Z')).toISOString(), '2026-01-15T09:00:00.000Z');
+});
+
+test('«grazie» è marketing: serve un consenso separato; gli avvisi no', () => {
+  assert.equal(EVENTS['reservation.thanks'].category, 'marketing');
+  assert.equal(needsMarketingConsent('reservation.thanks'), true);
+  assert.equal(needsMarketingConsent('reservation.confirmed'), false);
+  assert.equal(staleReason('reservation.thanks', { status: 'completed' }), null);
+  assert.equal(staleReason('reservation.thanks', { status: 'confirmed' }), 'STATO_CAMBIATO');
+});
+
+test('messaggi in arrivo: STOP, RIPRENDI e tutto il resto', () => {
+  for (const t of ['STOP', ' stop ', 'Stop!', 'basta', 'Annulla iscrizione', 'CANCELLAMI']) assert.equal(classifyInbound(t), 'optout', t);
+  for (const t of ['riprendi', 'START', 'Riattiva']) assert.equal(classifyInbound(t), 'optin', t);
+  for (const t of ['ciao', 'vorrei cambiare orario', 'stop ai ritardi', '', null]) assert.equal(classifyInbound(t), 'other', String(t));
+  assert.match(inboundReply('other', { locale: 'Pizzeria Rossi', phone: '0123 456789' }), /Per parlare con Pizzeria Rossi chiama il 0123 456789/);
+  assert.match(inboundReply('other', {}), /contattalo direttamente/);
+  assert.match(inboundReply('optout'), /non riceverai più avvisi/);
+  assert.match(inboundReply('optin'), /riceverai di nuovo/);
 });

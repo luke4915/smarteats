@@ -51,6 +51,8 @@ const MenuPage = lazy(() => import('./pages/MenuPage'));
 const MasterPage = lazy(() => import('./pages/MasterPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const OrderPage = lazy(() => import('./pages/OrderPage'));
+const LegalPage = lazy(() => import('./pages/LegalPage'));
+const ShortLink = lazy(() => import('./pages/ShortLink'));
 
 const PageLoading = () => (
   <div className="h-full min-h-[50vh] flex items-center justify-center text-[var(--text-main)]">Caricamento...</div>
@@ -125,7 +127,7 @@ const App = () => {
   useEffect(() => {
     if (!user?.role || checkedRole.current === user.role) return;
     // La pagina pubblica di prenotazione non è una vista di lavoro: non si rimanda alla pagina iniziale
-    if (/^\/(book|order)(\/|$)/.test(window.location.pathname)) return;
+    if (/^\/(book|order|s|privacy|terms)(\/|$)/.test(window.location.pathname)) return;
     checkedRole.current = user.role;
     const path = window.location.pathname.replace('/', '') || 'dashboard';
     if (canView(user.role, path, user.modules)) return setView(path);
@@ -183,6 +185,8 @@ const App = () => {
   // Prenotazione dei clienti: pubblica, anche per chi ha una sessione aperta in questo browser
   if (/^\/book(\/|$)/.test(window.location.pathname)) return <Suspense fallback={<PageLoading />}><BookingPage /></Suspense>;
   if (/^\/order(\/|$)/.test(window.location.pathname)) return <Suspense fallback={<PageLoading />}><OrderPage /></Suspense>;
+  if (window.location.pathname === '/privacy' || window.location.pathname === '/terms') return <Suspense fallback={<PageLoading />}><LegalPage kind={window.location.pathname.slice(1)} /></Suspense>;
+  if (/^\/s\//.test(window.location.pathname)) return <Suspense fallback={<PageLoading />}><ShortLink /></Suspense>;
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">Caricamento...</div>;
 

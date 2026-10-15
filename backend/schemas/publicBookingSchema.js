@@ -20,6 +20,8 @@ export const portalRequestSchema = z.object({
   email: z.string().trim().max(120).default('')
     .refine(v => v === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), 'L\'email non sembra valida'),
   notes: z.string().trim().max(500).default(''),
+  // consenso separato e facoltativo ai messaggi di ringraziamento e novità del locale
+  marketing: z.boolean().default(false),
   consent: z.literal(true, { errorMap: () => ({ message: 'Serve il consenso al trattamento dei dati' }) }),
   // Campo «trappola»: una persona non lo vede e lo lascia vuoto; un programma automatico lo compila.
   website: z.string().max(200).default(''),

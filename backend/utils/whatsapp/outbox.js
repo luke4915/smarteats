@@ -5,7 +5,7 @@ import { getTenantModules } from '../tenantModules.js';
 import { PORTAL_TZ } from '../bookingPortal.js';
 import {
   EVENTS, EVENT_IDS, STATUS_BUTTON_EVENTS, eventSettingKey, QUOTA_SETTING_KEY, DEFAULT_MONTHLY_QUOTA, MAX_MESSAGES_PER_CASE,
-  templateName, normalizeMobile, sendAtFor, nextAttempt, staleReason, dayLabel, euro, REMINDER_HOURS,
+  templateName, normalizeMobile, sendAtFor, nextAttempt, staleReason, dayLabel, euro, REMINDER_HOURS, needsMarketingConsent,
 } from '../whatsapp.js';
 import { getDriver } from './driver.js';
 
@@ -22,14 +22,17 @@ export async function loadContext(db, refType, refId) {
       `SELECT r.id, r.status, r.customer_name, r.phone, r.party_size, r.public_token,
               to_char(r.date, 'YYYY-MM-DD') AS date, to_char(s.start_time, 'HH24:MI') AS time,
               ((r.date + s.start_time) AT TIME ZONE $2) AS starts_at,
-              (SELECT name FROM tenants WHERE id = r.tenant_id) AS locale
+              ((r.date + s.start_time) AT TIME ZONE $2) + make_interval(mins => s.duration_minutes) AS ends_at,
+              r.marketing_consent_at,
+              (SELECT name FROM tenants WHERE id = r.tenant_id) AS locale, (SELECT slug FROM tenants WHERE id = r.tenant_id) AS slug
        FROM reservations r JOIN booking_shifts s ON s.id = r.shift_id WHERE r.id = $1`, [refId, PORTAL_TZ]);
     return rows[0] ?? null;
   }
   const { rows } = await db.query(
     `SELECT t.id, t.status, t.customer_name, t.phone, t.total, t.public_token,
             to_char(t.pickup_at AT TIME ZONE $2, 'YYYY-MM-DD') AS date, to_char(t.pickup_at AT TIME ZONE $2, 'HH24:MI') AS time,
-            t.pickup_at AS starts_at, (SELECT name FROM tenants WHERE id = t.tenant_id) AS locale
+            t.pickup_at AS starts_at, (SELECT name FROM tenants WHERE id = t.tenant_id) AS locale,
+            (SELECT slug FROM tenants WHERE id = t.tenant_id) AS slug
      FROM takeaway_orders t WHERE t.id = $1`, [refId, PORTAL_TZ]);
   return rows[0] ?? null;
 }
@@ -73,12 +76,15 @@ export async function enqueue(db, refType, refId, event, { now = new Date() } = 
     if (!cfg.events[eventId]) return null;
     const ctx = await loadContext(db, refType, refId);
     if (!ctx || !String(ctx.phone ?? '').trim()) return null;
-    const sendAt = sendAtFor(eventId, { now, startsAt: ctx.starts_at ? new Date(ctx.starts_at) : null });
+    // il messaggio di fidelizzazione parte solo con il consenso dato con la casella dedicata
+    if (needsMarketingConsent(eventId) && !ctx.marketing_consent_at) return null;
+    const sendAt = sendAtFor(eventId, { now, startsAt: ctx.starts_at ? new Date(ctx.starts_at) : null, endsAt: ctx.ends_at ? new Date(ctx.ends_at) : null });
     if (!sendAt) return null;
 
     const to = normalizeMobile(ctx.phone);
     let status = 'queued', error = '';
     if (!to) { status = 'skipped'; error = 'NUMERO_NON_VALIDO'; }
+    else if (await isOptedOut(db, to)) { status = 'skipped'; error = 'DISISCRITTO'; }
     else {
       const { rows: [c] } = await db.query(
         `SELECT COUNT(*) FILTER (WHERE status <> 'skipped')::int AS sent FROM whatsapp_messages WHERE ref_type = $1 AND ref_id = $2`, [refType, refId]);
@@ -95,6 +101,12 @@ export async function enqueue(db, refType, refId, event, { now = new Date() } = 
     logger.error({ err, refType, refId, event }, 'Errore messa in coda avviso WhatsApp');
     return null;
   }
+}
+
+// Chi ha scritto STOP non riceve più nulla da questo numero (per nessun locale), finché non scrive RIPRENDI
+export async function isOptedOut(db, phone) {
+  const { rows } = await db.query('SELECT 1 FROM whatsapp_optouts WHERE phone = $1', [phone]);
+  return rows.length > 0;
 }
 
 // Un ordine di cucina è concluso: se è un ordine da asporto accettato, il cliente va avvisato che è pronto.
@@ -116,6 +128,8 @@ async function processOne(db, m, driver, cfg, now) {
   if (!ctx) return mark('skipped', 'PRATICA_NON_TROVATA');
   const stale = staleReason(eventId, ctx);
   if (stale) return mark('skipped', stale);
+  if (await isOptedOut(db, m.to_phone)) return mark('skipped', 'DISISCRITTO');
+  if (needsMarketingConsent(eventId) && !ctx.marketing_consent_at) return mark('skipped', 'SENZA_CONSENSO');
 
   if (eventId === 'reservation.reminder') {
     const startsAt = new Date(ctx.starts_at);
@@ -129,8 +143,13 @@ async function processOne(db, m, driver, cfg, now) {
   try {
     const { id } = await driver.send({
       to: m.to_phone, template: m.template, header: `SmartEats × ${ctx.locale}`, params,
-      buttonToken: STATUS_BUTTON_EVENTS.has(eventId) ? ctx.public_token : null,
+      // il bottone punta a `<APP_DOMAIN>/s/<locale>/<book|order>/<codice>`, che porta alla pagina di stato del locale
+      buttonToken: STATUS_BUTTON_EVENTS.has(eventId) ? `${ctx.slug}/${m.ref_type === 'reservation' ? 'book' : 'order'}/${ctx.public_token}` : null,
     });
+    // dal webhook di Meta (stato, risposta del cliente) si risale al locale da questo id e da questo numero
+    await db.query(
+      `INSERT INTO whatsapp_message_tenants (wa_message_id, tenant_id, to_phone) VALUES ($1, $2, $3) ON CONFLICT (wa_message_id) DO NOTHING`,
+      [id, m.tenant_id, m.to_phone]);
     return mark('sent', '', { waId: id, params, sentAt: now, attempts: m.attempts + 1 });
   } catch (err) {
     const attempts = m.attempts + 1;

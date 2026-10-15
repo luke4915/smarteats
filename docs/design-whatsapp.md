@@ -1,6 +1,8 @@
 # WhatsApp: disegno
 
-Stato: **W1 realizzata** (15 ottobre 2026, migrazione 053): coda, driver finto e `meta`, eventi di prenotazione e asporto, scadenze, tetto, Master e stato nella pratica. **Da fare:** W0 (account Meta, numero, `/privacy` e `/terms`), W2 (webhook di stato e STOP, risposta automatica, fidelizzazione con consenso separato), W3 (registrazione dei modelli su Meta, prova reale). Decisioni di Luca, 15 ottobre 2026: avvisi **automatici** da un **numero unico** della piattaforma (nessuna burocrazia a carico dei locali); il numero del singolo locale è un'evoluzione; niente funzione «manuale» a sé (resta solo come rete di sicurezza).
+Stato: **W1 e W2 realizzate** (15 ottobre 2026, migrazioni 053-054): coda, driver finto e `meta`, eventi di prenotazione e asporto, scadenze, tetto, Master e stato nella pratica; webhook (stato di consegna, STOP/RIPRENDI, risposta automatica), fidelizzazione con consenso separato, pagine `/privacy` e `/terms`, link breve `/s/…`, script dei modelli (`npm run whatsapp:templates`). **Da fare:** W0 (tu, con `docs/guida-whatsapp-meta.md`) e la prova reale col numero; la registrazione dei modelli è nello script.
+
+**STOP vale per tutti i locali** (il numero è unico): chi lo scrive non riceve più nulla da questo numero finché non scrive RIPRENDI. Decisioni di Luca, 15 ottobre 2026: avvisi **automatici** da un **numero unico** della piattaforma (nessuna burocrazia a carico dei locali); il numero del singolo locale è un'evoluzione; niente funzione «manuale» a sé (resta solo come rete di sicurezza).
 Corrisponde al modulo `whatsapp`, a pagamento come gli altri. Per le regole di sviluppo vale `CLAUDE.md`
 (RLS, validazione zod, audit, nomenclatura inglese, endpoint pubblici).
 

@@ -8,6 +8,8 @@ import { deliverDue } from '../../utils/whatsapp/outbox.js';
 import { expireAll } from '../../utils/caseExpiry.js';
 import { localNow, addDays } from '../../utils/bookingPortal.js';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { resetWebhookState } from '../../utils/whatsapp/webhook.js';
 
 // In CI non c'è un .env: il segreto del Master di prova si imposta qui (come negli altri test)
 process.env.MASTER_JWT_SECRET ||= 'segreto-master-di-prova-lungo-almeno-32-caratteri';
@@ -201,7 +203,7 @@ describe('avvisi whatsapp', () => {
     const masterCookie = { cookie: `master_token=${jwt.sign({ master: true }, process.env.MASTER_JWT_SECRET)}` };
     const master = apiClient(server.port, 'master.standmanager.local');
     const get = (await master.request('GET', `/master/tenants/${t.id}/whatsapp`, undefined, masterCookie)).body;
-    assert.deepEqual([get.module_enabled, get.driver, get.quota, get.events.length], [true, 'mock', 300, 14]);
+    assert.deepEqual([get.module_enabled, get.driver, get.quota, get.events.length], [true, 'mock', 300, 15]);
     assert.equal(get.events.find(e => e.id === 'takeaway.picked_up').enabled, false);
     assert.ok(get.log.length > 0 && get.log[0].to_tail.length <= 3, 'del numero si vedono solo le ultime cifre');
 
@@ -223,5 +225,125 @@ describe('avvisi whatsapp', () => {
     assert.ok(msgs.length > 0);
     assert.ok(msgs.every(m => m.to.startsWith('…') && m.to_phone === undefined));
     await master.request('PUT', `/master/tenants/${t.id}/whatsapp`, { events: { 'takeaway.picked_up': false, 'reservation.reminder': true }, quota: 300 }, masterCookie);
+  });
+
+  // ── W2: webhook, STOP, risposta automatica, fidelizzazione ───────────────────────────────────────────────────
+  const SECRET = 'segreto-app-di-prova';
+  const hook = (payload, { sign = true, secret = SECRET } = {}) => {
+    const body = JSON.stringify(payload);
+    const sig = `sha256=${crypto.createHmac('sha256', secret).update(body).digest('hex')}`;
+    return client.request('POST', '/webhooks/whatsapp', payload, sign ? { 'x-hub-signature-256': sig } : {});
+  };
+  const statusOf = (waId, status, extra = {}) => ({ entry: [{ changes: [{ value: { statuses: [{ id: waId, status, ...extra }] } }] }] });
+  const inbound = (from, body, id = `wamid.in-${Math.random().toString(36).slice(2)}`) => ({ entry: [{ changes: [{ value: { messages: [{ id, from, type: 'text', text: { body } }] } }] }] });
+
+  it('webhook: verifica del collegamento e firma obbligatoria', async () => {
+    process.env.WHATSAPP_APP_SECRET = SECRET;
+    process.env.WHATSAPP_VERIFY_TOKEN = 'token-di-prova';
+    const ok = await client.request('GET', '/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=token-di-prova&hub.challenge=12345');
+    assert.equal(ok.status, 200);
+    assert.equal((await client.request('GET', '/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=sbagliato&hub.challenge=1')).status, 403);
+    assert.equal((await hook({ entry: [] }, { sign: false })).status, 401, 'senza firma');
+    assert.equal((await hook({ entry: [] }, { secret: 'altro-segreto' })).status, 401, 'firma sbagliata');
+    assert.equal((await hook({ entry: [] })).status, 200);
+  });
+
+  it('webhook: consegnato e letto avanzano lo stato, mai indietro; fallito lo segna', async () => {
+    const r = await book({ customer_name: 'Stato Webhook' });
+    const row = await confirmOf(r.body.token);
+    await admin.post(`/bookings/reservations/${row.id}/confirm`, {});
+    await run(t, later(3));
+    const message = (await log()).find(m => m.ref_id === row.id && m.event === 'confirmed');
+    assert.equal(message.status, 'sent');
+    const get = async () => (await adminDb.query('SELECT status, error FROM whatsapp_messages WHERE id = $1', [message.id])).rows[0];
+
+    assert.equal((await hook(statusOf(message.wa_message_id, 'delivered'))).status, 200);
+    assert.equal((await get()).status, 'delivered');
+    await hook(statusOf(message.wa_message_id, 'read'));
+    assert.equal((await get()).status, 'read');
+    await hook(statusOf(message.wa_message_id, 'delivered'));
+    assert.equal((await get()).status, 'read', 'non torna indietro');
+    // un messaggio sconosciuto non fa danni
+    assert.equal((await hook(statusOf('wamid.sconosciuto', 'delivered'))).status, 200);
+
+    const second = await book({ customer_name: 'Fallito Webhook' });
+    const rs = await confirmOf(second.body.token);
+    await admin.post(`/bookings/reservations/${rs.id}/confirm`, {});
+    await run(t, later(3));
+    const m2 = (await log()).find(m => m.ref_id === rs.id && m.event === 'confirmed');
+    await hook(statusOf(m2.wa_message_id, 'failed', { errors: [{ title: 'Message undeliverable' }] }));
+    const f = (await adminDb.query('SELECT status, error FROM whatsapp_messages WHERE id = $1', [m2.id])).rows[0];
+    assert.deepEqual([f.status, f.error], ['failed', 'Message undeliverable']);
+  });
+
+  it('STOP toglie l\'iscrizione per tutti i locali; RIPRENDI la rimette; chi scrive riceve una risposta', async () => {
+    resetWebhookState();
+    await admin.put('/settings/booking_portal_phone', { value: '0123 456789' });
+    const phone = `39${mobile()}`;
+    const r = await book({ customer_name: 'Stop Cliente', phone: `+${phone}` });
+    const row = await confirmOf(r.body.token);
+    await admin.post(`/bookings/reservations/${row.id}/confirm`, {});
+    await run(t, later(3));                                           // un avviso già partito: il numero è noto
+    const texts = driver.texts.length;
+
+    // una domanda qualsiasi: risposta automatica col nome e il telefono del locale; una volta sola
+    await hook(inbound(phone, 'ciao, posso cambiare orario?'));
+    assert.equal(driver.texts.length, texts + 1);
+    assert.match(driver.texts.at(-1).body, new RegExp(`Per parlare con Prova ${t.slug} chiama il 0123 456789`));
+    await hook(inbound(phone, 'e allora?'));
+    assert.equal(driver.texts.length, texts + 1, 'non si risponde a ogni messaggio');
+
+    // STOP: da qui in poi nessun avviso, anche per un'altra prenotazione
+    await hook(inbound(phone, 'STOP'));
+    assert.match(driver.texts.at(-1).body, /non riceverai più avvisi/);
+    assert.equal((await adminDb.query('SELECT 1 FROM whatsapp_optouts WHERE phone = $1', [phone])).rows.length, 1);
+    const again = await book({ customer_name: 'Stop Cliente', phone: `+${phone}` });
+    const ra = await confirmOf(again.body.token);
+    const queuedBefore = (await log()).length;
+    await admin.post(`/bookings/reservations/${ra.id}/confirm`, {});
+    const added = (await log()).slice(queuedBefore).filter(m => m.ref_id === ra.id);
+    assert.ok(added.every(m => m.status === 'skipped' && m.error === 'DISISCRITTO'), JSON.stringify(added.map(m => [m.event, m.status, m.error])));
+
+    // RIPRENDI: si torna a riceverli
+    await hook(inbound(phone, 'riprendi'));
+    assert.match(driver.texts.at(-1).body, /riceverai di nuovo/);
+    const third = await book({ customer_name: 'Riprendi Cliente', phone: `+${phone}` });
+    const rt = await confirmOf(third.body.token);
+    await admin.post(`/bookings/reservations/${rt.id}/confirm`, {});
+    assert.ok((await log()).some(m => m.ref_id === rt.id && m.event === 'confirmed' && m.status === 'queued'));
+    await adminDb.query('DELETE FROM whatsapp_optouts WHERE phone = $1', [phone]);
+  });
+
+  it('fidelizzazione: il «grazie» parte solo con il consenso dato sul sito, dopo la visita, 2 ore dopo il turno', async () => {
+    const room = (await admin.post('/rooms', { name: 'Sala WA' })).body;
+    const tables = (await admin.post(`/rooms/${room.id}/tables/bulk`, { prefix: 'W', from: 1, to: 2, seats: 4 })).body.created;
+    const visit = async (name, marketing, table) => {
+      const r = await book({ customer_name: name, marketing });
+      const row = await confirmOf(r.body.token);
+      await admin.post(`/bookings/reservations/${row.id}/confirm`, {});
+      await admin.put(`/bookings/reservations/${row.id}/tables`, { table_ids: [table.id] });
+      const arrived = await admin.post(`/bookings/reservations/${row.id}/arrived`, {});
+      assert.equal(arrived.status, 200, JSON.stringify(arrived.body));
+      assert.equal((await admin.post(`/checks/${arrived.body.check.id}/close`, {})).status, 200);
+      return row.id;
+    };
+    const withConsent = await visit('Grata Consenso', true, tables[0]);
+    const without = await visit('Muta Senzaconsenso', false, tables[1]);
+    const rows = await log();
+    const thanks = rows.find(m => m.ref_id === withConsent && m.event === 'thanks');
+    assert.deepEqual([thanks.status, thanks.category, thanks.template], ['queued', 'marketing', 'se_reservation_thanks_v1']);
+    assert.equal(rows.some(m => m.ref_id === without && m.event === 'thanks'), false, 'senza consenso non parte');
+    // non subito: 2 ore dopo la fine del turno (20:00 + 90 minuti → 23:30 → il giorno dopo alle 10:00, ora di Roma)
+    assert.ok(new Date(thanks.next_attempt_at).getTime() > Date.now() + 3600000);
+    await run(t, new Date(thanks.next_attempt_at));
+    assert.ok(driver.sent.some(m => m.template === 'se_reservation_thanks_v1' && m.params[0] === 'Grata'));
+  });
+
+  it('il Master vede anche i messaggi di marketing e il registro porta gli stati del webhook', async () => {
+    const masterCookie = { cookie: `master_token=${jwt.sign({ master: true }, process.env.MASTER_JWT_SECRET)}` };
+    const master = apiClient(server.port, 'master.standmanager.local');
+    const data = (await master.request('GET', `/master/tenants/${t.id}/whatsapp`, undefined, masterCookie)).body;
+    assert.equal(data.events.find(e => e.id === 'reservation.thanks').category, 'marketing');
+    assert.ok(data.log.some(m => m.status === 'read'));
   });
 });

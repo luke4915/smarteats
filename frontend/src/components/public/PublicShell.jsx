@@ -19,6 +19,9 @@ export const PublicShell = ({ info, kicker, children, footer = null }) => (
         </p>
       )}
       {footer}
+      <p className="text-xs text-[var(--text-muted)] text-center pb-4">
+        <a className="hover:underline" href="/privacy">Privacy</a> · <a className="hover:underline" href="/terms">Condizioni d'uso</a>
+      </p>
       <div aria-hidden="true" style={{ height: 'env(safe-area-inset-bottom)' }} />
     </main>
   </div>

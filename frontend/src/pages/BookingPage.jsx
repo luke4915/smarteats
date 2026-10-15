@@ -105,7 +105,7 @@ const BookingPage = () => {
   const [date, setDate] = useState('');
   const [shifts, setShifts] = useState(null);
   const [shiftId, setShiftId] = useState(null);
-  const [form, setForm] = useState({ customer_name: '', phone: '', email: '', notes: '', consent: false, website: '' });
+  const [form, setForm] = useState({ customer_name: '', phone: '', email: '', notes: '', consent: false, marketing: false, website: '' });
   const [sending, setSending] = useState(false);
   const openedAt = useRef(Date.now());
 
@@ -223,6 +223,10 @@ const BookingPage = () => {
               <label className="flex items-start gap-3 text-sm cursor-pointer">
                 <input type="checkbox" className="mt-1 w-4 h-4 accent-[var(--accent)]" checked={form.consent} onChange={setField('consent')} />
                 <span className="text-[var(--text-muted)]">Acconsento al trattamento di nome, telefono ed email solo per gestire questa prenotazione, e a ricevere gli aggiornamenti su WhatsApp. I dati si cancellano dopo 90 giorni.</span>
+              </label>
+              <label className="flex items-start gap-3 text-sm cursor-pointer">
+                <input type="checkbox" className="mt-1 w-4 h-4 accent-[var(--accent)]" checked={form.marketing} onChange={e => setForm(f => ({ ...f, marketing: e.target.checked }))} />
+                <span className="text-[var(--text-muted)]">Facoltativo: voglio ricevere su WhatsApp un ringraziamento dopo la visita e le novità del locale.</span>
               </label>
             </div>
 

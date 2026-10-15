@@ -34,7 +34,7 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
   await phone.getByLabel('Telefono', { exact: true }).fill('333 9876543');
   await phone.getByLabel('Note', { exact: false }).fill('Un seggiolone');
   await expect(phone.getByRole('button', { name: 'Invia richiesta' })).toBeDisabled();   // manca il consenso
-  await phone.getByRole('checkbox').check();
+  await phone.getByRole('checkbox').first().check();     // il consenso al trattamento; la casella di fidelizzazione è facoltativa
   await phone.waitForTimeout(3200);                                                       // il modulo non si invia in un lampo
   await shot(phone, 'booking-portal-02-modulo');
   await phone.getByRole('button', { name: 'Invia richiesta' }).click();
