@@ -121,7 +121,8 @@ const NewOrder = ({ date, cart, setCart, onBack, onCreated }) => {
 
         <div className="grid grid-cols-2 gap-3">
           <div><label className={label} htmlFor="t-name">Nome</label><input id="t-name" className={`${input} mt-1`} value={form.customer_name} maxLength={80} onChange={set('customer_name')} autoComplete="off" /></div>
-          <div><label className={label} htmlFor="t-phone">Telefono</label><input id="t-phone" className={`${input} mt-1`} type="tel" inputMode="tel" value={form.phone} maxLength={40} onChange={set('phone')} autoComplete="off" /></div>
+          <div><label className={label} htmlFor="t-phone">Telefono</label><input id="t-phone" className={`${input} mt-1`} type="tel" inputMode="tel" value={form.phone} maxLength={40} onChange={set('phone')} autoComplete="off" />
+            <p className="text-[11px] leading-tight text-[var(--text-muted)] mt-1">Cellulare = avvisi su WhatsApp</p></div>
         </div>
 
         <div>

@@ -13,8 +13,10 @@ import {
   shiftSchema, closureSchema, closuresQuerySchema, createReservationSchema, updateReservationSchema, declineSchema,
   reservationTablesSchema, arrivedSchema, reservationsQuerySchema, availabilityQuerySchema,
 } from '../schemas/bookingSchema.js';
-import { canTransition, freeSeats, shiftOpenOn, tableConflicts, confirmationMessage, REQUEST_TTL_HOURS } from '../utils/bookings.js';
+import { canTransition, freeSeats, shiftOpenOn, tableConflicts, confirmationMessage } from '../utils/bookings.js';
 import { SHIFT_COLUMNS, CLOSURE_COLUMNS, lockShift, closuresOn, assertBookable } from '../utils/bookingDb.js';
+import { expireReservations } from '../utils/caseExpiry.js';
+import { enqueue } from '../utils/whatsapp/outbox.js';
 import { openCheckOnTable } from '../utils/openCheck.js';
 import { getCheckSummary } from '../utils/checks.js';
 
@@ -34,9 +36,8 @@ const withShift = (r) => ({ ...r, shift: { id: r.shift_id, name: r.shift_name, s
 export default function (broadcast) {
   const notify = (tenantId, reservation) => broadcast?.(tenantId, { type: 'reservation_updated', reservation });
 
-  // Le richieste non decise da più di 24 ore decadono: il posto torna libero. Si fa quando si legge o si decide.
-  const expireStale = (db) => db.query(
-    `UPDATE reservations SET status = 'expired' WHERE status = 'requested' AND requested_at < now() - make_interval(hours => $1)`, [REQUEST_TTL_HOURS]);
+  // Le richieste non decise decadono (24 ore, o l'inizio del turno) e il cliente viene avvisato: si fa quando si legge o si decide.
+  const expireStale = expireReservations;
 
   const load = async (db, where, params) => {
     const { rows } = await db.query(`${RESERVATION_SQL} WHERE ${where} ORDER BY s.start_time, r.id`, params);
@@ -240,6 +241,8 @@ export default function (broadcast) {
            VALUES ($1, $2, $3, 'confirmed', $4, $5, $6, $7, 'staff', $8, $9, now(), $9) RETURNING id`,
           [b.date, b.shift_id, b.party_size, b.customer_name, b.phone, b.email, b.notes, crypto.randomBytes(18).toString('base64url'), req.user.id]);
         if (b.table_ids.length) await assignTables(db, { id: created.id, date: b.date, shift: { ...shift } }, b.table_ids);
+        await enqueue(db, 'reservation', created.id, 'confirmed');
+        await enqueue(db, 'reservation', created.id, 'reminder');
         return created.id;
       });
       await logAudit(req.db, req.user.id, 'BOOKING_CREATE', { reservationId: id, date: b.date, shiftId: b.shift_id, partySize: b.party_size });
@@ -277,6 +280,7 @@ export default function (broadcast) {
           `UPDATE reservations SET date = $1, shift_id = $2, party_size = $3, customer_name = COALESCE($4, customer_name),
              phone = COALESCE($5, phone), email = COALESCE($6, email), notes = COALESCE($7, notes) WHERE id = $8`,
           [next.date, next.shift_id, next.party_size, b.customer_name ?? null, b.phone ?? null, b.email ?? null, b.notes ?? null, cur.id]);
+        if (cur.status === 'confirmed') await enqueue(db, 'reservation', cur.id, 'reminder');
       });
       await logAudit(req.db, req.user.id, 'BOOKING_UPDATE', { reservationId: Number(req.params.id) });
       const reservation = await present(req.db, req.user.tenantId, req.params.id);
@@ -304,6 +308,9 @@ export default function (broadcast) {
             }
           }
           await transition(db, req.params.id, to, { userId: req.user.id, reason: req.body?.reason });
+          const event = { confirmed: 'confirmed', declined: 'declined', cancelled: 'cancelled' }[to];
+          if (event) await enqueue(db, 'reservation', Number(req.params.id), event);
+          if (to === 'confirmed') await enqueue(db, 'reservation', Number(req.params.id), 'reminder');
         });
         await logAudit(req.db, req.user.id, action, { reservationId: Number(req.params.id) });
         const reservation = await present(req.db, req.user.tenantId, req.params.id);
@@ -362,6 +369,7 @@ export default function (broadcast) {
       const { rowCount } = await req.db.query(
         `UPDATE reservations SET cancel_requested_at = NULL WHERE id = $1 AND status = 'confirmed' AND cancel_requested_at IS NOT NULL`, [req.params.id]);
       if (!rowCount) return res.status(409).json({ error: 'Nessuna richiesta di annullo da rifiutare', code: 'NO_CANCEL_REQUEST' });
+      await enqueue(req.db, 'reservation', Number(req.params.id), 'kept');
       await logAudit(req.db, req.user.id, 'BOOKING_CANCEL_REQUEST_REJECTED', { reservationId: Number(req.params.id) });
       const reservation = await present(req.db, req.user.tenantId, req.params.id);
       notify(req.user.tenantId, reservation);

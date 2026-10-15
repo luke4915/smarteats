@@ -14,6 +14,8 @@ import { localNow, PORTAL_TZ } from '../utils/bookingPortal.js';
 import { slotStates, slotWithinWindow, isSlot } from '../utils/takeaway.js';
 import { loadSettings, loadHours, loadByTime, loadOfItems, createKitchenOrder, cancelKitchenOrder } from '../utils/takeawayDb.js';
 import { verifyOrderItems } from '../utils/orderLines.js';
+import { expireTakeaway } from '../utils/caseExpiry.js';
+import { enqueue } from '../utils/whatsapp/outbox.js';
 import { snapshotItems } from '../utils/takeawayDb.js';
 
 // Asporto (modulo `takeaway`): gli ordini con orario di ritiro. Si leggono e si gestiscono con i ruoli di sala e cassa;
@@ -87,6 +89,7 @@ export default function (broadcast) {
   // GET /orders?date= — gli ordini di un giorno, per orario di ritiro
   router.get('/orders', ...guard, validate({ query: ordersQuerySchema }), tenantScope, async (req, res) => {
     try {
+      await expireTakeaway(req.db);
       const { rows } = await req.db.query(
         `${ORDER_SQL} WHERE (t.pickup_at AT TIME ZONE $1)::date = $2::date ORDER BY t.pickup_at, t.id`, [PORTAL_TZ, req.validQuery.date]);
       res.json(rows.map(present));
@@ -99,6 +102,7 @@ export default function (broadcast) {
   // GET /inbox — le richieste da approvare (alimenta la campanella)
   router.get('/inbox', ...guard, tenantScope, async (req, res) => {
     try {
+      await expireTakeaway(req.db);
       const { rows } = await req.db.query(
         `${ORDER_SQL} WHERE t.status = 'requested' AND t.pickup_at > now() - interval '1 day' ORDER BY t.requested_at, t.id`, [PORTAL_TZ]);
       res.json(rows.map(r => ({ id: r.id, kind: 'takeaway_request', customer_name: r.customer_name, party_size: null, date: r.date, start_time: r.time,
@@ -157,6 +161,7 @@ export default function (broadcast) {
           [b.source, at, load, b.customer_name, b.phone, b.notes, JSON.stringify(snapshot), total, crypto.randomBytes(18).toString('base64url'), req.user.id]);
         const full = { id: row.id, items: snapshot, customer_name: b.customer_name, pickup_at: at };
         const created = await accept(db, req, full);
+        await enqueue(db, 'takeaway', row.id, 'accepted');
         return { id: row.id, created, full, at };
       });
       await logAudit(req.db, req.user.id, 'TAKEAWAY_CREATE', { takeawayId: result.id, source: b.source, total: result.created.total });
@@ -187,6 +192,7 @@ export default function (broadcast) {
           time = req.body.time;
         }
         const created = await accept(db, req, { ...row, items: row.items }, { time, date });
+        await enqueue(db, 'takeaway', row.id, 'accepted');
         return { created, row, time };
       });
       await logAudit(req.db, req.user.id, 'TAKEAWAY_ACCEPT', { takeawayId: Number(req.params.id) });
@@ -209,6 +215,7 @@ export default function (broadcast) {
         if (row.status !== 'requested') throw new HttpError(409, 'Questo ordine è già stato gestito', 'INVALID_TRANSITION');
         await db.query(`UPDATE takeaway_orders SET status = 'rejected', reject_reason = $2, decided_by = $3, decided_at = now() WHERE id = $1`,
           [row.id, req.body.reason, req.user.id]);
+        await enqueue(db, 'takeaway', row.id, 'rejected');
       });
       await logAudit(req.db, req.user.id, 'TAKEAWAY_REJECT', { takeawayId: Number(req.params.id) });
       const order = present(await loadOne(req.db, req.params.id));
@@ -231,6 +238,7 @@ export default function (broadcast) {
         // Consegnato: l'ordine di cucina è concluso (esce dalla coda) e conta nell'incasso
         await db.query(`UPDATE orders SET status = $2, completed_at = COALESCE(completed_at, now()) WHERE id = $1 AND status <> 'canceled'`, [row.order_id, DONE]);
         await db.query(`UPDATE order_items SET prep_status = 'ready', ready_at = COALESCE(ready_at, now()) WHERE order_id = $1 AND prep_status = 'new'`, [row.order_id]);
+        await enqueue(db, 'takeaway', row.id, 'picked_up');
       });
       await logAudit(req.db, req.user.id, 'TAKEAWAY_PICKED_UP', { takeawayId: Number(req.params.id), method: req.body.method });
       const order = present(await loadOne(req.db, req.params.id));
@@ -251,6 +259,7 @@ export default function (broadcast) {
         const row = await loadOne(db, req.params.id, { lock: true });
         if (!['requested', 'accepted'].includes(row.status)) throw new HttpError(409, 'Questo ordine non si può annullare', 'INVALID_TRANSITION');
         await db.query(`UPDATE takeaway_orders SET status = 'cancelled', decided_by = $2, decided_at = now() WHERE id = $1`, [row.id, req.user.id]);
+        await enqueue(db, 'takeaway', row.id, 'cancelled');
         return row.order_id ? cancelKitchenOrder(db, row.order_id) : [];
       });
       await logAudit(req.db, req.user.id, 'TAKEAWAY_CANCEL', { takeawayId: Number(req.params.id) });

@@ -7,6 +7,7 @@ import CheckMenu from '../floor/CheckMenu';
 import { btn, btnPrimary, btnDanger, input, label } from '../floor/ui';
 import { STATUS, formatDay, whatsappLink, mailLink, telLink } from './rules';
 import StatusChip from './StatusChip';
+import WhatsAppStatus from '../notifications/WhatsAppStatus';
 
 // Il dettaglio di una prenotazione nel pannello a destra: cosa fare dipende dallo stato (conferma o rifiuta una
 // richiesta; assegna il tavolo; messaggio al cliente; arrivato; non si è presentato).
@@ -93,6 +94,8 @@ const ReservationPanel = ({ reservation: r, tableNames, onBack, onChanged, onTab
           <dt className="text-[var(--text-muted)]">Provenienza</dt><dd className="text-[var(--text-main)]">{({ staff: 'Inserita a mano', portal: 'Portale' })[r.source] ?? r.source}</dd>
           {r.decline_reason && <><dt className="text-[var(--text-muted)]">Motivo</dt><dd className="text-[var(--text-main)]">{r.decline_reason}</dd></>}
         </dl>
+
+        <WhatsAppStatus refType="reservation" refId={r.id} version={r.status + (r.cancel_requested_at ?? '')} />
 
         {['confirmed', 'requested'].includes(r.status) && (r.phone || r.email) && (
           <section className="rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] p-3 space-y-3">

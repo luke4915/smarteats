@@ -17,6 +17,7 @@ const STATUS_TEXT = {
   picked_up: { title: 'Ordine ritirato', body: 'Grazie e buon appetito!' },
   rejected: { title: 'Ordine non accettato', body: 'Purtroppo il locale non ha potuto accettarlo. Puoi riprovare con un altro orario o telefonare.' },
   cancelled: { title: 'Ordine annullato', body: 'L\'ordine è stato annullato.' },
+  expired: { title: 'Ordine non confermato', body: 'Il locale non ha fatto in tempo a confermarlo. Puoi inviare una nuova richiesta o chiamare il locale.' },
 };
 
 const Status = ({ token, info }) => {
@@ -241,7 +242,7 @@ const OrderPage = () => {
               </div>
               <label className="flex items-start gap-3 text-sm cursor-pointer">
                 <input type="checkbox" className="mt-1 w-4 h-4 accent-[var(--accent)]" checked={form.consent} onChange={setField('consent')} />
-                <span className="text-[var(--text-muted)]">Acconsento al trattamento di nome e telefono solo per gestire questo ordine. I dati si cancellano dopo 90 giorni.</span>
+                <span className="text-[var(--text-muted)]">Acconsento al trattamento di nome e telefono solo per gestire questo ordine, e a ricevere gli aggiornamenti su WhatsApp. I dati si cancellano dopo 90 giorni.</span>
               </label>
             </div>
           </StepSection>

@@ -5,6 +5,7 @@ import TenantReceiptEditor from '../components/master/TenantReceiptEditor';
 import TenantUsers from '../components/master/TenantUsers';
 import ModulePicker from '../components/master/ModulePicker';
 import TenantModules from '../components/master/TenantModules';
+import TenantWhatsApp from '../components/master/TenantWhatsApp';
 import TempPasswordField from '../components/shared/TempPasswordField';
 
 // Console del gestore: crea i locali (tenant), ne gestisce licenza, moduli, utenti e scontrini. Stesso linguaggio
@@ -82,6 +83,7 @@ const MasterPage = () => {
   const [receiptTarget, setReceiptTarget] = useState(null);
   const [usersTarget, setUsersTarget] = useState(null);
   const [modulesTarget, setModulesTarget] = useState(null);
+  const [whatsappTarget, setWhatsappTarget] = useState(null);
   const [catalog, setCatalog] = useState(null);
 
   const emptyForm = { slug: '', name: '', plan: 'trial', expiresInDays: 7, adminUsername: '', adminPassword: '', businessType: 'street_food', modules: ['kds', 'stats', 'qr_menu'] };
@@ -349,6 +351,7 @@ const MasterPage = () => {
                 <div className="mt-3 pt-3 border-t border-[var(--border)] flex flex-wrap items-center gap-2">
                   <button onClick={() => catalog && setModulesTarget(t)} className={btn}><Blocks size={14} /> Moduli</button>
                   <button onClick={() => setUsersTarget(t)} className={btn}><Users size={14} /> Utenti</button>
+                  {t.modules?.includes('whatsapp') && <button onClick={() => setWhatsappTarget(t)} className={btn}><MessageSquare size={14} /> WhatsApp</button>}
                   <button onClick={() => setReceiptTarget(t)} className={btn}><Printer size={14} /> Scontrini</button>
                   <span className="hidden sm:block w-px h-6 bg-[var(--border)] mx-1" />
                   <button onClick={() => handleExtend(t.id, 7)} className={btn} title="Allunga la licenza di 7 giorni"><Clock size={14} /> +7 giorni</button>
@@ -364,6 +367,7 @@ const MasterPage = () => {
       </div>
 
       {modulesTarget && catalog && <TenantModules tenant={modulesTarget} catalog={catalog} onClose={() => setModulesTarget(null)} onSaved={loadTenants} />}
+      {whatsappTarget && <TenantWhatsApp tenant={whatsappTarget} onClose={() => setWhatsappTarget(null)} />}
       {usersTarget && <TenantUsers tenant={usersTarget} onClose={() => setUsersTarget(null)} onChanged={loadTenants} />}
       {receiptTarget && <TenantReceiptEditor tenant={receiptTarget} onClose={() => setReceiptTarget(null)} />}
       {deleteTarget && <DeleteTenantModal tenant={deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDelete} />}

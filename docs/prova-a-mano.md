@@ -235,6 +235,18 @@ imposta l'indirizzo `https://localhost:9443`.
 
 - [ ] Impostazioni → «Dicci cosa migliorare»: scrivi un messaggio per un modulo. Nel Master → Feedback compare?
 
+## P. Avvisi WhatsApp (modo di prova)
+
+Nel file `.env` del backend metti `WHATSAPP_DRIVER=mock`: i messaggi non escono, ma si vedono nel registro del Master.
+
+- [ ] Master → Moduli del locale: accendi «Avvisi WhatsApp». Compare il pulsante «WhatsApp» sulla scheda del locale?
+- [ ] Master → WhatsApp: eventi acceso/spento, tetto mensile, «Invia prova» con un tuo cellulare.
+- [ ] Invia una prenotazione dal sito con un cellulare: in Prenotazioni, nel dettaglio, compare «Avvisi WhatsApp · Ricevuta · in coda»?
+- [ ] Dopo 2 minuti passa a «inviato»; se la confermi prima, «Ricevuta» non parte e parte «Confermata»?
+- [ ] Un fisso o un numero sbagliato: «numero non valido», nessun errore per il personale?
+- [ ] Asporto: accetta → «Confermato»; la cucina segna «Pronta» → «Pronto»; annulla → «Annullato».
+- [ ] Una richiesta lasciata senza risposta: scade (asporto a 10 minuti dal ritiro) e si vede «Scaduto»?
+
 ## Dopo la prova
 
 Mandami le righe `[~]` e `[!]`. Per ogni problema mi bastano:

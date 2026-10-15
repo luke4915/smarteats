@@ -13,6 +13,7 @@ export const MODULES = {
   tables: { label: 'Sala e tavoli', types: ['restaurant'] },
   bookings: { label: 'Prenotazioni', types: ['restaurant'] },
   takeaway: { label: 'Asporto', types: ALL_TYPES },
+  whatsapp: { label: 'Avvisi WhatsApp', types: ['restaurant', 'takeaway_shop'] },
 };
 
 // Il tipo di attività propone i moduli di partenza; poi il master può accendere o spegnere quelli che esistono per il tipo.

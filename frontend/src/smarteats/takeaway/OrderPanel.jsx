@@ -7,6 +7,7 @@ import { btn, btnPrimary, btnDanger, input } from '../floor/ui';
 import { formatEuro } from '../floor/checkMath';
 import { STATUS, SOURCE, shownStatus } from './rules';
 import { formatDay } from '../reservations/rules';
+import WhatsAppStatus from '../notifications/WhatsAppStatus';
 
 const METHODS = [['cash', 'Contanti', Banknote], ['card', 'Carta', CreditCard], ['other', 'Altro', Wallet]];
 const TONES = {
@@ -115,6 +116,7 @@ const OrderPanel = ({ order, slots, onBack, onChanged }) => {
           {order.notes && <><dt className="text-[var(--text-muted)] flex items-center gap-1.5"><StickyNote size={14} />Note</dt><dd className="text-[var(--text-main)]">{order.notes}</dd></>}
           {order.reject_reason && <><dt className="text-[var(--text-muted)] flex items-center gap-1.5"><X size={14} />Motivo</dt><dd className="text-[var(--text-main)]">{order.reject_reason}</dd></>}
         </dl>
+        <WhatsAppStatus refType="takeaway" refId={order.id} version={order.status + (order.ready ? 'r' : '')} />
         {!open && order.status === 'picked_up' && <p className="text-sm text-[var(--text-muted)]">Ordine concluso.</p>}
       </div>
     </PanelFrame>

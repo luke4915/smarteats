@@ -53,6 +53,8 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
   await shot(page, 'booking-portal-05-campanella');
   await page.getByRole('menuitem', { name: /Nuova richiesta · Famiglia Bianchi/ }).click();
   await expect(page.getByRole('button', { name: 'Conferma', exact: true })).toBeVisible();
+  // il locale vede lo stato degli avvisi WhatsApp (sola lettura): «Ricevuta» è in coda, parte dopo 2 minuti
+  await expect(page.getByRole('region', { name: 'Avvisi WhatsApp' })).toContainText('Ricevuta');
   await page.getByRole('button', { name: 'Conferma', exact: true }).click();
   await expect(page.getByText('Prenotazione confermata').first()).toBeVisible();
 

@@ -18,6 +18,7 @@ import bookingRoutes from './routes/bookings.js';
 import publicBookingRoutes from './routes/publicBooking.js';
 import takeawayRoutes from './routes/takeaway.js';
 import feedbackRoutes from './routes/feedback.js';
+import whatsappRoutes from './routes/whatsapp.js';
 import publicTakeawayRoutes from './routes/publicTakeaway.js';
 import { modifierGroupsRouter, productModifiersRouter } from './routes/modifierGroups.js';
 import checkRoutes from './routes/checks.js';
@@ -97,6 +98,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/public/booking', publicBookingRoutes(broadcast));
   app.use('/api/takeaway', takeawayRoutes(broadcast));
   app.use('/api/feedback', feedbackRoutes);
+  app.use('/api/whatsapp', whatsappRoutes);
   app.use('/api/public/takeaway', publicTakeawayRoutes(broadcast));
   app.use('/api/checks', checkRoutes(broadcast));
   app.use('/api/settings', settingsRoutes);

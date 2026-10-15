@@ -13,6 +13,8 @@ import { localNow, addDays, phoneDigits, MIN_FILL_MS, PORTAL_TZ } from '../utils
 import { MAX_DAYS_AHEAD, MAX_ITEMS_PER_ORDER, MAX_PENDING_PER_PHONE, slotStates, slotWithinWindow, isSlot } from '../utils/takeaway.js';
 import { loadSettings, loadHours, loadByTime, loadOfItems, snapshotItems } from '../utils/takeawayDb.js';
 import { verifyOrderItems } from '../utils/orderLines.js';
+import { expireTakeaway } from '../utils/caseExpiry.js';
+import { enqueue } from '../utils/whatsapp/outbox.js';
 
 // Ordini da asporto dal sito pubblico (modulo `takeaway`, impostazione `takeaway_portal_enabled`). Senza login: il
 // locale arriva dal sottodominio, ogni colonna restituita è scelta a mano. Mai carichi o capienze nelle risposte, mai
@@ -52,6 +54,7 @@ export default function (broadcast) {
   // GET /slots?date=&load= — le fasce del giorno: ciascuna richiedibile o no (mai numeri)
   router.get('/slots', ...guard, validate({ query: slotsQuerySchema }), inPortal(async (db, { req, settings }) => {
     const { date, load } = req.validQuery;
+    await expireTakeaway(db);
     const [hours, byTime] = await Promise.all([loadHours(db), loadByTime(db, date)]);
     const slots = slotStates({ date, hours, slotMinutes: settings.slotMinutes, capacity: settings.capacity, loadByTime: byTime, now: localNow(), minLeadMinutes: settings.minLeadMinutes, load });
     return { date, slots: slots.map(s => ({ time: s.time, available: s.available })) };
@@ -59,6 +62,7 @@ export default function (broadcast) {
 
   // GET /days — i prossimi giorni, con almeno una fascia ancora richiedibile oppure no
   router.get('/days', ...guard, inPortal(async (db, { settings }) => {
+    await expireTakeaway(db);
     const hours = await loadHours(db);
     const today = localNow().date;
     const now = localNow();
@@ -102,6 +106,7 @@ export default function (broadcast) {
         `INSERT INTO takeaway_orders (status, source, pickup_at, load, customer_name, phone, email, notes, items, total, public_token, consent_at)
          VALUES ('requested', 'portal', $1, $2, $3, $4, $5, $6, $7, $8, $9, now()) RETURNING id`,
         [at, load, b.customer_name, b.phone, b.email, b.notes, JSON.stringify(snapshotItems(items)), total, token]);
+      await enqueue(tx, 'takeaway', row.id, 'received');
       return row.id;
     });
     await logAudit(db, null, 'TAKEAWAY_PORTAL_REQUEST', { takeawayId: id, itemCount: b.items.length });
@@ -111,6 +116,7 @@ export default function (broadcast) {
 
   // L'ordine di chi ha il link: solo il suo, solo i campi che servono a mostrarlo
   const loadMine = async (db, token) => {
+    await expireTakeaway(db);
     const { rows } = await db.query(
       `SELECT id, status, items, total, customer_name, notes, reject_reason, paid_method,
               to_char(pickup_at AT TIME ZONE $2, 'YYYY-MM-DD') AS date, to_char(pickup_at AT TIME ZONE $2, 'HH24:MI') AS time

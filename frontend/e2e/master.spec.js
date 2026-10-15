@@ -31,3 +31,27 @@ test('master: creo un locale, lo trovo, allungo la licenza e lo elimino', async 
   await page.getByRole('button', { name: 'Elimina', exact: true }).last().click();
   await expect(page.getByRole('heading', { name: `Locale ${slug}` })).toHaveCount(0);
 });
+
+// Avvisi WhatsApp: si configurano solo dal Master (eventi, tetto, prova); il locale vede solo lo stato.
+test('master: avvisi WhatsApp di un locale — eventi, tetto, messaggio di prova', async ({ page }) => {
+  const s = seed();
+  await page.goto(`${urlOf(s.restaurant.host)}/master`);
+  await page.getByLabel('Password master').fill(s.password);
+  await page.getByRole('button', { name: 'Entra' }).click();
+  await page.getByPlaceholder('Cerca un locale').fill(s.restaurant.host.split('.')[0]);
+  const card = page.getByRole('article').first();
+  await card.getByRole('button', { name: 'WhatsApp' }).click();
+
+  await expect(page.getByText('Pratiche incluse al mese')).toBeVisible();
+  await expect(page.getByText('Prenotazione confermata', { exact: true })).toBeVisible();
+  await expect(page.getByText('Ordine ritirato', { exact: true })).toBeVisible();
+  await page.getByLabel('Ordine ritirato').check();                                 // spento di partenza
+  await page.getByLabel('Pratiche incluse al mese').fill('120');
+  await page.getByRole('button', { name: 'Salva' }).click();
+  await expect(page.getByText('Salvato')).toBeVisible();
+  await shot(page, 'master-04-whatsapp');
+
+  await page.getByPlaceholder('Cellulare, es. 333 1234567').fill('333 123 4567');
+  await page.getByRole('button', { name: 'Invia prova' }).click();
+  await expect(page.getByText(/Prova inviata \(mock\)/)).toBeVisible();
+});

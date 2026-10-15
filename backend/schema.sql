@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict taLgC5TOGTECYE0Ttf08VM5mVKxmeiwbBifHa55clUaKRyeN45D84Xgk8DFnGTg
+\restrict 0XIGlYhdz1SSm4R7eQIQIcogkmFL5J4yK3h59yEy3GnZJeH31YgfpFv8mHPvxF8
 
 -- Dumped from database version 17.10 (Homebrew)
 -- Dumped by pg_dump version 17.10 (Homebrew)
@@ -1143,7 +1143,7 @@ CREATE TABLE public.takeaway_orders (
     CONSTRAINT takeaway_orders_paid_method_check CHECK ((paid_method = ANY (ARRAY['cash'::text, 'card'::text, 'other'::text]))),
     CONSTRAINT takeaway_orders_payment_mode_check CHECK ((payment_mode = ANY (ARRAY['on_pickup'::text, 'online'::text]))),
     CONSTRAINT takeaway_orders_source_check CHECK ((source = ANY (ARRAY['portal'::text, 'counter'::text, 'phone'::text]))),
-    CONSTRAINT takeaway_orders_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'accepted'::text, 'picked_up'::text, 'rejected'::text, 'cancelled'::text])))
+    CONSTRAINT takeaway_orders_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'accepted'::text, 'picked_up'::text, 'rejected'::text, 'cancelled'::text, 'expired'::text])))
 );
 
 ALTER TABLE ONLY public.takeaway_orders FORCE ROW LEVEL SECURITY;
@@ -1255,6 +1255,59 @@ ALTER SEQUENCE public.users_id_seq OWNER TO colettas;
 --
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
+
+
+--
+-- Name: whatsapp_messages; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.whatsapp_messages (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    ref_type text NOT NULL,
+    ref_id integer NOT NULL,
+    event text NOT NULL,
+    to_phone text DEFAULT ''::text NOT NULL,
+    template text NOT NULL,
+    category text DEFAULT 'utility'::text NOT NULL,
+    params jsonb DEFAULT '[]'::jsonb NOT NULL,
+    status text DEFAULT 'queued'::text NOT NULL,
+    error text DEFAULT ''::text NOT NULL,
+    attempts integer DEFAULT 0 NOT NULL,
+    next_attempt_at timestamp with time zone DEFAULT now() NOT NULL,
+    wa_message_id text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    CONSTRAINT whatsapp_messages_category_check CHECK ((category = ANY (ARRAY['utility'::text, 'marketing'::text]))),
+    CONSTRAINT whatsapp_messages_ref_type_check CHECK ((ref_type = ANY (ARRAY['reservation'::text, 'takeaway'::text]))),
+    CONSTRAINT whatsapp_messages_status_check CHECK ((status = ANY (ARRAY['queued'::text, 'sent'::text, 'delivered'::text, 'read'::text, 'failed'::text, 'skipped'::text])))
+);
+
+ALTER TABLE ONLY public.whatsapp_messages FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.whatsapp_messages OWNER TO colettas;
+
+--
+-- Name: whatsapp_messages_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.whatsapp_messages_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.whatsapp_messages_id_seq OWNER TO colettas;
+
+--
+-- Name: whatsapp_messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.whatsapp_messages_id_seq OWNED BY public.whatsapp_messages.id;
 
 
 --
@@ -1437,6 +1490,13 @@ ALTER TABLE ONLY public.tenants ALTER COLUMN id SET DEFAULT nextval('public.tena
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: whatsapp_messages id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.whatsapp_messages ALTER COLUMN id SET DEFAULT nextval('public.whatsapp_messages_id_seq'::regclass);
 
 
 --
@@ -1701,6 +1761,14 @@ ALTER TABLE ONLY public.tenants
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: whatsapp_messages whatsapp_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.whatsapp_messages
+    ADD CONSTRAINT whatsapp_messages_pkey PRIMARY KEY (id);
 
 
 --
@@ -1991,6 +2059,27 @@ CREATE INDEX idx_users_tenant ON public.users USING btree (tenant_id);
 
 
 --
+-- Name: idx_whatsapp_due; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_whatsapp_due ON public.whatsapp_messages USING btree (tenant_id, next_attempt_at) WHERE (status = 'queued'::text);
+
+
+--
+-- Name: idx_whatsapp_ref; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_whatsapp_ref ON public.whatsapp_messages USING btree (tenant_id, ref_type, ref_id);
+
+
+--
+-- Name: idx_whatsapp_wa_id; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_whatsapp_wa_id ON public.whatsapp_messages USING btree (wa_message_id) WHERE (wa_message_id IS NOT NULL);
+
+
+--
 -- Name: uniq_booking_shifts_tenant_name; Type: INDEX; Schema: public; Owner: colettas
 --
 
@@ -2114,6 +2203,13 @@ CREATE UNIQUE INDEX uniq_takeaway_orders_token ON public.takeaway_orders USING b
 --
 
 CREATE UNIQUE INDEX uniq_users_tenant_username ON public.users USING btree (tenant_id, username);
+
+
+--
+-- Name: uniq_whatsapp_case_event; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_whatsapp_case_event ON public.whatsapp_messages USING btree (tenant_id, ref_type, ref_id, event);
 
 
 --
@@ -2581,6 +2677,14 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: whatsapp_messages whatsapp_messages_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.whatsapp_messages
+    ADD CONSTRAINT whatsapp_messages_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: app_feedback; Type: ROW SECURITY; Schema: public; Owner: colettas
 --
 
@@ -2646,6 +2750,13 @@ CREATE POLICY master_read ON public.app_feedback FOR SELECT TO standmanager_mast
 --
 
 CREATE POLICY master_read ON public.users FOR SELECT TO standmanager_master USING (true);
+
+
+--
+-- Name: whatsapp_messages master_read; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY master_read ON public.whatsapp_messages FOR SELECT TO standmanager_master USING (true);
 
 
 --
@@ -2940,10 +3051,23 @@ CREATE POLICY tenant_isolation ON public.users USING ((tenant_id = (NULLIF(curre
 
 
 --
+-- Name: whatsapp_messages tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.whatsapp_messages USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
 -- Name: users; Type: ROW SECURITY; Schema: public; Owner: colettas
 --
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: whatsapp_messages; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.whatsapp_messages ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
@@ -3394,6 +3518,22 @@ GRANT SELECT,USAGE ON SEQUENCE public.users_id_seq TO standmanager_master;
 
 
 --
+-- Name: TABLE whatsapp_messages; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_messages TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_messages TO standmanager_master;
+
+
+--
+-- Name: SEQUENCE whatsapp_messages_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.whatsapp_messages_id_seq TO standmanager_app;
+GRANT SELECT,USAGE ON SEQUENCE public.whatsapp_messages_id_seq TO standmanager_master;
+
+
+--
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: colettas
 --
 
@@ -3413,5 +3553,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,
 -- PostgreSQL database dump complete
 --
 
-\unrestrict taLgC5TOGTECYE0Ttf08VM5mVKxmeiwbBifHa55clUaKRyeN45D84Xgk8DFnGTg
+\unrestrict 0XIGlYhdz1SSm4R7eQIQIcogkmFL5J4yK3h59yEy3GnZJeH31YgfpFv8mHPvxF8
 

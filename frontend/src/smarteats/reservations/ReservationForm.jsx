@@ -71,7 +71,8 @@ const ReservationForm = ({ date, shifts, availability, reservation = null, defau
         </div>
         <div><p className={`${label} text-center`}>Persone</p><CoversStepper value={party} onChange={setParty} compact /></div>
         <div><label className={label} htmlFor="r-name">Nome</label><input id="r-name" className={`${input} mt-1`} value={name} maxLength={80} onChange={e => setName(e.target.value)} placeholder="Es. Rossi" autoFocus={!editing} /></div>
-        <div><label className={label} htmlFor="r-phone">Telefono</label><input id="r-phone" className={`${input} mt-1`} inputMode="tel" value={phone} maxLength={40} onChange={e => setPhone(e.target.value)} /></div>
+        <div><label className={label} htmlFor="r-phone">Telefono</label><input id="r-phone" className={`${input} mt-1`} inputMode="tel" value={phone} maxLength={40} onChange={e => setPhone(e.target.value)} />
+          <p className="text-xs text-[var(--text-muted)] mt-1">Con un cellulare, il cliente riceve gli avvisi su WhatsApp (se attivi).</p></div>
         <div><label className={label} htmlFor="r-email">Email (facoltativa)</label><input id="r-email" className={`${input} mt-1`} inputMode="email" value={email} maxLength={120} onChange={e => setEmail(e.target.value)} /></div>
         <div><label className={label} htmlFor="r-notes">Note</label><input id="r-notes" className={`${input} mt-1`} value={notes} maxLength={500} onChange={e => setNotes(e.target.value)} placeholder="Allergie, seggiolone, occasione…" /></div>
       </div>

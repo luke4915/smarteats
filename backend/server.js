@@ -10,6 +10,8 @@ import { pool } from './db.js';
 import logger from './logger.js';
 import { checkSecrets } from './utils/jwtConfig.js';
 import { purgeAllTenants } from './utils/bookingRetention.js';
+import { runAllTenants } from './utils/whatsapp/outbox.js';
+import { expireAll } from './utils/caseExpiry.js';
 
 dotenv.config();
 
@@ -62,4 +64,6 @@ server.listen(PORT, '0.0.0.0', () => logger.info(`API e WSS in ascolto su https:
 
 // Conservazione dei dati dei clienti: una pulizia all'avvio e poi una al giorno
 purgeAllTenants().catch(err => logger.error({ err }, 'Pulizia dati prenotazioni non riuscita'));
+// Avvisi WhatsApp: ogni 20 secondi scadenze e invii dei locali con il modulo acceso
+setInterval(() => runAllTenants({ expire: expireAll }).catch(err => logger.error({ err }, 'Giro avvisi WhatsApp non riuscito')), 20_000).unref();
 setInterval(() => purgeAllTenants().catch(err => logger.error({ err }, 'Pulizia dati prenotazioni non riuscita')), 24 * 60 * 60 * 1000).unref();

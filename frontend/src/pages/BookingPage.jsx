@@ -222,7 +222,7 @@ const BookingPage = () => {
               </div>
               <label className="flex items-start gap-3 text-sm cursor-pointer">
                 <input type="checkbox" className="mt-1 w-4 h-4 accent-[var(--accent)]" checked={form.consent} onChange={setField('consent')} />
-                <span className="text-[var(--text-muted)]">Acconsento al trattamento di nome, telefono ed email solo per gestire questa prenotazione. I dati si cancellano dopo 90 giorni.</span>
+                <span className="text-[var(--text-muted)]">Acconsento al trattamento di nome, telefono ed email solo per gestire questa prenotazione, e a ricevere gli aggiornamenti su WhatsApp. I dati si cancellano dopo 90 giorni.</span>
               </label>
             </div>
 

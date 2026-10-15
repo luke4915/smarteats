@@ -8,6 +8,7 @@ export const STATUS = {
   picked_up: { label: 'Consegnato', tone: 'muted' },
   rejected: { label: 'Rifiutato', tone: 'muted' },
   cancelled: { label: 'Annullato', tone: 'muted' },
+  expired: { label: 'Scaduto', tone: 'muted' },
 };
 export const SOURCE = { portal: 'Sito', counter: 'Banco', phone: 'Telefono' };
 
@@ -21,7 +22,7 @@ export function groupOrders(orders) {
     { key: 'requested', title: 'Da approvare', items: by(o => o.status === 'requested') },
     { key: 'active', title: 'Da preparare e ritirare', items: by(o => o.status === 'accepted') },
     { key: 'done', title: 'Consegnati', items: by(o => o.status === 'picked_up') },
-    { key: 'closed', title: 'Rifiutati e annullati', items: by(o => ['rejected', 'cancelled'].includes(o.status)) },
+    { key: 'closed', title: 'Rifiutati, annullati e scaduti', items: by(o => ['rejected', 'cancelled', 'expired'].includes(o.status)) },
   ].filter(g => g.items.length);
 }
 

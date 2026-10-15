@@ -8,7 +8,9 @@ import logger from '../logger.js';
 import { logAudit } from '../utils/auditLogger.js';
 import { requireModule } from '../utils/tenantModules.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
-import { canTransition, freeSeats, shiftOpenOn, REQUEST_TTL_HOURS } from '../utils/bookings.js';
+import { expireReservations } from '../utils/caseExpiry.js';
+import { enqueue } from '../utils/whatsapp/outbox.js';
+import { canTransition, freeSeats, shiftOpenOn } from '../utils/bookings.js';
 import { SHIFT_COLUMNS, CLOSURE_COLUMNS, lockShift, assertBookable } from '../utils/bookingDb.js';
 import {
   MAX_PARTY, MAX_DAYS_AHEAD, MIN_CANCEL_NOTICE_HOURS, MIN_NOTICE_HOURS, MAX_PENDING_PER_PHONE, MIN_FILL_MS, localNow, addDays, withinWindow, phoneDigits, cancelOption,
@@ -41,8 +43,7 @@ export default function (broadcast) {
     }
   };
 
-  const expireStale = (db) => db.query(
-    `UPDATE reservations SET status = 'expired' WHERE status = 'requested' AND requested_at < now() - make_interval(hours => $1)`, [REQUEST_TTL_HOURS]);
+  const expireStale = expireReservations;
 
   // Per un insieme di date: per ogni turno, si può richiedere? (finestra, giorno, chiusure, posti per `party`).
   async function availableShifts(db, dates, party) {
@@ -123,6 +124,7 @@ export default function (broadcast) {
         `INSERT INTO reservations (date, shift_id, party_size, status, customer_name, phone, email, notes, source, public_token, consent_at)
          VALUES ($1, $2, $3, 'requested', $4, $5, $6, $7, 'portal', $8, now()) RETURNING id`,
         [b.date, b.shift_id, b.party_size, b.customer_name, b.phone, b.email, b.notes, token]);
+      await enqueue(tx, 'reservation', r.id, 'received');
       return r.id;
     });
     await logAudit(db, null, 'BOOKING_PORTAL_REQUEST', { reservationId: created, date: b.date, shiftId: b.shift_id, partySize: b.party_size });
