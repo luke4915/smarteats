@@ -1,53 +1,51 @@
 # WhatsApp: disegno
 
-Stato: **da approvare** (nessun codice scritto). Proposta del 15 ottobre 2026, su richiesta di Luca.
+Stato: **approvato nelle linee generali** (nessun codice scritto). Decisioni di Luca, 15 ottobre 2026: avvisi **automatici** da un **numero unico** della piattaforma (nessuna burocrazia a carico dei locali); il numero del singolo locale è un'evoluzione; niente funzione «manuale» a sé (resta solo come rete di sicurezza).
 Corrisponde al modulo `whatsapp`, a pagamento come gli altri. Per le regole di sviluppo vale `CLAUDE.md`
 (RLS, validazione zod, audit, nomenclatura inglese, endpoint pubblici).
 
 ## 1. Cosa vogliamo
 
-Quando una prenotazione o un ordine da asporto cambia stato, il cliente riceve **in automatico** un messaggio WhatsApp
-dal **numero del locale**, senza che il personale faccia nulla. Ogni locale usa il proprio numero. È un modulo
-acceso dal Master, venduto a parte.
+Quando una prenotazione o un ordine da asporto cambia stato, il cliente riceve **in automatico** un messaggio WhatsApp,
+senza che il personale faccia nulla. Il messaggio parte da **un solo numero della piattaforma** («SmartEats») e dice per
+conto di chi scrive: *«Pizzeria Rossi: la tua prenotazione per venerdì alle 20:00 è confermata.»* È un modulo acceso dal
+Master, venduto a parte. Il numero **del singolo locale** è un'evoluzione prevista (§3, «driver»).
 
-## 2. Il numero: dove sta, che cos'è
+## 2. Il numero unico
 
-Con la **WhatsApp Business Platform** (l'API ufficiale di Meta) il numero **non sta in un telefono**: vive nel cloud di Meta.
-- Va **verificato una volta** con un codice ricevuto per SMS o chiamata vocale. Dopo, la SIM non serve più per far
-  funzionare l'invio.
-- Può essere un cellulare, un **fisso** (si verifica con la chiamata) o un numero virtuale.
-- **Attenzione:** un numero già registrato sull'app WhatsApp normale non può essere anche sull'API. Strade: usare un numero
-  nuovo dedicato agli avvisi (il più semplice), oppure la modalità **«coexistence»** di Meta, che permette di usare lo stesso
-  numero sia nell'app WhatsApp Business sia con l'API (ha condizioni: da verificare al momento dell'attivazione).
-- Il cliente vede il **nome del locale** (nome visualizzato approvato da Meta) e il numero.
+- Un solo numero, tuo, registrato sulla **WhatsApp Business Platform** (API ufficiale di Meta). Vive nel cloud di Meta: si
+  verifica una volta con un codice via SMS o chiamata, poi nessuna SIM da tenere accesa. Può essere un numero virtuale.
+- **Non deve essere già su WhatsApp** (app normale o Business): va usato un numero nuovo dedicato agli avvisi.
+- Il cliente vede «SmartEats» (nome visualizzato approvato da Meta) e il testo nomina il locale.
+- **Risposte dei clienti:** a questo numero non risponde nessuno. Si risponde in automatico (la risposta libera è
+  ammessa dentro la finestra di 24 ore aperta dal cliente) con «Per parlare con *Pizzeria Rossi* chiama il 0123…»,
+  usando il telefono che il locale ha già impostato per prenotazioni e asporto. Se risponde STOP non gli scriviamo più.
+- **Il locale non fa nulla**: nessun account Meta, nessun numero, nessuna verifica. Accende il modulo (lo fa il Master),
+  sceglie gli eventi e basta.
 
-## 3. La burocrazia con Meta (diretto)
+## 3. Cosa serve a te, una volta (e cosa no)
 
-**Una volta, per te (il fornitore del software).** Per gestire molti locali ognuno col suo numero, il percorso di Meta è
-quello del **Tech Provider** con **Embedded Signup**: il locale collega il suo numero da una finestra dentro la nostra app.
-1. **Meta Business Portfolio** della tua società, con **verifica dell'azienda** (documenti: visura camerale, partita IVA).
-2. **App su Meta for Developers** (tipo Business) con il prodotto WhatsApp.
-3. **App Review** dei permessi `whatsapp_business_messaging` e `whatsapp_business_management`: servono una pagina
-   **privacy** e **termini** pubblici, un video dimostrativo del flusso, e il completamento della verifica d'accesso.
-4. Configurazione di **Embedded Signup** e di un utente di sistema con token.
-Tempi realistici: da pochi giorni a 2-3 settimane, soprattutto per la verifica azienda e la review.
+**Serve:**
+1. un **Meta Business Portfolio** (account Meta Business) e un'**app** su Meta for Developers con il prodotto WhatsApp;
+2. il **numero** verificato e il **nome visualizzato** approvato;
+3. una **pagina privacy e termini pubblica** (la preparo io: `/privacy` e `/terms`);
+4. un **metodo di pagamento** sull'account WhatsApp, perché Meta fattura qui i messaggi.
 
-**Per ogni locale (guidato dalla finestra Embedded Signup).**
-1. Accedere o creare il proprio account Meta Business; si crea il suo **WhatsApp Business Account**.
-2. Scegliere il numero e **verificarlo** (SMS o chiamata).
-3. Scegliere il **nome visualizzato** (deve richiamare il nome dell'attività; Meta lo approva).
-4. Inserire un **metodo di pagamento** su Meta: i messaggi li fattura Meta **direttamente al locale**.
-La verifica azienda del locale non è obbligatoria all'inizio: serve per alzare i limiti di invio (un locale nuovo parte da
-poche centinaia di conversazioni al giorno, più che sufficiente per una pizzeria).
+**Non serve** (per partire): Tech Provider, Embedded Signup, review dei permessi avanzati, verifica azienda dei locali.
+Senza verifica azienda Meta fissa un **limite di partenza** di qualche centinaio di clienti diversi al giorno: per i primi
+locali basta; si alza con la verifica quando i volumi lo richiederanno. I requisiti di Meta cambiano spesso: al momento di
+collegare il numero ti dirò esattamente cosa chiede il pannello.
 
-**Privacy.** Siamo responsabili del trattamento per il locale; Meta è sub-responsabile. Serve aggiornare l'informativa
-(«i tuoi dati sono usati per inviarti aggiornamenti su WhatsApp») e raccogliere il **consenso** (vedi §6).
+**Costi (onestà).** Meta addebita ogni messaggio in base alla categoria (un avviso su una prenotazione è «utility»: pochi
+centesimi). Con un numero unico **i messaggi li paghi tu**: conviene includerli nel canone del modulo con un **tetto
+mensile** per locale (es. «fino a 300 avvisi, oltre a consumo»); il contatore per locale c'è già nel registro degli invii.
 
-**Costi e margine (onestà).** Meta addebita ogni messaggio in base alla categoria (per un avviso su una prenotazione è
-«utility»: pochi centesimi per messaggio; tariffe per Paese da verificare sul sito di Meta al momento). Andando
-diretti **Meta fattura il locale** e noi non possiamo rivendere i messaggi con un ricarico (servirebbe lo status di Solution
-Partner con linea di credito, un percorso più lungo). **Il tuo margine è il canone del modulo**: la scelta giusta è prezzarlo
-come servizio («avvisi automatici ai clienti») e dire al locale che i messaggi li paga a Meta, a consumo.
+**Driver intercambiabile.** Il motore parla con un «driver» (`meta_cloud` oggi). In futuro un locale che vuole il proprio
+numero ha un driver con le **sue** credenziali (via intermediario o Embedded Signup) senza cambiare coda, eventi, consenso
+e log. È la stessa idea dei driver di stampa.
+
+**Rete di sicurezza.** Se un invio fallisce, il pannello della prenotazione/ordine mostra «WhatsApp non inviato: motivo» e
+il pulsante col messaggio già pronto per mandarlo a mano (i link esistono già).
 
 ## 4. Messaggi: eventi e modelli
 
@@ -109,8 +107,9 @@ scritti nei log); tabelle con RLS e in `TENANT_SCOPED_TABLES`; log degli invii c
 
 ## 6. Modello dati (migrazione 053, indicativo)
 
-- `whatsapp_accounts`: `tenant_id` (unico), `waba_id`, `phone_number_id`, `display_phone`, `display_name`, `token_enc`,
-  `status` (`pending`, `connected`, `error`), `quality`, `connected_at`.
+- **Credenziali della piattaforma** in variabili d'ambiente (`WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`,
+  `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN`), non nel database. Una tabella `whatsapp_accounts` per locale
+  (credenziali proprie, cifrate) arriverà con il driver per-locale.
 - `whatsapp_settings`: eventi accesi per locale (in `settings` come `whatsapp_event_*` = '1'/'0').
 - `whatsapp_messages`: `event`, `ref_type` (`reservation`|`takeaway`), `ref_id`, `to_phone`, `template`, `params` (JSONB),
   `status` (`queued`, `sent`, `delivered`, `read`, `failed`, `skipped`), `error`, `wa_message_id`, `attempts`,
@@ -120,27 +119,26 @@ scritti nei log); tabelle con RLS e in `TENANT_SCOPED_TABLES`; log degli invii c
 
 ## 7. Interfaccia
 
-- **Impostazioni → WhatsApp** (admin): stato del collegamento («Collegato · +39 …»), pulsante **Collega WhatsApp**
-  (Embedded Signup), interruttori per evento con anteprima del testo, **Invia un messaggio di prova** al proprio numero,
-  elenco degli ultimi invii con esito.
-- **Prenotazione / ordine**: riga di stato dell'ultimo messaggio e «Invia di nuovo» se fallito.
-- **Master**: accensione del modulo per locale e stato del collegamento (per assistenza).
+- **Impostazioni → WhatsApp** (admin): interruttori per evento con **anteprima del testo**, telefono del locale mostrato
+  nelle risposte, **messaggio di prova** al proprio numero, elenco degli ultimi invii con esito e contatore del mese.
+- **Prenotazione / ordine**: riga di stato dell'ultimo messaggio («consegnato alle 19:02») e «Invia di nuovo» /
+  «Invia a mano» se fallito.
+- **Master**: accensione del modulo per locale e, per assistenza, lo stato degli ultimi invii.
 
 ## 8. Fasi
 
 | Fase | Contenuto |
 |---|---|
-| **W0** | Tu: verifica azienda Meta, app, pagina privacy e termini pubblici, review. Io: pagina `/privacy` e `/terms`. In parallelo si può sviluppare con il **numero di prova** che Meta fornisce (5 destinatari). |
-| **W1** | Outbox, invio, modelli, log, eventi di prenotazione e asporto, credenziali inserite a mano per **un locale pilota**. Test con Meta simulato. |
-| **W2** | Webhook (stati, STOP), consenso nelle pagine pubbliche, riga di stato nei pannelli. |
-| **W3** | Embedded Signup e invio automatico dei modelli a Meta, interfaccia di Impostazioni, Master. |
+| **W0** | Tu: account Meta, app, numero e nome, metodo di pagamento. Io: `/privacy` e `/terms`, e la guida passo passo con le schermate da seguire. |
+| **W1** | Modulo, outbox, driver (con uno **finto** per sviluppo e test), modelli, eventi di prenotazione e asporto, log. Si prova tutto senza Meta. |
+| **W2** | Webhook (stati, STOP, risposta automatica), consenso nelle pagine pubbliche, riga di stato nei pannelli. |
+| **W3** | Impostazioni e Master, invio dei modelli a Meta e prova reale con il numero di prova (5 destinatari) e poi col numero vero. |
 
-W1-W2 si costruiscono e si provano **prima** che la review sia approvata; W3 dipende dall'approvazione.
+W1-W2 non dipendono da Meta: li costruiamo e proviamo mentre fai W0.
 
 ## 9. Da decidere
 
-1. **Eventi**: confermi la tabella di §4 (aggiunta «asporto rifiutato», «ritirato» spento di partenza)?
-2. **Prenotazioni del personale**: messaggio solo con la spunta esplicita, o mai?
-3. **Numero**: consigli ai locali un numero dedicato agli avvisi (semplice) o puntiamo sulla coexistence?
-4. **Dati azienda** per Meta: ragione sociale, P.IVA, sito/URL privacy: quelli che userai (il nome della società fornitrice).
-5. **Prezzo del modulo**: lo decidi tu; nel Master mostreremo solo se è acceso.
+1. **Eventi** (§4): tabella confermata? In particolare «asporto rifiutato» aggiunto e «ritirato» spento di partenza.
+2. **Prenotazioni inserite dal personale**: nessun messaggio, salvo una spunta esplicita «Invia conferma su WhatsApp»?
+3. **Tetto di messaggi per locale** nel canone: lo decidi tu; il sistema lo conta e lo mostra.
+4. **Nome visualizzato** del numero: «SmartEats» o un altro nome di prodotto?
