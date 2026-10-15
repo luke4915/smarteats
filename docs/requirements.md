@@ -88,7 +88,7 @@ Disegno e decisioni in `docs/design-prenotazioni.md` (turni fissi, richiesta dal
 | 4-1 | Agenda delle prenotazioni per giorno e turno (migrazione 044, vista Prenotazioni): inserimento a mano, conferma o rifiuto delle richieste, annullo, «non si è presentato», messaggio pronto per il cliente (WhatsApp, chiama, email). **P1 fatto.** | `[x]` |
 | 4-2 | Capienza e turni: turni fissi con capienza e durata del tavolo, chiusure, richieste che tengono il posto per 24 ore; oltre la capienza solo di proposito. | `[x]` |
 | 4-3 | Assegnazione del tavolo sulla pianta (più tavoli per i gruppi, mai doppi con orari sovrapposti), segno sulla Sala e «Arrivato» che apre il conto con i coperti. | `[x]` |
-| 4-4 | Pagina pubblica di prenotazione per ogni locale (sottodominio del tenant). | `[ ]` |
+| 4-4 | Pagina pubblica di prenotazione per ogni locale (sottodominio del tenant): richieste, link personale con annullo, anti-spam, conservazione dei dati (migrazione 047). | `[x]` |
 | 4-5 | Conferma e promemoria al cliente (email o messaggio). | `[ ]` |
 | 4-6 | Lista d'attesa. | `[ ]` |
 

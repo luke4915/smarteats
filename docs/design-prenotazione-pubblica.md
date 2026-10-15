@@ -1,6 +1,6 @@
 # Pagina pubblica di prenotazione (P2): definizione
 
-Stato: **da approvare**. Completa `docs/design-prenotazioni.md` (sezioni 3 e 6) con la pagina vista dal cliente e le sue regole.
+Stato: **realizzata** (15 ottobre 2026, migrazione 047). Decisioni del titolare: oltre 10 persone si telefona; anticipo da 1 ora a 30 giorni; dati conservati 90 giorni; 2 richieste in attesa per telefono; il personale conferma sempre. Completa `docs/design-prenotazioni.md` (sezioni 3 e 6) con la pagina vista dal cliente e le sue regole.
 Non cambia nulla di quanto il personale usa già (P1): aggiunge un ingresso per le richieste.
 
 ## 1. Cosa vede il cliente
@@ -80,7 +80,7 @@ account del cliente. Le piattaforme (P5) arrivano dopo, con gli accordi.
 ## 6. Da decidere (con la proposta in grassetto)
 
 1. **Persone massime dal portale:** **10** (oltre: telefona).
-2. **Anticipo:** minimo **2 ore**, massimo **60 giorni**.
+2. **Anticipo:** minimo **1 ora**, massimo **30 giorni**.
 3. **Conservazione dei dati:** **90 giorni** dalla data della prenotazione.
 4. **Tetto per telefono:** **2** richieste in attesa.
 5. **Informativa privacy:** testo standard breve scritto da noi, con il link alla pagina del locale se ne ha una; da far

@@ -207,6 +207,17 @@ imposta l'indirizzo `https://localhost:9443`.
 
 ---
 
+## M. Prenotazioni online (portale dei clienti)
+
+- [ ] Impostazioni → Prenotazioni online: accendi, scrivi il telefono e un messaggio. Il QR e il link compaiono?
+- [ ] Apri il link dal **telefono**: i quattro passi sono chiari? Un giorno senza posto è grigio?
+- [ ] Invia una richiesta: arriva «Richiesta ricevuta» con un link? In Prenotazioni la vedi «Da confermare»?
+- [ ] Conferma dall'agenda: dal link del cliente vedi «Prenotazione confermata»?
+- [ ] Prova a inviare 3 richieste con lo stesso telefono: la terza viene respinta con un messaggio chiaro?
+- [ ] Con 10 persone: il pulsante «+» si ferma e dice di telefonare?
+- [ ] Annulla dal link: il posto torna libero?
+- [ ] Segna «Arrivato», incassa il conto: la prenotazione diventa «Conclusa» e il tavolo si libera?
+
 ## Dopo la prova
 
 Mandami le righe `[~]` e `[!]`. Per ogni problema mi bastano:

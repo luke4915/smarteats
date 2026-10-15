@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Copy, ExternalLink } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { btn, btnPrimary, iconBtn, input, label } from './sala/ui';
@@ -16,11 +17,15 @@ const BookingSettings = () => {
   const [closures, setClosures] = useState([]);
   const [draft, setDraft] = useState(null);
   const [closure, setClosure] = useState({ date_from: '', date_to: '', shift_id: '', reason: '' });
+  const [portal, setPortal] = useState(null);   // { enabled, phone, welcome }: impostazioni del portale dei clienti
+  const link = `${window.location.origin}/prenota`;
 
   const load = useCallback(async () => {
     try {
       const [s, c] = await Promise.all([fetchWithAuth('/bookings/shifts'), fetchWithAuth('/bookings/closures')]);
       setShifts(s); setClosures(c);
+      const all = await fetchWithAuth('/settings/all');
+      setPortal({ enabled: all.booking_portal_enabled === '1', phone: all.booking_portal_phone ?? '', welcome: all.booking_portal_welcome ?? '' });
     } catch (err) { showToast(err.message, 'error'); }
   }, [showToast]);
   useEffect(() => { load(); }, [load]);
@@ -46,10 +51,51 @@ const BookingSettings = () => {
     try { await fetchWithAuth(`/bookings/closures/${c.id}`, { method: 'DELETE' }); load(); }
     catch (err) { showToast(err.message, 'error'); }
   };
+  const savePortal = async (key, value, message) => {
+    try { await fetchWithAuth(`/settings/${key}`, { method: 'PUT', body: { value } }); if (message) showToast(message, 'success'); }
+    catch (err) { showToast(err.message, 'error'); load(); }
+  };
   const toggleDay = (d) => setDraft(x => ({ ...x, weekdays: x.weekdays.includes(d) ? x.weekdays.filter(n => n !== d) : [...x.weekdays, d] }));
 
   return (
     <div className="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)] space-y-6">
+      <section>
+        <h2 className="text-sm font-semibold text-[var(--text-main)] mb-1">Prenotazioni online</h2>
+        <p className="text-xs text-[var(--text-muted)] mb-4">I clienti chiedono un tavolo da una pagina pubblica; tu confermi dall'agenda. Fino a 10 persone, da un'ora a 30 giorni prima; oltre devono telefonare.</p>
+        {portal === null ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+          <div className="grid lg:grid-cols-[1fr_auto] gap-6 max-w-3xl">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <button type="button" role="switch" aria-checked={portal.enabled} aria-label="Prenotazioni online"
+                  onClick={() => { const enabled = !portal.enabled; setPortal(p => ({ ...p, enabled })); savePortal('booking_portal_enabled', enabled ? '1' : '0', enabled ? 'Prenotazioni online accese' : 'Prenotazioni online spente'); }}
+                  className={`shrink-0 w-11 h-6 p-0.5 rounded-full flex items-center cursor-pointer transition-colors ${portal.enabled ? 'bg-[var(--accent)] justify-end' : 'bg-[var(--border-hover)] justify-start'}`}>
+                  <span className="block w-5 h-5 bg-white rounded-full" />
+                </button>
+                <span className="text-sm text-[var(--text-main)]">{portal.enabled ? 'Accese: i clienti possono inviare richieste' : 'Spente: la pagina non è raggiungibile'}</span>
+              </div>
+              <div>
+                <label className={label} htmlFor="p-phone">Telefono da mostrare ai clienti (per i gruppi grandi e i cambi)</label>
+                <input id="p-phone" className={`${input} mt-1`} value={portal.phone} maxLength={40} placeholder="Es. 0123 456789"
+                  onChange={e => setPortal(p => ({ ...p, phone: e.target.value }))} onBlur={e => savePortal('booking_portal_phone', e.target.value.trim() || null)} />
+              </div>
+              <div>
+                <label className={label} htmlFor="p-welcome">Messaggio in cima alla pagina (facoltativo)</label>
+                <textarea id="p-welcome" className={`${input} mt-1 !h-20 py-2`} value={portal.welcome} maxLength={500} placeholder="Es. Il giovedì siamo chiusi. Per eventi privati scriveteci."
+                  onChange={e => setPortal(p => ({ ...p, welcome: e.target.value }))} onBlur={e => savePortal('booking_portal_welcome', e.target.value.trim() || null)} />
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="p-2 bg-white rounded-lg"><QRCodeSVG value={link} size={120} /></div>
+              <p className="text-xs text-[var(--text-muted)] break-all max-w-[140px] text-center">{link}</p>
+              <div className="flex gap-1.5">
+                <button className={btn} onClick={async () => { try { await navigator.clipboard.writeText(link); showToast('Link copiato', 'success'); } catch { showToast('Copia non riuscita', 'warning'); } }}><Copy size={15} /> Copia</button>
+                <a className={btn} href={link} target="_blank" rel="noreferrer"><ExternalLink size={15} /> Apri</a>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
       <section>
         <h2 className="text-sm font-semibold text-[var(--text-main)] mb-1">Turni delle prenotazioni</h2>
         <p className="text-xs text-[var(--text-muted)] mb-4">Orari fissi in cui si accettano prenotazioni, con i coperti che si possono prenotare e quanto resta impegnato il tavolo.</p>

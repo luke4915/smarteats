@@ -1,6 +1,6 @@
 # Prenotazioni: disegno
 
-Stato: **P1 realizzata** (15 ottobre 2026, migrazione 044). P2 in poi da fare. Decisioni prese con Luca il 14-15 ottobre 2026.
+Stato: **P1 e P2 realizzate** (15 ottobre 2026, migrazioni 044-047). P3 in poi da fare. Decisioni prese con Luca il 14-15 ottobre 2026.
 
 Corrisponde alla Fase 4 di `docs/requirements.md` (4-1 … 4-6). Per le regole di sviluppo vale `CLAUDE.md`
 (RLS, validazione zod, audit, endpoint pubblici).
@@ -141,7 +141,7 @@ anche nel calendario del telefono.
 | Fase | Contenuto | Stato |
 |---|---|---|
 | **P1** | Modello (migrazione 044), turni e chiusure, inserimento a mano, **agenda**, conferma/rifiuto, **assegnazione sulla pianta**, **«Arrivato» → conto**, segno nella Sala, messaggio pronto (WhatsApp/chiama/email). Modulo `bookings`. | **fatta** |
-| **P2** | **Portale pubblico** con richieste, pagina di stato con link, annullo, anti-spam, informativa. | da fare |
+| **P2** | **Portale pubblico** con richieste, pagina di stato con link, annullo, anti-spam, informativa. | **fatta** |
 | **P3** | Messaggi pronti (WhatsApp/email/chiama), **foglio stampabile** del turno con la pianta, lista d'attesa semplice. | da fare |
 | **P4** | **Email automatiche** (conferma, promemoria): funzione aggiuntiva, con servizio di invio e consenso. | dopo |
 | **P5** | Piattaforme (TheFork, Google), calendario iCal. | dopo, con accordi |

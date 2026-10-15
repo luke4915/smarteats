@@ -45,6 +45,7 @@ const Statistics = lazy(() => import('./components/shared/Statistics'));
 const KDS = lazy(() => import('./pages/KDSPage'));
 const MenuPage = lazy(() => import('./pages/MenuPage'));
 const MasterPage = lazy(() => import('./pages/MasterPage'));
+const BookingPage = lazy(() => import('./pages/BookingPage'));
 
 const PageLoading = () => (
   <div className="h-full min-h-[50vh] flex items-center justify-center text-[var(--text-main)]">Caricamento...</div>
@@ -166,6 +167,9 @@ const App = () => {
     try { await logout(); setShowLogoutConfirm(false); showToast('Sessione chiusa', 'info'); navigate('/login'); }
     catch (err) { console.error(err); }
   };
+
+  // Prenotazione dei clienti: pubblica, anche per chi ha una sessione aperta in questo browser
+  if (window.location.pathname === '/prenota' || window.location.pathname.startsWith('/prenota/')) return <Suspense fallback={<PageLoading />}><BookingPage /></Suspense>;
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">Caricamento...</div>;
 
