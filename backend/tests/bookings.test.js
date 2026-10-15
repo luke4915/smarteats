@@ -9,11 +9,11 @@ test('stati: da una richiesta si va avanti, gli stati finali non hanno uscite', 
   assert.equal(canTransition('requested', 'seated'), false, 'prima va confermata');
   assert.equal(canTransition('confirmed', 'seated'), true);
   assert.equal(canTransition('confirmed', 'declined'), false);
-  for (const final of ['seated', 'declined', 'cancelled', 'no_show', 'expired']) assert.equal(canTransition(final, 'confirmed'), false);
+  for (const final of ['completed', 'declined', 'cancelled', 'no_show', 'expired']) assert.equal(canTransition(final, 'confirmed'), false);
 });
 
 test('tengono il posto: richiesta, confermata, seduta', () => {
-  assert.deepEqual(['requested', 'confirmed', 'seated', 'declined', 'cancelled', 'no_show', 'expired'].map(holdsSeats), [true, true, true, false, false, false, false]);
+  assert.deepEqual(['requested', 'confirmed', 'seated', 'completed', 'declined', 'cancelled', 'no_show', 'expired'].map(holdsSeats), [true, true, true, false, false, false, false, false]);
 });
 
 test('una richiesta decade dopo 24 ore', () => {

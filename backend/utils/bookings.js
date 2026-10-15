@@ -2,13 +2,14 @@
 // Niente database: sono funzioni con test (tests/bookings.test.js). Le date sono stringhe `YYYY-MM-DD` nel locale,
 // le ore sono `HH:MM` o `HH:MM:SS`.
 
-export const STATUSES = ['requested', 'confirmed', 'declined', 'cancelled', 'seated', 'no_show', 'expired'];
+export const STATUSES = ['requested', 'confirmed', 'declined', 'cancelled', 'seated', 'completed', 'no_show', 'expired'];
 
 // Da quali stati si può passare a quali. Gli stati finali non hanno uscite.
 const TRANSITIONS = {
   requested: ['confirmed', 'declined', 'cancelled', 'expired'],
   confirmed: ['seated', 'no_show', 'cancelled'],
-  seated: [],
+  seated: ['completed'],
+  completed: [],
   declined: [],
   cancelled: [],
   no_show: [],

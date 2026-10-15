@@ -841,7 +841,7 @@ CREATE TABLE public.reservations (
     created_by integer,
     CONSTRAINT reservations_customer_name_check CHECK ((length(btrim(customer_name)) > 0)),
     CONSTRAINT reservations_party_size_check CHECK (((party_size >= 1) AND (party_size <= 99))),
-    CONSTRAINT reservations_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'confirmed'::text, 'declined'::text, 'cancelled'::text, 'seated'::text, 'no_show'::text, 'expired'::text])))
+    CONSTRAINT reservations_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'confirmed'::text, 'declined'::text, 'cancelled'::text, 'seated'::text, 'completed'::text, 'no_show'::text, 'expired'::text])))
 );
 
 ALTER TABLE ONLY public.reservations FORCE ROW LEVEL SECURITY;

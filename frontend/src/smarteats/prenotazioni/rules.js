@@ -23,6 +23,7 @@ export const STATUS = {
   requested: { label: 'Da confermare', tone: 'amber' },
   confirmed: { label: 'Confermata', tone: 'green' },
   seated: { label: 'Al tavolo', tone: 'accent' },
+  completed: { label: 'Conclusa', tone: 'muted' },
   declined: { label: 'Rifiutata', tone: 'muted' },
   cancelled: { label: 'Annullata', tone: 'muted' },
   no_show: { label: 'Non si è presentata', tone: 'muted' },
@@ -37,7 +38,7 @@ export function agendaGroups(reservations) {
     { key: 'requested', title: 'Da confermare', items: by(['requested']) },
     { key: 'confirmed', title: 'Confermate', items: by(['confirmed']) },
     { key: 'seated', title: 'Al tavolo', items: by(['seated']) },
-    { key: 'closed', title: 'Chiuse', items: by(['declined', 'cancelled', 'no_show', 'expired']) },
+    { key: 'closed', title: 'Concluse e chiuse', items: by(['completed', 'declined', 'cancelled', 'no_show', 'expired']) },
   ].filter(g => g.items.length);
 }
 

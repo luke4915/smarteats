@@ -218,6 +218,39 @@ describe('prenotazioni', () => {
     assert.equal((await waiter.post(`/bookings/reservations/${busy.id}/arrived`, {})).body.code, 'TABLE_BUSY');
   });
 
+  it('quando il conto si chiude la prenotazione non resta «al tavolo»: pagato = conclusa, annullato = torna confermata, unito = segue', async () => {
+    const day = '2026-12-05';
+    const arrive = async (name, table) => {
+      const r = (await book({ date: day, customer_name: name, party_size: 2, table_ids: [table.id] })).body;
+      const res = await waiter.post(`/bookings/reservations/${r.id}/arrived`, {});
+      assert.equal(res.status, 200, JSON.stringify(res.body));
+      return { r, check: res.body.check };
+    };
+    const state = async (id) => (await waiter.get(`/bookings/reservations/${id}`)).body;
+
+    // pagato (conto vuoto da chiudere): conclusa, e il tavolo si può dare a un'altra prenotazione dello stesso turno
+    const paid = await arrive('Pagati', tables[0]);
+    assert.equal((await admin.post(`/checks/${paid.check.id}/close`, {})).status, 200);
+    assert.equal((await state(paid.r.id)).status, 'completed');
+    const again = await book({ date: day, customer_name: 'Dopo', party_size: 2, table_ids: [tables[0].id] });
+    assert.equal(again.status, 201, 'il tavolo è libero per la stessa sera');
+
+    // annullato: era aperto per sbaglio, la prenotazione torna confermata, senza conto
+    const voided = await arrive('Sbagliati', tables[1]);
+    assert.equal((await admin.post(`/checks/${voided.check.id}/void`, { cancel_orders: false })).status, 200);
+    const back = await state(voided.r.id);
+    assert.deepEqual([back.status, back.check_id, back.table_ids], ['confirmed', null, [tables[1].id]]);
+
+    // unito: la prenotazione segue il conto di destinazione
+    const room = (await admin.post('/rooms', { name: 'Veranda' })).body;
+    const spare = (await admin.post(`/rooms/${room.id}/tables/bulk`, { prefix: 'V', from: 1, to: 2, seats: 4 })).body.created;
+    const a = await arrive('Uniti A', spare[0]);
+    const b = await arrive('Uniti B', spare[1]);
+    assert.equal((await admin.post(`/checks/${a.check.id}/merge`, { into: b.check.id })).status, 200);
+    const followed = await state(a.r.id);
+    assert.deepEqual([followed.status, followed.check_id], ['seated', b.check.id]);
+  });
+
   it('isolamento e ruoli: un altro locale non vede nulla; la cucina non entra; gli eventi arrivano al personale', async () => {
     const day = '2026-12-11';
     const staff = await connectWs(server.port, t.host, { cookie: admin.cookie });

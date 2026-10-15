@@ -9,7 +9,7 @@ import { formatEuro } from './checkMath';
 import { printFired } from './printFired';
 import { NO_COURSE_NAME } from './courses';
 import { canCash, canDiscount as roleCanDiscount } from './permissions';
-import { btn, btnPrimary, btnDanger, label, row } from './ui';
+import { btn, btnPrimary, btnDanger, label } from './ui';
 
 const METHOD = { cash: 'Contanti', card: 'Carta', other: 'Altro' };
 const time = (iso) => new Date(iso).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
@@ -29,6 +29,10 @@ const CheckView = ({ detail, user, service, onBack, onOrder, onPay, onAdjust, on
   const cash = canCash(user.role);
   const hasPayments = detail.payments.length > 0;
   const billRequested = open && detail.bill_requested_at;
+  // «Contanti 10,00 € · Carta 12,00 €»: come si è pagato, in calce accanto al totale (se un solo metodo, basta il nome)
+  const byMethod = detail.payments.reduce((m, p) => m.set(p.method, (m.get(p.method) ?? 0) + Number(p.amount)), new Map());
+  const methods = [...byMethod].map(([k, v]) => (byMethod.size > 1 || open ? `${METHOD[k]} ${formatEuro(v)}` : METHOD[k])).join(' · ');
+  const closedAt = detail.closed_at ? time(detail.closed_at) : '';
 
   const run = async (action) => {
     setBusy(true);
@@ -67,6 +71,7 @@ const CheckView = ({ detail, user, service, onBack, onOrder, onPay, onAdjust, on
     { label: billRequested ? 'Annulla richiesta conto' : 'Il cliente chiede il conto', icon: billRequested ? BellOff : BellRing,
       onClick: () => run(() => fetchWithAuth(`/checks/${detail.id}/bill-request`, { method: 'POST', body: { requested: !detail.bill_requested_at } })) },
     { label: 'Stampa il conto', icon: Printer, onClick: () => onPrint() },
+    ...(detail.payments.length > 1 ? detail.payments.map(p => ({ label: `Ricevuta ${METHOD[p.method]} ${formatEuro(p.amount)}`, icon: Printer, onClick: () => onPrint(p.id) })) : []),
     { label: 'Modifica i coperti', icon: Users, onClick: onCovers },
     { label: 'Sposta o unisci tavolo', icon: ArrowRightLeft, onClick: onMove },
     canDiscount && activeOrders.length > 0 && { label: 'Omaggio o sconto', icon: Percent, onClick: onAdjust },
@@ -82,11 +87,12 @@ const CheckView = ({ detail, user, service, onBack, onOrder, onPay, onAdjust, on
       footer={
         <>
           <div className="space-y-0.5">
-            {hasPayments && <div className="flex justify-between text-xs text-[var(--text-muted)]"><span>Totale {formatEuro(detail.total)}</span><span>Pagato {formatEuro(detail.paid)}</span></div>}
+            {hasPayments && open && <div className="flex justify-between text-xs text-[var(--text-muted)]"><span>Totale {formatEuro(detail.total)}</span><span>Già pagato {formatEuro(detail.paid)}{methods && ` · ${methods}`}</span></div>}
             <div className="flex justify-between items-baseline">
               <span className={label}>{open ? 'Da pagare' : 'Totale'}</span>
               <span className="text-3xl font-semibold tabular-nums text-[var(--text-main)]">{formatEuro(open ? detail.due : detail.total)}</span>
             </div>
+            {hasPayments && !open && <p className="text-sm text-[var(--text-muted)] text-right">Pagato {methods}{closedAt && ` · ${closedAt}`}</p>}
           </div>
           {open ? (
             <div className="grid grid-cols-2 gap-2">
@@ -122,20 +128,6 @@ const CheckView = ({ detail, user, service, onBack, onOrder, onPay, onAdjust, on
         </div>
       )}
       <CheckOrders detail={detail} user={user} onChanged={onChanged} />
-      {hasPayments && (
-        <section className="space-y-1.5 pt-2">
-          <p className="px-1 text-xs font-semibold text-[var(--text-muted)]">Pagamenti</p>
-          {detail.payments.map(p => (
-            <button key={p.id} onClick={() => onPrint(p.id)} title="Stampa la ricevuta di questo pagamento" className={`${row} w-full flex items-center gap-2 text-left hover:border-[var(--accent)]/60`}>
-              <span className="flex-1 min-w-0 text-xs font-bold text-[var(--text-main)] truncate">
-                {METHOD[p.method]} · {time(p.paid_at)}{p.items.length > 0 && <span className="font-normal normal-case text-[var(--text-muted)]"> · {p.items.map(i => `${i.quantity}× ${i.name}`).join(', ')}</span>}
-              </span>
-              <span className="font-semibold text-xs tabular-nums text-[var(--text-main)]">{formatEuro(p.amount)}</span>
-              <Printer size={14} className="text-[var(--text-muted)] shrink-0" />
-            </button>
-          ))}
-        </section>
-      )}
     </PanelFrame>
   );
 };
