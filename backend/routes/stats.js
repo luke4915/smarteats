@@ -9,10 +9,11 @@ import { COMPLETED_ITEMS, LINE_REVENUE } from '../utils/statsSql.js';
 import { isRevenue, isKitchenOrder } from '../utils/revenue.js';
 import { buildStats } from '../utils/stats.js';
 import { buildRestaurantStats } from '../utils/restaurantStats.js';
+import { buildOccupancy, buildBookingStats } from '../utils/occupancy.js';
 
 const router = express.Router();
 
-const authorizeStats = authorizeRoles(['admin', 'responsabile'], 'Le statistiche sono riservate ad admin e responsabili');
+const authorizeStats = authorizeRoles(['admin', 'manager'], 'Le statistiche sono riservate ad admin e responsabili');
 
 // GET /api/stats?sessions=1,2&tz=Europe/Rome — statistiche aggregate dal database (nessun ordine viaggia verso il browser).
 // Senza `sessions` valgono tutte le serate. Le ore sono nel fuso `tz` del dispositivo.
@@ -68,7 +69,7 @@ router.get('/restaurant', authenticate, requireModule('stats'), requireModule('t
   const checkSessions = 'AND ($1::int[] IS NULL OR c.session_id = ANY($1))';
   const revenueOrders = `${isRevenue('o')} AND ${isKitchenOrder('o')}`;
   try {
-    const [checks, revenue, byHour, courses, products, kitchen, discounts, payments] = await Promise.all([
+    const [checks, revenue, byHour, courses, products, kitchen, discounts, payments, seated, seatTotal, reservations] = await Promise.all([
       req.db.query(
         `SELECT COUNT(*)::int AS n, COALESCE(SUM(c.covers), 0)::int AS covers, COUNT(DISTINCT c.table_id)::int AS tables,
                 AVG(EXTRACT(EPOCH FROM (c.closed_at - c.opened_at)) / 60) FILTER (WHERE c.closed_at - c.opened_at < interval '6 hours') AS avg_minutes
@@ -101,10 +102,25 @@ router.get('/restaurant', authenticate, requireModule('stats'), requireModule('t
       req.db.query(
         `SELECT p.method, SUM(p.amount) AS amount FROM payments p JOIN checks c ON c.id = p.check_id
          WHERE c.status = 'paid' ${checkSessions} GROUP BY p.method`, [sf]),
+      // Riempimento: ogni conto pagato con quando si è seduto, quanto è rimasto e i posti del suo tavolo
+      req.db.query(
+        `SELECT c.session_id, EXTRACT(EPOCH FROM c.opened_at)::float8 AS opened_at, EXTRACT(EPOCH FROM c.closed_at)::float8 AS closed_at,
+                (EXTRACT(hour FROM c.opened_at AT TIME ZONE $2) * 60 + EXTRACT(minute FROM c.opened_at AT TIME ZONE $2))::int AS start,
+                c.covers, t.seats
+         FROM checks c LEFT JOIN dining_tables t ON t.id = c.table_id
+         WHERE c.status = 'paid' AND c.closed_at IS NOT NULL ${checkSessions}`, [sf, tz]),
+      req.db.query(`SELECT COALESCE(SUM(seats), 0)::int AS seats FROM dining_tables WHERE active`),
+      // Prenotazioni dei giorni dei servizi scelti (o tutte): anticipo = giorni tra la richiesta e la data
+      req.db.query(
+        `SELECT r.status, r.source, r.party_size, (r.date - (r.requested_at AT TIME ZONE $2)::date)::int AS lead_days
+         FROM reservations r
+         WHERE $1::int[] IS NULL OR r.date IN (SELECT (s.start_time AT TIME ZONE $2)::date FROM sessions s WHERE s.id = ANY($1))`, [sf, tz]),
     ]);
     res.json(buildRestaurantStats({
       checks: checks.rows[0], revenue: revenue.rows[0].total, byHour: byHour.rows, courses: courses.rows, products: products.rows,
       kitchen: kitchen.rows, discounts: discounts.rows[0], payments: payments.rows,
+      occupancy: buildOccupancy({ checks: seated.rows, seats: seatTotal.rows[0].seats, revenue: revenue.rows[0].total }),
+      bookings: buildBookingStats(reservations.rows),
     }));
   } catch (err) {
     logger.error({ err }, 'Errore GET /api/stats/restaurant');

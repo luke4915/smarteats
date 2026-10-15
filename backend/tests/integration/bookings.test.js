@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import bcrypt from 'bcrypt';
 import { startServer, createTenant, deleteTenants, closePools, apiClient, adminDb, connectWs, sleep, PASSWORD } from './helpers.js';
 
-const DATE = '2026-10-23';   // un venerdì
-const SATURDAY = '2026-10-24';
+const DATE = '2030-10-25';   // un venerdì (lontano nel futuro: le richieste non gestite scadono all'inizio del turno)
+const SATURDAY = '2030-10-26';
 
 describe('prenotazioni', () => {
   let server, t, other, sagra, admin, waiter, kitchen, otherApi, sagraApi, tables, dinner, late;
@@ -30,12 +30,12 @@ describe('prenotazioni', () => {
 
   before(async () => {
     server = await startServer();
-    [t, other, sagra] = [await createTenant({ businessType: 'ristorante' }), await createTenant({ businessType: 'ristorante' }), await createTenant()];
+    [t, other, sagra] = [await createTenant({ businessType: 'restaurant' }), await createTenant({ businessType: 'restaurant' }), await createTenant()];
     await withBookings(t); await withBookings(other);
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
-    waiter = await user('cameriere');
-    kitchen = await user('cucina');
+    waiter = await user('waiter');
+    kitchen = await user('kitchen');
     otherApi = apiClient(server.port, other.host);
     await otherApi.login(other.username);
     sagraApi = apiClient(server.port, sagra.host);
@@ -84,7 +84,7 @@ describe('prenotazioni', () => {
     const sat = (await admin.get(`/bookings/availability?date=${SATURDAY}`)).body.filter(s => s.shift_id !== mon.body.id);
     assert.ok(sat.every(s => !s.bookable && s.reason === 'Evento privato'));
     assert.equal((await waiter.post('/bookings/closures', { date_from: SATURDAY, date_to: SATURDAY })).status, 403);
-    assert.equal((await admin.post('/bookings/closures', { date_from: SATURDAY, date_to: '2026-10-01' })).status, 400);
+    assert.equal((await admin.post('/bookings/closures', { date_from: SATURDAY, date_to: '2030-10-01' })).status, 400);
     await admin.request('DELETE', `/bookings/closures/${closure.body.id}`);
     await admin.request('DELETE', `/bookings/shifts/${mon.body.id}`);
     await adminDb.query('DELETE FROM reservations WHERE id = $1', [reqId]);
@@ -132,7 +132,7 @@ describe('prenotazioni', () => {
   });
 
   it('una richiesta non decisa decade dopo 24 ore e libera il posto', async () => {
-    const day = '2026-11-06';
+    const day = '2030-11-06';
     const old = await requested(6, { date: day, requestedAt: new Date(Date.now() - 25 * 3600 * 1000) });
     const fresh = await requested(4, { date: day, requestedAt: new Date(Date.now() - 2 * 3600 * 1000) });
     const avail = (await admin.get(`/bookings/availability?date=${day}`)).body[0];
@@ -144,7 +144,7 @@ describe('prenotazioni', () => {
   });
 
   it('confermare ricontrolla i posti: una richiesta che non ci sta non si conferma', async () => {
-    const day = '2026-11-13';
+    const day = '2030-11-13';
     await book({ date: day, shift_id: late.id, party_size: 9 });
     const r = await requested(3, { date: day, shiftId: late.id });
     const res = await waiter.post(`/bookings/reservations/${r}/confirm`, {});
@@ -154,7 +154,7 @@ describe('prenotazioni', () => {
   });
 
   it('tavoli: assegnati sulla pianta, mai doppi con orari sovrapposti, liberi dopo il turno', async () => {
-    const day = '2026-11-20';
+    const day = '2030-11-20';
     const first = (await book({ date: day, customer_name: 'Primo', party_size: 4, table_ids: [tables[0].id] })).body;
     assert.deepEqual(first.table_ids, [tables[0].id]);
 
@@ -181,7 +181,7 @@ describe('prenotazioni', () => {
   });
 
   it('modifica: cambio persone e turno ricontrollati; spostando di turno i tavoli si liberano', async () => {
-    const day = '2026-11-27';
+    const day = '2030-11-27';
     const r = (await book({ date: day, party_size: 4, table_ids: [tables[3].id] })).body;
     assert.equal((await waiter.put(`/bookings/reservations/${r.id}`, { party_size: 25 })).body.code, 'NO_CAPACITY');
     const moved = await waiter.put(`/bookings/reservations/${r.id}`, { shift_id: late.id, party_size: 3, notes: 'Anniversario' });
@@ -195,8 +195,24 @@ describe('prenotazioni', () => {
     assert.equal((await waiter.put(`/bookings/reservations/${r.id}`, { notes: 'x' })).status, 409, 'una annullata non si modifica');
   });
 
+  it('i tavoli scelti devono avere posti a sufficienza: 3 posti non reggono 4 persone', async () => {
+    const day = '2030-12-06';
+    const { rows: [small] } = await adminDb.query(
+      `INSERT INTO dining_tables (room_id, name, seats, tenant_id) SELECT room_id, 'Piccolo', 3, tenant_id FROM dining_tables WHERE id = $1 RETURNING id`, [tables[0].id]);
+    const r = (await book({ date: day, party_size: 4 })).body;
+    const refused = await waiter.put(`/bookings/reservations/${r.id}/tables`, { table_ids: [small.id] });
+    assert.deepEqual([refused.status, refused.body.code], [409, 'NOT_ENOUGH_SEATS']);
+    assert.match(refused.body.error, /3 posti.*non bastano per 4/);
+    // due tavoli insieme bastano (3 + 4)
+    const ok = await waiter.put(`/bookings/reservations/${r.id}/tables`, { table_ids: [small.id, tables[1].id] });
+    assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    // aumentando le persone oltre i posti assegnati, i tavoli si liberano (il personale li riassegna)
+    const more = await waiter.put(`/bookings/reservations/${r.id}`, { party_size: 9 });
+    assert.deepEqual([more.status, more.body.table_ids], [200, []]);
+  });
+
   it('arrivato: apre il conto sul tavolo assegnato con i coperti, e la prenotazione è «seduta»', async () => {
-    const day = '2026-12-04';
+    const day = '2030-12-04';
     const r = (await book({ date: day, customer_name: 'Neri', party_size: 3 })).body;
     assert.equal((await waiter.post(`/bookings/reservations/${r.id}/arrived`, {})).body.code, 'NO_TABLE');
     await waiter.put(`/bookings/reservations/${r.id}/tables`, { table_ids: [tables[2].id] });
@@ -218,8 +234,41 @@ describe('prenotazioni', () => {
     assert.equal((await waiter.post(`/bookings/reservations/${busy.id}/arrived`, {})).body.code, 'TABLE_BUSY');
   });
 
+  it('quando il conto si chiude la prenotazione non resta «al tavolo»: pagato = conclusa, annullato = torna confermata, unito = segue', async () => {
+    const day = '2030-12-05';
+    const arrive = async (name, table) => {
+      const r = (await book({ date: day, customer_name: name, party_size: 2, table_ids: [table.id] })).body;
+      const res = await waiter.post(`/bookings/reservations/${r.id}/arrived`, {});
+      assert.equal(res.status, 200, JSON.stringify(res.body));
+      return { r, check: res.body.check };
+    };
+    const state = async (id) => (await waiter.get(`/bookings/reservations/${id}`)).body;
+
+    // pagato (conto vuoto da chiudere): conclusa, e il tavolo si può dare a un'altra prenotazione dello stesso turno
+    const paid = await arrive('Pagati', tables[0]);
+    assert.equal((await admin.post(`/checks/${paid.check.id}/close`, {})).status, 200);
+    assert.equal((await state(paid.r.id)).status, 'completed');
+    const again = await book({ date: day, customer_name: 'Dopo', party_size: 2, table_ids: [tables[0].id] });
+    assert.equal(again.status, 201, 'il tavolo è libero per la stessa sera');
+
+    // annullato: era aperto per sbaglio, la prenotazione torna confermata, senza conto
+    const voided = await arrive('Sbagliati', tables[1]);
+    assert.equal((await admin.post(`/checks/${voided.check.id}/void`, { cancel_orders: false })).status, 200);
+    const back = await state(voided.r.id);
+    assert.deepEqual([back.status, back.check_id, back.table_ids], ['confirmed', null, [tables[1].id]]);
+
+    // unito: la prenotazione segue il conto di destinazione
+    const room = (await admin.post('/rooms', { name: 'Veranda' })).body;
+    const spare = (await admin.post(`/rooms/${room.id}/tables/bulk`, { prefix: 'V', from: 1, to: 2, seats: 4 })).body.created;
+    const a = await arrive('Uniti A', spare[0]);
+    const b = await arrive('Uniti B', spare[1]);
+    assert.equal((await admin.post(`/checks/${a.check.id}/merge`, { into: b.check.id })).status, 200);
+    const followed = await state(a.r.id);
+    assert.deepEqual([followed.status, followed.check_id], ['seated', b.check.id]);
+  });
+
   it('isolamento e ruoli: un altro locale non vede nulla; la cucina non entra; gli eventi arrivano al personale', async () => {
-    const day = '2026-12-11';
+    const day = '2030-12-11';
     const staff = await connectWs(server.port, t.host, { cookie: admin.cookie });
     const kds = await connectWs(server.port, t.host, { publicKds: true });
     const r = (await book({ date: day, customer_name: 'Evento' })).body;

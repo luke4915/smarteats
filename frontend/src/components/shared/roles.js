@@ -1,9 +1,9 @@
 // Ruoli degli utenti, con l'etichetta mostrata in interfaccia (stessi valori di ROLES nel backend).
 export const ROLE_OPTIONS = [
-  { value: 'cassa', label: 'Cassa' },
-  { value: 'cameriere', label: 'Cameriere' },
-  { value: 'cucina', label: 'Cucina' },
-  { value: 'responsabile', label: 'Responsabile' },
+  { value: 'cashier', label: 'Cassa' },
+  { value: 'waiter', label: 'Cameriere' },
+  { value: 'kitchen', label: 'Cucina' },
+  { value: 'manager', label: 'Responsabile' },
   { value: 'admin', label: 'Admin' },
 ];
 

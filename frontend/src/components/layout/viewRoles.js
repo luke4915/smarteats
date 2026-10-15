@@ -2,16 +2,18 @@
 // e per le route: nascondere la voce non basta, perché l'URL (o la PWA riaperta sull'ultima pagina) porterebbe
 // comunque lì. Le autorizzazioni vere sono sul server (ruoli e requireModule).
 export const VIEW_ROLES = {
-  dashboard: ['admin', 'responsabile', 'cassa'],
-  kitchen: ['admin', 'cucina'],
-  statistics: ['admin', 'responsabile'],
+  dashboard: ['admin', 'manager', 'cashier'],
+  kitchen: ['admin', 'kitchen'],
+  takeaway: ['admin', 'manager', 'cashier'],
+  statistics: ['admin', 'manager'],
   config: ['admin'],
-  setup: ['admin', 'responsabile', 'cassa'],
+  setup: ['admin', 'manager', 'cashier', 'kitchen'],
 };
 
 // Pagine che dipendono da un modulo; le altre fanno parte del nucleo e ci sono sempre.
 export const VIEW_MODULES = {
   kitchen: 'kds',
+  takeaway: 'takeaway',
   statistics: 'stats',
 };
 

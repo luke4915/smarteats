@@ -25,7 +25,7 @@ describe('statistiche e paginazione', () => {
     t = await createTenant();
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
-    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cassa', $3)`, [`cassa-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
+    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cashier', $3)`, [`cassa-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
     cashier = apiClient(server.port, t.host);
     await cashier.login(`cassa-${t.slug}`);
 

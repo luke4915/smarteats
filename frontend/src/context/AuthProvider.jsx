@@ -10,6 +10,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const refreshTimer = useRef(null);
+  const userRef = useRef(null);
+  userRef.current = user;
 
   // Sessione chiusa (logout, rinnovo rifiutato, licenza scaduta): si torna al login.
   const clearSession = useCallback(() => {
@@ -79,6 +81,22 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
     return () => clearInterval(refreshTimer.current);
   }, [executeRefresh, startRefreshTimer, clearSession]);
+
+  // Il cookie di sessione è uno solo per sottodominio: se in un'altra scheda ci si collega con un altro utente,
+  // questa continuerebbe a mostrare quello vecchio mentre le richieste partono con il nuovo (permessi «sbagliati»).
+  // Al ritorno sulla scheda si controlla chi è davvero collegato.
+  useEffect(() => {
+    const check = async () => {
+      if (document.visibilityState !== 'visible' || !userRef.current) return;
+      try {
+        const actual = await fetchWithAuth('/auth/me');
+        setUser(u => (u && actual?.id !== u.id ? actual : u));
+      } catch { /* offline o sessione scaduta: ci pensano le richieste normali */ }
+    };
+    document.addEventListener('visibilitychange', check);
+    window.addEventListener('focus', check);
+    return () => { document.removeEventListener('visibilitychange', check); window.removeEventListener('focus', check); };
+  }, []);
 
   const login = (userData) => {
     setUser(userData);

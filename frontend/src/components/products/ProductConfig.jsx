@@ -3,6 +3,7 @@ import { X, Edit, Trash2, Search, Plus, CheckSquare, Square, Eye, EyeOff } from 
 
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
+import { PageHeader } from '../shared/PageHeader';
 
 const Combobox = ({ name, value, onChange, options, placeholder }) => {
   const [open, setOpen] = useState(false);
@@ -60,7 +61,7 @@ const Combobox = ({ name, value, onChange, options, placeholder }) => {
 
 // `courses` (solo ristoranti): le portate del locale; con la lista il prodotto ne sceglie una.
 // `modifierGroups` (solo ristoranti): i gruppi di modificatori; il prodotto sceglie quali chiedere. `onModifiersSaved` li rilegge.
-const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved }) => {
+const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved, hideHeader = false, takeawayEnabled = false }) => {
   const { showToast } = useToast();
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({ 
@@ -98,6 +99,7 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
       visible: true, 
       print_destination: 'both',
       ...(courses && { course_id: null }),
+      ...(takeawayEnabled && { takeaway_load: 1 }),
       ...(modifierGroups && { modifier_group_ids: [] }),
       stock_enabled: false,
       stock: ''
@@ -115,6 +117,7 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
       visible: p.visible ?? true,
       print_destination: p.print_destination || 'both',
       ...(courses && { course_id: p.course_id ?? null }),
+      ...(takeawayEnabled && { takeaway_load: p.takeaway_load ?? 1 }),
       ...(modifierGroups && { modifier_group_ids: modifierGroups.filter(g => g.product_ids.includes(p.id)).map(g => g.id) }),
       stock_enabled: p.stock_enabled ?? false,
       stock: p.stock !== undefined && p.stock !== null ? String(p.stock) : ''
@@ -331,12 +334,8 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
   );
 
   return (
-    <div className="max-w-5xl mx-auto space-y-5 relative">
-      {/* Header Titolo */}
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight text-[var(--text-main)]">Menu</h2>
-        <p className="text-xs font-semibold text-gray-400 mt-1">Gestione prodotti</p>
-      </div>
+    <div className="max-w-5xl mx-auto w-full space-y-5 relative">
+      {!hideHeader && <PageHeader title="Menu" subtitle="Gestione prodotti" />}
 
       {/* Top Bar Unificata */}
       <div className="flex items-center justify-between flex-wrap gap-2.5 w-full">
@@ -631,6 +630,19 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
                       className="w-full h-10 px-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-main)] text-sm focus:outline-none focus:border-[var(--accent)]">
                       <option value="">Nessuna (esce subito: bevande, pane…)</option>
                       {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {takeawayEnabled && (
+                  <div className="p-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)]">
+                    <label htmlFor="takeaway_load" className="text-xs font-medium text-[var(--text-muted)] block mb-2">Asporto: quanto impegna il forno</label>
+                    <select id="takeaway_load" value={formData.takeaway_load ?? 1} onChange={e => setFormData(prev => ({ ...prev, takeaway_load: Number(e.target.value) }))}
+                      className="w-full h-10 px-3 rounded-lg bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-main)] text-sm focus:outline-none focus:border-[var(--accent)]">
+                      <option value={0}>Niente (bibite, dolci già pronti…)</option>
+                      <option value={1}>Una porzione (una pizza)</option>
+                      <option value={2}>Due porzioni (pizza grande, teglia)</option>
+                      <option value={3}>Tre porzioni</option>
                     </select>
                   </div>
                 )}

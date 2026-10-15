@@ -47,7 +47,7 @@ export async function closePools() {
 }
 
 // Tenant di prova con un admin, un prodotto e (a richiesta) una sessione aperta.
-export async function createTenant({ openSession = true, active = true, businessType = 'sagra' } = {}) {
+export async function createTenant({ openSession = true, active = true, businessType = 'street_food' } = {}) {
   const slug = `test-${randomUUID().slice(0, 8)}`;
   const { rows: [tenant] } = await adminDb.query(
     'INSERT INTO tenants (slug, name, active, business_type, modules) VALUES ($1, $2, $3, $4, $5) RETURNING id',
@@ -66,7 +66,7 @@ export async function createTenant({ openSession = true, active = true, business
   return { id: tenant.id, slug, host: `${slug}.standmanager.local`, username: `admin-${slug}`, userId: user.id, productId: product.id, sessionId };
 }
 
-const TENANT_TABLES = ['reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
+const TENANT_TABLES = ['whatsapp_messages', 'app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
 
 export async function deleteTenants(...tenants) {
   for (const { id } of tenants) {

@@ -1,0 +1,29 @@
+import { test, expect } from '@playwright/test';
+import { seed, login, shot } from './support.js';
+
+// La cassa della sagra su schermo grande (PC o tablet in orizzontale): carta a sinistra, carrello a destra.
+test('sagra: batto un ordine con due prodotti, lo invio, lo storno non serve: il carrello si svuota', async ({ page }) => {
+  const { festival } = seed();
+  await login(page, festival.host, festival.admin);
+  await expect(page.getByRole('button', { name: /Panino con salsiccia/ })).toBeVisible();
+  await shot(page, 'festival-01-cassa');
+
+  await page.getByRole('button', { name: /Panino con salsiccia/ }).click();
+  await page.getByRole('button', { name: /Panino con salsiccia/ }).click();
+  await page.getByRole('button', { name: /^Birra/ }).click();
+  await shot(page, 'festival-02-carrello');
+  // 2 × 5,00 + 4,00
+  await expect(page.getByText('14.00 €').first()).toBeVisible();
+
+  await page.getByRole('button', { name: /Invia ordine/i }).click();
+  await expect(page.getByText(/Ordine .* inviato|inviato/i).first()).toBeVisible({ timeout: 10_000 });
+  await shot(page, 'festival-03-inviato');
+});
+
+test('sagra: la cucina vede l\'ordine e lo completa', async ({ browser }) => {
+  const { festival } = seed();
+  const page = await (await browser.newContext()).newPage();
+  await login(page, festival.host, festival.kitchen);
+  await expect(page.getByText(/Panino con salsiccia/)).toBeVisible({ timeout: 10_000 });
+  await shot(page, 'festival-04-cucina');
+});

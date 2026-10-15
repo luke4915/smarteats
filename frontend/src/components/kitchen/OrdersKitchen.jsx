@@ -6,6 +6,7 @@ import { useAuth } from '../../context/useAuth';
 
 import { useLiveUpdates } from '../../hooks/useLiveUpdates';
 import { fetchWithAuth } from '../../utils/apiClient';
+import { PageHeader } from '../shared/PageHeader';
 
 const mergeOrders = (existing, incoming) => {
   const map = new Map();
@@ -26,24 +27,24 @@ const OrderCard = ({ order, onComplete }) => {
     }`}>
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
-          <span className={`font-black text-sm tracking-widest uppercase ${
+          <span className={`font-semibold text-sm ${
             order.status === 'completed' || order.status === 'canceled'
               ? 'line-through text-[var(--text-muted)]'
               : 'text-[var(--text-main)]'
           }`}>#{orderCode}</span>
           {order.table_name && (
-            <span className="px-2 py-0.5 bg-[var(--accent)]/10 border border-[var(--accent)]/40 text-[var(--accent)] rounded-full text-[9px] font-black uppercase">
+            <span className="px-2 py-0.5 bg-[var(--accent)]/10 border border-[var(--accent)]/40 text-[var(--accent)] rounded-full text-xs font-medium">
               {order.table_name}{order.covers > 0 && ` · ${order.covers} cop.`}
             </span>
           )}
           {order.is_takeaway && (
-            <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-500 rounded-full text-[9px] font-black uppercase">Asporto</span>
+            <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-500 rounded-full text-xs font-medium">Asporto</span>
           )}
           {order.status === 'canceled' && (
-            <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/30 text-red-500 rounded-full text-[9px] font-black uppercase">Stornato</span>
+            <span className="px-2 py-0.5 bg-red-500/10 border border-red-500/30 text-red-500 rounded-full text-xs font-medium">Stornato</span>
           )}
           {order.status === 'completed' && (
-            <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-500 rounded-full text-[9px] font-black uppercase">Completato</span>
+            <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-500 rounded-full text-xs font-medium">Completato</span>
           )}
         </div>
         <span className="text-[10px] font-bold text-[var(--text-muted)] tabular-nums">
@@ -57,11 +58,11 @@ const OrderCard = ({ order, onComplete }) => {
         {order.items?.map((item, idx) => (
           <li key={idx}>
             <div className="flex items-baseline gap-2">
-              <span className="text-[var(--accent)] font-black text-sm">×{item.quantity}</span>
-              <span className="font-bold text-sm text-[var(--text-main)] uppercase">{item.name}</span>
+              <span className="text-[var(--accent)] font-semibold text-sm">×{item.quantity}</span>
+              <span className="font-medium text-base text-[var(--text-main)]">{item.name}</span>
             </div>
             {item.note && (
-              <div className="ml-6 mt-0.5 px-2 py-0.5 bg-yellow-500/10 border-l-2 border-yellow-400 text-xs text-yellow-500 font-black uppercase">
+              <div className="ml-6 mt-0.5 px-2 py-0.5 bg-yellow-500/10 border-l-2 border-yellow-400 text-sm text-yellow-500 font-semibold">
                 {item.note}
               </div>
             )}
@@ -71,7 +72,7 @@ const OrderCard = ({ order, onComplete }) => {
 
       {order.status !== 'completed' && order.status !== 'canceled' && (
         <button onClick={() => onComplete(order)}
-          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all active:scale-[0.99]">
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-lg font-medium text-sm transition-all active:scale-[0.99]">
           <Check size={14} /> PRONTO
         </button>
       )}
@@ -174,21 +175,14 @@ const OrdersKitchen = () => {
   return (
     <div className="h-full flex flex-col gap-4">
 
-      {/* Header */}
-      <div className="flex justify-between items-end shrink-0">
-        <div>
-          <h2 className="text-4xl font-black tracking-tighter text-[var(--text-main)]">CUCINA</h2>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mt-1">
-            {pending.length} in attesa · {completed.length} completati · {canceled.length} stornati
-          </p>
-        </div>
+      <PageHeader title="Cucina" subtitle={`${pending.length} in attesa · ${completed.length} completati · ${canceled.length} stornati`}>
         <button onClick={scanning ? stopScanner : startScanner}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest text-white transition-all ${
+          className={`flex items-center gap-2 h-10 px-4 rounded-lg text-sm font-medium text-white transition-colors cursor-pointer ${
             scanning ? 'bg-red-500' : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)]'
           }`}>
           <Camera size={16} /> {scanning ? 'Ferma' : 'Scansiona QR'}
         </button>
-      </div>
+      </PageHeader>
 
       {/* Scanner */}
       {scanning && (
@@ -206,7 +200,7 @@ const OrdersKitchen = () => {
         {orders.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-40 text-[var(--text-muted)]">
             <ChefHat size={28} className="mb-2 opacity-30" />
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-50">Nessun ordine</p>
+            <p className="text-sm opacity-60">Nessun ordine</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

@@ -28,13 +28,18 @@ import NoViewAvailable from './components/layout/NoViewAvailable';
 import UsersSettings from './components/setup/UsersSettings';
 import ReverseOrder from './components/shared/ReverseOrder';
 import ChangePassword from './components/shared/ChangePassword';
-import UserProfile from './components/shared/UserProfile';
+import AccountSettings from './components/shared/AccountSettings';
 import StartSessionModal from './components/shared/StartSessionModal';
 import CloseSessionFlow from './components/shared/CloseSessionFlow';
 import Login from './pages/LoginPage';
+import { PageBody } from './components/shared/PageHeader';
+import FeedbackBox from './components/shared/FeedbackBox';
+import TakeawayPage from './smarteats/takeaway/TakeawayPage';
+import TakeawaySettings from './smarteats/takeaway/TakeawaySettings';
+import { useInbox } from './smarteats/notifications/useInbox';
 
 // Ruoli abilitati ad applicare sconti/omaggi (specchio di DISCOUNT_ROLES nel backend)
-const DISCOUNT_ROLES = ['admin', 'responsabile'];
+const DISCOUNT_ROLES = ['admin', 'manager'];
 
 // Schermate pesanti o non usate alla cassa (grafici, PDF, lettore codici, pagine pubbliche):
 // si caricano a richiesta, così il bundle della cassa resta leggero. Il service worker le
@@ -44,6 +49,8 @@ const Statistics = lazy(() => import('./components/shared/Statistics'));
 const KDS = lazy(() => import('./pages/KDSPage'));
 const MenuPage = lazy(() => import('./pages/MenuPage'));
 const MasterPage = lazy(() => import('./pages/MasterPage'));
+const BookingPage = lazy(() => import('./pages/BookingPage'));
+const OrderPage = lazy(() => import('./pages/OrderPage'));
 
 const PageLoading = () => (
   <div className="h-full min-h-[50vh] flex items-center justify-center text-[var(--text-main)]">Caricamento...</div>
@@ -78,7 +85,9 @@ const App = () => {
   const { cart, clearCart } = cartState;
 
   // ── Aggiornamenti in tempo reale dal server ───────────────
+  const [lastEvent, setLastEvent] = useState(null);
   const wsConnected = useLiveUpdates((msg) => {
+    setLastEvent(msg);
     switch (msg.type) {
       case 'product_updated': setProducts(prev => prev.map(p => p.id === msg.product.id ? { ...msg.product, price: parseFloat(msg.product.price) } : p)); showToast(`"${msg.product.name}" aggiornato!`, 'success'); break;
       case 'product_created': setProducts(prev => [...prev, { ...msg.product, price: parseFloat(msg.product.price) }]); showToast('Nuovo prodotto aggiunto!', 'success'); break;
@@ -97,13 +106,16 @@ const App = () => {
     }
   }, { enabled: isLoggedIn, onUnauthorized: refreshSession });
 
+  // Notifiche: gli ordini da asporto da approvare (solo chi li gestisce, solo con il modulo acceso)
+  const hasTakeaway = isLoggedIn && !!user?.modules?.includes('takeaway') && ['admin', 'manager', 'cashier'].includes(user.role);
+  const inbox = useInbox({ bookings: false, takeaway: hasTakeaway, event: lastEvent });
+
   // ── Navigazione e finestre aperte ─────────────────────────
-  const [view, setView] = useState(user?.role === 'cucina' ? 'kitchen' : 'dashboard');
+  const [view, setView] = useState(user?.role === 'kitchen' ? 'kitchen' : 'dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [showReversePopup, setShowReversePopup] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showStartSessionModal, setShowStartSessionModal] = useState(false);
   const [showCloseSession, setShowCloseSession] = useState(false);
 
@@ -112,6 +124,8 @@ const App = () => {
   const checkedRole = useRef(null);
   useEffect(() => {
     if (!user?.role || checkedRole.current === user.role) return;
+    // La pagina pubblica di prenotazione non è una vista di lavoro: non si rimanda alla pagina iniziale
+    if (/^\/(book|order)(\/|$)/.test(window.location.pathname)) return;
     checkedRole.current = user.role;
     const path = window.location.pathname.replace('/', '') || 'dashboard';
     if (canView(user.role, path, user.modules)) return setView(path);
@@ -122,7 +136,7 @@ const App = () => {
   }, [user?.role, user?.modules, navigate]);
 
   useEffect(() => {
-    if (user?.role === 'cucina') { setView('kitchen'); navigate('/kitchen'); }
+    if (user?.role === 'kitchen') { setView('kitchen'); navigate('/kitchen'); }
   }, [user, navigate]);
 
   // Su mobile chiude sidebar dopo navigazione
@@ -165,6 +179,10 @@ const App = () => {
     try { await logout(); setShowLogoutConfirm(false); showToast('Sessione chiusa', 'info'); navigate('/login'); }
     catch (err) { console.error(err); }
   };
+
+  // Prenotazione dei clienti: pubblica, anche per chi ha una sessione aperta in questo browser
+  if (/^\/book(\/|$)/.test(window.location.pathname)) return <Suspense fallback={<PageLoading />}><BookingPage /></Suspense>;
+  if (/^\/order(\/|$)/.test(window.location.pathname)) return <Suspense fallback={<PageLoading />}><OrderPage /></Suspense>;
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">Caricamento...</div>;
 
@@ -236,8 +254,9 @@ const App = () => {
           isSidebarOpen={isSidebarOpen}
           currentUser={user}
           onLogoutClick={() => setShowLogoutConfirm(true)}
-          onProfileClick={() => setShowProfilePopup(true)}
           wsConnected={wsConnected}
+          inbox={hasTakeaway ? inbox : null}
+          onOpenNotification={(i) => { setView('takeaway'); navigate('/takeaway', { state: { orderId: i.id, date: i.date } }); }}
         />
 
         {/* Content area */}
@@ -245,23 +264,25 @@ const App = () => {
 
           {/* Pagine */}
           <div className="flex-1 overflow-y-auto no-scrollbar bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-6 min-w-0">
-            {user.role === 'cucina' ? (
+            {user.role === 'kitchen' ? (
               <OrdersKitchen />
             ) : (
               <Suspense fallback={<PageLoading />}>
                 <Routes>
                   <Route path="/dashboard" element={canView(user.role, 'dashboard', user.modules) ? <ProductList setProducts={setProducts} products={products} addToCart={cartState.addToCart} removeLastItem={cartState.removeLastItem} cart={cart} /> : <Navigate to={`/${home}`} replace />} />
+                  <Route path="/takeaway" element={canView(user.role, 'takeaway', user.modules) ? <div className="flex gap-4 h-[calc(100dvh-10rem)] min-h-[420px]"><TakeawayPage event={lastEvent} /></div> : <Navigate to={`/${home}`} replace />} />
                   <Route path="/kitchen" element={canView(user.role, 'kitchen', user.modules) ? <OrdersKitchen /> : <Navigate to={`/${home}`} replace />} />
                   <Route path="/statistics" element={canView(user.role, 'statistics', user.modules) ? <Statistics /> : <Navigate to={`/${home}`} replace />} />
                   <Route path="/config" element={canView(user.role, 'config', user.modules) ? <ProductConfig products={products} setProducts={setProducts} /> : <Navigate to={`/${home}`} replace />} />
                   <Route path="/setup" element={!canView(user.role, 'setup', user.modules) ? <Navigate to={`/${home}`} replace /> :
-                    <div className="space-y-6">
+                    <PageBody>
                       <AppearanceSettings theme={theme} setTheme={setTheme} isSoundEnabled={isSoundEnabled} setIsSoundEnabled={setIsSoundEnabled} />
-                      <MenuSettings />
-                      <OrderSettings orderMode={orderMode} setOrderMode={setOrderMode} />
-                      <PrintProfiles />
+                      {user.role === 'admin' && user.modules?.includes('takeaway') && <TakeawaySettings />}
+                      {user.role !== 'kitchen' && <><MenuSettings /><OrderSettings orderMode={orderMode} setOrderMode={setOrderMode} /><PrintProfiles /></>}
                       {user.role === 'admin' && <UsersSettings />}
-                    </div>
+                      <FeedbackBox modules={['pos', 'kitchen', 'catalog', 'stats', 'settings']} />
+                      <AccountSettings />
+                    </PageBody>
                   } />
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
@@ -271,7 +292,7 @@ const App = () => {
           </div>
 
           {/* ── Carrello Desktop ──────────────────────────── */}
-          {view === 'dashboard' && user.role !== 'cucina' && (
+          {view === 'dashboard' && user.role !== 'kitchen' && (
             <div className="w-[340px] xl:w-[420px] hidden md:flex flex-col shrink-0">
               <Cart {...cartProps} />
             </div>
@@ -280,7 +301,7 @@ const App = () => {
       </main>
 
       {/* ── Carrello Mobile overlay ──────────────────────────── */}
-      {isMobile && view === 'dashboard' && user.role !== 'cucina' && (
+      {isMobile && view === 'dashboard' && user.role !== 'kitchen' && (
         <MobileCartOverlay
           isOpen={isMobileCartOpen}
           onOpen={() => setIsMobileCartOpen(true)}
@@ -298,7 +319,6 @@ const App = () => {
       {showCloseSession && (
         <CloseSessionFlow sessionName={sessionName} onCancel={() => setShowCloseSession(false)} onConfirm={handleEndSession} />
       )}
-      {showProfilePopup && <UserProfile onClose={() => setShowProfilePopup(false)} />}
       {showReversePopup && <ReverseOrder onClose={() => setShowReversePopup(false)} />}
     </div>
   );

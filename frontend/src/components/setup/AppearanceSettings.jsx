@@ -1,13 +1,11 @@
 import React from 'react';
 import { Moon, Sun, Volume2, VolumeX } from 'lucide-react';
+import { PageHeader } from '../shared/PageHeader';
 
 // Il tema viene gestito in App.jsx — questo componente non duplica il useEffect
 const AppearanceSettings = ({ theme, setTheme, isSoundEnabled, setIsSoundEnabled }) => (
-  <div className="max-w-4xl mx-auto space-y-6">
-    <div>
-      <h2 className="text-2xl font-semibold tracking-tight text-[var(--text-main)]">Impostazioni</h2>
-      <p className="text-xs font-semibold text-[var(--text-muted)] mt-1">Personalizza la tua esperienza</p>
-    </div>
+  <div className="space-y-6">
+    <PageHeader title="Impostazioni" subtitle="Aspetto e suoni di questo dispositivo" />
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Tema */}

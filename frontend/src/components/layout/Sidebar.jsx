@@ -1,9 +1,10 @@
 import React from 'react';
 import { canView } from './viewRoles';
-import { LayoutDashboard, UtensilsCrossed, BarChart3, Settings, Database, ChevronLeft, ChevronRight, Power } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, BarChart3, Settings, Database, ChevronLeft, ChevronRight, Power, ShoppingBag } from 'lucide-react';
 
 const menuItems = [
   { id: 'dashboard', icon: <LayoutDashboard size={20} />, label: 'Cassa' },
+  { id: 'takeaway', icon: <ShoppingBag size={20} />, label: 'Asporto' },
   { id: 'kitchen', icon: <UtensilsCrossed size={20} />, label: 'Cucina' },
   { id: 'statistics', icon: <BarChart3 size={20} />, label: 'Statistiche' },
   { id: 'config', icon: <Database size={20} />, label: 'Menu' },
@@ -50,7 +51,7 @@ const Sidebar = ({ view, setView, isOpen, toggleSidebar, currentUser, sessionAct
     </nav>
 
     {/* Sessione */}
-    {currentUser?.role !== 'cucina' && (
+    {currentUser?.role !== 'kitchen' && (
       <div className="w-full px-3 mb-2 shrink-0">
         <button
           onClick={() => setSessionActive(!sessionActive)}

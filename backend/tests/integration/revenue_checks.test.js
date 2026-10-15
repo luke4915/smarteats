@@ -26,7 +26,7 @@ describe('incasso con i conti dei tavoli', () => {
 
   before(async () => {
     server = await startServer();
-    t = await createTenant({ businessType: 'ristorante' });
+    t = await createTenant({ businessType: 'restaurant' });
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
     room = (await admin.post('/rooms', { name: 'Sala' })).body;

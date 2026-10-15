@@ -99,7 +99,7 @@ Eventi WebSocket: `check_updated`, `table_updated`. Il KDS pubblico riceve il no
 
 ## 6. Interfaccia
 
-Il ristorante ha una **app propria** (`frontend/src/smarteats/`, scelta da `AppRouter.jsx` dal tipo del locale), non una variante della cassa delle sagre. La vista **Sala** (`smarteats/SalaPage.jsx`, con i componenti in `smarteats/sala/`) è operativa dal passo 2-6. Disposizione come la cassa: area di lavoro a sinistra (tavoli, oppure la carta durante una comanda) e **un solo pannello a destra** (`SidePanel`) che cambia vista senza finestre sopra le finestre: apri tavolo, conto (`CheckView`, azioni secondarie nel menu «⋯»), incasso (`PayView`), sconto (`AdjustView`), comanda (`DraftOrder`). Sotto i 1280 px il pannello è a tutto schermo. I calcoli di anteprima stanno in `checkMath.js`. Quanto segue descrive l'idea originale:
+Il ristorante ha una **app propria** (`frontend/src/smarteats/`, scelta da `AppRouter.jsx` dal tipo del locale), non una variante della cassa delle sagre. La vista **Sala** (`smarteats/FloorPage.jsx`, con i componenti in `smarteats/floor/`) è operativa dal passo 2-6. Disposizione come la cassa: area di lavoro a sinistra (tavoli, oppure la carta durante una comanda) e **un solo pannello a destra** (`SidePanel`) che cambia vista senza finestre sopra le finestre: apri tavolo, conto (`CheckView`, azioni secondarie nel menu «⋯»), incasso (`PayView`), sconto (`AdjustView`), comanda (`DraftOrder`). Sotto i 1280 px il pannello è a tutto schermo. I calcoli di anteprima stanno in `checkMath.js`. Quanto segue descrive l'idea originale:
 elenco o mappa dei tavoli per sala con stato; aprire un tavolo (coperti); il carrello esistente funziona in "modalità
 tavolo" (invia la comanda al conto invece di pagarla); pannello del conto con righe, totale, richiesta del conto e pagamento.
 Mobile e desktop come il resto dell'app.
@@ -131,6 +131,6 @@ Prima del passo 2-3 e di ogni migrazione: backup. Dopo ogni passo: test di integ
 
 1. **Incasso dei conti:** conta quando il conto è pagato (consigliato; le comande servite ma non ancora pagate non sono denaro).
 2. **Offline dei tavoli:** non supportato in questa fase (vedi §6).
-3. **Ruolo cameriere:** nella Fase 2 bastano i ruoli esistenti (cassa, responsabile, admin); il ruolo `cameriere` con permessi
+3. **Ruolo cameriere:** nella Fase 2 bastano i ruoli esistenti (cassa, responsabile, admin); il ruolo `waiter` con permessi
    propri (nessun pagamento, sconto o annullo) arriva con la Fase 3.
 4. **Fiscale:** fuori, come deciso; la ricevuta del conto è un documento non fiscale.

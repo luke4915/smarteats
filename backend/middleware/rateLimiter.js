@@ -65,6 +65,21 @@ export const ordersLimiter = limiter({
   message: { error: 'Troppi ordini in poco tempo, riprova tra un minuto.' },
 });
 
+// Prenotazioni dal portale pubblico: per IP, perché chi prenota non ha un account. Gli invii sono pochi (una richiesta
+// vera ogni tanto), le letture del calendario un po' di più.
+export const publicBookingReadLimiter = limiter({
+  windowMs: 60 * 1000,
+  limit: 60,
+  keyGenerator: (req) => ipKeyGenerator(req.ip),
+  message: { error: 'Troppe richieste, riprova tra un minuto.' },
+});
+export const publicBookingWriteLimiter = limiter({
+  windowMs: 60 * 60 * 1000,
+  limit: 10,
+  keyGenerator: (req) => ipKeyGenerator(req.ip),
+  message: { error: 'Hai inviato troppe richieste: riprova più tardi oppure chiamaci.' },
+});
+
 // Dispositivi: l'abbinamento avviene una volta per cassa. Il limite protegge dall'esaurire le 26 lettere,
 // ma lascia spazio al recupero dello stato (GET) di molte casse che ripartono insieme.
 export const devicesLimiter = limiter({

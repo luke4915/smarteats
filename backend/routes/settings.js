@@ -49,6 +49,24 @@ router.put('/:key', authenticate, authorizeAdmin, validate({ params: settingPara
             return res.status(400).json({ error: 'value: indica un importo in euro da 0 a 100 (es. 2,50)' });
         value = Number(text).toFixed(2);
     }
+    if (key === 'booking_portal_enabled' && !['0', '1'].includes(value))
+        return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
+    if (key === 'booking_portal_phone' && value && !/^[+\d][\d\s./-]{4,38}$/.test(value.trim()))
+        return res.status(400).json({ error: 'value: scrivi un numero di telefono (cifre, spazi, + . / -)' });
+    if (key === 'takeaway_portal_enabled' && !['0', '1'].includes(value))
+        return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
+    if (key === 'takeaway_slot_minutes' && !['10', '15', '20', '30', '60'].includes(String(value)))
+        return res.status(400).json({ error: 'value: la fascia dura 10, 15, 20, 30 o 60 minuti' });
+    if (key === 'takeaway_slot_capacity' && !(/^\d{1,3}$/.test(String(value)) && Number(value) >= 1))
+        return res.status(400).json({ error: 'value: indica quante pizze per fascia (da 1 a 999)' });
+    if (key === 'takeaway_min_lead_minutes' && !(/^\d{1,3}$/.test(String(value)) && Number(value) <= 240))
+        return res.status(400).json({ error: 'value: l\'anticipo minimo va da 0 a 240 minuti' });
+    if (key === 'takeaway_phone' && value && !/^[+\d][\d\s./-]{4,38}$/.test(value.trim()))
+        return res.status(400).json({ error: 'value: scrivi un numero di telefono (cifre, spazi, + . / -)' });
+    if (key === 'takeaway_welcome' && value && value.length > 500)
+        return res.status(400).json({ error: 'value: il messaggio è lungo al massimo 500 caratteri' });
+    if (key === 'booking_portal_welcome' && value && value.length > 500)
+        return res.status(400).json({ error: 'value: il testo di benvenuto è lungo al massimo 500 caratteri' });
     try {
         await req.db.query(
             'INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (tenant_id, key) DO UPDATE SET value = $2',

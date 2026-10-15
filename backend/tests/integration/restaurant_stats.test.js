@@ -24,12 +24,12 @@ describe('statistiche ristorante', () => {
 
   before(async () => {
     server = await startServer();
-    [t, sagra] = [await createTenant({ businessType: 'ristorante' }), await createTenant()];
+    [t, sagra] = [await createTenant({ businessType: 'restaurant' }), await createTenant()];
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
     sagraApi = apiClient(server.port, sagra.host);
     await sagraApi.login(sagra.username);
-    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cassa', $3)`, [`c-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
+    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cashier', $3)`, [`c-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
     waiter = apiClient(server.port, t.host);
     await waiter.login(`c-${t.slug}`);
     ({ rows: [{ id: wine }] } = await adminDb.query(`INSERT INTO products (name, price, category, print_destination, tenant_id) VALUES ('Vino', 20, 'Bevande', 'bar', $1) RETURNING id`, [t.id]));
@@ -49,6 +49,7 @@ describe('statistiche ristorante', () => {
     assert.equal(s.totals.checks, 0);
     assert.equal(s.totals.avgPerCover, null);
     assert.deepEqual(s.topProducts, []);
+    assert.deepEqual([s.occupancy.seatOccupancy, s.occupancy.revpash, s.occupancy.curve, s.bookings], [null, null, [], null]);
   });
 
   it('conta solo i conti pagati: coperti, scontrino medio, portate, piatti, metodi', async () => {
@@ -76,6 +77,32 @@ describe('statistiche ristorante', () => {
     assert.equal(s.byHour.reduce((n, h) => n + h.revenue, 0), 45);
     assert.ok(s.kitchen.dishes >= 2, 'righe pronte con il loro tempo');
     assert.equal(s.kitchen.avgMinutes >= 0, true);
+  });
+
+  it('riempimento: occupazione dei posti, RevPASH, curva e abbinamento gruppo-tavolo', async () => {
+    // i due conti pagati sono durati un'ora (invece di un istante): 2 persone al T1 e 4 al T2
+    await adminDb.query(`UPDATE checks SET opened_at = closed_at - interval '60 minutes' WHERE tenant_id = $1 AND status = 'paid'`, [t.id]);
+    const s = await stats();
+    const o = s.occupancy;
+    const seats = (await adminDb.query('SELECT SUM(seats)::int AS n FROM dining_tables WHERE tenant_id = $1 AND active', [t.id])).rows[0].n;
+    assert.equal(o.seats, seats);
+    assert.ok(o.seatOccupancy > 0 && o.seatOccupancy <= 1);
+    assert.ok(o.revpash > 0);
+    assert.ok(o.curve.length >= 4 && o.peak.seats >= 4, 'dalle 4 persone in su nel quarto d\'ora di punta');
+    assert.equal(o.fit.checks, 2);
+    assert.ok(o.fit.rate > 0);
+    assert.equal(s.bookings, null, 'nessuna prenotazione');
+  });
+
+  it('prenotazioni nelle statistiche: non presentati, annullati, quota del portale', async () => {
+    const { rows: [shift] } = await adminDb.query(
+      `INSERT INTO booking_shifts (name, start_time, duration_minutes, weekdays, capacity, tenant_id) VALUES ('Cena', '20:00', 90, '{0,1,2,3,4,5,6}', 30, $1) RETURNING id`, [t.id]);
+    const add = (status, source) => adminDb.query(
+      `INSERT INTO reservations (date, shift_id, party_size, status, customer_name, source, public_token, tenant_id)
+       VALUES (CURRENT_DATE, $1, 2, $2, 'X', $3, $4, $5)`, [shift.id, status, source, `st-${Math.random()}`, t.id]);
+    for (const [st, src] of [['completed', 'staff'], ['no_show', 'portal'], ['cancelled', 'portal'], ['confirmed', 'staff']]) await add(st, src);
+    const b = (await stats()).bookings;
+    assert.deepEqual([b.total, b.noShowRate, b.cancelRate, b.portalShare], [4, 0.5, 0.25, 0.5]);
   });
 
   it('sconti e omaggi: quanto è stato tolto e regalato', async () => {

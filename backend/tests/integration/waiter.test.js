@@ -12,11 +12,11 @@ describe('ruolo cameriere', () => {
 
   before(async () => {
     server = await startServer();
-    t = await createTenant({ businessType: 'ristorante' });
+    t = await createTenant({ businessType: 'restaurant' });
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
     const username = `cameriere-${t.slug}`;
-    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cameriere', $3)`, [username, await bcrypt.hash(PASSWORD, 4), t.id]);
+    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'waiter', $3)`, [username, await bcrypt.hash(PASSWORD, 4), t.id]);
     waiter = apiClient(server.port, t.host);
     await waiter.login(username);
     const room = (await admin.post('/rooms', { name: 'Sala' })).body;
@@ -31,11 +31,11 @@ describe('ruolo cameriere', () => {
   });
 
   it('l\'admin crea un utente cameriere e il login lo riconosce', async () => {
-    const created = await admin.post('/auth/admin/createUser', { username: 'mario', password: 'temporanea1', role: 'cameriere' });
+    const created = await admin.post('/auth/admin/createUser', { username: 'mario', password: 'temporanea1', role: 'waiter' });
     assert.equal(created.status, 201, JSON.stringify(created.body));
-    assert.equal((await adminDb.query(`SELECT role FROM users WHERE username = 'mario' AND tenant_id = $1`, [t.id])).rows[0].role, 'cameriere');
+    assert.equal((await adminDb.query(`SELECT role FROM users WHERE username = 'mario' AND tenant_id = $1`, [t.id])).rows[0].role, 'waiter');
     const me = await waiter.get('/auth/me');
-    assert.equal(me.body.role, 'cameriere');
+    assert.equal(me.body.role, 'waiter');
     assert.equal((await admin.post('/auth/admin/createUser', { username: 'x', password: 'temporanea1', role: 'pizzaiolo' })).status, 400);
   });
 

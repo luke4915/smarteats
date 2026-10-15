@@ -1,6 +1,6 @@
 # Prenotazioni: disegno
 
-Stato: **P1 realizzata** (15 ottobre 2026, migrazione 044). P2 in poi da fare. Decisioni prese con Luca il 14-15 ottobre 2026.
+Stato: **P1 e P2 realizzate** (15 ottobre 2026, migrazioni 044-047). P3 in poi da fare. Decisioni prese con Luca il 14-15 ottobre 2026.
 
 Corrisponde alla Fase 4 di `docs/requirements.md` (4-1 … 4-6). Per le regole di sviluppo vale `CLAUDE.md`
 (RLS, validazione zod, audit, endpoint pubblici).
@@ -26,7 +26,7 @@ sulla pianta, e quando il cliente arriva, il tavolo si apre con i coperti già p
 
 ## 3. Come funziona, dal punto di vista di chi lo usa
 
-**Il cliente** (dal telefono, sul sito del locale `nome.miodominio.it/prenota`):
+**Il cliente** (dal telefono, sul sito del locale `nome.miodominio.it/book`):
 
 1. sceglie la **data** e il **turno** (vede solo quelli con posto), il **numero di persone**;
 2. scrive nome, telefono, (email facoltativa), eventuali note (allergie, seggiolone);
@@ -141,7 +141,7 @@ anche nel calendario del telefono.
 | Fase | Contenuto | Stato |
 |---|---|---|
 | **P1** | Modello (migrazione 044), turni e chiusure, inserimento a mano, **agenda**, conferma/rifiuto, **assegnazione sulla pianta**, **«Arrivato» → conto**, segno nella Sala, messaggio pronto (WhatsApp/chiama/email). Modulo `bookings`. | **fatta** |
-| **P2** | **Portale pubblico** con richieste, pagina di stato con link, annullo, anti-spam, informativa. | da fare |
+| **P2** | **Portale pubblico** con richieste, pagina di stato con link, annullo, anti-spam, informativa. | **fatta** |
 | **P3** | Messaggi pronti (WhatsApp/email/chiama), **foglio stampabile** del turno con la pianta, lista d'attesa semplice. | da fare |
 | **P4** | **Email automatiche** (conferma, promemoria): funzione aggiuntiva, con servizio di invio e consenso. | dopo |
 | **P5** | Piattaforme (TheFork, Google), calendario iCal. | dopo, con accordi |
@@ -151,9 +151,9 @@ Ogni fase va in produzione da sola e si prova con la scaletta (`docs/prova-a-man
 ## 9. Impatto sul codice esistente
 
 - `backend/utils/modules.js`: nuovo modulo `bookings` (solo ristorante); catalogo e master panel lo mostrano.
-- Sala (`smarteats/sala/FloorView.jsx`): segno sul tavolo prenotato; `GET /checks` non cambia.
+- Sala (`smarteats/floor/FloorView.jsx`): segno sul tavolo prenotato; `GET /checks` non cambia.
 - Nuove route: `routes/bookings.js` (staff), `routes/publicBooking.js` (pubbliche), schemi in `schemas/bookingSchema.js`.
-- Nuova vista in SmartEats: `smarteats/prenotazioni/` (agenda, dettaglio, assegnazione sulla pianta, riuso di `floor/FloorCanvas`).
+- Nuova vista in SmartEats: `smarteats/reservations/` (agenda, dettaglio, assegnazione sulla pianta, riuso di `floorplan/FloorCanvas`).
 - Rete di sicurezza: un test nel browser per il giro (richiesta dal portale → conferma → assegna tavolo → arrivato → incasso).
 
 ## 10. Domande aperte

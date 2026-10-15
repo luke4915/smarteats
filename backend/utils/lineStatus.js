@@ -1,4 +1,5 @@
 import { HttpError } from './httpError.js';
+import { afterOrderCompleted } from './whatsapp/outbox.js';
 
 // Stato per riga di una comanda (passo 3-3). Le righe hanno il loro stato (`prep_status`); lo stato della comanda si
 // ricava da loro, così le due cose non si contraddicono mai. Postazioni: una riga è del bar se si stampa solo al bar,
@@ -48,6 +49,8 @@ export async function setLineStatus(db, orderId, { status, lineIds, station, can
       await db.query(
         `UPDATE orders SET status = $1, completed_at = CASE WHEN $1 = 'completed' THEN COALESCE(completed_at, now()) ELSE NULL END WHERE id = $2`,
         [next, orderId]);
+    // un ordine da asporto concluso in cucina: il cliente va avvisato che è pronto
+    if (next === 'completed' && order.status !== 'completed') await afterOrderCompleted(db, orderId);
   }
   return { order, changed };
 }

@@ -14,10 +14,10 @@ describe('coperto', () => {
 
   before(async () => {
     server = await startServer();
-    t = await createTenant({ businessType: 'ristorante' });
+    t = await createTenant({ businessType: 'restaurant' });
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
-    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cassa', $3)`, [`cassa-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
+    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cashier', $3)`, [`cassa-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
     cashier = apiClient(server.port, t.host);
     await cashier.login(`cassa-${t.slug}`);
     const room = (await admin.post('/rooms', { name: 'Sala' })).body;

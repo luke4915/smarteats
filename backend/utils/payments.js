@@ -1,4 +1,5 @@
 import { HttpError } from './httpError.js';
+import { settleReservationForCheck } from './reservationCheck.js';
 
 // Pagamenti dei conti dei tavoli (passo 2-5 e pagamento per voce). Tutti gli importi si calcolano in centesimi
 // interi sul server: il client indica il metodo e cosa paga, mai quanto vale una riga (CLAUDE.md §4).
@@ -82,6 +83,7 @@ export async function closeAsPaid(db, checkId) {
   const { rows: [{ n }] } = await db.query(`SELECT COUNT(*)::int AS n FROM orders WHERE check_id = $1 AND status = 'scheduled'`, [checkId]);
   if (n > 0) throw new HttpError(409, 'Ci sono portate ancora da mandare: mandale o stornale prima di chiudere il conto', 'COURSES_PENDING');
   await db.query(`UPDATE checks SET status = 'paid', closed_at = now(), bill_requested_at = NULL WHERE id = $1`, [checkId]);
+  await settleReservationForCheck(db, checkId, 'paid');
 }
 
 // Una comanda non si storna se ne è già stata pagata una parte, o se il totale scenderebbe sotto il già pagato.

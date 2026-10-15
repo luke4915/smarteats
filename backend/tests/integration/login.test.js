@@ -62,14 +62,14 @@ describe('login per tenant', () => {
     const other = apiClient(server.port, t2.host);
     await other.login('admin', 'password-due');
 
-    assert.equal((await admin.post('/auth/admin/createUser', { username: 'cassa1', role: 'cassa', password: 'temporanea-1' })).status, 201);
-    assert.equal((await other.post('/auth/admin/createUser', { username: 'cassa1', role: 'cassa', password: 'temporanea-1' })).status, 201); // stesso nome, altro tenant
-    const dup = await admin.post('/auth/admin/createUser', { username: 'cassa1', role: 'cassa', password: 'temporanea-1' });
+    assert.equal((await admin.post('/auth/admin/createUser', { username: 'cassa1', role: 'cashier', password: 'temporanea-1' })).status, 201);
+    assert.equal((await other.post('/auth/admin/createUser', { username: 'cassa1', role: 'cashier', password: 'temporanea-1' })).status, 201); // stesso nome, altro tenant
+    const dup = await admin.post('/auth/admin/createUser', { username: 'cassa1', role: 'cashier', password: 'temporanea-1' });
     assert.equal(dup.status, 409);
     assert.equal(dup.body.error, 'Username già esistente');
 
     assert.equal((await admin.request('PATCH', '/profile/username', { newUsername: 'cassa1' })).status, 409);
-    assert.equal((await admin.request('PATCH', '/profile/username', { newUsername: 'responsabile' })).status, 200);
+    assert.equal((await admin.request('PATCH', '/profile/username', { newUsername: 'manager' })).status, 200);
   });
 
   it('la tabella users non ha più deroghe: senza tenant impostato non si legge nessun utente', async () => {
@@ -103,7 +103,7 @@ describe('login per tenant', () => {
   });
 
   it('un utente senza password non entra, con nessuna password', async () => {
-    await adminDb.query(`INSERT INTO users (username, role, tenant_id) VALUES ('senzapassword', 'cassa', $1)`, [t1.id]);
+    await adminDb.query(`INSERT INTO users (username, role, tenant_id) VALUES ('senzapassword', 'cashier', $1)`, [t1.id]);
     for (const password of ['x', 'password-uno', ' ']) {
       const res = await apiClient(server.port, t1.host).login('senzapassword', password);
       assert.equal(res.status, 401, `password "${password}"`);
@@ -113,8 +113,8 @@ describe('login per tenant', () => {
 
   it('password temporanea: il server blocca tutto finché non viene cambiata', async () => {
     const admin = apiClient(server.port, t1.host);
-    await admin.login('responsabile', 'password-uno'); // rinominato dal test precedente
-    assert.equal((await admin.post('/auth/admin/createUser', { username: 'nuovo', role: 'cassa', password: 'temporanea-1' })).status, 201);
+    await admin.login('manager', 'password-uno'); // rinominato dal test precedente
+    assert.equal((await admin.post('/auth/admin/createUser', { username: 'nuovo', role: 'cashier', password: 'temporanea-1' })).status, 201);
 
     const user = apiClient(server.port, t1.host);
     const login = await user.login('nuovo', 'temporanea-1');
@@ -139,7 +139,7 @@ describe('login per tenant', () => {
 
   it('reimpostazione della password: solo admin, solo nel proprio tenant, da cambiare al primo accesso', async () => {
     const admin = apiClient(server.port, t1.host);
-    await admin.login('responsabile', 'password-uno'); // rinominato dal test precedente
+    await admin.login('manager', 'password-uno'); // rinominato dal test precedente
     const { rows: [target] } = await adminDb.query(`SELECT id FROM users WHERE tenant_id = $1 AND username = 'senzapassword'`, [t1.id]);
     const { rows: [foreign] } = await adminDb.query(`SELECT id FROM users WHERE tenant_id = $1 AND username = 'admin'`, [t2.id]);
 

@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { LogOut, Settings, Menu, CloudOff, RefreshCw, AlertTriangle, Printer } from "lucide-react";
+import { LogOut, Menu, CloudOff, RefreshCw, AlertTriangle, Printer } from "lucide-react";
 import { useOfflineSync } from "../../offline/useOfflineSync";
 import { usePrintQueue } from "../../print/usePrintQueue";
 import FailedOrdersModal from "../shared/FailedOrdersModal";
+import NotificationBell from "../../smarteats/notifications/NotificationBell";
 
-const Header = ({ toggleSidebar, currentUser, onLogoutClick, onProfileClick, sessionName, wsConnected }) => {
+const Header = ({ toggleSidebar, currentUser, onLogoutClick, sessionName, wsConnected, inbox = null, onOpenNotification }) => {
   const { online, pending, failed, syncNow, refreshCounts } = useOfflineSync();
   const [showFailed, setShowFailed] = useState(false);
   const { pending: printPending, retryNow: retryPrint } = usePrintQueue();
@@ -72,6 +73,7 @@ const Header = ({ toggleSidebar, currentUser, onLogoutClick, onProfileClick, ses
               <span className="text-xs font-semibold">{failed}</span>
             </button>
           )}
+          {inbox && <NotificationBell items={inbox.items} onOpen={onOpenNotification} />}
           <div className="flex items-center gap-2 h-9 px-2 rounded-lg">
             <div className="w-7 h-7 rounded-full bg-[var(--accent)] flex items-center justify-center text-xs text-white font-semibold shrink-0">
               {currentUser.username[0].toUpperCase()}
@@ -84,12 +86,6 @@ const Header = ({ toggleSidebar, currentUser, onLogoutClick, onProfileClick, ses
               className={`w-2 h-2 rounded-full shrink-0 ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}
             />
           </div>
-          <button
-            onClick={onProfileClick}
-            className="p-2 hover:bg-[var(--bg-card-2)] rounded-lg transition-colors text-[var(--text-muted)] hover:text-[var(--text-main)] min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer enabled:active:scale-95"
-          >
-            <Settings size={18} className="pointer-events-none" />
-          </button>
           <button
             onClick={onLogoutClick}
             className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer enabled:active:scale-95"

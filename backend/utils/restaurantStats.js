@@ -8,7 +8,7 @@ const ratio = (a, b) => (b > 0 ? a / b : null);
 // `checks`: { n, covers, tables, avg_minutes }; `revenue`: incasso totale; `byHour`: [{ hour, n, covers, revenue }];
 // `courses`: [{ course, quantity, revenue }]; `products`: [{ product_id, name, quantity, revenue }];
 // `kitchen`: [{ station, avg_minutes, n }]; `discounts`: { discount, gift, lines }; `payments`: [{ method, amount }].
-export function buildRestaurantStats({ checks, revenue, byHour, courses, products, kitchen, discounts, payments }) {
+export function buildRestaurantStats({ checks, revenue, byHour, courses, products, kitchen, discounts, payments, occupancy = null, bookings = null }) {
   const total = num(revenue);
   const n = num(checks.n), covers = num(checks.covers), tables = num(checks.tables);
 
@@ -41,5 +41,7 @@ export function buildRestaurantStats({ checks, revenue, byHour, courses, product
     },
     discounts: { discount: round(num(discounts.discount)), gift: round(num(discounts.gift)), lines: num(discounts.lines) },
     payments: payments.map(p => ({ method: p.method, amount: round(num(p.amount)) })).sort((a, b) => b.amount - a.amount),
+    occupancy,
+    bookings,
   };
 }

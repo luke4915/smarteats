@@ -21,12 +21,12 @@ describe('sale e tavoli', () => {
 
   before(async () => {
     server = await startServer();
-    [t1, t2] = [await createTenant({ businessType: 'ristorante' }), await createTenant({ businessType: 'ristorante' })];
+    [t1, t2] = [await createTenant({ businessType: 'restaurant' }), await createTenant({ businessType: 'restaurant' })];
     [admin1, admin2, master] = [t1, t2, t1].map(t => apiClient(server.port, t.host));
     await admin1.login(t1.username);
     await admin2.login(t2.username);
-    cashier = await addUser(t1, 'cassa');
-    kitchen = await addUser(t1, 'cucina');
+    cashier = await addUser(t1, 'cashier');
+    kitchen = await addUser(t1, 'kitchen');
   });
   after(async () => {
     await deleteTenants(t1, t2);
@@ -237,7 +237,7 @@ describe('sale e tavoli', () => {
   });
 
   it('eliminare un tenant cancella anche sale e tavoli', async () => {
-    const doomed = await createTenant({ businessType: 'ristorante' });
+    const doomed = await createTenant({ businessType: 'restaurant' });
     const api = apiClient(server.port, doomed.host);
     await api.login(doomed.username);
     const room = (await api.post('/rooms', { name: 'Sala' })).body;

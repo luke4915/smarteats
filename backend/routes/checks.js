@@ -8,6 +8,7 @@ import { logAudit } from '../utils/auditLogger.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { requireModule } from '../utils/tenantModules.js';
 import { getCheckDetail, getCheckSummary, listChecks, getCheckReceipt } from '../utils/checks.js';
+import { settleReservationForCheck } from '../utils/reservationCheck.js';
 import { recordPayment, lockCheck, checkBalance, closeAsPaid, toCents } from '../utils/payments.js';
 import { computeLineTotal, sanitizeAdjustment } from '../utils/pricing.js';
 import { sumQuantitiesByProduct, applyStockChange } from '../utils/stock.js';
@@ -296,6 +297,7 @@ export default function (broadcast) {
           stockUpdates = await applyStockChange(db, sumQuantitiesByProduct(items), +1);
         }
         await db.query(`UPDATE checks SET status = 'void', closed_at = now(), bill_requested_at = NULL WHERE id = $1`, [req.params.id]);
+        await settleReservationForCheck(db, req.params.id, 'void');
         return { canceledIds, stockUpdates };
       });
       const check = await getCheckSummary(req.db, req.params.id);
@@ -380,6 +382,7 @@ export default function (broadcast) {
           `UPDATE checks t SET covers = LEAST(99, t.covers + $3), bill_requested_at = COALESCE(t.bill_requested_at, s.bill_requested_at)
            FROM checks s WHERE t.id = $1 AND s.id = $2`, [targetId, sourceId, sourceCovers]);
         await db.query(`UPDATE checks SET status = 'void', closed_at = now(), bill_requested_at = NULL, merged_into = $1 WHERE id = $2`, [targetId, sourceId]);
+        await settleReservationForCheck(db, sourceId, 'merged', { mergedInto: targetId });
         await syncCoverOrder(db, req.user.tenantId, targetId, req.user.id);
         return { orderIds: moved.filter(o => ['pending', 'preparing'].includes(o.status)).map(o => o.id) };
       });

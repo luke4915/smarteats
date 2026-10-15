@@ -13,7 +13,10 @@ import {
   shiftSchema, closureSchema, closuresQuerySchema, createReservationSchema, updateReservationSchema, declineSchema,
   reservationTablesSchema, arrivedSchema, reservationsQuerySchema, availabilityQuerySchema,
 } from '../schemas/bookingSchema.js';
-import { canTransition, freeSeats, shiftOpenOn, tableConflicts, confirmationMessage, REQUEST_TTL_HOURS } from '../utils/bookings.js';
+import { canTransition, freeSeats, shiftOpenOn, tableConflicts, confirmationMessage } from '../utils/bookings.js';
+import { SHIFT_COLUMNS, CLOSURE_COLUMNS, lockShift, closuresOn, assertBookable } from '../utils/bookingDb.js';
+import { expireReservations } from '../utils/caseExpiry.js';
+import { enqueue } from '../utils/whatsapp/outbox.js';
 import { openCheckOnTable } from '../utils/openCheck.js';
 import { getCheckSummary } from '../utils/checks.js';
 
@@ -21,11 +24,9 @@ import { getCheckSummary } from '../utils/checks.js';
 // li scrive solo l'admin. Disegno e regole: docs/design-prenotazioni.md. Evento: `reservation_updated` al personale.
 const router = express.Router();
 const guard = [authenticate, requireModule('bookings')];
-const SHIFT_COLUMNS = `id, name, to_char(start_time, 'HH24:MI') AS start_time, duration_minutes, weekdays, capacity, active, position`;
-const CLOSURE_COLUMNS = `id, to_char(date_from, 'YYYY-MM-DD') AS date_from, to_char(date_to, 'YYYY-MM-DD') AS date_to, shift_id, reason`;
 const RESERVATION_SQL = `
   SELECT r.id, to_char(r.date, 'YYYY-MM-DD') AS date, r.shift_id, r.party_size, r.status, r.customer_name, r.phone, r.email,
-         r.notes, r.source, r.external_id, r.public_token, r.requested_at, r.decided_by, r.decided_at, r.decline_reason, r.check_id,
+         r.notes, r.source, r.external_id, r.public_token, r.requested_at, r.decided_by, r.decided_at, r.decline_reason, r.check_id, r.cancel_requested_at,
          s.name AS shift_name, to_char(s.start_time, 'HH24:MI') AS start_time, s.duration_minutes,
          COALESCE((SELECT array_agg(rt.table_id ORDER BY rt.table_id) FROM reservation_tables rt WHERE rt.reservation_id = r.id), '{}') AS table_ids
   FROM reservations r JOIN booking_shifts s ON s.id = r.shift_id`;
@@ -35,9 +36,8 @@ const withShift = (r) => ({ ...r, shift: { id: r.shift_id, name: r.shift_name, s
 export default function (broadcast) {
   const notify = (tenantId, reservation) => broadcast?.(tenantId, { type: 'reservation_updated', reservation });
 
-  // Le richieste non decise da più di 24 ore decadono: il posto torna libero. Si fa quando si legge o si decide.
-  const expireStale = (db) => db.query(
-    `UPDATE reservations SET status = 'expired' WHERE status = 'requested' AND requested_at < now() - make_interval(hours => $1)`, [REQUEST_TTL_HOURS]);
+  // Le richieste non decise decadono (24 ore, o l'inizio del turno) e il cliente viene avvisato: si fa quando si legge o si decide.
+  const expireStale = expireReservations;
 
   const load = async (db, where, params) => {
     const { rows } = await db.query(`${RESERVATION_SQL} WHERE ${where} ORDER BY s.start_time, r.id`, params);
@@ -54,33 +54,17 @@ export default function (broadcast) {
     return { ...r, confirmation_message: confirmationMessage({ restaurant: await restaurantName(db, tenantId), date: r.date, shift: r.shift, party_size: r.party_size, customer_name: r.customer_name }) };
   };
 
-  // Blocca il turno (serializza chi prenota lo stesso turno) e lo ritorna.
-  const lockShift = async (db, shiftId) => {
-    const { rows } = await db.query(`SELECT ${SHIFT_COLUMNS} FROM booking_shifts WHERE id = $1 FOR UPDATE`, [shiftId]);
-    if (!rows.length) throw new HttpError(404, 'Turno non trovato');
-    return rows[0];
-  };
-  const closuresOn = async (db, date) =>
-    (await db.query(`SELECT ${CLOSURE_COLUMNS} FROM booking_closures WHERE date_from <= $1 AND date_to >= $1`, [date])).rows;
-
-  // Il turno è prenotabile in quella data e i posti bastano (a meno che il personale non accetti di proposito).
-  async function assertBookable(db, shift, date, partySize, { ignoreCapacity = false, excludeId = null } = {}) {
-    const open = shiftOpenOn(shift, date, await closuresOn(db, date));
-    if (!open.open) throw new HttpError(409, `Il turno non è prenotabile: ${open.reason}`, 'SHIFT_CLOSED');
-    const { rows } = await db.query(
-      `SELECT status, party_size, requested_at FROM reservations WHERE date = $1 AND shift_id = $2 AND ($3::int IS NULL OR id <> $3)`,
-      [date, shift.id, excludeId]);
-    const { free } = freeSeats(shift.capacity, rows);
-    if (!ignoreCapacity && free < partySize)
-      throw new HttpError(409, free > 0 ? `Posti insufficienti: ne restano ${free}` : 'Il turno è al completo', 'NO_CAPACITY');
-  }
-
   // Assegna i tavoli (sostituisce quelli di prima) controllando che esistano, siano attivi e non siano già impegnati da
   // un'altra prenotazione attiva con orario sovrapposto.
   async function assignTables(db, reservation, tableIds) {
     if (tableIds.length) {
       const { rows: tables } = await db.query('SELECT id, name, active FROM dining_tables WHERE id = ANY($1::int[])', [tableIds]);
       if (tables.length !== tableIds.length) throw new HttpError(400, 'Tavolo non valido', 'INVALID_TABLE');
+      // I posti dei tavoli scelti devono bastare per il gruppo: un tavolo da 3 non regge 4 persone
+      const { rows: [{ party_size: party }] } = await db.query('SELECT party_size FROM reservations WHERE id = $1', [reservation.id]);
+      const { rows: [{ seats }] } = await db.query('SELECT COALESCE(SUM(seats), 0)::int AS seats FROM dining_tables WHERE id = ANY($1::int[])', [tableIds]);
+      if (seats < party)
+        throw new HttpError(409, `I tavoli scelti hanno ${seats} ${seats === 1 ? 'posto' : 'posti'}: non bastano per ${party} persone`, 'NOT_ENOUGH_SEATS');
       const inactive = tables.find(t => !t.active);
       if (inactive) throw new HttpError(409, `Il tavolo ${inactive.name} è disattivato`, 'TABLE_INACTIVE');
       const others = (await load(db, `r.date = $1 AND r.id <> $2 AND r.status IN ('requested', 'confirmed', 'seated')`, [reservation.date, reservation.id]));
@@ -101,7 +85,7 @@ export default function (broadcast) {
     if (!canTransition(rows[0].status, to))
       throw new HttpError(409, `La prenotazione è già «${rows[0].status}»: non si può passare a «${to}»`, 'INVALID_TRANSITION');
     await db.query(
-      `UPDATE reservations SET status = $1, decided_by = $2, decided_at = now(), decline_reason = COALESCE($3, decline_reason) WHERE id = $4`,
+      `UPDATE reservations SET status = $1, decided_by = $2, decided_at = now(), decline_reason = COALESCE($3, decline_reason), cancel_requested_at = NULL WHERE id = $4`,
       [to, userId ?? null, reason ?? null, id]);
     return rows[0].status;
   }
@@ -257,6 +241,8 @@ export default function (broadcast) {
            VALUES ($1, $2, $3, 'confirmed', $4, $5, $6, $7, 'staff', $8, $9, now(), $9) RETURNING id`,
           [b.date, b.shift_id, b.party_size, b.customer_name, b.phone, b.email, b.notes, crypto.randomBytes(18).toString('base64url'), req.user.id]);
         if (b.table_ids.length) await assignTables(db, { id: created.id, date: b.date, shift: { ...shift } }, b.table_ids);
+        await enqueue(db, 'reservation', created.id, 'confirmed');
+        await enqueue(db, 'reservation', created.id, 'reminder');
         return created.id;
       });
       await logAudit(req.db, req.user.id, 'BOOKING_CREATE', { reservationId: id, date: b.date, shiftId: b.shift_id, partySize: b.party_size });
@@ -284,11 +270,17 @@ export default function (broadcast) {
           await assertBookable(db, shift, next.date, next.party_size, { ignoreCapacity: b.ignore_capacity, excludeId: cur.id });
           // spostata o cambiata di turno: i tavoli assegnati devono ancora andare bene, altrimenti si liberano
           if (next.date !== cur.date || next.shift_id !== cur.shift_id) await db.query('DELETE FROM reservation_tables WHERE reservation_id = $1', [cur.id]);
+          else if (next.party_size > cur.party_size) {
+            const { rows: [{ seats }] } = await db.query(
+              `SELECT COALESCE(SUM(t.seats), 0)::int AS seats FROM reservation_tables rt JOIN dining_tables t ON t.id = rt.table_id WHERE rt.reservation_id = $1`, [cur.id]);
+            if (seats < next.party_size) await db.query('DELETE FROM reservation_tables WHERE reservation_id = $1', [cur.id]);
+          }
         }
         await db.query(
           `UPDATE reservations SET date = $1, shift_id = $2, party_size = $3, customer_name = COALESCE($4, customer_name),
              phone = COALESCE($5, phone), email = COALESCE($6, email), notes = COALESCE($7, notes) WHERE id = $8`,
           [next.date, next.shift_id, next.party_size, b.customer_name ?? null, b.phone ?? null, b.email ?? null, b.notes ?? null, cur.id]);
+        if (cur.status === 'confirmed') await enqueue(db, 'reservation', cur.id, 'reminder');
       });
       await logAudit(req.db, req.user.id, 'BOOKING_UPDATE', { reservationId: Number(req.params.id) });
       const reservation = await present(req.db, req.user.tenantId, req.params.id);
@@ -316,6 +308,9 @@ export default function (broadcast) {
             }
           }
           await transition(db, req.params.id, to, { userId: req.user.id, reason: req.body?.reason });
+          const event = { confirmed: 'confirmed', declined: 'declined', cancelled: 'cancelled' }[to];
+          if (event) await enqueue(db, 'reservation', Number(req.params.id), event);
+          if (to === 'confirmed') await enqueue(db, 'reservation', Number(req.params.id), 'reminder');
         });
         await logAudit(req.db, req.user.id, action, { reservationId: Number(req.params.id) });
         const reservation = await present(req.db, req.user.tenantId, req.params.id);
@@ -348,6 +343,41 @@ export default function (broadcast) {
       if (sendHttpError(res, err)) return;
       logger.error({ err }, 'Errore PUT /api/bookings/reservations/:id/tables');
       res.status(500).json({ error: 'Errore assegnazione tavoli' });
+    }
+  });
+
+  // Da fare per il personale: richieste da confermare e annulli chiesti dai clienti. Alimenta la campanella in testata.
+  router.get('/inbox', ...guard, authorizeWaiter, tenantScope, async (req, res) => {
+    try {
+      await expireStale(req.db);
+      const rows = await load(req.db,
+        `r.date >= CURRENT_DATE - 1 AND (r.status = 'requested' OR (r.status = 'confirmed' AND r.cancel_requested_at IS NOT NULL))`, []);
+      const items = rows.map(r => ({
+        id: r.id, kind: r.status === 'requested' ? 'request' : 'cancel_request', customer_name: r.customer_name, party_size: r.party_size,
+        date: r.date, start_time: r.start_time, shift_name: r.shift_name, at: r.status === 'requested' ? r.requested_at : r.cancel_requested_at,
+      })).sort((a, b) => new Date(a.at) - new Date(b.at));
+      res.json(items);
+    } catch (err) {
+      logger.error({ err }, 'Errore GET /api/bookings/inbox');
+      res.status(500).json({ error: 'Errore caricamento notifiche' });
+    }
+  });
+
+  // Il locale non accetta l'annullo chiesto dal cliente: la prenotazione resta confermata.
+  router.post('/reservations/:id/keep', ...guard, authorizeWaiter, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
+    try {
+      const { rowCount } = await req.db.query(
+        `UPDATE reservations SET cancel_requested_at = NULL WHERE id = $1 AND status = 'confirmed' AND cancel_requested_at IS NOT NULL`, [req.params.id]);
+      if (!rowCount) return res.status(409).json({ error: 'Nessuna richiesta di annullo da rifiutare', code: 'NO_CANCEL_REQUEST' });
+      await enqueue(req.db, 'reservation', Number(req.params.id), 'kept');
+      await logAudit(req.db, req.user.id, 'BOOKING_CANCEL_REQUEST_REJECTED', { reservationId: Number(req.params.id) });
+      const reservation = await present(req.db, req.user.tenantId, req.params.id);
+      notify(req.user.tenantId, reservation);
+      res.json(reservation);
+    } catch (err) {
+      if (sendHttpError(res, err)) return;
+      logger.error({ err }, 'Errore POST /api/bookings/reservations/:id/keep');
+      res.status(500).json({ error: 'Errore aggiornamento prenotazione' });
     }
   });
 

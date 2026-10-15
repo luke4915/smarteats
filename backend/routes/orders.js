@@ -19,6 +19,7 @@ import { loadItems, withItems } from '../utils/orderItemsRead.js';
 import { writeOrderItems } from '../utils/orderItemsWrite.js';
 import { requireModule, getTenantModules } from '../utils/tenantModules.js';
 import { setLineStatus } from '../utils/lineStatus.js';
+import { afterOrderCompleted } from '../utils/whatsapp/outbox.js';
 import { lineStatusSchema } from '../schemas/lineStatusSchema.js';
 import { withCheckInfo } from '../utils/orderCheck.js';
 import { lockCheck, assertOrderCancelable } from '../utils/payments.js';
@@ -288,6 +289,8 @@ export default function (broadcast) {
           await db.query(`UPDATE order_items SET prep_status = 'ready', ready_at = COALESCE(ready_at, now()) WHERE order_id = $1 AND prep_status IN ('new', 'preparing')`, [id]);
         else if (status === 'preparing')
           await db.query(`UPDATE order_items SET prep_status = 'preparing' WHERE order_id = $1 AND prep_status = 'new'`, [id]);
+        // un ordine da asporto concluso in cucina: il cliente va avvisato che è pronto
+        if (status === 'completed' && order.status !== 'completed') await afterOrderCompleted(db, id);
         const [withInfo] = await withCheckInfo(db, [rows[0]]);
         const updated = { ...withInfo, items: (await loadItems(db, [id])).get(id) ?? [] };
         const stockUpdates = status === 'canceled'

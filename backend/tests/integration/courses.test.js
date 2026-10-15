@@ -22,13 +22,13 @@ describe('portate', () => {
 
   before(async () => {
     server = await startServer();
-    [t, sagra] = [await createTenant({ businessType: 'ristorante' }), await createTenant()];
+    [t, sagra] = [await createTenant({ businessType: 'restaurant' }), await createTenant()];
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
     sagraApi = apiClient(server.port, sagra.host);
     await sagraApi.login(sagra.username);
-    cashier = await user('cassa');
-    kitchen = await user('cucina');
+    cashier = await user('cashier');
+    kitchen = await user('kitchen');
     const room = (await admin.post('/rooms', { name: 'Sala' })).body;
     tables = (await admin.post(`/rooms/${room.id}/tables/bulk`, { prefix: 'T', from: 1, to: 12 })).body.created;
     [starter, main, dessert] = [];

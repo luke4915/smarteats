@@ -10,6 +10,11 @@ import { SIGN_OPTIONS } from '../utils/jwtConfig.js';
 import { hashPassword } from '../utils/password.js';
 import { validate } from '../middleware/validate.js';
 import { idParamsSchema } from '../schemas/common.js';
+import { feedbackStatusSchema } from '../schemas/feedbackSchema.js';
+import { whatsappConfigSchema, whatsappTestSchema } from '../schemas/whatsappSchema.js';
+import { EVENTS, EVENT_IDS, eventSettingKey, QUOTA_SETTING_KEY, renderBody, normalizeMobile, templateName } from '../utils/whatsapp.js';
+import { loadConfig, monthUsage } from '../utils/whatsapp/outbox.js';
+import { getDriver } from '../utils/whatsapp/driver.js';
 import { masterLoginSchema, createTenantSchema, extendLicenseSchema, tenantActiveSchema, deleteTenantSchema, receiptCustomizationSchema, tenantUserParamsSchema, tenantModulesSchema } from '../schemas/masterSchema.js';
 import { createUserSchema, resetPasswordSchema, updateUserSchema } from '../schemas/authSchema.js';
 import { catalog, normalizeModules, firstModuleNotAllowed, BUSINESS_TYPES } from '../utils/modules.js';
@@ -161,6 +166,101 @@ router.patch('/tenants/:id/active', authenticateMaster, validate({ params: idPar
   }
 });
 
+// AVVISI WHATSAPP — configurazione per locale (eventi, tetto mensile), registro e messaggio di prova. Solo qui: il
+// locale non configura nulla (docs/design-whatsapp.md). Le tabelle del locale si toccano con la sua connessione scoped.
+router.get('/tenants/:id/whatsapp', authenticateMaster, validate({ params: idParamsSchema }), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows: [tenant] } = await masterPool.query('SELECT modules FROM tenants WHERE id = $1', [id]);
+    if (!tenant) return res.status(404).json({ error: 'Tenant non trovato' });
+    const data = await withTenantClient(id, async (db) => {
+      const cfg = await loadConfig(db);
+      const used = await monthUsage(db);
+      const { rows: log } = await db.query(
+        `SELECT id, ref_type, ref_id, event, status, error, attempts, right(to_phone, 3) AS to_tail, created_at, sent_at
+         FROM whatsapp_messages ORDER BY id DESC LIMIT 50`);
+      return { cfg, used, log };
+    }, masterPool);
+    res.json({
+      module_enabled: tenant.modules.includes('whatsapp'),
+      driver: getDriver().id,
+      quota: data.cfg.quota, used: data.used,
+      events: EVENT_IDS.map(eventId => ({ id: eventId, ref: EVENTS[eventId].ref, label: EVENTS[eventId].label, category: EVENTS[eventId].category,
+        enabled: data.cfg.events[eventId], template: templateName(eventId), body: EVENTS[eventId].body })),
+      log: data.log,
+    });
+  } catch (err) {
+    logger.error({ err }, 'Errore GET /api/master/tenants/:id/whatsapp');
+    res.status(500).json({ error: 'Errore caricamento avvisi WhatsApp' });
+  }
+});
+
+router.put('/tenants/:id/whatsapp', authenticateMaster, validate({ params: idParamsSchema, body: whatsappConfigSchema }), async (req, res) => {
+  const { id } = req.params;
+  try {
+    if (!await tenantExists(id)) return res.status(404).json({ error: 'Tenant non trovato' });
+    await withTenantClient(id, (client) => inTransaction(client, async (db) => {
+      const upsert = (key, value) => db.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (tenant_id, key) DO UPDATE SET value = $2', [key, value]);
+      for (const [eventId, on] of Object.entries(req.body.events)) await upsert(eventSettingKey(eventId), on ? '1' : '0');
+      if (req.body.quota !== undefined) await upsert(QUOTA_SETTING_KEY, String(req.body.quota));
+      await logAudit(db, null, 'MASTER_WHATSAPP_CONFIG', { events: Object.keys(req.body.events).length, quota: req.body.quota });
+    }), masterPool);
+    res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, 'Errore PUT /api/master/tenants/:id/whatsapp');
+    res.status(500).json({ error: 'Errore salvataggio avvisi WhatsApp' });
+  }
+});
+
+// Un messaggio di prova (modello «prenotazione confermata» con dati d'esempio) al numero indicato
+router.post('/tenants/:id/whatsapp/test', authenticateMaster, validate({ params: idParamsSchema, body: whatsappTestSchema }), async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows: [tenant] } = await masterPool.query('SELECT name FROM tenants WHERE id = $1', [id]);
+    if (!tenant) return res.status(404).json({ error: 'Tenant non trovato' });
+    const to = normalizeMobile(req.body.to);
+    if (!to) return res.status(400).json({ error: 'Il numero non sembra un cellulare valido' });
+    const driver = getDriver();
+    if (driver.id === 'off') return res.status(409).json({ error: 'Gli avvisi WhatsApp non sono attivi su questo server (WHATSAPP_DRIVER)', code: 'DRIVER_OFF' });
+    const params = ['Prova', 'venerdì 23 ottobre', '20:00', '4'];
+    try {
+      await driver.send({ to, template: templateName('reservation.confirmed'), header: `SmartEats × ${tenant.name}`, params, buttonToken: null });
+    } catch (err) {
+      return res.status(502).json({ error: `Invio non riuscito: ${err.message}`, code: err.code || 'SEND_FAILED' });
+    }
+    res.json({ ok: true, preview: renderBody('reservation.confirmed', params), driver: driver.id });
+  } catch (err) {
+    logger.error({ err }, 'Errore POST /api/master/tenants/:id/whatsapp/test');
+    res.status(500).json({ error: 'Errore invio di prova' });
+  }
+});
+
+// FEEDBACK — i suggerimenti e le segnalazioni lasciati dagli utenti dei locali (più recenti per primi).
+// La lettura trasversale passa dalla policy `master_read`; la modifica dello stato dal contesto del locale.
+router.get('/feedback', authenticateMaster, async (_req, res) => {
+  try {
+    const { rows } = await masterPool.query(
+      `SELECT f.id, f.tenant_id, t.name AS tenant_name, f.username, f.module, f.message, f.status, f.created_at
+       FROM app_feedback f JOIN tenants t ON t.id = f.tenant_id ORDER BY f.created_at DESC LIMIT 200`);
+    res.json(rows);
+  } catch (err) {
+    logger.error({ err }, 'Errore GET /api/master/feedback');
+    res.status(500).json({ error: 'Errore caricamento feedback' });
+  }
+});
+
+router.patch('/feedback/:id', authenticateMaster, validate({ params: idParamsSchema, body: feedbackStatusSchema }), async (req, res) => {
+  try {
+    const { rows } = await masterPool.query('SELECT tenant_id FROM app_feedback WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Feedback non trovato' });
+    await withTenantClient(rows[0].tenant_id, (db) => db.query('UPDATE app_feedback SET status = $2 WHERE id = $1', [req.params.id, req.body.status]), masterPool);
+    res.json({ ok: true });
+  } catch (err) {
+    logger.error({ err }, 'Errore PATCH /api/master/feedback/:id');
+    res.status(500).json({ error: 'Errore aggiornamento feedback' });
+  }
+});
+
 // PERSONALIZZAZIONE SCONTRINI — testi e immagini delle copie di un tenant (solo master).
 // Le tabelle del tenant si toccano solo con la sua connessione scoped (withTenantClient), mai con masterPool.query.
 // `masterPool` è il pool del ruolo master (vedi db.js e migrazione 025), non quello applicativo.
@@ -288,7 +388,7 @@ router.post('/tenants/:id/users/:userId/reset-password', authenticateMaster, val
 // Richiede conferma esplicita (slug ripetuto) lato client prima di chiamarla.
 // Tutto in un'unica transazione sulla connessione scoped al tenant: o sparisce
 // tutto o non sparisce niente. L'ordine rispetta le foreign key (audit_logs → users).
-const TENANT_SCOPED_TABLES = ['reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
+const TENANT_SCOPED_TABLES = ['whatsapp_messages', 'app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
 router.delete('/tenants/:id', authenticateMaster, validate({ params: idParamsSchema, body: deleteTenantSchema }), async (req, res) => {
   const { id } = req.params;
   try {

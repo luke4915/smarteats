@@ -9,7 +9,7 @@ test('la vista pubblica non espone prezzi, totali né utente', () => {
     items: [{ id: 1, name: 'Panino', quantity: 2, price: 6, original_price: 6, type: 'sale', category: 'Cibo' }],
   });
   assert.deepEqual(order, {
-    id: 7, display_code: 'A7', status: 'pending', is_takeaway: true, created_at: '2026-01-01T20:00:00Z', table_name: null, covers: null,
+    id: 7, display_code: 'A7', status: 'pending', is_takeaway: true, created_at: '2026-01-01T20:00:00Z', table_name: null, covers: null, pickup_at: null,
     items: [{ id: 1, name: 'Panino', quantity: 2, note: '', category: 'Cibo' }],
   });
 });

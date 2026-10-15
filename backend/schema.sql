@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 9acWNOuvBltTGfn3lssHGbq7NUO1xFH4ti6Y2SK5dh5zrPZGpcdAneSWMyMvx01
+\restrict 0XIGlYhdz1SSm4R7eQIQIcogkmFL5J4yK3h59yEy3GnZJeH31YgfpFv8mHPvxF8
 
 -- Dumped from database version 17.10 (Homebrew)
 -- Dumped by pg_dump version 17.10 (Homebrew)
@@ -56,6 +56,51 @@ ALTER SEQUENCE public._migrations_id_seq OWNER TO colettas;
 --
 
 ALTER SEQUENCE public._migrations_id_seq OWNED BY public._migrations.id;
+
+
+--
+-- Name: app_feedback; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.app_feedback (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    user_id integer,
+    username text NOT NULL,
+    module text NOT NULL,
+    message text NOT NULL,
+    status text DEFAULT 'new'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT app_feedback_message_check CHECK (((length(btrim(message)) >= 3) AND (length(btrim(message)) <= 2000))),
+    CONSTRAINT app_feedback_module_check CHECK ((module = ANY (ARRAY['general'::text, 'pos'::text, 'floor'::text, 'reservations'::text, 'takeaway'::text, 'kitchen'::text, 'catalog'::text, 'stats'::text, 'settings'::text]))),
+    CONSTRAINT app_feedback_status_check CHECK ((status = ANY (ARRAY['new'::text, 'read'::text])))
+);
+
+ALTER TABLE ONLY public.app_feedback FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.app_feedback OWNER TO colettas;
+
+--
+-- Name: app_feedback_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.app_feedback_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.app_feedback_id_seq OWNER TO colettas;
+
+--
+-- Name: app_feedback_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.app_feedback_id_seq OWNED BY public.app_feedback.id;
 
 
 --
@@ -770,7 +815,9 @@ CREATE TABLE public.products (
     stock_enabled boolean DEFAULT false NOT NULL,
     tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
     course_id integer,
-    CONSTRAINT products_print_destination_check CHECK (((print_destination)::text = ANY ((ARRAY['bar'::character varying, 'kitchen'::character varying, 'both'::character varying])::text[])))
+    takeaway_load integer DEFAULT 1 NOT NULL,
+    CONSTRAINT products_print_destination_check CHECK (((print_destination)::text = ANY ((ARRAY['bar'::character varying, 'kitchen'::character varying, 'both'::character varying])::text[]))),
+    CONSTRAINT products_takeaway_load_check CHECK (((takeaway_load >= 0) AND (takeaway_load <= 20)))
 );
 
 ALTER TABLE ONLY public.products FORCE ROW LEVEL SECURITY;
@@ -839,9 +886,12 @@ CREATE TABLE public.reservations (
     decline_reason text DEFAULT ''::text NOT NULL,
     check_id integer,
     created_by integer,
+    consent_at timestamp with time zone,
+    personal_data_purged_at timestamp with time zone,
+    cancel_requested_at timestamp with time zone,
     CONSTRAINT reservations_customer_name_check CHECK ((length(btrim(customer_name)) > 0)),
     CONSTRAINT reservations_party_size_check CHECK (((party_size >= 1) AND (party_size <= 99))),
-    CONSTRAINT reservations_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'confirmed'::text, 'declined'::text, 'cancelled'::text, 'seated'::text, 'no_show'::text, 'expired'::text])))
+    CONSTRAINT reservations_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'confirmed'::text, 'declined'::text, 'cancelled'::text, 'seated'::text, 'completed'::text, 'no_show'::text, 'expired'::text])))
 );
 
 ALTER TABLE ONLY public.reservations FORCE ROW LEVEL SECURITY;
@@ -1019,6 +1069,111 @@ ALTER TABLE ONLY public.settings FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.settings OWNER TO colettas;
 
 --
+-- Name: takeaway_hours; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.takeaway_hours (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    weekday smallint NOT NULL,
+    open_time time without time zone NOT NULL,
+    close_time time without time zone NOT NULL,
+    CONSTRAINT takeaway_hours_check CHECK ((close_time > open_time)),
+    CONSTRAINT takeaway_hours_weekday_check CHECK (((weekday >= 0) AND (weekday <= 6)))
+);
+
+ALTER TABLE ONLY public.takeaway_hours FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.takeaway_hours OWNER TO colettas;
+
+--
+-- Name: takeaway_hours_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.takeaway_hours_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.takeaway_hours_id_seq OWNER TO colettas;
+
+--
+-- Name: takeaway_hours_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.takeaway_hours_id_seq OWNED BY public.takeaway_hours.id;
+
+
+--
+-- Name: takeaway_orders; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.takeaway_orders (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    status text DEFAULT 'requested'::text NOT NULL,
+    source text NOT NULL,
+    pickup_at timestamp with time zone NOT NULL,
+    load integer DEFAULT 0 NOT NULL,
+    customer_name text NOT NULL,
+    phone text DEFAULT ''::text NOT NULL,
+    email text DEFAULT ''::text NOT NULL,
+    notes text DEFAULT ''::text NOT NULL,
+    items jsonb NOT NULL,
+    total numeric(10,2) NOT NULL,
+    order_id integer,
+    public_token text NOT NULL,
+    payment_mode text DEFAULT 'on_pickup'::text NOT NULL,
+    paid_method text,
+    reject_reason text DEFAULT ''::text NOT NULL,
+    requested_at timestamp with time zone DEFAULT now() NOT NULL,
+    decided_by integer,
+    decided_at timestamp with time zone,
+    picked_up_at timestamp with time zone,
+    consent_at timestamp with time zone,
+    created_by integer,
+    personal_data_purged_at timestamp with time zone,
+    CONSTRAINT takeaway_orders_customer_name_check CHECK ((length(btrim(customer_name)) > 0)),
+    CONSTRAINT takeaway_orders_load_check CHECK ((load >= 0)),
+    CONSTRAINT takeaway_orders_paid_method_check CHECK ((paid_method = ANY (ARRAY['cash'::text, 'card'::text, 'other'::text]))),
+    CONSTRAINT takeaway_orders_payment_mode_check CHECK ((payment_mode = ANY (ARRAY['on_pickup'::text, 'online'::text]))),
+    CONSTRAINT takeaway_orders_source_check CHECK ((source = ANY (ARRAY['portal'::text, 'counter'::text, 'phone'::text]))),
+    CONSTRAINT takeaway_orders_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'accepted'::text, 'picked_up'::text, 'rejected'::text, 'cancelled'::text, 'expired'::text])))
+);
+
+ALTER TABLE ONLY public.takeaway_orders FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.takeaway_orders OWNER TO colettas;
+
+--
+-- Name: takeaway_orders_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.takeaway_orders_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.takeaway_orders_id_seq OWNER TO colettas;
+
+--
+-- Name: takeaway_orders_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.takeaway_orders_id_seq OWNED BY public.takeaway_orders.id;
+
+
+--
 -- Name: tenants; Type: TABLE; Schema: public; Owner: colettas
 --
 
@@ -1031,9 +1186,9 @@ CREATE TABLE public.tenants (
     created_at timestamp with time zone DEFAULT now(),
     expires_at timestamp with time zone,
     active boolean DEFAULT true NOT NULL,
-    business_type text DEFAULT 'sagra'::text NOT NULL,
+    business_type text DEFAULT 'street_food'::text NOT NULL,
     modules text[] DEFAULT ARRAY['kds'::text, 'stats'::text, 'qr_menu'::text] NOT NULL,
-    CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['sagra'::text, 'paninaro'::text, 'ristorante'::text])))
+    CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['street_food'::text, 'restaurant'::text, 'takeaway_shop'::text])))
 );
 
 
@@ -1072,7 +1227,7 @@ CREATE TABLE public.users (
     role character varying(20) NOT NULL,
     tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
     must_change_password boolean DEFAULT false NOT NULL,
-    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'responsabile'::character varying, 'cassa'::character varying, 'cameriere'::character varying, 'cucina'::character varying])::text[])))
+    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'manager'::character varying, 'cashier'::character varying, 'waiter'::character varying, 'kitchen'::character varying])::text[])))
 );
 
 ALTER TABLE ONLY public.users FORCE ROW LEVEL SECURITY;
@@ -1103,10 +1258,70 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: whatsapp_messages; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.whatsapp_messages (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    ref_type text NOT NULL,
+    ref_id integer NOT NULL,
+    event text NOT NULL,
+    to_phone text DEFAULT ''::text NOT NULL,
+    template text NOT NULL,
+    category text DEFAULT 'utility'::text NOT NULL,
+    params jsonb DEFAULT '[]'::jsonb NOT NULL,
+    status text DEFAULT 'queued'::text NOT NULL,
+    error text DEFAULT ''::text NOT NULL,
+    attempts integer DEFAULT 0 NOT NULL,
+    next_attempt_at timestamp with time zone DEFAULT now() NOT NULL,
+    wa_message_id text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    CONSTRAINT whatsapp_messages_category_check CHECK ((category = ANY (ARRAY['utility'::text, 'marketing'::text]))),
+    CONSTRAINT whatsapp_messages_ref_type_check CHECK ((ref_type = ANY (ARRAY['reservation'::text, 'takeaway'::text]))),
+    CONSTRAINT whatsapp_messages_status_check CHECK ((status = ANY (ARRAY['queued'::text, 'sent'::text, 'delivered'::text, 'read'::text, 'failed'::text, 'skipped'::text])))
+);
+
+ALTER TABLE ONLY public.whatsapp_messages FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.whatsapp_messages OWNER TO colettas;
+
+--
+-- Name: whatsapp_messages_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.whatsapp_messages_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.whatsapp_messages_id_seq OWNER TO colettas;
+
+--
+-- Name: whatsapp_messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.whatsapp_messages_id_seq OWNED BY public.whatsapp_messages.id;
+
+
+--
 -- Name: _migrations id; Type: DEFAULT; Schema: public; Owner: colettas
 --
 
 ALTER TABLE ONLY public._migrations ALTER COLUMN id SET DEFAULT nextval('public._migrations_id_seq'::regclass);
+
+
+--
+-- Name: app_feedback id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.app_feedback ALTER COLUMN id SET DEFAULT nextval('public.app_feedback_id_seq'::regclass);
 
 
 --
@@ -1250,6 +1465,20 @@ ALTER TABLE ONLY public.sessions ALTER COLUMN id SET DEFAULT nextval('public.ses
 
 
 --
+-- Name: takeaway_hours id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.takeaway_hours ALTER COLUMN id SET DEFAULT nextval('public.takeaway_hours_id_seq'::regclass);
+
+
+--
+-- Name: takeaway_orders id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.takeaway_orders ALTER COLUMN id SET DEFAULT nextval('public.takeaway_orders_id_seq'::regclass);
+
+
+--
 -- Name: tenants id; Type: DEFAULT; Schema: public; Owner: colettas
 --
 
@@ -1261,6 +1490,13 @@ ALTER TABLE ONLY public.tenants ALTER COLUMN id SET DEFAULT nextval('public.tena
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: whatsapp_messages id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.whatsapp_messages ALTER COLUMN id SET DEFAULT nextval('public.whatsapp_messages_id_seq'::regclass);
 
 
 --
@@ -1277,6 +1513,14 @@ ALTER TABLE ONLY public._migrations
 
 ALTER TABLE ONLY public._migrations
     ADD CONSTRAINT _migrations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: app_feedback app_feedback_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.app_feedback
+    ADD CONSTRAINT app_feedback_pkey PRIMARY KEY (id);
 
 
 --
@@ -1480,6 +1724,22 @@ ALTER TABLE ONLY public.settings
 
 
 --
+-- Name: takeaway_hours takeaway_hours_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.takeaway_hours
+    ADD CONSTRAINT takeaway_hours_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: takeaway_orders takeaway_orders_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.takeaway_orders
+    ADD CONSTRAINT takeaway_orders_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: tenants tenants_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
 --
 
@@ -1501,6 +1761,21 @@ ALTER TABLE ONLY public.tenants
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: whatsapp_messages whatsapp_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.whatsapp_messages
+    ADD CONSTRAINT whatsapp_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: idx_app_feedback_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_app_feedback_tenant ON public.app_feedback USING btree (tenant_id, created_at DESC);
 
 
 --
@@ -1707,10 +1982,24 @@ CREATE INDEX idx_reservation_tables_tenant ON public.reservation_tables USING bt
 
 
 --
+-- Name: idx_reservations_cancel_requested; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_reservations_cancel_requested ON public.reservations USING btree (tenant_id, date) WHERE (cancel_requested_at IS NOT NULL);
+
+
+--
 -- Name: idx_reservations_check; Type: INDEX; Schema: public; Owner: colettas
 --
 
 CREATE INDEX idx_reservations_check ON public.reservations USING btree (check_id) WHERE (check_id IS NOT NULL);
+
+
+--
+-- Name: idx_reservations_pending_phone; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_reservations_pending_phone ON public.reservations USING btree (tenant_id, "right"(regexp_replace(phone, '\D'::text, ''::text, 'g'::text), 10)) WHERE (status = 'requested'::text);
 
 
 --
@@ -1742,10 +2031,52 @@ CREATE INDEX idx_sessions_tenant ON public.sessions USING btree (tenant_id);
 
 
 --
+-- Name: idx_takeaway_hours_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_takeaway_hours_tenant ON public.takeaway_hours USING btree (tenant_id, weekday);
+
+
+--
+-- Name: idx_takeaway_orders_pending_phone; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_takeaway_orders_pending_phone ON public.takeaway_orders USING btree (tenant_id, "right"(regexp_replace(phone, '\D'::text, ''::text, 'g'::text), 10)) WHERE (status = 'requested'::text);
+
+
+--
+-- Name: idx_takeaway_orders_pickup; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_takeaway_orders_pickup ON public.takeaway_orders USING btree (tenant_id, pickup_at);
+
+
+--
 -- Name: idx_users_tenant; Type: INDEX; Schema: public; Owner: colettas
 --
 
 CREATE INDEX idx_users_tenant ON public.users USING btree (tenant_id);
+
+
+--
+-- Name: idx_whatsapp_due; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_whatsapp_due ON public.whatsapp_messages USING btree (tenant_id, next_attempt_at) WHERE (status = 'queued'::text);
+
+
+--
+-- Name: idx_whatsapp_ref; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_whatsapp_ref ON public.whatsapp_messages USING btree (tenant_id, ref_type, ref_id);
+
+
+--
+-- Name: idx_whatsapp_wa_id; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_whatsapp_wa_id ON public.whatsapp_messages USING btree (wa_message_id) WHERE (wa_message_id IS NOT NULL);
 
 
 --
@@ -1854,10 +2185,47 @@ CREATE UNIQUE INDEX uniq_sessions_open_per_tenant ON public.sessions USING btree
 
 
 --
+-- Name: uniq_takeaway_orders_order; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_takeaway_orders_order ON public.takeaway_orders USING btree (order_id) WHERE (order_id IS NOT NULL);
+
+
+--
+-- Name: uniq_takeaway_orders_token; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_takeaway_orders_token ON public.takeaway_orders USING btree (public_token);
+
+
+--
 -- Name: uniq_users_tenant_username; Type: INDEX; Schema: public; Owner: colettas
 --
 
 CREATE UNIQUE INDEX uniq_users_tenant_username ON public.users USING btree (tenant_id, username);
+
+
+--
+-- Name: uniq_whatsapp_case_event; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_whatsapp_case_event ON public.whatsapp_messages USING btree (tenant_id, ref_type, ref_id, event);
+
+
+--
+-- Name: app_feedback app_feedback_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.app_feedback
+    ADD CONSTRAINT app_feedback_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: app_feedback app_feedback_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.app_feedback
+    ADD CONSTRAINT app_feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --
@@ -2261,12 +2629,66 @@ ALTER TABLE ONLY public.settings
 
 
 --
+-- Name: takeaway_hours takeaway_hours_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.takeaway_hours
+    ADD CONSTRAINT takeaway_hours_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: takeaway_orders takeaway_orders_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.takeaway_orders
+    ADD CONSTRAINT takeaway_orders_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: takeaway_orders takeaway_orders_decided_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.takeaway_orders
+    ADD CONSTRAINT takeaway_orders_decided_by_fkey FOREIGN KEY (decided_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: takeaway_orders takeaway_orders_order_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.takeaway_orders
+    ADD CONSTRAINT takeaway_orders_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id);
+
+
+--
+-- Name: takeaway_orders takeaway_orders_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.takeaway_orders
+    ADD CONSTRAINT takeaway_orders_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: users users_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
 --
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT users_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
+
+--
+-- Name: whatsapp_messages whatsapp_messages_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.whatsapp_messages
+    ADD CONSTRAINT whatsapp_messages_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: app_feedback; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.app_feedback ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: audit_logs; Type: ROW SECURITY; Schema: public; Owner: colettas
@@ -2317,10 +2739,24 @@ ALTER TABLE public.devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dining_tables ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: app_feedback master_read; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY master_read ON public.app_feedback FOR SELECT TO standmanager_master USING (true);
+
+
+--
 -- Name: users master_read; Type: POLICY; Schema: public; Owner: colettas
 --
 
 CREATE POLICY master_read ON public.users FOR SELECT TO standmanager_master USING (true);
+
+
+--
+-- Name: whatsapp_messages master_read; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY master_read ON public.whatsapp_messages FOR SELECT TO standmanager_master USING (true);
 
 
 --
@@ -2412,6 +2848,25 @@ ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: takeaway_hours; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.takeaway_hours ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: takeaway_orders; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.takeaway_orders ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: app_feedback tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.app_feedback USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
 
 --
 -- Name: audit_logs tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
@@ -2575,6 +3030,20 @@ CREATE POLICY tenant_isolation ON public.settings USING ((tenant_id = (NULLIF(cu
 
 
 --
+-- Name: takeaway_hours tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.takeaway_hours USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: takeaway_orders tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.takeaway_orders USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
 -- Name: users tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
 --
 
@@ -2582,10 +3051,23 @@ CREATE POLICY tenant_isolation ON public.users USING ((tenant_id = (NULLIF(curre
 
 
 --
+-- Name: whatsapp_messages tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.whatsapp_messages USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
 -- Name: users; Type: ROW SECURITY; Schema: public; Owner: colettas
 --
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: whatsapp_messages; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.whatsapp_messages ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
@@ -2609,6 +3091,22 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public._migrations TO standmanager_ma
 
 GRANT ALL ON SEQUENCE public._migrations_id_seq TO standmanager_app;
 GRANT SELECT,USAGE ON SEQUENCE public._migrations_id_seq TO standmanager_master;
+
+
+--
+-- Name: TABLE app_feedback; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.app_feedback TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.app_feedback TO standmanager_master;
+
+
+--
+-- Name: SEQUENCE app_feedback_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.app_feedback_id_seq TO standmanager_app;
+GRANT SELECT,USAGE ON SEQUENCE public.app_feedback_id_seq TO standmanager_master;
 
 
 --
@@ -2956,6 +3454,38 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.settings TO standmanager_maste
 
 
 --
+-- Name: TABLE takeaway_hours; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_hours TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_hours TO standmanager_master;
+
+
+--
+-- Name: SEQUENCE takeaway_hours_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.takeaway_hours_id_seq TO standmanager_app;
+GRANT SELECT,USAGE ON SEQUENCE public.takeaway_hours_id_seq TO standmanager_master;
+
+
+--
+-- Name: TABLE takeaway_orders; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_orders TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_orders TO standmanager_master;
+
+
+--
+-- Name: SEQUENCE takeaway_orders_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.takeaway_orders_id_seq TO standmanager_app;
+GRANT SELECT,USAGE ON SEQUENCE public.takeaway_orders_id_seq TO standmanager_master;
+
+
+--
 -- Name: TABLE tenants; Type: ACL; Schema: public; Owner: colettas
 --
 
@@ -2988,6 +3518,22 @@ GRANT SELECT,USAGE ON SEQUENCE public.users_id_seq TO standmanager_master;
 
 
 --
+-- Name: TABLE whatsapp_messages; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_messages TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_messages TO standmanager_master;
+
+
+--
+-- Name: SEQUENCE whatsapp_messages_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.whatsapp_messages_id_seq TO standmanager_app;
+GRANT SELECT,USAGE ON SEQUENCE public.whatsapp_messages_id_seq TO standmanager_master;
+
+
+--
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: colettas
 --
 
@@ -3007,5 +3553,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 9acWNOuvBltTGfn3lssHGbq7NUO1xFH4ti6Y2SK5dh5zrPZGpcdAneSWMyMvx01
+\unrestrict 0XIGlYhdz1SSm4R7eQIQIcogkmFL5J4yK3h59yEy3GnZJeH31YgfpFv8mHPvxF8
 
