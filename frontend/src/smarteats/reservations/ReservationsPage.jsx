@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, CalendarX } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '../../hooks/useBreakpoint';
 import { useBookings } from './useBookings';
 import { todayLocal, addDays, formatDay, agendaGroups } from './rules';
@@ -23,6 +23,7 @@ const Empty = () => (
 // l'elenco, a destra un solo pannello che cambia (dettaglio, nuova, tavoli); su schermo stretto il pannello è a tutto schermo.
 const ReservationsPage = ({ event }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const narrow = useIsMobile(900);
   const [date, setDate] = useState(todayLocal);
   const { shifts, rooms, reservations, availability, loading, reload } = useBookings(date, event);
@@ -30,6 +31,15 @@ const ReservationsPage = ({ event }) => {
 
   const byId = useMemo(() => new Map(reservations.map(r => [r.id, r])), [reservations]);
   const tableNames = useMemo(() => { const m = new Map(rooms.flatMap(r => r.tables).map(t => [t.id, t.name])); return (ids) => ids.map(id => m.get(id)).filter(Boolean); }, [rooms]);
+  // Si arriva dalla campanella: si apre il giorno e la prenotazione da decidere, poi lo stato di navigazione si butta
+  useEffect(() => {
+    const target = location.state;
+    if (!target?.reservationId) return;
+    if (target.date) setDate(target.date);
+    setPanel({ kind: 'detail', id: target.reservationId });
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location, navigate]);
+
   const current = panel?.id ? byId.get(panel.id) : null;
   const activeShifts = shifts.filter(s => s.active);
   const total = reservations.filter(r => ['requested', 'confirmed', 'seated'].includes(r.status)).reduce((s, r) => s + r.party_size, 0);
@@ -94,7 +104,9 @@ const ReservationsPage = ({ event }) => {
                             <span className="block text-sm font-medium text-[var(--text-main)] truncate">{r.customer_name}</span>
                             <span className="block text-xs text-[var(--text-muted)] truncate">{[tableNames(r.table_ids).join(', ') || 'senza tavolo', r.notes].filter(Boolean).join(' · ')}</span>
                           </span>
-                          <StatusChip status={r.status} />
+                          {r.cancel_requested_at && r.status === 'confirmed'
+                            ? <span className="inline-flex items-center h-6 px-2.5 rounded-full text-xs font-medium bg-red-500/15 text-red-500">Chiede di annullare</span>
+                            : <StatusChip status={r.status} />}
                         </button>
                       </li>
                     ))}

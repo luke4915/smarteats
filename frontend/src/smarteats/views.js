@@ -6,7 +6,7 @@ export const VIEWS = [
   { id: 'kitchen', label: 'Cucina', roles: ['admin', 'kitchen'], module: 'kds' },
   { id: 'catalog', label: 'Carta', roles: ['admin'] },
   { id: 'stats', label: 'Statistiche', roles: ['admin', 'manager'], module: 'stats' },
-  { id: 'settings', label: 'Impostazioni', roles: ['admin'] },
+  { id: 'settings', label: 'Impostazioni', roles: ['admin', 'manager', 'cashier', 'waiter', 'kitchen'] },
 ];
 
 // `modules` mancante = utente salvato in cache offline: non si nasconde nulla finché il server non risponde.

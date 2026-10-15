@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { todayLocal, addDays, formatDay, agendaGroups, tableTakenBy, nextByTable, whatsappLink, mailLink, telLink, isActive } from './rules.js';
+import { todayLocal, addDays, formatDay, agendaGroups, tableTakenBy, suggestTables, nextByTable, whatsappLink, mailLink, telLink, isActive } from './rules.js';
 
 const res = (id, status, start, extra = {}) => ({ id, status, date: '2026-10-23', start_time: start, duration_minutes: 90, table_ids: [], ...extra });
 
@@ -48,4 +48,26 @@ test('collegamenti per il messaggio', () => {
   assert.equal(telLink(' '), null);
   assert.equal(mailLink('a@b.it', 'Conferma', 'Ciao & grazie'), 'mailto:a@b.it?subject=Conferma&body=Ciao%20%26%20grazie');
   assert.equal(mailLink('', 's', 't'), null);
+});
+
+test('tavolo consigliato: il più piccolo che basta (meno posti sprecati)', () => {
+  const free = [{ id: 1, seats: 2, roomId: 1 }, { id: 2, seats: 6, roomId: 1 }, { id: 3, seats: 4, roomId: 1 }, { id: 4, seats: 5, roomId: 1 }];
+  assert.deepEqual(suggestTables(4, free), { ids: [3], seats: 4, waste: 0 });
+  assert.deepEqual(suggestTables(3, free), { ids: [3], seats: 4, waste: 1 }, 'tre persone: il da 4, non il da 6');
+  assert.deepEqual(suggestTables(1, free), { ids: [1], seats: 2, waste: 1 });
+});
+
+test('tavolo consigliato: se nessuno basta da solo si uniscono i meno possibili, nella stessa sala', () => {
+  const free = [{ id: 1, seats: 4, roomId: 1 }, { id: 2, seats: 4, roomId: 1 }, { id: 3, seats: 2, roomId: 1 }, { id: 4, seats: 6, roomId: 2 }];
+  assert.deepEqual(suggestTables(8, free), { ids: [1, 2], seats: 8, waste: 0 });
+  assert.deepEqual(suggestTables(7, free), { ids: [1, 2], seats: 8, waste: 1 });
+  assert.deepEqual(suggestTables(9, free), { ids: [1, 2, 3], seats: 10, waste: 1 }, 'tre tavoli, mai di sale diverse');
+  assert.equal(suggestTables(11, free), null, 'oltre i tre tavoli della stessa sala non si suggerisce nulla');
+  assert.equal(suggestTables(2, []), null);
+});
+
+test('tavolo consigliato: a parità di sprechi vince la sala indicata', () => {
+  const free = [{ id: 1, seats: 4, roomId: 1 }, { id: 2, seats: 4, roomId: 2 }];
+  assert.deepEqual(suggestTables(4, free, { preferRoomId: 2 }).ids, [2]);
+  assert.deepEqual(suggestTables(4, free).ids, [1]);
 });

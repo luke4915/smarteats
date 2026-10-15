@@ -21,7 +21,7 @@ const ReservationPanel = ({ reservation: r, tableNames, onBack, onChanged, onTab
     setBusy(true);
     try {
       const res = await fetchWithAuth(`/bookings/reservations/${r.id}/${path}`, { method: 'POST', body });
-      showToast({ confirm: 'Prenotazione confermata', decline: 'Richiesta rifiutata', cancel: 'Prenotazione annullata', 'no-show': 'Segnata come non presentata', arrived: 'Cliente accolto: conto aperto' }[path], 'success');
+      showToast({ confirm: 'Prenotazione confermata', decline: 'Richiesta rifiutata', cancel: 'Prenotazione annullata', keep: 'Prenotazione mantenuta', 'no-show': 'Segnata come non presentata', arrived: 'Cliente accolto: conto aperto' }[path], 'success');
       onChanged(res.reservation ?? res, res.check);
       setDeclining(false); setOverbook(null);
     } catch (err) {
@@ -59,6 +59,11 @@ const ReservationPanel = ({ reservation: r, tableNames, onBack, onChanged, onTab
               <button className={btnPrimary} disabled={busy} onClick={() => act('confirm')}>Conferma</button>
             </div>
           )
+        ) : r.status === 'confirmed' && r.cancel_requested_at ? (
+          <div className="grid grid-cols-2 gap-2">
+            <button className={btn} disabled={busy} onClick={() => act('keep')}>Mantieni</button>
+            <button className={btnDanger} disabled={busy} onClick={() => act('cancel')}>Conferma l'annullo</button>
+          </div>
         ) : r.status === 'confirmed' ? (
           r.table_ids.length
             ? <button className={`${btnPrimary} w-full !h-12`} disabled={busy} onClick={() => act('arrived')}>Arrivato · apri il conto</button>
@@ -68,6 +73,12 @@ const ReservationPanel = ({ reservation: r, tableNames, onBack, onChanged, onTab
         ) : null
       }>
       <div className="px-1 space-y-4 pb-2">
+        {r.status === 'confirmed' && r.cancel_requested_at && (
+          <div className="rounded-lg border border-red-500/40 bg-red-500/5 p-3" role="status">
+            <p className="text-sm font-medium text-[var(--text-main)]">Il cliente chiede di annullare</p>
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">Se confermi, la prenotazione si annulla e il posto torna libero. Se la mantieni, il cliente resta prenotato: avvisalo tu.</p>
+          </div>
+        )}
         <div className="flex items-center gap-2 flex-wrap"><StatusChip status={r.status} />
           <span className="text-sm text-[var(--text-muted)]">{r.shift_name} · {r.duration_minutes} min</span></div>
 

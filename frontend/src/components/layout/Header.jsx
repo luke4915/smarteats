@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { LogOut, Settings, Menu, CloudOff, RefreshCw, AlertTriangle, Printer } from "lucide-react";
+import { LogOut, Menu, CloudOff, RefreshCw, AlertTriangle, Printer } from "lucide-react";
 import { useOfflineSync } from "../../offline/useOfflineSync";
 import { usePrintQueue } from "../../print/usePrintQueue";
 import FailedOrdersModal from "../shared/FailedOrdersModal";
 
-const Header = ({ toggleSidebar, currentUser, onLogoutClick, onProfileClick, sessionName, wsConnected }) => {
+const Header = ({ toggleSidebar, currentUser, onLogoutClick, sessionName, wsConnected }) => {
   const { online, pending, failed, syncNow, refreshCounts } = useOfflineSync();
   const [showFailed, setShowFailed] = useState(false);
   const { pending: printPending, retryNow: retryPrint } = usePrintQueue();
@@ -84,12 +84,6 @@ const Header = ({ toggleSidebar, currentUser, onLogoutClick, onProfileClick, ses
               className={`w-2 h-2 rounded-full shrink-0 ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}
             />
           </div>
-          <button
-            onClick={onProfileClick}
-            className="p-2 hover:bg-[var(--bg-card-2)] rounded-lg transition-colors text-[var(--text-muted)] hover:text-[var(--text-main)] min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer enabled:active:scale-95"
-          >
-            <Settings size={18} className="pointer-events-none" />
-          </button>
           <button
             onClick={onLogoutClick}
             className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer enabled:active:scale-95"

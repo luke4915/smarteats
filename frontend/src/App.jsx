@@ -28,7 +28,7 @@ import NoViewAvailable from './components/layout/NoViewAvailable';
 import UsersSettings from './components/setup/UsersSettings';
 import ReverseOrder from './components/shared/ReverseOrder';
 import ChangePassword from './components/shared/ChangePassword';
-import UserProfile from './components/shared/UserProfile';
+import AccountSettings from './components/shared/AccountSettings';
 import StartSessionModal from './components/shared/StartSessionModal';
 import CloseSessionFlow from './components/shared/CloseSessionFlow';
 import Login from './pages/LoginPage';
@@ -105,7 +105,6 @@ const App = () => {
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [showReversePopup, setShowReversePopup] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [showStartSessionModal, setShowStartSessionModal] = useState(false);
   const [showCloseSession, setShowCloseSession] = useState(false);
 
@@ -243,7 +242,6 @@ const App = () => {
           isSidebarOpen={isSidebarOpen}
           currentUser={user}
           onLogoutClick={() => setShowLogoutConfirm(true)}
-          onProfileClick={() => setShowProfilePopup(true)}
           wsConnected={wsConnected}
         />
 
@@ -264,10 +262,9 @@ const App = () => {
                   <Route path="/setup" element={!canView(user.role, 'setup', user.modules) ? <Navigate to={`/${home}`} replace /> :
                     <PageBody>
                       <AppearanceSettings theme={theme} setTheme={setTheme} isSoundEnabled={isSoundEnabled} setIsSoundEnabled={setIsSoundEnabled} />
-                      <MenuSettings />
-                      <OrderSettings orderMode={orderMode} setOrderMode={setOrderMode} />
-                      <PrintProfiles />
+                      {user.role !== 'kitchen' && <><MenuSettings /><OrderSettings orderMode={orderMode} setOrderMode={setOrderMode} /><PrintProfiles /></>}
                       {user.role === 'admin' && <UsersSettings />}
+                      <AccountSettings />
                     </PageBody>
                   } />
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -305,7 +302,6 @@ const App = () => {
       {showCloseSession && (
         <CloseSessionFlow sessionName={sessionName} onCancel={() => setShowCloseSession(false)} onConfirm={handleEndSession} />
       )}
-      {showProfilePopup && <UserProfile onClose={() => setShowProfilePopup(false)} />}
       {showReversePopup && <ReverseOrder onClose={() => setShowReversePopup(false)} />}
     </div>
   );

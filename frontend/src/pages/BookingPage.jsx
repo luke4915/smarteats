@@ -10,7 +10,7 @@ import { btnPrimary, btn, input } from '../smarteats/floor/ui';
 
 const STATUS_TEXT = {
   requested: { title: 'Richiesta ricevuta', body: 'Il locale la conferma a breve. Finché non è confermata non è ancora una prenotazione.' },
-  confirmed: { title: 'Prenotazione confermata', body: 'Vi aspettiamo. Se cambiano i programmi, annullate da qui o chiamateci.' },
+  confirmed: { title: 'Prenotazione confermata', body: 'Vi aspettiamo. Se cambiano i programmi, potete chiedere l\'annullo da qui fino a un\'ora prima del turno; dopo, chiamateci.' },
   declined: { title: 'Richiesta non accettata', body: 'Purtroppo non è stato possibile accettarla. Potete provare un altro giorno o chiamarci.' },
   cancelled: { title: 'Richiesta annullata', body: 'Il posto è stato liberato.' },
   expired: { title: 'Richiesta scaduta', body: 'Il locale non ha risposto in tempo e il posto è stato liberato. Potete inviarne una nuova o chiamarci.' },
@@ -96,15 +96,34 @@ const Status = ({ token, info }) => {
         </dl>
       </div>
       {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
-      {data.can_cancel && (asking ? (
+      {data.cancel === 'withdraw' && (asking ? (
         <div className="rounded-xl border border-red-500/40 p-4 space-y-3">
-          <p className="text-sm">Annullare davvero? Il posto tornerà libero.</p>
+          <p className="text-sm">Ritirare la richiesta? Il posto tornerà libero.</p>
           <div className="grid grid-cols-2 gap-2">
             <button className={btn} onClick={() => setAsking(false)}>No, tienila</button>
-            <button className="inline-flex items-center justify-center h-11 rounded-lg bg-red-500 text-white text-sm font-medium cursor-pointer disabled:opacity-50" disabled={busy} onClick={cancel}>Sì, annulla</button>
+            <button className="inline-flex items-center justify-center h-11 rounded-lg bg-red-500 text-white text-sm font-medium cursor-pointer disabled:opacity-50" disabled={busy} onClick={cancel}>Sì, ritira</button>
           </div>
         </div>
-      ) : <button className={`${btn} w-full`} onClick={() => setAsking(true)}>Annulla la richiesta</button>)}
+      ) : <button className={`${btn} w-full`} onClick={() => setAsking(true)}>Ritira la richiesta</button>)}
+      {data.cancel === 'request' && (asking ? (
+        <div className="rounded-xl border border-[var(--border)] p-4 space-y-3">
+          <p className="text-sm">La prenotazione è confermata: non si annulla da qui. Inviamo al locale la richiesta di annullo, e sarà il locale a confermarla.</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button className={btn} onClick={() => setAsking(false)}>Indietro</button>
+            <button className={btnPrimary} disabled={busy} onClick={cancel}>Invia la richiesta</button>
+          </div>
+        </div>
+      ) : <button className={`${btn} w-full`} onClick={() => setAsking(true)}>Chiedi di annullare</button>)}
+      {data.cancel === 'requested' && (
+        <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm" role="status">
+          Hai chiesto di annullare. La prenotazione resta valida finché il locale non conferma: ti avviserà.
+        </p>
+      )}
+      {data.cancel === 'call' && (
+        <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm" role="status">
+          Manca meno di un'ora al turno: per annullare o cambiare, chiama il locale.
+        </p>
+      )}
       {phone && <a href={`tel:${phone.replace(/[^\d+]/g, '')}`} className={`${btn} w-full`}><Phone size={16} /> Chiama il locale</a>}
     </div>
   );

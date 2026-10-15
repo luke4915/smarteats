@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { X, Eye, EyeOff, Check, Circle, UserRound, KeyRound, Building2 } from 'lucide-react';
+import { Eye, EyeOff, Check, Circle, UserRound, KeyRound, Building2 } from 'lucide-react';
 import { useToast } from '../../context/useToast';
 import { useAuth } from '../../context/useAuth';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { roleLabel } from './roles';
 
-// "Il mio account": username e password dell'utente collegato. Ogni parte si salva da sola,
-// con i requisiti visibili mentre si scrive.
+// «Il mio account» (nelle Impostazioni, in fondo): username e password dell'utente collegato. Ogni parte si
+// salva da sola, con i requisiti visibili mentre si scrive.
 const MIN_PASSWORD = 8;
 
 const inputClass = 'w-full p-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] placeholder:text-[var(--text-muted)]';
@@ -36,7 +36,7 @@ const PasswordInput = ({ label, value, onChange, show, autoComplete }) => (
   </label>
 );
 
-const UserProfile = ({ onClose }) => {
+const AccountSettings = () => {
   const { user, login } = useAuth();
   const { showToast } = useToast();
 
@@ -86,23 +86,21 @@ const UserProfile = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end sm:items-center z-50" onClick={onClose}>
-      <div className="bg-[var(--bg-card)] w-full sm:max-w-3xl max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-xl shadow-2xl border border-[var(--border)]" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center gap-4 p-6 pb-4">
-          <div className="w-14 h-14 rounded-xl bg-[var(--accent)] text-white text-2xl font-semibold flex items-center justify-center shrink-0">
-            {user.username[0].toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-xl font-semibold tracking-tight text-[var(--text-main)] truncate">{user.username}</h2>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
-              <span className="px-2 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-semibold">{roleLabel(user.role)}</span>
-              {user.tenantName && <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] truncate"><Building2 size={12} /> {user.tenantName}</span>}
-            </div>
-          </div>
-          <button onClick={onClose} aria-label="Chiudi" className="self-start p-2 rounded-xl hover:bg-[var(--bg-card-2)] transition-colors"><X size={18} className="text-[var(--text-muted)]" /></button>
+    <section className="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)]" aria-label="Il mio account">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-12 h-12 rounded-xl bg-[var(--accent)] text-white text-xl font-semibold flex items-center justify-center shrink-0">
+          {user.username[0].toUpperCase()}
         </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-sm font-semibold text-[var(--text-main)]">Il mio account</h2>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+            <span className="px-2 py-0.5 rounded-full bg-[var(--accent)]/10 text-[var(--accent)] text-xs font-semibold">{roleLabel(user.role)}</span>
+            {user.tenantName && <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] truncate"><Building2 size={12} /> {user.tenantName}</span>}
+          </div>
+        </div>
+      </div>
 
-        <div className="px-6 pb-6 grid gap-4 md:grid-cols-2 items-start">
+      <div className="grid gap-4 md:grid-cols-2 items-start">
           <Card icon={UserRound} title="Username">
             <input className={inputClass} aria-label="Username" maxLength={50} autoComplete="username" value={username}
               onChange={e => { setUsername(e.target.value); setNameError(''); }}
@@ -132,10 +130,9 @@ const UserProfile = ({ onClose }) => {
               {savingPassword ? 'Salvataggio…' : 'Cambia password'}
             </button>
           </Card>
-        </div>
       </div>
-    </div>
+    </section>
   );
 };
 
-export default UserProfile;
+export default AccountSettings;

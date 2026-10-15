@@ -11,7 +11,10 @@ import { useService } from './useService';
 import ServiceControl from './ServiceControl';
 import FloorPage from './FloorPage';
 import NoViewAvailable from '../components/layout/NoViewAvailable';
-import UserProfile from '../components/shared/UserProfile';
+import AccountSettings from '../components/shared/AccountSettings';
+import NotificationSettings from './NotificationSettings';
+import NotificationBell from './notifications/NotificationBell';
+import { useInbox } from './notifications/useInbox';
 import ProductConfig from '../components/products/ProductConfig';
 import RoomsSettings from '../components/setup/RoomsSettings';
 import UsersSettings from '../components/setup/UsersSettings';
@@ -68,10 +71,12 @@ const CatalogPage = () => {
 
 const SettingsPage = ({ user }) => (
   <PageBody>
-    <PageHeader title="Impostazioni" subtitle="Come lavora il locale: coperto, portate, sale, prenotazioni e personale." />
-    {user.modules?.includes('tables') && <><CoverSettings /><CourseSettings /><RoomsSettings /></>}
-    {user.modules?.includes('bookings') && <BookingSettings />}
-    <UsersSettings />
+    <PageHeader title="Impostazioni" subtitle={user.role === 'admin' ? 'Come lavora il locale: coperto, portate, sale, prenotazioni e personale.' : 'Il tuo account e le notifiche di questo dispositivo.'} />
+    {user.role === 'admin' && user.modules?.includes('tables') && <><CoverSettings /><CourseSettings /><RoomsSettings /></>}
+    {user.role === 'admin' && user.modules?.includes('bookings') && <BookingSettings />}
+    {user.role === 'admin' && <UsersSettings />}
+    {user.modules?.includes('bookings') && user.role !== 'kitchen' && <NotificationSettings />}
+    <AccountSettings />
   </PageBody>
 );
 
@@ -84,12 +89,15 @@ const SmartEatsApp = () => {
   const { service, start, closingInfo, end, onEvent } = useService();
   const [event, setEvent] = useState(null);
   const [theme, setTheme] = useState('dark');
-  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => { document.documentElement.classList.toggle('dark', theme === 'dark'); }, [theme]);
 
   const handleMessage = useCallback((msg) => { onEvent(msg); setEvent(msg); }, [onEvent]);
   useLiveUpdates(handleMessage, { enabled: !!user, onUnauthorized: refreshSession });
+
+  // Notifiche per il personale di sala: richieste di prenotazione e annulli da decidere
+  const hasInbox = !!user.modules?.includes('bookings') && ['admin', 'manager', 'cashier', 'waiter'].includes(user.role);
+  const inbox = useInbox({ enabled: hasInbox, event });
 
   const views = visibleViews(user.role, user.modules);
   const home = smartEatsHome(user.role, user.modules);
@@ -119,9 +127,10 @@ const SmartEatsApp = () => {
           <div className="flex items-center gap-2 shrink-0">
             <ServiceControl service={service} canManage={canManageService} start={start} closingInfo={closingInfo} end={end} />
             <div className="flex items-center gap-0.5">
-              <button onClick={() => setShowProfile(true)} className="flex items-center gap-2 h-9 px-2.5 rounded-lg hover:bg-[var(--bg-card-2)] text-[var(--text-main)] cursor-pointer">
+              {hasInbox && <NotificationBell items={inbox.items} onOpen={(i) => navigate('/reservations', { state: { reservationId: i.id, date: i.date } })} />}
+              <span className="flex items-center gap-2 h-9 px-2.5 text-[var(--text-main)]" title={user.username}>
                 <UserRound size={16} /><span className="hidden sm:inline text-xs font-semibold">{user.username}</span>
-              </button>
+              </span>
               <button onClick={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))} aria-label="Cambia tema" className="h-9 w-9 flex items-center justify-center rounded-lg hover:bg-[var(--bg-card-2)] text-[var(--text-muted)] cursor-pointer">
                 {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
               </button>
@@ -150,7 +159,6 @@ const SmartEatsApp = () => {
         </nav>}
       </main>
 
-      {showProfile && <UserProfile onClose={() => setShowProfile(false)} />}
     </div>
   );
 };

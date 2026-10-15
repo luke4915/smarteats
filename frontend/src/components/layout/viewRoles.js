@@ -6,7 +6,7 @@ export const VIEW_ROLES = {
   kitchen: ['admin', 'kitchen'],
   statistics: ['admin', 'manager'],
   config: ['admin'],
-  setup: ['admin', 'manager', 'cashier'],
+  setup: ['admin', 'manager', 'cashier', 'kitchen'],
 };
 
 // Pagine che dipendono da un modulo; le altre fanno parte del nucleo e ci sono sempre.

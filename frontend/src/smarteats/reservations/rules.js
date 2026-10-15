@@ -73,3 +73,35 @@ export function whatsappLink(phone, text) {
 }
 export const mailLink = (email, subject, text) => (email ? `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}` : null);
 export const telLink = (phone) => (String(phone ?? '').trim() ? `tel:${String(phone).replace(/[^\d+]/g, '')}` : null);
+
+// Il tavolo (o i tavoli) migliori per un gruppo: meno posti sprecati possibile, meno tavoli possibile, nella stessa sala.
+// `candidates` = [{ id, seats, roomId }] già liberi per quel turno. Un solo tavolo che basta vince sempre su due
+// tavoli uniti; a parità di posti sprecati si preferisce la sala `preferRoomId`, poi l'ordine dei tavoli. Si uniscono
+// al massimo tre tavoli, tutti della stessa sala. Ritorna { ids, seats, waste } oppure null se nulla basta.
+export function suggestTables(party, candidates, { preferRoomId = null, maxTables = 3 } = {}) {
+  const usable = candidates.filter(c => c.seats > 0);
+  let best = null;
+  const consider = (combo) => {
+    const seats = combo.reduce((n, c) => n + c.seats, 0);
+    if (seats < party) return;
+    // una combinazione con un tavolo di troppo (basta anche senza) non è mai la migliore: la scarta il confronto sui posti
+    const candidate = { combo, seats, waste: seats - party, count: combo.length, room: combo[0].roomId === preferRoomId ? 0 : 1 };
+    if (!best || candidate.count < best.count || (candidate.count === best.count && (candidate.waste < best.waste
+      || (candidate.waste === best.waste && candidate.room < best.room)))) best = candidate;
+  };
+  const byRoom = new Map();
+  for (const c of usable) byRoom.set(c.roomId, [...(byRoom.get(c.roomId) ?? []), c]);
+  for (const list of byRoom.values()) {
+    const n = list.length;
+    for (let i = 0; i < n; i++) {
+      consider([list[i]]);
+      if (maxTables < 2) continue;
+      for (let j = i + 1; j < n; j++) {
+        consider([list[i], list[j]]);
+        if (maxTables < 3) continue;
+        for (let k = j + 1; k < n; k++) consider([list[i], list[j], list[k]]);
+      }
+    }
+  }
+  return best ? { ids: best.combo.map(c => c.id), seats: best.seats, waste: best.waste } : null;
+}

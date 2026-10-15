@@ -44,8 +44,34 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
   await expect(phone.getByText('Famiglia Bianchi')).toBeVisible();
   await shot(phone, 'booking-portal-03-ricevuta');
 
-  await phone.getByRole('button', { name: 'Annulla la richiesta' }).click();
-  await phone.getByRole('button', { name: 'Sì, annulla' }).click();
+  // Il titolare (che aveva aperto la pagina pubblica) torna all'app
+  await page.goto(`${urlOf(r.host)}/floor`);
+  // Il titolare vede la notifica: campanella con il numero, e dalla voce arriva alla richiesta da approvare
+  const bell = page.getByRole('button', { name: /^Notifiche/ });
+  await expect(bell).toContainText('1', { timeout: 15_000 });
+  await bell.click();
+  await shot(page, 'booking-portal-05-campanella');
+  await page.getByRole('menuitem', { name: /Nuova richiesta · Famiglia Bianchi/ }).click();
+  await expect(page.getByRole('button', { name: 'Conferma', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Conferma', exact: true }).click();
+  await expect(page.getByText('Prenotazione confermata').first()).toBeVisible();
+
+  // Confermata: il cliente non annulla da solo, chiede l'annullo
+  await phone.reload();
+  await expect(phone.getByRole('heading', { name: 'Prenotazione confermata' })).toBeVisible();
+  await expect(phone.getByRole('button', { name: 'Ritira la richiesta' })).toHaveCount(0);
+  await phone.getByRole('button', { name: 'Chiedi di annullare' }).click();
+  await phone.getByRole('button', { name: 'Invia la richiesta' }).click();
+  await expect(phone.getByText(/Hai chiesto di annullare/)).toBeVisible();
+
+  // Il locale lo vede nella campanella e decide
+  await expect(bell).toContainText('1', { timeout: 15_000 });
+  await bell.click();
+  await page.getByRole('menuitem', { name: /Chiede di annullare · Famiglia Bianchi/ }).click();
+  await expect(page.getByText('Il cliente chiede di annullare')).toBeVisible();
+  await shot(page, 'booking-portal-06-annullo');
+  await page.getByRole('button', { name: "Conferma l'annullo" }).click();
+  await phone.reload();
   await expect(phone.getByRole('heading', { name: 'Richiesta annullata' })).toBeVisible();
 });
 

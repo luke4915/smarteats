@@ -28,8 +28,19 @@ test('prenotazioni: inserisco, assegno il tavolo, la Sala lo segna, arrivato apr
 
   // Tavoli sulla pianta
   await page.getByRole('button', { name: 'Assegna un tavolo' }).click();
-  await page.getByRole('button', { name: 'T2', exact: true }).click();
+  // Si parte dal tavolo consigliato per 4 persone (uno da 4 posti: nessun posto sprecato)
+  const picked = page.locator('button[aria-pressed="true"]');
+  await expect(picked).toHaveCount(1);
+  await expect(picked).toHaveAccessibleName(/, 4 posti/);
+  await expect(page.getByText('Preselezionato il più adatto')).toBeVisible();
   await shot(page, 'reservations-04-tavoli');
+  // Un tavolo piccolo non regge il gruppo: l'assegnazione resta bloccata e dice quanti posti mancano
+  await picked.click();
+  await page.getByRole('button', { name: /^T3, 2 posti/ }).click();
+  await expect(page.getByText(/2 posti per 4 persone: ne servono ancora 2/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Assegna', exact: true })).toBeDisabled();
+  await page.getByRole('button', { name: /^T3, 2 posti/ }).click();
+  await page.getByRole('button', { name: /^T2, 4 posti/ }).click();
   await page.getByRole('button', { name: 'Assegna', exact: true }).click();
   await expect(page.getByRole('button', { name: /Arrivato/ })).toBeVisible();
 
