@@ -76,6 +76,12 @@ test('ristorante: apro un tavolo, ordino per portate, la cucina segna pronto, in
   // Incasso senza resto: il pannello torna da solo alla sala e il tavolo è libero
   await expect(sala.getByRole('button', { name: /^T1: Libero/ })).toBeVisible({ timeout: 10_000 });
   await shot(sala, 'ristorante-07-tavolo-libero');
+
+  // Statistiche: il conto appena pagato compare, con l'occupazione dei posti e la curva del servizio
+  await sala.locator('a[href="/statistiche"]').first().click();
+  await expect(sala.getByText('Posti occupati', { exact: true })).toBeVisible();
+  await expect(sala.getByText('Abbinamento gruppo-tavolo')).toBeVisible();
+  await shot(sala, 'ristorante-10-statistiche');
 });
 
 test('ristorante: il cameriere non vede incassa e sconti', async ({ page }) => {

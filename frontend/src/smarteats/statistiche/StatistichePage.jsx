@@ -4,9 +4,12 @@ import { useToast } from '../../context/useToast';
 import { formatEuro } from '../sala/checkMath';
 import { segment, segmentBox, input } from '../sala/ui';
 import { HBars, HourBars, HourTable } from './Bars';
+import { Columns } from '../../components/shared/charts';
 import { PageHeader, PageBody } from '../../components/shared/PageHeader';
 import { fillHours, peakHour, hourLabel, formatDuration, METHOD_LABEL } from './chartData';
 
+const pct = (v) => (v === null || v === undefined ? '—' : `${Math.round(v * 100)} %`);
+const clock = (minute) => `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
 const dateLabel = (iso) => new Date(iso).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
 
 const Kpi = ({ label, value, note }) => (
@@ -82,6 +85,23 @@ const StatistichePage = () => {
             {peak && !asTable && <p className="mt-3 text-xs text-[var(--text-muted)]">Ora di punta: <span className="text-[var(--text-main)] font-medium">{hourLabel(peak.hour)}</span> con {formatEuro(peak.revenue)}.</p>}
           </Card>
 
+          {stats.occupancy?.seatOccupancy !== null && stats.occupancy?.seatOccupancy !== undefined && (
+            <>
+              <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
+                <Kpi label="Posti occupati" value={pct(stats.occupancy.seatOccupancy)} note={`su ${stats.occupancy.seats} posti, nelle ore di servizio`} />
+                <Kpi label="RevPASH" value={formatEuro(stats.occupancy.revpash)} note="incasso per posto e per ora" />
+                <Kpi label="Abbinamento gruppo-tavolo" value={pct(stats.occupancy.fit.rate)} note="persone ÷ posti del tavolo" />
+                <Kpi label="Tavoli troppo grandi" value={`${stats.occupancy.fit.oversized}`} note={`su ${stats.occupancy.fit.checks} conti, con 2 o più posti vuoti`} />
+              </div>
+              <Card title="Posti occupati durante il servizio">
+                <Columns ariaLabel="Posti occupati ogni quarto d'ora" peak={stats.occupancy.peak?.minute}
+                  items={stats.occupancy.curve.map(p => ({ key: p.minute, label: clock(p.minute), short: p.minute % 60 === 0 ? String(p.minute / 60).padStart(2, '0') : '', value: p.seats }))}
+                  format={v => `${v} ${v === 1 ? 'posto' : 'posti'} occupati`} />
+                {stats.occupancy.peak && <p className="mt-3 text-xs text-[var(--text-muted)]">Punta alle <span className="text-[var(--text-main)] font-medium">{clock(stats.occupancy.peak.minute)}</span> con {stats.occupancy.peak.seats} posti occupati in media su {stats.occupancy.seats}. I posti sono quelli attuali della sala.</p>}
+              </Card>
+            </>
+          )}
+
           <div className="grid gap-5 lg:grid-cols-2">
             <Card title="Per portata">
               {stats.courses.length === 0 ? <Empty>Nessun dato.</Empty>
@@ -118,6 +138,22 @@ const StatistichePage = () => {
               )}
             </Card>
           </div>
+          {stats.bookings && (
+            <Card title="Prenotazioni">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+                {[['Prenotazioni', stats.bookings.total, `${stats.bookings.covers} coperti attesi`],
+                  ['Non si sono presentati', pct(stats.bookings.noShowRate), 'su chi è arrivato o è mancato'],
+                  ['Annullate', pct(stats.bookings.cancelRate), 'sul totale'],
+                  ['Dal portale', pct(stats.bookings.portalShare), 'sul totale']].map(([k, v, note]) => (
+                  <div key={k}><p className="text-[var(--text-muted)]">{k}</p><p className="text-xl font-semibold tabular-nums text-[var(--text-main)]">{v}</p><p className="text-xs text-[var(--text-muted)]">{note}</p></div>
+                ))}
+              </div>
+              <p className="mt-4 text-xs text-[var(--text-muted)]">
+                {stats.bookings.avgLeadDays !== null && <>Si prenota in media {stats.bookings.avgLeadDays} giorni prima. </>}
+                {stats.bookings.declined + stats.bookings.expired > 0 && <>Richieste senza esito positivo: {stats.bookings.declined} rifiutate, {stats.bookings.expired} scadute senza risposta.</>}
+              </p>
+            </Card>
+          )}
         </>
       )}
     </PageBody>
