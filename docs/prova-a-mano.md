@@ -47,66 +47,75 @@ condividono l'accesso.
 
 ## A. Preparazione del ristorante (come admin)
 
-- [ ] **Impostazioni → Sale e tavoli**: crea una sala «Interna» e 6 tavoli in serie (T1-T6).
-- [ ] Apri l'**editor della pianta** della sala: trascina i tavoli, cambia forma (tondo) e misura, aggiungi un **muro**
+- [x] **Impostazioni → Sale e tavoli**: crea una sala «Interna» e 6 tavoli in serie (T1-T6).
+- [--] Apri l'**editor della pianta** della sala: trascina i tavoli, cambia forma (tondo) e misura, aggiungi un **muro**
       e un **separatore**. Salva. Torna in Sala: la pianta è uguale?
-- [ ] Prova **annulla** (Ctrl+Z) nell'editor, e chiudi senza salvare: ti avvisa?
-- [ ] **Impostazioni → Portate**: crea Antipasti, Primi, Secondi, Dolci. Riordinale con le frecce.
-- [ ] **Carta**: crea 8-10 piatti e 2 bevande. Assegna a ogni piatto la sua **portata** e (per le bevande) la destinazione Bar.
-- [ ] **Carta → Opzioni dei piatti**: crea il gruppo «Cottura» (scelta singola, obbligatoria: Al sangue / Media / Ben cotta)
+la gestione dei separatori è un po' macchinosa, non posso fare resizing come per i tavoli, e l'anchor di resizing non mi piace sui tavoli. cambialo e rendilo uniforme per tavoli e separatori. il muro non penso serva più a sto punto, intendevo separatori per visualizzare meglio la sala.
+- [x] Prova **annulla** (Ctrl+Z) nell'editor, e chiudi senza salvare: ti avvisa? metti solo manina clic su modale di conferma modifiche o annullamento.
+- [--] **Impostazioni → Portate**: crea Antipasti, Primi, Secondi, Dolci. Riordinale con le frecce.
+ok, ma molto macchinoso con le freccette, metti dei trascinabili stile ordinamento stampe sul modulo sagra, non so se chiaro. cerchiamo di tenere uno stile app uniforme su tutti i moduli, così da diventare identità dell'app complessiva. devo avere la possibilità di mettere però due categorie vicine o comunque trovare un modo per gestire tipo secondi e contorni che dovrebbero uscire insieme, ma con questa logica escono sempre sequenzialmente (a meno che io crei una categoria "secondi e contorni").
+- [x] **Carta**: crea 8-10 piatti e 2 bevande. Assegna a ogni piatto la sua **portata** e (per le bevande) la destinazione Bar.
+- [x] **Carta → Opzioni dei piatti**: crea il gruppo «Cottura» (scelta singola, obbligatoria: Al sangue / Media / Ben cotta)
       e «Aggiunte» (facoltativo, fino a 2, con supplemento). Collegali a un piatto, dal form del piatto.
-- [ ] **Impostazioni → Coperto**: imposta 2,00 € a persona.
-- [ ] **Apri il servizio** (in alto): il nome proposto (Pranzo/Cena) è giusto per l'ora?
+- [x] **Impostazioni → Coperto**: imposta 2,00 € a persona.
+- [x] **Apri il servizio** (in alto): il nome proposto (Pranzo/Cena) è giusto per l'ora?
 
 ## B. Il giro del tavolo (cameriere)
 
 Accedi come `cameriere` (ideale su un telefono 📱, ma prova prima da PC).
 
-- [ ] In Sala vedi i tavoli. **Tocca T1**, imposta 4 coperti, **Apri tavolo**.
-- [ ] Il conto mostra il coperto (4 × 2,00 €)? Il totale è giusto?
-- [ ] **Aggiungi**: tocca un piatto con le opzioni → compare la scelta. Prova a **non** scegliere la cottura: ti blocca
+- [x] In Sala vedi i tavoli. **Tocca T1**, imposta 4 coperti, **Apri tavolo**.
+- [x] Il conto mostra il coperto (4 × 2,00 €)? Il totale è giusto?
+- [x] **Aggiungi**: tocca un piatto con le opzioni → compare la scelta. Prova a **non** scegliere la cottura: ti blocca
       e dice cosa manca?
-- [ ] Aggiungi: un antipasto, due primi, un secondo, una bevanda. A destra i piatti sono **divisi per portata**?
-- [ ] Prova a **spostare una portata** con le frecce. Prova «insieme alla precedente» su una portata.
-- [ ] Tocca un piatto: **nota** («senza cipolla») e cambio portata. Si capisce come si fa?
-- [ ] Il pulsante dice cosa succede («Esce subito: Bevande e altro, Antipasti · Da mandare dopo: Primi, Secondi»)? È chiaro?
-- [ ] **Invia in cucina**. Torni al conto: vedi le portate («In cucina», «Da mandare»)?
-- [ ] Prova il **doppio tocco veloce** su «Invia in cucina»: non deve creare due comande.
+- [x] Aggiungi: un antipasto, due primi, un secondo, una bevanda. A destra i piatti sono **divisi per portata**?
+- [--] Prova a **spostare una portata** con le frecce. Prova «insieme alla precedente» su una portata.
+ok, ma lo spostamento è fatto su tutta la categoria, non sulla singola portata. idem per il dopo e prima la precedente.
+- [!] Tocca un piatto: **nota** («senza cipolla») e cambio portata. Si capisce come si fa?
+appena scrivo una lettera si toglie il campo di inserimento note. sfrutta il modo di inserimento note del modulo sagra, funziona bene, con capitalized letters.
+- [--] Il pulsante dice cosa succede («Esce subito: Bevande e altro, Antipasti · Da mandare dopo: Primi, Secondi»)? È chiaro?
+ok il dettaglio, ma su un tablet deve essere bello visibile e comunque sempre professionale e bello da vedere, puoi migliorare? se necessario rifai pure la grafica eh, stupiscimi.
+- [x] **Invia in cucina**. Torni al conto: vedi le portate («In cucina», «Da mandare»)?
+- [x] Prova il **doppio tocco veloce** su «Invia in cucina»: non deve creare due comande.
 
 ## C. La cucina
 
 Apri l'altra finestra come `cucina`.
 
-- [ ] Compare la comanda con **tavolo, coperti, portata e minuti**? Le bevande escono insieme agli antipasti?
-- [ ] Le portate «da mandare» **non** compaiono tra le comande; stanno in basso in «In arrivo»?
-- [ ] Tocca un **singolo piatto**: si barra. Toccalo di nuovo: torna da fare?
-- [ ] Premi **Pronta** sulla comanda. Sparisce?
-- [ ] Nella finestra della sala compare l'avviso «Tavolo T1: Antipasti pronti»? Il tavolo mostra il segno verde per un po'?
-- [ ] Aspetta 10 minuti (o fingi): la barra della comanda diventa ambra e poi rossa?
-- [ ] Se hai bevande al bar: compaiono i tab **Cucina / Bar**? Nascono solo se serve?
+- [x] Compare la comanda con **tavolo, coperti, portata e minuti**? Le bevande escono insieme agli antipasti?
+non ho controllato bevande e antipasti se escono insieme.
+- [x] Le portate «da mandare» **non** compaiono tra le comande; stanno in basso in «In arrivo»? di nuovo, questa specie di kds deve essere ottimizzato per l'ambiente frenetico della cucina.
+- [x] Tocca un **singolo piatto**: si barra. Toccalo di nuovo: torna da fare?
+- [x] Premi **Pronta** sulla comanda. Sparisce?
+- [--] Nella finestra della sala compare l'avviso «Tavolo T1: Antipasti pronti»? Il tavolo mostra il segno verde per un po'?
+non mi risulta che rimanga un badge. sarebbe buono una motifica in realtà, e solo sui terminali dei camerieri/del cameriere che hanno preso in gestione quel tavolo lì.
+- [x] Aspetta 10 minuti (o fingi): la barra della comanda diventa ambra e poi rossa?
+- [x] Se hai bevande al bar: compaiono i tab **Cucina / Bar**? Nascono solo se serve?
 
 ## D. Portate, conto, incasso
 
-- [ ] Sul conto premi **Manda** (prossima portata): arriva in cucina? La stampa parte (se hai la stampante)?
+- [ ] Sul conto premi **Manda** (prossima portata): arriva in cucina? La stampa parte (se hai la stampante)? non posso testare ora
 - [ ] Ordina un secondo giro (altre bevande) mentre ci sono portate ancora da mandare: si accoda dopo le altre?
-- [ ] Menu **⋯** del conto: **Modifica i coperti** (6 → coperto aggiornato), **Il cliente chiede il conto** (il tavolo cambia colore).
-- [ ] **Sposta tavolo** su un tavolo libero. La cucina vede il tavolo nuovo?
+- [x] Menu **⋯** del conto: **Modifica i coperti** (6 → coperto aggiornato), **Il cliente chiede il conto** (il tavolo cambia colore).
+- [] **Sposta tavolo** su un tavolo libero. La cucina vede il tavolo nuovo?
 - [ ] Apri un secondo tavolo e **unisci** i due conti (come admin).
 - [ ] **Omaggio o sconto** su un piatto. Il totale si aggiorna?
 - [ ] **Incassa → Per voce**: di partenza è già tutto selezionato? Deseleziona un piatto e incassa a «Contanti»;
       con contanti ricevuti (es. 50 €): il resto è chiaro?
-- [ ] **Incassa → A importo → Alla romana** con 3 persone: le quote sono giuste?
-- [ ] Incassa **tutto** senza resto (es. carta): il pannello torna da solo alla sala e **il tavolo è libero**?
-- [ ] Prova a incassare con una portata ancora da mandare: ti dice di mandarla o stornarla?
-- [ ] Stampa la **ricevuta** (non fiscale): il testo e gli importi sono giusti?
+- [--] **Incassa → A importo → Alla romana** con 3 persone: le quote sono giuste?
+si però è diffficile pagare alla romana, appenaclicco sul pagamento di una quota, si toglie la schermata e devo rifare tutto il processo si suddivisione. guarda anche tu cosa accade.
+- [x] Incassa **tutto** senza resto (es. carta): il pannello torna da solo alla sala e **il tavolo è libero**?
+si però non riesco a far fare l'incasso. rimane la schermata di pagamento purtroppo, come se non venisse incassato. risolvi pls, non mi esce neanche nessun badge.
+- [x] Prova a incassare con una portata ancora da mandare: ti dice di mandarla o stornarla?
+- [ ] Stampa la **ricevuta** (non fiscale): il testo e gli importi sono giusti? non posso testare ora
 
 ## E. Il cameriere non deve poter fare certe cose
 
 Come `cameriere`:
 
-- [ ] **Non** vede «Incassa», «Omaggio o sconto», «Elimina conto», «Unisci».
-- [ ] Vede «Chiedi il conto». Funziona?
-- [ ] Non può stornare una comanda.
+- [x] **Non** vede «Incassa», «Omaggio o sconto», «Elimina conto», «Unisci».
+- [x] Vede «Chiedi il conto». Funziona?
+- [x] Non può stornare una comanda. si però dovrebbe poterlo fare, direi.
 
 ## F. Statistiche (admin)
 

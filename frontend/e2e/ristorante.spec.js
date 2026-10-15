@@ -4,6 +4,17 @@ import { seed, login, shot } from './support.js';
 // Il giro principale del ristorante, con due schermi: il cameriere (sala) e la cucina.
 test.describe.configure({ mode: 'serial' });
 
+// Segna pronte tutte le comande visibili, una alla volta, aspettando che ognuna sparisca prima della successiva.
+async function segnaTuttoPronto(page) {
+  const pronta = page.getByRole('button', { name: 'Pronta', exact: true });
+  await expect(pronta.first()).toBeVisible();
+  for (let i = 0; i < 6 && await pronta.count(); i++) {
+    const before = await pronta.count();
+    await pronta.first().click();
+    await expect(pronta).toHaveCount(before - 1, { timeout: 8000 });
+  }
+}
+
 test('ristorante: apro un tavolo, ordino per portate, la cucina segna pronto, incasso', async ({ browser }) => {
   const { ristorante: r } = seed();
   const sala = await (await browser.newContext()).newPage();
@@ -39,7 +50,7 @@ test('ristorante: apro un tavolo, ordino per portate, la cucina segna pronto, in
   await expect(cucina.getByText('Acqua')).toBeVisible();
   await expect(cucina.getByText('Spaghetti alle vongole')).toHaveCount(0);
   await shot(cucina, 'ristorante-05-cucina');
-  while (await cucina.getByRole('button', { name: 'Pronta', exact: true }).count()) await cucina.getByRole('button', { name: 'Pronta', exact: true }).first().click();
+  await segnaTuttoPronto(cucina);
   await expect(cucina.getByText('Bruschetta')).toHaveCount(0);
 
   // ── Sala: avviso di pronto, poi mando i primi e incasso tutto ──
@@ -66,4 +77,26 @@ test('ristorante: il cameriere non vede incassa e sconti', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Incassa' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Chiedi il conto' })).toBeVisible();
   await shot(page, 'ristorante-08-cameriere');
+});
+
+test('ristorante: alla romana in 3 quote, senza uscire dalla schermata di incasso', async ({ page }) => {
+  const { ristorante: r } = seed();
+  await login(page, r.host, r.admin);
+  await page.getByRole('button', { name: /^T4: Libero/ }).click();
+  await page.getByRole('button', { name: 'Apri tavolo' }).click();
+  await page.getByRole('button', { name: 'Aggiungi' }).click();
+  await page.getByRole('button', { name: /Vino della casa/ }).click();   // 18 € + coperto
+  await page.getByRole('button', { name: 'Invia in cucina' }).click();
+  await page.getByRole('button', { name: 'Incassa' }).click();
+  await page.getByRole('tab', { name: 'A importo' }).click();
+  await page.getByRole('button', { name: '3', exact: true }).click();
+
+  for (const left of [2, 1]) {
+    await page.getByRole('button', { name: /^Incassa [0-9]/ }).click();
+    await expect(page.getByRole('heading', { name: 'Incassa' })).toBeVisible();        // ancora qui
+    await expect(page.getByRole('button', { name: left === 1 ? 'Tutto' : String(left), exact: true })).toHaveAttribute('aria-pressed', 'true');
+  }
+  await shot(page, 'ristorante-09-romana-ultima-quota');
+  await page.getByRole('button', { name: /^Incassa [0-9]/ }).click();                 // l'ultima quota chiude il conto
+  await expect(page.getByRole('button', { name: /^T4: Libero/ })).toBeVisible({ timeout: 10_000 });
 });

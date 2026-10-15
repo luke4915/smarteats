@@ -21,7 +21,7 @@ const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 s
 // solo pannello che cambia contenuto (apri tavolo, conto, incasso, comanda). Sotto i 1280 px il pannello è a tutto schermo.
 const SalaPage = ({ user, service, event }) => {
   const { showToast } = useToast();
-  const narrow = useIsMobile(1280);
+  const narrow = useIsMobile(900);          // sotto 900 px (telefono, tablet in verticale) il pannello è a tutto schermo
   const [rooms, setRooms] = useState(null);
   const [checks, setChecks] = useState([]);
   const [reservations, setReservations] = useState([]);   // prenotazioni di oggi (modulo bookings): per segnare i tavoli prenotati
@@ -48,9 +48,10 @@ const SalaPage = ({ user, service, event }) => {
   // La cucina segna pronta una portata: lo si dice a chi è in sala, così la porta al tavolo (niente da confermare)
   useEffect(() => {
     const o = event?.type === 'order_updated' ? event.order : null;
-    if (o?.status === 'completed' && o.check_id && o.order_type !== 'cover')
-      showToast(`${o.table_name ? `Tavolo ${o.table_name}` : 'Conto'}: ${o.course_name ?? 'piatti'} pronti`, 'success');
-  }, [event, showToast]);
+    // Lo vede solo chi ha in carico il tavolo (ha aperto il conto): gli altri camerieri non vengono disturbati.
+    if (o?.status === 'completed' && o.check_id && o.order_type !== 'cover' && o.check_opened_by === user.id)
+      showToast(`${o.table_name ? `Tavolo ${o.table_name}` : 'Conto'}: ${o.course_name ?? 'piatti'} pronti`, 'success', 8000);
+  }, [event, showToast, user.id]);
   // Un conto cambia su un altro dispositivo
   useEffect(() => { if (event?.type === 'check_updated' || event?.type === 'reservation_updated') load(); }, [event, load]);
   const reserved = nextByTable(reservations);
@@ -89,7 +90,7 @@ const SalaPage = ({ user, service, event }) => {
     return (
       <>
         <div className={`${card} flex-1 min-h-0 ${ordering ? 'overflow-y-auto no-scrollbar' : 'overflow-hidden'}`}>{ordering ? menu : floor}</div>
-        <div className="w-[420px] shrink-0 h-full">{side}</div>
+        <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>
       </>
     );
   }

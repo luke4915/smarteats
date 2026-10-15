@@ -4,7 +4,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { formatEuro } from './checkMath';
 import { iconBtn } from './ui';
-import { canCash } from './permissions';
+import { canCancelOrders } from './permissions';
 
 // Stato di una comanda (una portata) visto da sala e cassa: da mandare, in cucina, pronta. Niente passaggi in più.
 const STATUS = { scheduled: ['Da mandare', 'text-amber-500'], pending: ['In cucina', 'text-sky-500'], preparing: ['In cucina', 'text-sky-500'], completed: ['Pronta', 'text-emerald-500'], canceled: ['Stornata', 'text-red-500'] };
@@ -40,7 +40,7 @@ const CheckOrders = ({ detail, user, onChanged }) => {
         {!isCover && <div className="flex items-center gap-2 px-1 pt-2">
           <span className="text-xs font-semibold text-[var(--text-muted)]">{order.course_name ? `${order.course_name} · ` : ''}#{order.display_code} · {time(order.created_at)}</span>
           <span className={`text-xs font-semibold ${tone}`}>{text}</span>
-          {open && canCash(user.role) && ['scheduled', 'pending', 'preparing'].includes(order.status) && (
+          {open && canCancelOrders(user.role) && ['scheduled', 'pending', 'preparing'].includes(order.status) && (
             <span className="ml-auto flex items-center gap-1.5">
               {confirming === order.id ? (
                 <>

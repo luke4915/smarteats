@@ -23,7 +23,7 @@ const Empty = () => (
 // l'elenco, a destra un solo pannello che cambia (dettaglio, nuova, tavoli); su schermo stretto il pannello è a tutto schermo.
 const PrenotazioniPage = ({ event }) => {
   const navigate = useNavigate();
-  const narrow = useIsMobile(1280);
+  const narrow = useIsMobile(900);
   const [date, setDate] = useState(todayLocal);
   const { shifts, rooms, reservations, availability, loading, reload } = useBookings(date, event);
   const [panel, setPanel] = useState(null);     // { kind: 'detail' | 'new' | 'edit' | 'tables', id? }
@@ -122,7 +122,7 @@ const PrenotazioniPage = ({ event }) => {
     return (
       <>
         <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div>
-        <div className="w-[420px] shrink-0 h-full">{side}</div>
+        <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>
       </>
     );
   }
