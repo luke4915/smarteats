@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { ChefHat, Clock, Check, Volume2, VolumeX } from 'lucide-react';
 import { useKitchenOrders } from './useKitchenOrders';
+import { playChime } from '../../utils/chime';
 import { boardOrders, upcomingByTable, urgency, ticketAction, toggleLineStatus, isDone, hasBarWork, newOrderIds, STATIONS } from './board';
 
 // Il monitor della cucina: fatto per essere letto da lontano e premuto con le mani sporche. Testi grandi, l'attesa
@@ -8,21 +9,7 @@ import { boardOrders, upcomingByTable, urgency, ticketAction, toggleLineStatus, 
 // Le comande nuove si evidenziano e suonano (si può spegnere). Le portate non ancora mandate stanno in basso.
 const HEAD = { ok: 'bg-emerald-600 text-white', warn: 'bg-amber-500 text-black', late: 'bg-red-600 text-white' };
 
-function beep() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.18].forEach((t, i) => {
-      const osc = ctx.createOscillator(), gain = ctx.createGain();
-      osc.frequency.value = i ? 1040 : 780;
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + t);
-      gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.16);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.18);
-    });
-    setTimeout(() => ctx.close(), 600);
-  } catch { /* audio non disponibile */ }
-}
+const beep = () => { playChime(); };
 
 const Ticket = ({ order, fresh, onLines }) => {
   const level = urgency(order.minutes);

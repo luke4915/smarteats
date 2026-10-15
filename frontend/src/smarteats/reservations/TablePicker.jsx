@@ -55,18 +55,28 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
         aria-label={`${table.name}, ${table.seats} posti${other ? `: assegnato a ${other.customer_name}` : ''}${suggested ? ', consigliato' : ''}`}
         onClick={() => toggle(table)} title={other ? `${other.customer_name} · ${other.start_time}` : `${table.name}: ${table.seats} posti`}
         className={`relative flex flex-col items-center justify-center border box-border overflow-hidden text-center transition ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${base} ${suggested ? '!border-[var(--accent)] ring-2 ring-[var(--accent)]/40' : ''} ${style ? '' : 'min-h-14 px-2'}`}>
-        <span className="font-semibold leading-none truncate max-w-full px-1" style={style ? { fontSize: Math.max(12, Math.min(cell * 0.45, 16)) } : undefined}>{table.name}</span>
-        {(!style || cell >= 22) && (other
+        <span className="font-semibold leading-none truncate max-w-full px-1" style={{ fontSize: style ? Math.max(14, Math.min(cell * 0.4, 20)) : 16 }}>{table.name}</span>
+        {other
           ? <span className="text-xs leading-none mt-1 opacity-80 truncate max-w-full px-1">{other.customer_name}</span>
-          : <span className="flex items-center gap-0.5 mt-1 font-semibold tabular-nums leading-none" style={style ? { fontSize: Math.max(11, Math.min(cell * 0.4, 15)) } : { fontSize: 14 }}>
-            <Users size={style ? Math.max(10, Math.min(cell * 0.35, 14)) : 13} />{table.seats}
-          </span>)}
+          : <span className="flex items-center gap-1 mt-1 font-semibold tabular-nums leading-none" style={{ fontSize: style ? Math.max(13, Math.min(cell * 0.34, 17)) : 15 }}>
+            <Users size={style ? Math.max(13, Math.min(cell * 0.32, 17)) : 15} />{table.seats}
+          </span>}
         {on && <Check size={12} className="absolute top-0.5 right-0.5" />}
       </button>
     );
   };
 
   const placed = room?.tables.filter(t => t.active && isPlaced(t)) ?? [];
+  // La pianta si ritaglia sui tavoli: i margini vuoti della sala non servono, e così i tavoli restano leggibili
+  const crop = useMemo(() => {
+    if (!room || !placed.length) return null;
+    const items = [...placed, ...(room.elements ?? [])];
+    const x0 = Math.min(...items.map(i => i.x)), y0 = Math.min(...items.map(i => i.y));
+    const x1 = Math.max(...items.map(i => i.x + i.w)), y1 = Math.max(...items.map(i => i.y + i.h));
+    const move = (i) => ({ ...i, x: i.x - x0, y: i.y - y0 });
+    return { w: x1 - x0, h: y1 - y0, tables: placed.map(move), elements: (room.elements ?? []).map(move) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room]);
   const loose = room?.tables.filter(t => t.active && !isPlaced(t)) ?? [];
 
   return (
@@ -95,11 +105,9 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
         </div>
       )}
       {!room && <p className="text-sm text-[var(--text-muted)] p-2">Nessuna sala: creala in Impostazioni.</p>}
-      {room && placed.length > 0 && (
-        <div className="w-full" style={{ aspectRatio: `${room.grid_w} / ${room.grid_h}` }}>
-          <FloorCanvas fit gridW={room.grid_w} gridH={room.grid_h} tables={placed} elements={room.elements}
-            renderTable={(table, style, cell) => tableButton(table, style, cell)} />
-        </div>
+      {room && crop && (
+        <FloorCanvas minCell={28} gridW={crop.w} gridH={crop.h} tables={crop.tables} elements={crop.elements}
+          renderTable={(table, style, cell) => tableButton(table, style, cell)} />
       )}
       {loose.length > 0 && <div className="grid grid-cols-3 gap-2 pt-2">{loose.map(t => tableButton(t))}</div>}
     </PanelFrame>

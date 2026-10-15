@@ -25,7 +25,7 @@ const ReservationsPage = ({ event }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const narrow = useIsMobile(900);
-  const [date, setDate] = useState(todayLocal);
+  const [date, setDate] = useState(() => location.state?.date ?? todayLocal());
   const { shifts, rooms, reservations, availability, loading, reload } = useBookings(date, event);
   const [panel, setPanel] = useState(null);     // { kind: 'detail' | 'new' | 'edit' | 'tables', id? }
 

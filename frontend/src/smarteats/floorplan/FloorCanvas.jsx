@@ -6,12 +6,13 @@ import { ELEMENT_CLASS } from './elementStyle';
 // stato dal vivo): cosa disegnare dentro a ogni tavolo lo decide `renderTable(table, style)`, che deve applicare
 // `style` (posizione e misura in pixel) al suo elemento. La cella si adatta alla larghezza disponibile; con `fit`
 // (la Sala) si adatta anche all'altezza: l'intera sala sta nell'area, centrata, senza scroll. `fit` richiede un
-// contenitore con altezza definita.
+// contenitore con altezza definita. Senza `fit`, `minCell` è la misura minima di una cella: una sala molto grande
+// scorre in orizzontale invece di rimpicciolire i tavoli fino a non leggerli.
 const MIN_CELL = 14;
 const MAX_CELL = 56;
 const MIN_FIT_CELL = 8;
 
-const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderElement, showGrid = false, fit = false, onBackgroundPointerDown, onBackgroundPointerMove, onBackgroundPointerUp, canvasRef }) => {
+const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderElement, showGrid = false, fit = false, minCell = MIN_CELL, onBackgroundPointerDown, onBackgroundPointerMove, onBackgroundPointerUp, canvasRef }) => {
   const box = useRef(null);
   const [cell, setCell] = useState(32);
 
@@ -19,13 +20,13 @@ const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderE
     const el = box.current;
     const measure = () => {
       if (fit) setCell(Math.max(MIN_FIT_CELL, Math.floor(Math.min(el.clientWidth / gridW, el.clientHeight / gridH))));
-      else setCell(clamp(Math.floor(el.clientWidth / gridW), MIN_CELL, MAX_CELL));
+      else setCell(clamp(Math.floor(el.clientWidth / gridW), minCell, MAX_CELL));
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [gridW, gridH, fit]);
+  }, [gridW, gridH, fit, minCell]);
 
   return (
     <div ref={box} className={fit ? 'w-full h-full flex items-center justify-center overflow-hidden' : 'w-full overflow-x-auto no-scrollbar'}>

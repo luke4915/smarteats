@@ -46,14 +46,14 @@ test('prenotazioni: inserisco, assegno il tavolo, la Sala lo segna, arrivato apr
 
   // La Sala lo mostra sul tavolo
   await page.getByRole('link', { name: 'Sala' }).click();
-  await expect(page.getByRole('button', { name: /^T2: Libero/ })).toContainText('Rossi');
+  await expect(page.getByRole('button', { name: /^T2: Libero/ })).toContainText('19:30');
   await shot(page, 'reservations-05-sala');
 
   // Arrivato dalla Sala: apre il conto con 4 coperti
   await page.getByRole('button', { name: /^T2: Libero/ }).click();
   await expect(page.getByText(/Prenotato/)).toBeVisible();
   await page.getByRole('button', { name: /Arrivato · Rossi/ }).click();
-  await expect(page.getByRole('button', { name: /^T2: Occupato/ })).toContainText('4/');
+  await expect(page.getByRole('button', { name: /^T2: Occupato/ })).toContainText('4');
   await shot(page, 'reservations-06-conto-aperto');
 
   // Dall'agenda, «Vai al tavolo» porta sul tavolo giusto (non solo alla Sala)

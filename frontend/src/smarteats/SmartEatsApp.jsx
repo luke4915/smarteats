@@ -98,6 +98,12 @@ const SmartEatsApp = () => {
   // Notifiche per il personale di sala: richieste di prenotazione e annulli da decidere
   const hasInbox = !!user.modules?.includes('bookings') && ['admin', 'manager', 'cashier', 'waiter'].includes(user.role);
   const inbox = useInbox({ enabled: hasInbox, event });
+  // Con la scheda in secondo piano il numero si vede comunque nel titolo («(2) SmartEats»)
+  useEffect(() => {
+    const base = document.title.replace(/^\(\d+\)\s*/, '');
+    document.title = inbox.items.length ? `(${inbox.items.length}) ${base}` : base;
+    return () => { document.title = base; };
+  }, [inbox.items.length]);
 
   const views = visibleViews(user.role, user.modules);
   const home = smartEatsHome(user.role, user.modules);

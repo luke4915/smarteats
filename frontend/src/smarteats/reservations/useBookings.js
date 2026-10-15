@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 
@@ -9,6 +9,7 @@ export function useBookings(date, event) {
   const [shifts, setShifts] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [day, setDay] = useState({ date: null, reservations: [], availability: [] });
+  const latest = useRef(0);   // numero dell'ultima richiesta: una risposta più vecchia non deve sovrascrivere quella nuova
 
   useEffect(() => {
     Promise.all([fetchWithAuth('/bookings/shifts'), fetchWithAuth('/rooms')])
@@ -17,10 +18,11 @@ export function useBookings(date, event) {
   }, [showToast]);
 
   const reload = useCallback(async () => {
+    const mine = ++latest.current;
     try {
       const [reservations, availability] = await Promise.all([
         fetchWithAuth(`/bookings/reservations?date=${date}`), fetchWithAuth(`/bookings/availability?date=${date}`)]);
-      setDay({ date, reservations, availability });
+      if (mine === latest.current) setDay({ date, reservations, availability });
     } catch (err) { showToast(err.message || 'Errore caricamento prenotazioni', 'error'); }
   }, [date, showToast]);
 

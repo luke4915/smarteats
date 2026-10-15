@@ -28,7 +28,7 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
   await phone.getByRole('button', { name: 'Una persona in più' }).click();           // 3 persone
   await expect(phone.getByText('3', { exact: true }).first()).toBeVisible();
   await phone.getByRole('radio', { name: /./ }).and(phone.locator('[aria-checked]')).first().waitFor();
-  await phone.locator('[role=radiogroup][aria-label=Giorno] [role=radio]:not([disabled])').first().click();
+  await phone.locator('[role=radiogroup][aria-label=Giorno] [role=radio]:not([disabled])').nth(2).click();   // fra tre giorni: non oggi
   await phone.locator('[role=radiogroup][aria-label=Turno] [role=radio]:not([disabled])').first().click();
   await phone.getByLabel('Nome', { exact: true }).fill('Famiglia Bianchi');
   await phone.getByLabel('Telefono', { exact: true }).fill('333 9876543');
