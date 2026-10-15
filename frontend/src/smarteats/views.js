@@ -2,6 +2,7 @@
 // Come in components/layout/viewRoles.js, vale per il menu e per le route; le autorizzazioni vere sono sul server.
 export const VIEWS = [
   { id: 'sala', label: 'Sala', roles: ['admin', 'responsabile', 'cassa', 'cameriere'] },
+  { id: 'prenotazioni', label: 'Prenotazioni', roles: ['admin', 'responsabile', 'cassa', 'cameriere'], module: 'bookings' },
   { id: 'cucina', label: 'Cucina', roles: ['admin', 'cucina'], module: 'kds' },
   { id: 'carta', label: 'Carta', roles: ['admin'] },
   { id: 'statistiche', label: 'Statistiche', roles: ['admin', 'responsabile'], module: 'stats' },

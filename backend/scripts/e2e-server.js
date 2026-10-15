@@ -57,6 +57,9 @@ await addProduct(risto, 'Bruschetta', 6, 'Antipasti', { courseId: antipasti.id, 
 await addProduct(risto, 'Spaghetti alle vongole', 14, 'Primi', { courseId: primi.id, destination: 'kitchen' });
 await addProduct(risto, 'Vino della casa', 18, 'Bevande', { destination: 'bar' });
 await addProduct(risto, 'Acqua', 2, 'Bevande', { destination: 'bar' });
+// Prenotazioni: modulo acceso e due turni fissi, tutti i giorni
+await adminDb.query(`UPDATE tenants SET modules = array_append(modules, 'bookings') WHERE id = $1`, [risto.id]);
+await adminDb.query(`INSERT INTO booking_shifts (name, start_time, duration_minutes, capacity, position, tenant_id) VALUES ('Cena 19:30', '19:30', 90, 30, 0, $1), ('Cena 21:00', '21:00', 90, 20, 1, $1)`, [risto.id]);
 const ristoSeed = { host: `${risto.slug}.standmanager.local`, admin: risto.username, cucina: await addUser(risto, 'cucina'), cameriere: await addUser(risto, 'cameriere'), cassa: await addUser(risto, 'cassa') };
 
 // ── Sagra: carta con più categorie ──

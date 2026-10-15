@@ -100,3 +100,8 @@ button[class*="border-[var(--border)]"]:not([class*="border-l-"]):not(:disabled)
 .se-app .rounded-3xl { border-radius: 0.875rem; }
 .se-app .rounded-2xl { border-radius: 0.75rem; }
 .se-app [class*="shadow-[var(--accent-shadow)]"] { box-shadow: none; }
+
+/* Ogni elemento su cui si può premere mostra la manina (Tailwind v4 la toglie ai pulsanti). */
+button:not(:disabled), [role="button"]:not([aria-disabled="true"]), summary, select:not(:disabled), label[for], input[type="checkbox"], input[type="radio"] {
+  cursor: pointer;
+}

@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict MQ5POc7JWxOHgxuIw6v8ZleKd2c2GbUGwuhDVlHi07nXIGgokNjPbc5WvaUGEpC
+\restrict 9acWNOuvBltTGfn3lssHGbq7NUO1xFH4ti6Y2SK5dh5zrPZGpcdAneSWMyMvx01
 
 -- Dumped from database version 17.10 (Homebrew)
 -- Dumped by pg_dump version 17.10 (Homebrew)
@@ -96,6 +96,93 @@ ALTER SEQUENCE public.audit_logs_id_seq OWNER TO colettas;
 --
 
 ALTER SEQUENCE public.audit_logs_id_seq OWNED BY public.audit_logs.id;
+
+
+--
+-- Name: booking_closures; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.booking_closures (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    date_from date NOT NULL,
+    date_to date NOT NULL,
+    shift_id integer,
+    reason text DEFAULT ''::text NOT NULL,
+    CONSTRAINT booking_closures_range CHECK ((date_to >= date_from))
+);
+
+ALTER TABLE ONLY public.booking_closures FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.booking_closures OWNER TO colettas;
+
+--
+-- Name: booking_closures_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.booking_closures_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.booking_closures_id_seq OWNER TO colettas;
+
+--
+-- Name: booking_closures_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.booking_closures_id_seq OWNED BY public.booking_closures.id;
+
+
+--
+-- Name: booking_shifts; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.booking_shifts (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    name text NOT NULL,
+    start_time time without time zone NOT NULL,
+    duration_minutes integer DEFAULT 90 NOT NULL,
+    weekdays smallint[] DEFAULT '{0,1,2,3,4,5,6}'::smallint[] NOT NULL,
+    capacity integer NOT NULL,
+    active boolean DEFAULT true NOT NULL,
+    "position" integer DEFAULT 0 NOT NULL,
+    CONSTRAINT booking_shifts_capacity_check CHECK (((capacity >= 1) AND (capacity <= 999))),
+    CONSTRAINT booking_shifts_duration_minutes_check CHECK (((duration_minutes >= 15) AND (duration_minutes <= 480))),
+    CONSTRAINT booking_shifts_name_check CHECK ((length(btrim(name)) > 0))
+);
+
+ALTER TABLE ONLY public.booking_shifts FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.booking_shifts OWNER TO colettas;
+
+--
+-- Name: booking_shifts_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.booking_shifts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.booking_shifts_id_seq OWNER TO colettas;
+
+--
+-- Name: booking_shifts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.booking_shifts_id_seq OWNED BY public.booking_shifts.id;
 
 
 --
@@ -197,6 +284,7 @@ CREATE TABLE public.courses (
     name text NOT NULL,
     "position" integer DEFAULT 0 NOT NULL,
     active boolean DEFAULT true NOT NULL,
+    with_previous boolean DEFAULT false NOT NULL,
     CONSTRAINT courses_name_check CHECK ((length(btrim(name)) > 0))
 );
 
@@ -713,6 +801,77 @@ ALTER SEQUENCE public.products_id_seq OWNED BY public.products.id;
 
 
 --
+-- Name: reservation_tables; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.reservation_tables (
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    reservation_id integer NOT NULL,
+    table_id integer NOT NULL
+);
+
+ALTER TABLE ONLY public.reservation_tables FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.reservation_tables OWNER TO colettas;
+
+--
+-- Name: reservations; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.reservations (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    date date NOT NULL,
+    shift_id integer NOT NULL,
+    party_size integer NOT NULL,
+    status text DEFAULT 'confirmed'::text NOT NULL,
+    customer_name text NOT NULL,
+    phone text DEFAULT ''::text NOT NULL,
+    email text DEFAULT ''::text NOT NULL,
+    notes text DEFAULT ''::text NOT NULL,
+    source text DEFAULT 'staff'::text NOT NULL,
+    external_id text,
+    public_token text NOT NULL,
+    requested_at timestamp with time zone DEFAULT now() NOT NULL,
+    decided_by integer,
+    decided_at timestamp with time zone,
+    decline_reason text DEFAULT ''::text NOT NULL,
+    check_id integer,
+    created_by integer,
+    CONSTRAINT reservations_customer_name_check CHECK ((length(btrim(customer_name)) > 0)),
+    CONSTRAINT reservations_party_size_check CHECK (((party_size >= 1) AND (party_size <= 99))),
+    CONSTRAINT reservations_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'confirmed'::text, 'declined'::text, 'cancelled'::text, 'seated'::text, 'no_show'::text, 'expired'::text])))
+);
+
+ALTER TABLE ONLY public.reservations FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.reservations OWNER TO colettas;
+
+--
+-- Name: reservations_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.reservations_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.reservations_id_seq OWNER TO colettas;
+
+--
+-- Name: reservations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.reservations_id_seq OWNED BY public.reservations.id;
+
+
+--
 -- Name: room_elements; Type: TABLE; Schema: public; Owner: colettas
 --
 
@@ -958,6 +1117,20 @@ ALTER TABLE ONLY public.audit_logs ALTER COLUMN id SET DEFAULT nextval('public.a
 
 
 --
+-- Name: booking_closures id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.booking_closures ALTER COLUMN id SET DEFAULT nextval('public.booking_closures_id_seq'::regclass);
+
+
+--
+-- Name: booking_shifts id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.booking_shifts ALTER COLUMN id SET DEFAULT nextval('public.booking_shifts_id_seq'::regclass);
+
+
+--
 -- Name: checks id; Type: DEFAULT; Schema: public; Owner: colettas
 --
 
@@ -1049,6 +1222,13 @@ ALTER TABLE ONLY public.products ALTER COLUMN id SET DEFAULT nextval('public.pro
 
 
 --
+-- Name: reservations id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservations ALTER COLUMN id SET DEFAULT nextval('public.reservations_id_seq'::regclass);
+
+
+--
 -- Name: room_elements id; Type: DEFAULT; Schema: public; Owner: colettas
 --
 
@@ -1105,6 +1285,22 @@ ALTER TABLE ONLY public._migrations
 
 ALTER TABLE ONLY public.audit_logs
     ADD CONSTRAINT audit_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: booking_closures booking_closures_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.booking_closures
+    ADD CONSTRAINT booking_closures_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: booking_shifts booking_shifts_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.booking_shifts
+    ADD CONSTRAINT booking_shifts_pkey PRIMARY KEY (id);
 
 
 --
@@ -1236,6 +1432,22 @@ ALTER TABLE ONLY public.products
 
 
 --
+-- Name: reservation_tables reservation_tables_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservation_tables
+    ADD CONSTRAINT reservation_tables_pkey PRIMARY KEY (reservation_id, table_id);
+
+
+--
+-- Name: reservations reservations_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservations
+    ADD CONSTRAINT reservations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: room_elements room_elements_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
 --
 
@@ -1310,6 +1522,20 @@ CREATE INDEX idx_audit_logs_created_at ON public.audit_logs USING btree (created
 --
 
 CREATE INDEX idx_audit_logs_tenant ON public.audit_logs USING btree (tenant_id);
+
+
+--
+-- Name: idx_booking_closures_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_booking_closures_tenant ON public.booking_closures USING btree (tenant_id, date_from);
+
+
+--
+-- Name: idx_booking_shifts_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_booking_shifts_tenant ON public.booking_shifts USING btree (tenant_id);
 
 
 --
@@ -1467,6 +1693,34 @@ CREATE INDEX idx_products_tenant ON public.products USING btree (tenant_id);
 
 
 --
+-- Name: idx_reservation_tables_table; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_reservation_tables_table ON public.reservation_tables USING btree (table_id);
+
+
+--
+-- Name: idx_reservation_tables_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_reservation_tables_tenant ON public.reservation_tables USING btree (tenant_id);
+
+
+--
+-- Name: idx_reservations_check; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_reservations_check ON public.reservations USING btree (check_id) WHERE (check_id IS NOT NULL);
+
+
+--
+-- Name: idx_reservations_tenant_date; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_reservations_tenant_date ON public.reservations USING btree (tenant_id, date, shift_id);
+
+
+--
 -- Name: idx_room_elements_room; Type: INDEX; Schema: public; Owner: colettas
 --
 
@@ -1492,6 +1746,13 @@ CREATE INDEX idx_sessions_tenant ON public.sessions USING btree (tenant_id);
 --
 
 CREATE INDEX idx_users_tenant ON public.users USING btree (tenant_id);
+
+
+--
+-- Name: uniq_booking_shifts_tenant_name; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_booking_shifts_tenant_name ON public.booking_shifts USING btree (tenant_id, lower(name));
 
 
 --
@@ -1565,6 +1826,20 @@ CREATE UNIQUE INDEX uniq_payment_items_payment_item ON public.payment_items USIN
 
 
 --
+-- Name: uniq_reservations_external; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_reservations_external ON public.reservations USING btree (tenant_id, source, external_id) WHERE (external_id IS NOT NULL);
+
+
+--
+-- Name: uniq_reservations_token; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_reservations_token ON public.reservations USING btree (public_token);
+
+
+--
 -- Name: uniq_rooms_tenant_name; Type: INDEX; Schema: public; Owner: colettas
 --
 
@@ -1599,6 +1874,30 @@ ALTER TABLE ONLY public.audit_logs
 
 ALTER TABLE ONLY public.audit_logs
     ADD CONSTRAINT audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: booking_closures booking_closures_shift_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.booking_closures
+    ADD CONSTRAINT booking_closures_shift_id_fkey FOREIGN KEY (shift_id) REFERENCES public.booking_shifts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: booking_closures booking_closures_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.booking_closures
+    ADD CONSTRAINT booking_closures_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: booking_shifts booking_shifts_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.booking_shifts
+    ADD CONSTRAINT booking_shifts_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -1858,6 +2157,70 @@ ALTER TABLE ONLY public.products
 
 
 --
+-- Name: reservation_tables reservation_tables_reservation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservation_tables
+    ADD CONSTRAINT reservation_tables_reservation_id_fkey FOREIGN KEY (reservation_id) REFERENCES public.reservations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: reservation_tables reservation_tables_table_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservation_tables
+    ADD CONSTRAINT reservation_tables_table_id_fkey FOREIGN KEY (table_id) REFERENCES public.dining_tables(id);
+
+
+--
+-- Name: reservation_tables reservation_tables_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservation_tables
+    ADD CONSTRAINT reservation_tables_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: reservations reservations_check_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservations
+    ADD CONSTRAINT reservations_check_id_fkey FOREIGN KEY (check_id) REFERENCES public.checks(id) ON DELETE SET NULL;
+
+
+--
+-- Name: reservations reservations_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservations
+    ADD CONSTRAINT reservations_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: reservations reservations_decided_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservations
+    ADD CONSTRAINT reservations_decided_by_fkey FOREIGN KEY (decided_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: reservations reservations_shift_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservations
+    ADD CONSTRAINT reservations_shift_id_fkey FOREIGN KEY (shift_id) REFERENCES public.booking_shifts(id);
+
+
+--
+-- Name: reservations reservations_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.reservations
+    ADD CONSTRAINT reservations_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: room_elements room_elements_room_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
 --
 
@@ -1910,6 +2273,18 @@ ALTER TABLE ONLY public.users
 --
 
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: booking_closures; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.booking_closures ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: booking_shifts; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.booking_shifts ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: checks; Type: ROW SECURITY; Schema: public; Owner: colettas
@@ -2003,6 +2378,18 @@ ALTER TABLE public.product_modifier_groups ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: reservation_tables; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.reservation_tables ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: reservations; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: room_elements; Type: ROW SECURITY; Schema: public; Owner: colettas
 --
 
@@ -2031,6 +2418,20 @@ ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
 --
 
 CREATE POLICY tenant_isolation ON public.audit_logs USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: booking_closures tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.booking_closures USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: booking_shifts tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.booking_shifts USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
 
 
 --
@@ -2132,6 +2533,20 @@ CREATE POLICY tenant_isolation ON public.products USING ((tenant_id = (NULLIF(cu
 
 
 --
+-- Name: reservation_tables tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.reservation_tables USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: reservations tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.reservations USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
 -- Name: room_elements tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
 --
 
@@ -2210,6 +2625,38 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.audit_logs TO standmanager_mas
 
 GRANT ALL ON SEQUENCE public.audit_logs_id_seq TO standmanager_app;
 GRANT SELECT,USAGE ON SEQUENCE public.audit_logs_id_seq TO standmanager_master;
+
+
+--
+-- Name: TABLE booking_closures; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_closures TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_closures TO standmanager_master;
+
+
+--
+-- Name: SEQUENCE booking_closures_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.booking_closures_id_seq TO standmanager_app;
+GRANT SELECT,USAGE ON SEQUENCE public.booking_closures_id_seq TO standmanager_master;
+
+
+--
+-- Name: TABLE booking_shifts; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_shifts TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_shifts TO standmanager_master;
+
+
+--
+-- Name: SEQUENCE booking_shifts_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.booking_shifts_id_seq TO standmanager_app;
+GRANT SELECT,USAGE ON SEQUENCE public.booking_shifts_id_seq TO standmanager_master;
 
 
 --
@@ -2429,6 +2876,30 @@ GRANT SELECT,USAGE ON SEQUENCE public.products_id_seq TO standmanager_master;
 
 
 --
+-- Name: TABLE reservation_tables; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservation_tables TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservation_tables TO standmanager_master;
+
+
+--
+-- Name: TABLE reservations; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservations TO standmanager_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservations TO standmanager_master;
+
+
+--
+-- Name: SEQUENCE reservations_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.reservations_id_seq TO standmanager_app;
+GRANT SELECT,USAGE ON SEQUENCE public.reservations_id_seq TO standmanager_master;
+
+
+--
 -- Name: TABLE room_elements; Type: ACL; Schema: public; Owner: colettas
 --
 
@@ -2536,5 +3007,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,
 -- PostgreSQL database dump complete
 --
 
-\unrestrict MQ5POc7JWxOHgxuIw6v8ZleKd2c2GbUGwuhDVlHi07nXIGgokNjPbc5WvaUGEpC
+\unrestrict 9acWNOuvBltTGfn3lssHGbq7NUO1xFH4ti6Y2SK5dh5zrPZGpcdAneSWMyMvx01
 

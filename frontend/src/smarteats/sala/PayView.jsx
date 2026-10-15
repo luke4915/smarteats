@@ -47,7 +47,14 @@ const PayView = ({ detail, onBack, onClosed, onPaid, onPrint }) => {
       const res = await fetchWithAuth(`/checks/${detail.id}/payments`, { method: 'POST', body });
       if (res.change > 0) setDone(res);
       else if (res.check.status === 'paid') { showToast(`Conto chiuso · ${formatEuro(res.payment.amount)} incassati`, 'success'); onClosed(); }
-      else { showToast(`Incassati ${formatEuro(res.payment.amount)} · restano ${formatEuro(res.check.due)}`, 'success'); onBack(); }
+      else {
+        // Pagamento parziale: si resta qui. Chi paga dopo (la quota successiva, o le sue voci) trova già il residuo.
+        showToast(`Incassati ${formatEuro(res.payment.amount)} · restano ${formatEuro(res.check.due)}`, 'success');
+        setTendered('');
+        if (mode === 'items') setSelection({});
+        else if (people > 1) { setPeople(people - 1); setAmount(splitEqually(res.check.due, people - 1)[0].toFixed(2)); }
+        else setAmount(res.check.due.toFixed(2));
+      }
     } catch (err) { showToast(err.message, 'error'); }
     finally { setBusy(false); onPaid(); } // il conto può essere cambiato nel frattempo: lo si rilegge
   };

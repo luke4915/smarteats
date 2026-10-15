@@ -84,7 +84,12 @@ describe('ruolo cameriere', () => {
     assert.equal((await waiter.post(`/checks/${check}/merge`, { target_id: other })).status, 403);
     assert.equal((await waiter.post(`/checks/${check}/adjust`, { order_item_ids: [lineId], type: 'gift' })).status, 403);
     assert.equal((await waiter.post(`/checks/${check}/void`, { cancel_orders: true })).status, 403);
-    assert.equal((await waiter.put(`/orders/${order.id}`, { status: 'canceled' })).status, 403, 'niente storni');
+    // lo storno di una comanda di un tavolo spetta anche al cameriere; quello di un ordine pagato subito no
+    const paidNow = (await admin.post('/orders', { items: [line()] })).body.orderId;
+    const denied = await waiter.put(`/orders/${paidNow}`, { status: 'canceled' });
+    assert.equal(denied.status, 403);
+    assert.equal(denied.body.code, 'WAITER_CANNOT_CANCEL');
+    assert.equal((await waiter.put(`/orders/${order.id}`, { status: 'canceled' })).status, 200, 'la comanda del tavolo sì');
     assert.equal((await waiter.post('/orders', { items: [line()] })).status, 403, 'niente ordini pagati subito (cassa)');
     assert.equal((await waiter.request('PATCH', `/products/${t.productId}/stock`, { stock_enabled: true, stock: 5 })).status, 403);
     assert.equal((await waiter.post(`/orders/${order.id}/reprint`)).status, 403);

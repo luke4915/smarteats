@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { minutesSince, urgency, boardOrders, ticketAction, toggleLineStatus, upcomingByTable, withLineStatus, stationOf, hasBarWork } from './board.js';
+import { minutesSince, urgency, boardOrders, ticketAction, toggleLineStatus, upcomingByTable, withLineStatus, stationOf, hasBarWork, newOrderIds } from './board.js';
 
 const NOW = new Date('2026-10-05T20:00:00Z').getTime();
 const ago = (min) => new Date(NOW - min * 60000).toISOString();
@@ -70,4 +70,11 @@ test('l\'aggiornamento a schermo tocca solo le righe indicate di quella comanda'
   const next = withLineStatus(list, 1, [12], 'ready');
   assert.deepEqual(next[0].items.map(i => i.prep_status), ['new', 'ready']);
   assert.deepEqual(next[1].items.map(i => i.prep_status), ['new']);
+});
+
+test('le comande nuove: dopo la prima lettura, solo quelle mai viste', () => {
+  const list = [order(1, 'pending', 1), order(2, 'pending', 1)];
+  assert.deepEqual(newOrderIds(null, list), [], 'la prima lettura non avvisa');
+  assert.deepEqual(newOrderIds(new Set([1]), list), [2]);
+  assert.deepEqual(newOrderIds(new Set([1, 2]), list), []);
 });

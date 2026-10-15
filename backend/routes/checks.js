@@ -13,7 +13,8 @@ import { computeLineTotal, sanitizeAdjustment } from '../utils/pricing.js';
 import { sumQuantitiesByProduct, applyStockChange } from '../utils/stock.js';
 import { loadItems } from '../utils/orderItemsRead.js';
 import { withCheckInfo } from '../utils/orderCheck.js';
-import { readCoverCharge, syncCoverOrder } from '../utils/cover.js';
+import { openCheckOnTable } from '../utils/openCheck.js';
+import { syncCoverOrder } from '../utils/cover.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { openCheckSchema, listChecksQuerySchema, billRequestSchema, paymentSchema, adjustSchema, voidCheckSchema, receiptQuerySchema, moveCheckSchema, mergeCheckSchema, coversSchema } from '../schemas/checkSchema.js';
 import { courseOrdersSchema, fireCoursesSchema, resequenceSchema } from '../schemas/courseSchema.js';
@@ -50,23 +51,8 @@ export default function (broadcast) {
   router.post('/', ...waiterGuard, validate({ body: openCheckSchema }), tenantScope, async (req, res) => {
     const { table_id, covers } = req.body;
     try {
-      const id = await inTransaction(req.db, async (db) => {
-        const { rows: sessions } = await db.query('SELECT id FROM sessions WHERE end_time IS NULL FOR SHARE');
-        if (!sessions.length) throw new HttpError(409, 'Nessuna sessione attiva: apri una sessione prima di aprire un tavolo', 'NO_ACTIVE_SESSION');
-
-        const { rows: tables } = await db.query('SELECT id, active FROM dining_tables WHERE id = $1', [table_id]);
-        if (!tables.length) throw new HttpError(404, 'Tavolo non trovato');
-        if (!tables[0].active) throw new HttpError(409, 'Il tavolo è disattivato', 'TABLE_INACTIVE');
-
-        // Aperture contemporanee nella stessa sessione si mettono in fila: ognuna vede l'ultimo numero dato.
-        await db.query(`SELECT pg_advisory_xact_lock(hashtextextended('checks:' || current_setting('app.tenant_id') || ':' || $1::text, 0))`, [sessions[0].id]);
-        const { rows } = await db.query(
-          `INSERT INTO checks (session_id, table_id, number, covers, opened_by, cover_charge)
-           VALUES ($1, $2, (SELECT COALESCE(MAX(number), 0) + 1 FROM checks WHERE session_id = $1), $3, $4, $5) RETURNING id`,
-          [sessions[0].id, table_id, covers, req.user.id, await readCoverCharge(db)]);
-        await syncCoverOrder(db, req.user.tenantId, rows[0].id, req.user.id);
-        return rows[0].id;
-      });
+      const id = await inTransaction(req.db, (db) =>
+        openCheckOnTable(db, { tenantId: req.user.tenantId, userId: req.user.id, tableId: table_id, covers }));
       const check = await getCheckSummary(req.db, id);
       await logAudit(req.db, req.user.id, 'OPEN_CHECK', { checkId: id, tableId: table_id, covers });
       notify(req.user.tenantId, check);

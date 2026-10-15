@@ -235,7 +235,8 @@ export default function (broadcast) {
     const { status } = req.body;
 
     // La cucina fa avanzare lo stato (in preparazione, completato), ma non storna.
-    if (status === 'canceled' && !CASH_ROLES.includes(req.user.role))
+    // Stornano i ruoli di cassa; il cameriere solo le comande dei suoi tavoli (controllo più sotto, sull'ordine)
+    if (status === 'canceled' && !WAITER_ROLES.includes(req.user.role))
       return res.status(403).json({ error: 'Non hai i permessi per stornare ordini' });
 
     try {
@@ -253,6 +254,8 @@ export default function (broadcast) {
         );
         if (!current.length) throw new HttpError(404, 'Ordine non trovato');
         const order = current[0];
+        if (status === 'canceled' && !CASH_ROLES.includes(req.user.role) && !order.check_id)
+          throw new HttpError(403, 'Il cameriere storna solo le comande dei tavoli', 'WAITER_CANNOT_CANCEL');
         // Una portata da mandare non entra in cucina: si manda dal conto (POST /checks/:id/fire) o si storna.
         if (order.status === 'scheduled' && status !== 'canceled')
           throw new HttpError(409, 'La portata non è ancora stata mandata', 'ORDER_SCHEDULED');

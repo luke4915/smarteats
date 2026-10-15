@@ -4,12 +4,13 @@ import { orderItemSchema } from './orderSchema.js';
 
 const name = z.string().trim().min(1).max(40);
 
-export const createCourseSchema = z.object({ name });
+export const createCourseSchema = z.object({ name, with_previous: z.boolean().default(false) });
 
 export const updateCourseSchema = z.object({
   name: name.optional(),
   active: z.boolean().optional(),
-}).refine(v => v.name !== undefined || v.active !== undefined, { message: 'Niente da modificare' });
+  with_previous: z.boolean().optional(),
+}).refine(v => v.name !== undefined || v.active !== undefined || v.with_previous !== undefined, { message: 'Niente da modificare' });
 
 // Nuovo ordine delle portate del locale: tutti gli id, nell'ordine voluto.
 export const reorderCoursesSchema = z.object({

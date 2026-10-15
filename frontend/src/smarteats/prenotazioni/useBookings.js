@@ -1,0 +1,32 @@
+import { useState, useEffect, useCallback } from 'react';
+import { fetchWithAuth } from '../../utils/apiClient';
+import { useToast } from '../../context/useToast';
+
+// I dati della giornata: turni, prenotazioni, disponibilità e sale (per assegnare i tavoli). Si rileggono quando un
+// altro dispositivo cambia una prenotazione o un conto.
+export function useBookings(date, event) {
+  const { showToast } = useToast();
+  const [shifts, setShifts] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [day, setDay] = useState({ date: null, reservations: [], availability: [] });
+
+  useEffect(() => {
+    Promise.all([fetchWithAuth('/bookings/shifts'), fetchWithAuth('/rooms')])
+      .then(([s, r]) => { setShifts(s); setRooms(r); })
+      .catch(err => showToast(err.message || 'Errore caricamento prenotazioni', 'error'));
+  }, [showToast]);
+
+  const reload = useCallback(async () => {
+    try {
+      const [reservations, availability] = await Promise.all([
+        fetchWithAuth(`/bookings/reservations?date=${date}`), fetchWithAuth(`/bookings/availability?date=${date}`)]);
+      setDay({ date, reservations, availability });
+    } catch (err) { showToast(err.message || 'Errore caricamento prenotazioni', 'error'); }
+  }, [date, showToast]);
+
+  useEffect(() => { reload(); }, [reload]);
+  useEffect(() => { if (event && ['reservation_updated', 'check_updated'].includes(event.type)) reload(); }, [event, reload]);
+
+  // Finché non arrivano i dati del giorno scelto si mostra il caricamento (evita di vedere il giorno precedente)
+  return { shifts, rooms, reservations: day.reservations, availability: day.availability, loading: day.date !== date, reload };
+}

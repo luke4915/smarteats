@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, NavLink, useNavigate } from 'react-router-dom';
-import { LayoutGrid, UtensilsCrossed, BookOpen, BarChart3, Settings, LogOut, Moon, Sun, UserRound } from 'lucide-react';
+import { LayoutGrid, CalendarDays, UtensilsCrossed, BookOpen, BarChart3, Settings, LogOut, Moon, Sun, UserRound } from 'lucide-react';
 
 import { useAuth } from '../context/useAuth';
 import { useToast } from '../context/useToast';
@@ -16,6 +16,8 @@ import ProductConfig from '../components/products/ProductConfig';
 import RoomsSettings from '../components/setup/RoomsSettings';
 import UsersSettings from '../components/setup/UsersSettings';
 import CoverSettings from './CoverSettings';
+import BookingSettings from './BookingSettings';
+import PrenotazioniPage from './prenotazioni/PrenotazioniPage';
 import CourseSettings from './CourseSettings';
 import ModifierSettings from './ModifierSettings';
 import { useModifiers } from './sala/useModifiers';
@@ -23,7 +25,7 @@ import { useModifiers } from './sala/useModifiers';
 const CucinaPage = lazy(() => import('./cucina/CucinaPage'));
 const StatistichePage = lazy(() => import('./statistiche/StatistichePage'));
 
-const ICONS = { sala: LayoutGrid, cucina: UtensilsCrossed, carta: BookOpen, statistiche: BarChart3, impostazioni: Settings };
+const ICONS = { sala: LayoutGrid, prenotazioni: CalendarDays, cucina: UtensilsCrossed, carta: BookOpen, statistiche: BarChart3, impostazioni: Settings };
 const NAV_CLASS = ({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm font-medium
   ${isActive ? 'bg-[var(--bg-card-2)] text-[var(--text-main)] [&>svg]:text-[var(--accent)]' : 'text-[var(--text-muted)] hover:bg-[var(--bg-card-2)] hover:text-[var(--text-main)]'}`;
 
@@ -66,6 +68,7 @@ const SettingsPage = ({ user }) => (
   <div className="space-y-6">
     <h2 className="text-2xl font-semibold tracking-tight text-[var(--text-main)]">Impostazioni</h2>
     {user.modules?.includes('tables') && <><CoverSettings /><CourseSettings /><RoomsSettings /></>}
+    {user.modules?.includes('bookings') && <BookingSettings />}
     <UsersSettings />
   </div>
 );
@@ -129,6 +132,7 @@ const SmartEatsApp = () => {
           <Suspense fallback={<Page><p className="text-[var(--text-muted)]">Caricamento…</p></Page>}>
             <Routes>
               <Route path="/sala" element={guard('sala', <SalaPage user={user} service={service} event={event} />)} />
+              <Route path="/prenotazioni" element={guard('prenotazioni', <PrenotazioniPage event={event} />)} />
               <Route path="/cucina" element={guard('cucina', <Page><CucinaPage event={event} /></Page>)} />
               <Route path="/carta" element={guard('carta', <Page><CartaPage /></Page>)} />
               <Route path="/statistiche" element={guard('statistiche', <Page><StatistichePage /></Page>)} />

@@ -1,71 +1,108 @@
-// Portate di una comanda: come le righe del carrello si dividono in gruppi, in che ordine escono e quali escono
-// insieme. È solo l'anteprima della comanda: ordine d'uscita e totali veri li fissa il server (POST /checks/:id/courses).
+// Le «uscite» di una comanda: in che ordine escono i piatti dalla cucina e quali escono insieme. È l'anteprima di quello
+// che si invia (POST /checks/:id/courses): numeri d'uscita e totali veri li fissa il server.
 //
-// `plan` = { order: [chiavi] | null, together: { [chiave]: true } }. La chiave di un gruppo è l'id della portata,
-// 0 per i piatti senza portata («Bevande e altro»: bevande, pane…). Senza `order` vale quello del locale, le bevande per prime.
+// Ogni riga ha una portata (`course_id`, nullo per bevande e pane) e, se il cameriere l'ha spostata, un'uscita propria
+// (`slot`, un numero: le righe con lo stesso numero escono insieme). Senza `slot` vale quello della portata:
+// le portate sono in ordine e una portata segnata «insieme alla precedente» ha lo stesso numero di quella prima.
+// Bevande e pane escono insieme alla prima portata vera, non da soli.
 
 export const NO_COURSE_NAME = 'Bevande e altro';
-export const emptyPlan = () => ({ order: null, together: {} });
-
 const keyOf = (courseId) => courseId ?? 0;
 
-// Chiavi dei gruppi presenti nella comanda, nell'ordine di uscita.
-export function orderedKeys(cart, courses, plan) {
-  const base = [0, ...courses.map(c => c.id)];
-  const rank = plan.order ?? base;
-  const position = (k) => { const i = rank.indexOf(k); return i === -1 ? rank.length + Math.max(base.indexOf(k), 0) : i; };
-  return [...new Set(cart.map(l => keyOf(l.course_id)))].sort((a, b) => position(a) - position(b));
+// Una portata del locale che non esiste più o non è attiva si tratta come «senza portata».
+export const courseOfProduct = (product, courses) => (courses.some(c => c.id === product.course_id) ? product.course_id : null);
+
+// Numero d'uscita di partenza di ogni portata: cresce a ogni portata, tranne quelle «insieme alla precedente».
+export function defaultSlots(courses) {
+  const map = new Map();
+  let slot = 0;
+  courses.forEach((c, i) => {
+    if (i === 0 || !c.with_previous) slot += 1;
+    map.set(c.id, slot);
+  });
+  return map;
 }
 
-// Gruppi pronti da mostrare e da inviare. `seq` è il numero d'uscita: un gruppo «insieme» al precedente ha lo stesso.
-// «Bevande e altro» (piatti senza portata) se sta in testa esce insieme alla prima portata vera, non da sole:
-// altrimenti il cameriere manderebbe le bevande e farebbe aspettare gli antipasti.
-export function buildGroups(cart, courses, plan) {
-  const keys = orderedKeys(cart, courses, plan);
-  const leadingSubito = keys.length > 1 && keys[0] === 0;
-  let seq = 0;
-  return keys.map((key, i) => {
-    const firstReal = leadingSubito ? i === 1 : i === 0;
-    // «insieme» ha senso solo dalla seconda portata vera in poi
-    const together = !firstReal && i > 0 && !(leadingSubito && i === 1) && !!plan.together[key];
-    if (leadingSubito && i === 0) seq = 1;
-    else if (!together) seq = Math.max(seq, leadingSubito && i === 1 ? 1 : seq + 1);
+const slotOfLine = (line, slots, nullSlot) => {
+  if (line.slot !== undefined && line.slot !== null) return line.slot;
+  return slots.get(line.course_id) ?? nullSlot;
+};
+
+// L'uscita di bevande e pane: quella della prima portata vera presente nella comanda (o la prima in assoluto).
+function nullCourseSlot(cart, slots) {
+  const present = cart.filter(l => l.course_id !== null && slots.has(l.course_id)).map(l => slots.get(l.course_id));
+  return present.length ? Math.min(...present) : 1;
+}
+
+// Il programma della comanda: uscite in ordine, ognuna con le sue portate e le sue righe.
+// `uscite[i]` = { index (1..n), raw (il numero grezzo), courses: [{ key, course_id, name, lines }], lines }
+export function buildSchedule(cart, courses) {
+  const slots = defaultSlots(courses);
+  const nullSlot = nullCourseSlot(cart, slots);
+  const withSlot = cart.map(line => ({ line, raw: slotOfLine(line, slots, nullSlot) }));
+  const raws = [...new Set(withSlot.map(x => x.raw))].sort((a, b) => a - b);
+  const order = new Map(courses.map((c, i) => [c.id, i]));
+
+  const uscite = raws.map((raw, i) => {
+    const lines = withSlot.filter(x => x.raw === raw).map(x => x.line);
+    const keys = [...new Set(lines.map(l => keyOf(l.course_id)))].sort((a, b) => (a === 0 ? -1 : b === 0 ? 1 : (order.get(a) ?? 99) - (order.get(b) ?? 99)));
     return {
-      key, course_id: key || null, seq, together,
-      // la prima portata vera che esce con le bevande: non si sposta da sola
-      withSubito: leadingSubito && i === 1,
-      name: key ? (courses.find(c => c.id === key)?.name ?? 'Portata') : NO_COURSE_NAME,
-      lines: cart.filter(l => keyOf(l.course_id) === key),
+      index: i + 1, raw, lines,
+      courses: keys.map(key => ({
+        key, course_id: key || null,
+        name: key ? (courses.find(c => c.id === key)?.name ?? 'Portata') : NO_COURSE_NAME,
+        lines: lines.filter(l => keyOf(l.course_id) === key),
+      })),
     };
+  });
+  return { uscite, slots, nullSlot };
+}
+
+// Cosa si manda al server: una voce per portata dentro ogni uscita, col numero d'uscita (1..n).
+export const toPayload = (schedule) => schedule.uscite.flatMap(u => u.courses.map(c => ({
+  course_id: c.course_id,
+  seq: u.index,
+  items: c.lines.map(l => ({ id: l.id, name: l.name, quantity: l.quantity, note: l.note, print_destination: l.print_destination, modifiers: (l.modifiers ?? []).map(m => m.id) })),
+})));
+
+// Sposta una riga: `to` = { raw } (in un'uscita esistente) | { after: raw } (in una nuova, subito dopo) | { first: true }.
+// Ritorna il carrello con la riga che ha un numero d'uscita proprio.
+export function moveLine(cart, lineIndex, to, schedule) {
+  const raws = schedule.uscite.map(u => u.raw);
+  let raw;
+  if ('raw' in to) raw = to.raw;
+  else if (to.first) raw = raws[0] - 1;
+  else {
+    const next = raws.find(r => r > to.after);
+    raw = next === undefined ? to.after + 1 : (to.after + next) / 2;
+  }
+  return cart.map((l, i) => (i === lineIndex ? { ...l, slot: raw } : l));
+}
+
+// Sposta un'intera uscita prima (-1) o dopo (+1): scambia il posto con quella accanto.
+export function moveUscita(cart, schedule, index, direction) {
+  const a = schedule.uscite[index], b = schedule.uscite[index + direction];
+  if (!a || !b) return cart;
+  return cart.map(l => {
+    const raw = schedule.uscite.find(u => u.lines.includes(l))?.raw;
+    return raw === a.raw ? { ...l, slot: b.raw } : raw === b.raw ? { ...l, slot: a.raw } : l;
   });
 }
 
-// Sposta un gruppo prima (-1) o dopo (+1) degli altri.
-export function moveGroup(cart, courses, plan, key, direction) {
-  const keys = orderedKeys(cart, courses, plan);
-  const from = keys.indexOf(key), to = from + direction;
-  if (from === -1 || to < 0 || to >= keys.length) return plan;
-  [keys[from], keys[to]] = [keys[to], keys[from]];
-  const rest = [0, ...courses.map(c => c.id)].filter(k => !keys.includes(k));
-  return { ...plan, order: [...keys, ...rest] };
+// Unisce un'uscita a quella prima: le sue righe escono insieme a quelle.
+export function mergeWithPrevious(cart, schedule, index) {
+  const cur = schedule.uscite[index], prev = schedule.uscite[index - 1];
+  if (!cur || !prev) return cart;
+  return cart.map(l => (cur.lines.includes(l) ? { ...l, slot: prev.raw } : l));
 }
 
-export const toggleTogether = (plan, key) => ({ ...plan, together: { ...plan.together, [key]: !plan.together[key] } });
+const names = (u) => u.courses.map(c => c.name).join(' + ');
 
-// Cosa si manda al server: per ogni riga solo id, quantità, nota, destinazione di stampa e id delle opzioni (prezzi e nomi li legge il server).
-export const toPayload = (groups) => groups.map(g => ({
-  course_id: g.course_id,
-  seq: g.seq,
-  items: g.lines.map(l => ({ id: l.id, name: l.name, quantity: l.quantity, note: l.note, print_destination: l.print_destination, modifiers: (l.modifiers ?? []).map(m => m.id) })),
-}));
-
-// Una riga del carrello con la portata del suo prodotto (se la portata esiste ancora e il locale ne usa).
-export const courseOfProduct = (product, courses) => (courses.some(c => c.id === product.course_id) ? product.course_id : null);
-
-// Riepilogo di cosa succede all'invio, per il pulsante: «Invia · Antipasti» e, sotto, cosa resta da mandare.
-export function sendSummary(groups, fireFirst) {
-  if (!groups.length) return { now: [], later: [] };
-  if (!fireFirst) return { now: [], later: groups };
-  const first = groups[0].seq;
-  return { now: groups.filter(g => g.seq === first), later: groups.filter(g => g.seq !== first) };
+// Il riepilogo che sta sotto al pulsante: cosa esce ora e cosa resta da mandare.
+export function sendSummary(schedule, fireFirst) {
+  const [first, ...rest] = schedule.uscite;
+  if (!first) return { now: null, later: [] };
+  return fireFirst
+    ? { now: names(first), later: rest.map(names) }
+    : { now: null, later: schedule.uscite.map(names) };
 }

@@ -1,87 +1,90 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { emptyPlan, orderedKeys, buildGroups, moveGroup, toggleTogether, toPayload, courseOfProduct, sendSummary } from './courses.js';
+import { buildSchedule, defaultSlots, toPayload, moveLine, moveUscita, mergeWithPrevious, sendSummary, courseOfProduct, NO_COURSE_NAME } from './courses.js';
 
-const courses = [{ id: 10, name: 'Antipasti' }, { id: 20, name: 'Primi' }, { id: 30, name: 'Dolci' }];
-const line = (id, course_id, quantity = 1) => ({ id, name: `P${id}`, quantity, note: '', print_destination: 'both', course_id });
+const courses = [
+  { id: 10, name: 'Antipasti', with_previous: false }, { id: 20, name: 'Primi', with_previous: false },
+  { id: 30, name: 'Secondi', with_previous: false }, { id: 35, name: 'Contorni', with_previous: true }, { id: 40, name: 'Dolci', with_previous: false },
+];
+const line = (id, course_id, extra = {}) => ({ id, name: `P${id}`, quantity: 1, note: '', print_destination: 'both', course_id, modifiers: [], ...extra });
+const shape = (s) => s.uscite.map(u => [u.index, u.courses.map(c => c.name)]);
 
-test('i gruppi seguono l\'ordine del locale, «Bevande e altro» per primo, anche se il carrello è in disordine', () => {
-  const cart = [line(1, 30), line(2, 20), line(3, null), line(4, 10), line(5, 20)];
-  const groups = buildGroups(cart, courses, emptyPlan());
-  assert.deepEqual(groups.map(g => [g.name, g.seq, g.lines.length]), [['Bevande e altro', 1, 1], ['Antipasti', 1, 1], ['Primi', 2, 2], ['Dolci', 3, 1]]);
-  assert.deepEqual(groups.map(g => g.withSubito), [false, true, false, false]);
+test('numeri d\'uscita di partenza: una portata «insieme alla precedente» esce con quella prima', () => {
+  assert.deepEqual([...defaultSlots(courses)], [[10, 1], [20, 2], [30, 3], [35, 3], [40, 4]]);
 });
 
-test('«insieme» dà lo stesso numero d\'uscita al precedente; sul primo gruppo non ha effetto', () => {
-  const cart = [line(1, 10), line(2, 20), line(3, 30)];
-  let plan = toggleTogether(emptyPlan(), 20);
-  assert.deepEqual(buildGroups(cart, courses, plan).map(g => g.seq), [1, 1, 2]);
-  plan = toggleTogether(plan, 10);
-  assert.deepEqual(buildGroups(cart, courses, plan).map(g => [g.together, g.seq]), [[false, 1], [true, 1], [false, 2]], 'il primo non è mai «insieme»');
-  plan = toggleTogether(plan, 20);
-  assert.deepEqual(buildGroups(cart, courses, plan).map(g => g.seq), [1, 2, 3], 'si toglie');
-});
-
-test('si riordinano i gruppi, fino ai bordi', () => {
-  const cart = [line(1, 10), line(2, 20), line(3, 30)];
-  let plan = moveGroup(cart, courses, emptyPlan(), 30, -1);
-  assert.deepEqual(orderedKeys(cart, courses, plan), [10, 30, 20]);
-  plan = moveGroup(cart, courses, plan, 30, -1);
-  assert.deepEqual(orderedKeys(cart, courses, plan), [30, 10, 20]);
-  assert.equal(moveGroup(cart, courses, plan, 30, -1), plan, 'già primo: niente cambia');
-  assert.equal(moveGroup(cart, courses, plan, 20, 1), plan, 'già ultimo');
-  assert.equal(moveGroup(cart, courses, plan, 99, 1), plan, 'gruppo inesistente');
-});
-
-test('un gruppo che compare dopo il riordino prende il suo posto naturale', () => {
-  let cart = [line(1, 10), line(2, 30)];
-  const plan = moveGroup(cart, courses, emptyPlan(), 30, -1);
-  cart = [...cart, line(3, 20)];
-  assert.deepEqual(orderedKeys(cart, courses, plan), [30, 10, 20]);
-});
-
-test('una portata eliminata dal locale non rompe la comanda', () => {
-  const groups = buildGroups([line(1, 99), line(2, 10)], courses, emptyPlan());
-  assert.deepEqual(groups.map(g => g.name), ['Antipasti', 'Portata']);
-});
-
-test('il payload porta solo id, quantità, nota, destinazione e id delle opzioni, con l\'ordine d\'uscita', () => {
-  const groups = buildGroups([line(1, 10, 2), line(2, 20)], courses, toggleTogether(emptyPlan(), 20));
-  assert.deepEqual(toPayload(groups), [
-    { course_id: 10, seq: 1, items: [{ id: 1, name: 'P1', quantity: 2, note: '', print_destination: 'both', modifiers: [] }] },
-    { course_id: 20, seq: 1, items: [{ id: 2, name: 'P2', quantity: 1, note: '', print_destination: 'both', modifiers: [] }] },
+test('le portate si dispongono in uscite; secondi e contorni insieme; bevande con la prima portata', () => {
+  const cart = [line(1, 40), line(2, 35), line(3, null), line(4, 10), line(5, 30), line(6, 20)];
+  const s = buildSchedule(cart, courses);
+  assert.deepEqual(shape(s), [
+    [1, [NO_COURSE_NAME, 'Antipasti']], [2, ['Primi']], [3, ['Secondi', 'Contorni']], [4, ['Dolci']],
   ]);
 });
 
-test('la portata di un prodotto vale solo se il locale la ha ancora', () => {
+test('le uscite si compattano: se mancano delle portate i numeri restano consecutivi', () => {
+  const s = buildSchedule([line(1, 30), line(2, 40)], courses);
+  assert.deepEqual(s.uscite.map(u => u.index), [1, 2]);
+  assert.deepEqual(toPayload(s).map(g => [g.course_id, g.seq]), [[30, 1], [40, 2]]);
+});
+
+test('solo bevande: una sola uscita', () => {
+  const s = buildSchedule([line(1, null), line(2, null)], courses);
+  assert.deepEqual(shape(s), [[1, [NO_COURSE_NAME]]]);
+});
+
+test('una portata eliminata dal locale non rompe la comanda: esce con le bevande', () => {
+  const s = buildSchedule([line(1, 999), line(2, 10)], courses);
+  assert.equal(s.uscite.length, 1);
+});
+
+test('spostare un singolo piatto: in un\'uscita esistente, in una nuova dopo, o davanti a tutto', () => {
+  const cart = [line(1, 10), line(2, 20), line(3, 20), line(4, 40)];
+  let s = buildSchedule(cart, courses);
+  // il secondo primo (riga 2) esce insieme agli antipasti
+  const together = moveLine(cart, 2, { raw: s.uscite[0].raw }, s);
+  s = buildSchedule(together, courses);
+  assert.deepEqual(shape(s), [[1, ['Antipasti', 'Primi']], [2, ['Primi']], [3, ['Dolci']]]);
+  assert.equal(s.uscite[0].courses[1].lines.length, 1, 'un solo primo con gli antipasti');
+
+  // il dolce in un'uscita sua, subito dopo gli antipasti (prima dei primi)
+  const s0 = buildSchedule(cart, courses);
+  const early = moveLine(cart, 3, { after: s0.uscite[0].raw }, s0);
+  assert.deepEqual(shape(buildSchedule(early, courses)), [[1, ['Antipasti']], [2, ['Dolci']], [3, ['Primi']]]);
+
+  // davanti a tutto
+  const first = moveLine(cart, 1, { first: true }, s0);
+  assert.deepEqual(shape(buildSchedule(first, courses)).map(([, c]) => c[0]), ['Primi', 'Antipasti', 'Primi', 'Dolci']);
+});
+
+test('spostare un\'intera uscita, o unirla alla precedente', () => {
+  const cart = [line(1, 10), line(2, 20), line(3, 40)];
+  const s = buildSchedule(cart, courses);
+  const swapped = moveUscita(cart, s, 0, +1);
+  assert.deepEqual(shape(buildSchedule(swapped, courses)).map(([, c]) => c[0]), ['Primi', 'Antipasti', 'Dolci']);
+  assert.equal(moveUscita(cart, s, 0, -1), cart, 'già prima');
+  const merged = mergeWithPrevious(cart, s, 1);
+  assert.deepEqual(shape(buildSchedule(merged, courses)), [[1, ['Antipasti', 'Primi']], [2, ['Dolci']]]);
+});
+
+test('payload: id, quantità, nota, destinazione e opzioni; il numero d\'uscita segue la disposizione', () => {
+  const cart = [line(1, 10, { quantity: 2, note: 'SENZA SALE', modifiers: [{ id: 7, name: 'x', price: 0 }] }), line(2, 35)];
+  const payload = toPayload(buildSchedule(cart, courses));
+  assert.deepEqual(payload, [
+    { course_id: 10, seq: 1, items: [{ id: 1, name: 'P1', quantity: 2, note: 'SENZA SALE', print_destination: 'both', modifiers: [7] }] },
+    { course_id: 35, seq: 2, items: [{ id: 2, name: 'P2', quantity: 1, note: '', print_destination: 'both', modifiers: [] }] },
+  ]);
+});
+
+test('riepilogo invio: ora, poi; oppure tutto da mandare', () => {
+  const s = buildSchedule([line(1, null), line(2, 10), line(3, 20), line(4, 30), line(5, 35)], courses);
+  assert.deepEqual(sendSummary(s, true), { now: `${NO_COURSE_NAME} + Antipasti`, later: ['Primi', 'Secondi + Contorni'] });
+  assert.deepEqual(sendSummary(s, false).now, null);
+  assert.equal(sendSummary(s, false).later.length, 3);
+  assert.deepEqual(sendSummary(buildSchedule([], courses), true), { now: null, later: [] });
+});
+
+test('portata del prodotto: vale solo se il locale la ha ancora', () => {
   assert.equal(courseOfProduct({ course_id: 20 }, courses), 20);
   assert.equal(courseOfProduct({ course_id: 99 }, courses), null);
   assert.equal(courseOfProduct({}, courses), null);
-});
-
-test('riepilogo invio: esce il primo numero d\'uscita, il resto aspetta', () => {
-  const groups = buildGroups([line(1, 10), line(2, 20), line(3, 30)], courses, toggleTogether(emptyPlan(), 20));
-  const s = sendSummary(groups, true);
-  assert.deepEqual([s.now.map(g => g.name), s.later.map(g => g.name)], [['Antipasti', 'Primi'], ['Dolci']]);
-  assert.deepEqual(sendSummary(groups, false).now, []);
-  assert.deepEqual(sendSummary([], true), { now: [], later: [] });
-});
-
-test('«Bevande e altro» da solo esce con il numero 1; con altre portate esce insieme alla prima', () => {
-  assert.deepEqual(buildGroups([line(1, null)], courses, emptyPlan()).map(g => g.seq), [1]);
-  const plan = toggleTogether(emptyPlan(), 10);                 // «insieme» sulla prima portata vera: non cambia nulla
-  const groups = buildGroups([line(1, null), line(2, 10), line(3, 20)], courses, plan);
-  assert.deepEqual(groups.map(g => g.seq), [1, 1, 2]);
-});
-
-test('«Bevande e altro» spostato dopo una portata si comporta come ogni altro gruppo', () => {
-  const cart = [line(1, null), line(2, 10), line(3, 20)];
-  const plan = moveGroup(cart, courses, emptyPlan(), 0, 1);     // Antipasti, Subito, Primi
-  assert.deepEqual(buildGroups(cart, courses, plan).map(g => [g.name, g.seq, g.withSubito]), [['Antipasti', 1, false], ['Bevande e altro', 2, false], ['Primi', 3, false]]);
-});
-
-test('invio: il primo numero d\'uscita comprende «Bevande e altro» e la prima portata', () => {
-  const groups = buildGroups([line(1, null), line(2, 10), line(3, 20)], courses, emptyPlan());
-  const s = sendSummary(groups, true);
-  assert.deepEqual([s.now.map(g => g.name), s.later.map(g => g.name)], [['Bevande e altro', 'Antipasti'], ['Primi']]);
 });

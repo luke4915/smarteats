@@ -11,6 +11,7 @@ export const MODULES = {
   stats: { label: 'Statistiche', types: ALL_TYPES },
   qr_menu: { label: 'Menu pubblico con QR', types: ['sagra', 'paninaro'] },
   tables: { label: 'Sala e tavoli', types: ['ristorante'] },
+  bookings: { label: 'Prenotazioni', types: ['ristorante'] },
 };
 
 // Il tipo di attività propone i moduli di partenza; poi il master può accendere o spegnere quelli che esistono per il tipo.
