@@ -34,3 +34,17 @@ test('conservazione: 90 giorni', () => {
   assert.equal(retentionCutoff('2026-10-15'), '2026-07-17');
   assert.equal(MAX_PARTY, 10);
 });
+
+import { minutesUntilStart, cancelOption } from '../utils/bookingPortal.js';
+
+test('annullo: una richiesta si ritira; una confermata si chiede, fino a un\'ora prima; poi si telefona', () => {
+  const now = { date: '2026-10-15', minutes: 17 * 60 + 30 };                       // le 17:30
+  assert.equal(minutesUntilStart('2026-10-15', '19:30', now), 120);
+  assert.equal(cancelOption({ status: 'requested' }, '2026-10-15', '19:30', now), 'withdraw');
+  assert.equal(cancelOption({ status: 'confirmed' }, '2026-10-15', '19:30', now), 'request');
+  assert.equal(cancelOption({ status: 'confirmed' }, '2026-10-15', '18:30', now), 'request', 'esattamente un\'ora');
+  assert.equal(cancelOption({ status: 'confirmed' }, '2026-10-15', '18:15', now), 'call');
+  assert.equal(cancelOption({ status: 'confirmed', cancel_requested: true }, '2026-10-15', '19:30', now), 'requested');
+  assert.equal(cancelOption({ status: 'confirmed' }, '2026-10-16', '12:00', now), 'request', 'domani');
+  for (const status of ['declined', 'cancelled', 'seated', 'completed', 'no_show', 'expired']) assert.equal(cancelOption({ status }, '2026-10-15', '19:30', now), null);
+});

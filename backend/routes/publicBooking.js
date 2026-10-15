@@ -11,7 +11,7 @@ import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { canTransition, freeSeats, shiftOpenOn, REQUEST_TTL_HOURS } from '../utils/bookings.js';
 import { SHIFT_COLUMNS, CLOSURE_COLUMNS, lockShift, assertBookable } from '../utils/bookingDb.js';
 import {
-  MAX_PARTY, MAX_DAYS_AHEAD, MIN_NOTICE_HOURS, MAX_PENDING_PER_PHONE, MIN_FILL_MS, localNow, addDays, withinWindow, phoneDigits,
+  MAX_PARTY, MAX_DAYS_AHEAD, MIN_CANCEL_NOTICE_HOURS, MIN_NOTICE_HOURS, MAX_PENDING_PER_PHONE, MIN_FILL_MS, localNow, addDays, withinWindow, phoneDigits, cancelOption,
 } from '../utils/bookingPortal.js';
 import { availabilityQuerySchema, portalRequestSchema, tokenParamsSchema } from '../schemas/publicBookingSchema.js';
 
@@ -135,7 +135,7 @@ export default function (broadcast) {
     await expireStale(db);
     const { rows } = await db.query(
       `SELECT r.id, to_char(r.date, 'YYYY-MM-DD') AS date, r.status, r.party_size, r.customer_name, r.decline_reason,
-              s.name AS shift_name, to_char(s.start_time, 'HH24:MI') AS start_time
+              (r.cancel_requested_at IS NOT NULL) AS cancel_requested, s.name AS shift_name, to_char(s.start_time, 'HH24:MI') AS start_time
        FROM reservations r JOIN booking_shifts s ON s.id = r.shift_id WHERE r.public_token = $1`, [token]);
     if (!rows.length) throw new HttpError(404, 'Richiesta non trovata', 'NOT_FOUND');
     return rows[0];
@@ -143,24 +143,38 @@ export default function (broadcast) {
   const present = (r, restaurant) => ({
     status: r.status, date: r.date, shift_name: r.shift_name, start_time: r.start_time, party_size: r.party_size,
     customer_name: r.customer_name, decline_reason: r.status === 'declined' ? r.decline_reason : '',
-    can_cancel: canTransition(r.status, 'cancelled'), restaurant,
+    // 'withdraw' | 'request' | 'requested' | 'call' | null (vedi cancelOption)
+    cancel: cancelOption(r, r.date, r.start_time, localNow()), restaurant,
   });
 
   router.get('/requests/:token', ...guard, validate({ params: tokenParamsSchema }), inPortal(async (db, { req, restaurant }) =>
     present(await loadMine(db, req.params.token), { name: restaurant.name, phone: restaurant.phone })));
 
+  // Annullo: una richiesta non ancora confermata si ritira subito; una prenotazione confermata si *chiede* di annullare
+  // (il locale decide) e solo fino a un'ora prima del turno; dopo, il cliente deve telefonare.
   router.post('/requests/:token/cancel', ...guard, validate({ params: tokenParamsSchema }), inPortal(async (db, { req, restaurant }) => {
-    const mine = await inTransaction(db, async (tx) => {
+    const outcome = await inTransaction(db, async (tx) => {
       const r = await loadMine(tx, req.params.token);
-      const { rows: [locked] } = await tx.query('SELECT status FROM reservations WHERE id = $1 FOR UPDATE', [r.id]);
-      if (!canTransition(locked.status, 'cancelled'))
-        throw new HttpError(409, 'Questa richiesta non si può più annullare da qui: chiamaci', 'INVALID_TRANSITION');
-      await tx.query(`UPDATE reservations SET status = 'cancelled' WHERE id = $1`, [r.id]);
-      return { ...r, status: 'cancelled' };
+      await tx.query('SELECT id FROM reservations WHERE id = $1 FOR UPDATE', [r.id]);
+      const option = cancelOption(r, r.date, r.start_time, localNow());
+      if (option === 'withdraw') {
+        await tx.query(`UPDATE reservations SET status = 'cancelled' WHERE id = $1`, [r.id]);
+        return { r: { ...r, status: 'cancelled' }, action: 'BOOKING_PORTAL_CANCEL' };
+      }
+      if (option === 'request') {
+        await tx.query('UPDATE reservations SET cancel_requested_at = now() WHERE id = $1', [r.id]);
+        return { r: { ...r, cancel_requested: true }, action: 'BOOKING_PORTAL_CANCEL_REQUEST' };
+      }
+      if (option === 'requested') return { r, action: null };   // già chiesto: non si ripete
+      throw new HttpError(409, option === 'call'
+        ? `Mancano meno di ${MIN_CANCEL_NOTICE_HOURS === 1 ? 'un\'ora' : `${MIN_CANCEL_NOTICE_HOURS} ore`} al turno: per annullare chiama il locale`
+        : 'Questa richiesta non si può più annullare da qui: chiama il locale', 'CANCEL_BY_PHONE');
     });
-    await logAudit(db, null, 'BOOKING_PORTAL_CANCEL', { reservationId: mine.id });
-    broadcast?.(req.tenantId, { type: 'reservation_updated', reservation: { id: mine.id, status: 'cancelled' } });
-    return present(mine, { name: restaurant.name, phone: restaurant.phone });
+    if (outcome.action) {
+      await logAudit(db, null, outcome.action, { reservationId: outcome.r.id });
+      broadcast?.(req.tenantId, { type: 'reservation_updated', reservation: { id: outcome.r.id, status: outcome.r.status, cancel_requested: !!outcome.r.cancel_requested } });
+    }
+    return present(outcome.r, { name: restaurant.name, phone: restaurant.phone });
   }));
 
   return router;

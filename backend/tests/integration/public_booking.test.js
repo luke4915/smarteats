@@ -86,13 +86,14 @@ describe('portale di prenotazione', () => {
 
     const mine = await client.get(`/public/booking/requests/${res.body.token}`);
     assert.equal(mine.status, 200);
-    assert.deepEqual(Object.keys(mine.body).sort(), ['can_cancel', 'customer_name', 'date', 'decline_reason', 'party_size', 'restaurant', 'shift_name', 'start_time', 'status']);
-    assert.deepEqual([mine.body.status, mine.body.can_cancel, mine.body.start_time], ['requested', true, '19:30']);
+    assert.deepEqual(Object.keys(mine.body).sort(), ['cancel', 'customer_name', 'date', 'decline_reason', 'party_size', 'restaurant', 'shift_name', 'start_time', 'status']);
+    assert.deepEqual([mine.body.status, mine.body.cancel, mine.body.start_time], ['requested', 'withdraw', '19:30']);
     assert.equal(JSON.stringify(mine.body).includes('verdi@example.com'), false, 'niente email nelle risposte pubbliche');
 
     // il personale conferma: il cliente lo vede dal suo link
     await admin.post(`/bookings/reservations/${staff.id}/confirm`, {});
-    assert.equal((await client.get(`/public/booking/requests/${res.body.token}`)).body.status, 'confirmed');
+    const confirmed = (await client.get(`/public/booking/requests/${res.body.token}`)).body;
+    assert.deepEqual([confirmed.status, confirmed.cancel], ['confirmed', 'request'], 'confermata: non si annulla da sola, si chiede');
   });
 
   it('rifiuti chiari: gruppo grande, consenso, trappola, troppo presto, troppo lontano, posto finito', async () => {
@@ -133,8 +134,8 @@ describe('portale di prenotazione', () => {
     assert.equal(res.status, 201, JSON.stringify(res.body) + JSON.stringify(made));
     const { token } = res.body;
     const cancelled = await client.post(`/public/booking/requests/${token}/cancel`, {});
-    assert.deepEqual([cancelled.status, cancelled.body.status, cancelled.body.can_cancel], [200, 'cancelled', false]);
-    assert.equal((await client.post(`/public/booking/requests/${token}/cancel`, {})).status, 409);
+    assert.deepEqual([cancelled.status, cancelled.body.status, cancelled.body.cancel], [200, 'cancelled', null]);
+    assert.equal((await client.post(`/public/booking/requests/${token}/cancel`, {})).status, 409, 'già annullata');
     assert.equal((await client.get(`/public/booking/requests/${token}x`)).status, 404);
     assert.equal((await client.get('/public/booking/requests/abcdefghijklmnop')).status, 404);
     // un altro locale (stesso token, altro sottodominio) non la trova, anche col portale acceso
@@ -145,6 +146,55 @@ describe('portale di prenotazione', () => {
     assert.ok(audit.some(a => a.action === 'BOOKING_PORTAL_REQUEST'));
     assert.ok(audit.some(a => a.action === 'BOOKING_PORTAL_CANCEL'));
     assert.equal(JSON.stringify(audit).includes('Rossi'), false, 'nell\'audit nessun dato personale');
+  });
+
+  it('annullo di una prenotazione confermata: il cliente lo chiede, il locale decide; troppo tardi si telefona', async () => {
+    const make = async (extra = {}) => {
+      const res = await request({ party_size: 2, ...extra });
+      assert.equal(res.status, 201, JSON.stringify(res.body));
+      const row = (await admin.get(`/bookings/reservations?date=${extra.date ?? day}`)).body.find(r => r.public_token === res.body.token);
+      await admin.post(`/bookings/reservations/${row.id}/confirm`, {});
+      return { token: res.body.token, id: row.id };
+    };
+    const { token, id } = await make();
+
+    // il cliente non annulla da solo: manda una richiesta di annullo, e la prenotazione resta confermata
+    const asked = await client.post(`/public/booking/requests/${token}/cancel`, {});
+    assert.deepEqual([asked.status, asked.body.status, asked.body.cancel], [200, 'confirmed', 'requested']);
+    assert.equal((await client.post(`/public/booking/requests/${token}/cancel`, {})).body.cancel, 'requested', 'ripeterlo non cambia nulla');
+
+    // il personale la vede nelle notifiche, con il tipo giusto
+    const inbox = (await admin.get('/bookings/inbox')).body;
+    const item = inbox.find(i => i.id === id);
+    assert.deepEqual([item.kind, item.customer_name, item.party_size], ['cancel_request', 'Rossi', 2]);
+
+    // «Mantieni»: la prenotazione resta, la richiesta sparisce e il cliente può chiederlo di nuovo
+    assert.equal((await admin.post(`/bookings/reservations/${id}/keep`, {})).status, 200);
+    assert.equal((await admin.post(`/bookings/reservations/${id}/keep`, {})).body.code, 'NO_CANCEL_REQUEST');
+    assert.equal((await admin.get('/bookings/inbox')).body.some(i => i.id === id), false);
+    assert.equal((await client.get(`/public/booking/requests/${token}`)).body.cancel, 'request');
+
+    // richiesto di nuovo e confermato dal locale: annullata, e fuori dalle notifiche
+    await client.post(`/public/booking/requests/${token}/cancel`, {});
+    assert.equal((await admin.post(`/bookings/reservations/${id}/cancel`, {})).body.status, 'cancelled');
+    assert.equal((await client.get(`/public/booking/requests/${token}`)).body.status, 'cancelled');
+    assert.equal((await admin.get('/bookings/inbox')).body.some(i => i.id === id), false);
+  });
+
+  it('a meno di un\'ora dal turno una prenotazione confermata non si annulla dal portale', async () => {
+    // un turno che inizia tra 30 minuti (nel fuso del locale), confermato dal personale direttamente in banca dati
+    const now = localNow();
+    const start = `${String(Math.floor(((now.minutes + 30) % 1440) / 60)).padStart(2, '0')}:${String((now.minutes + 30) % 60).padStart(2, '0')}`;
+    if (now.minutes + 30 >= 1440) return;                                  // a ridosso della mezzanotte il caso non si presenta
+    const { rows: [soon] } = await adminDb.query(
+      `INSERT INTO booking_shifts (name, start_time, duration_minutes, weekdays, capacity, tenant_id) VALUES ('Imminente', $1, 60, '{0,1,2,3,4,5,6}', 10, $2) RETURNING id`, [start, t.id]);
+    const token = `late-${Math.random().toString(36).slice(2)}-padding`;
+    await adminDb.query(
+      `INSERT INTO reservations (date, shift_id, party_size, status, customer_name, phone, source, public_token, tenant_id)
+       VALUES ($1, $2, 2, 'confirmed', 'Ritardatari', '333', 'portal', $3, $4)`, [today, soon.id, token, t.id]);
+    const res = await client.post(`/public/booking/requests/${token}/cancel`, {});
+    assert.deepEqual([res.status, res.body.code], [409, 'CANCEL_BY_PHONE']);
+    assert.equal((await client.get(`/public/booking/requests/${token}`)).body.cancel, 'call');
   });
 
   it('conservazione: dopo 90 giorni nome, telefono, email e note si svuotano; le prenotazioni vive no', async () => {

@@ -56,7 +56,7 @@ const ReservationsPage = ({ event }) => {
       </header>
 
       {activeShifts.length === 0 && !loading && (
-        <p className="text-sm text-[var(--text-muted)] py-6">Non ci sono turni attivi. Creali in <button className="text-[var(--accent)] font-medium cursor-pointer" onClick={() => navigate('/impostazioni')}>Impostazioni</button>.</p>
+        <p className="text-sm text-[var(--text-muted)] py-6">Non ci sono turni attivi. Creali in <button className="text-[var(--accent)] font-medium cursor-pointer" onClick={() => navigate('/settings')}>Impostazioni</button>.</p>
       )}
 
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pr-1">

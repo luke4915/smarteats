@@ -47,3 +47,23 @@ export const phoneDigits = (phone) => String(phone ?? '').replace(/\D/g, '').sli
 
 // Prima di questa data (esclusa) i dati personali di una prenotazione si svuotano.
 export const retentionCutoff = (today, days = RETENTION_DAYS) => addDays(today, -days);
+
+// ─── Annullo da parte del cliente ───────────────────────────────────────────────────────────────────────────────
+// Una richiesta non ancora confermata il cliente la ritira da solo. Una prenotazione confermata no: chiede
+// l'annullo e il locale lo conferma, e solo fino a un'ora prima dell'inizio del turno; dopo, deve telefonare.
+export const MIN_CANCEL_NOTICE_HOURS = 1;
+
+// Minuti dall'adesso all'inizio del turno (negativo se è già iniziato). `now` è localNow().
+export function minutesUntilStart(date, startTime, now) {
+  const [h, m] = String(startTime).split(':').map(Number);
+  return daysBetween(now.date, date) * 1440 + (h * 60 + (m || 0)) - now.minutes;
+}
+
+// Cosa può fare il cliente con la sua richiesta: 'withdraw' (ritira, è ancora una richiesta), 'request' (chiede
+// l'annullo di una prenotazione confermata), 'requested' (l'ha già chiesto), 'call' (troppo tardi: telefona), null.
+export function cancelOption({ status, cancel_requested }, date, startTime, now) {
+  if (status === 'requested') return 'withdraw';
+  if (status !== 'confirmed') return null;
+  if (cancel_requested) return 'requested';
+  return minutesUntilStart(date, startTime, now) >= MIN_CANCEL_NOTICE_HOURS * 60 ? 'request' : 'call';
+}

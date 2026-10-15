@@ -195,6 +195,22 @@ describe('prenotazioni', () => {
     assert.equal((await waiter.put(`/bookings/reservations/${r.id}`, { notes: 'x' })).status, 409, 'una annullata non si modifica');
   });
 
+  it('i tavoli scelti devono avere posti a sufficienza: 3 posti non reggono 4 persone', async () => {
+    const day = '2026-12-06';
+    const { rows: [small] } = await adminDb.query(
+      `INSERT INTO dining_tables (room_id, name, seats, tenant_id) SELECT room_id, 'Piccolo', 3, tenant_id FROM dining_tables WHERE id = $1 RETURNING id`, [tables[0].id]);
+    const r = (await book({ date: day, party_size: 4 })).body;
+    const refused = await waiter.put(`/bookings/reservations/${r.id}/tables`, { table_ids: [small.id] });
+    assert.deepEqual([refused.status, refused.body.code], [409, 'NOT_ENOUGH_SEATS']);
+    assert.match(refused.body.error, /3 posti.*non bastano per 4/);
+    // due tavoli insieme bastano (3 + 4)
+    const ok = await waiter.put(`/bookings/reservations/${r.id}/tables`, { table_ids: [small.id, tables[1].id] });
+    assert.equal(ok.status, 200, JSON.stringify(ok.body));
+    // aumentando le persone oltre i posti assegnati, i tavoli si liberano (il personale li riassegna)
+    const more = await waiter.put(`/bookings/reservations/${r.id}`, { party_size: 9 });
+    assert.deepEqual([more.status, more.body.table_ids], [200, []]);
+  });
+
   it('arrivato: apre il conto sul tavolo assegnato con i coperti, e la prenotazione è «seduta»', async () => {
     const day = '2026-12-04';
     const r = (await book({ date: day, customer_name: 'Neri', party_size: 3 })).body;

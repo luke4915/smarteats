@@ -841,6 +841,7 @@ CREATE TABLE public.reservations (
     created_by integer,
     consent_at timestamp with time zone,
     personal_data_purged_at timestamp with time zone,
+    cancel_requested_at timestamp with time zone,
     CONSTRAINT reservations_customer_name_check CHECK ((length(btrim(customer_name)) > 0)),
     CONSTRAINT reservations_party_size_check CHECK (((party_size >= 1) AND (party_size <= 99))),
     CONSTRAINT reservations_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'confirmed'::text, 'declined'::text, 'cancelled'::text, 'seated'::text, 'completed'::text, 'no_show'::text, 'expired'::text])))
@@ -1713,6 +1714,12 @@ CREATE INDEX idx_reservation_tables_tenant ON public.reservation_tables USING bt
 --
 
 CREATE INDEX idx_reservations_check ON public.reservations USING btree (check_id) WHERE (check_id IS NOT NULL);
+
+--
+-- Name: idx_reservations_cancel_requested; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_reservations_cancel_requested ON public.reservations USING btree (tenant_id, date) WHERE (cancel_requested_at IS NOT NULL);
 
 --
 -- Name: idx_reservations_pending_phone; Type: INDEX; Schema: public; Owner: colettas

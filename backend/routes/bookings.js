@@ -24,7 +24,7 @@ const router = express.Router();
 const guard = [authenticate, requireModule('bookings')];
 const RESERVATION_SQL = `
   SELECT r.id, to_char(r.date, 'YYYY-MM-DD') AS date, r.shift_id, r.party_size, r.status, r.customer_name, r.phone, r.email,
-         r.notes, r.source, r.external_id, r.public_token, r.requested_at, r.decided_by, r.decided_at, r.decline_reason, r.check_id,
+         r.notes, r.source, r.external_id, r.public_token, r.requested_at, r.decided_by, r.decided_at, r.decline_reason, r.check_id, r.cancel_requested_at,
          s.name AS shift_name, to_char(s.start_time, 'HH24:MI') AS start_time, s.duration_minutes,
          COALESCE((SELECT array_agg(rt.table_id ORDER BY rt.table_id) FROM reservation_tables rt WHERE rt.reservation_id = r.id), '{}') AS table_ids
   FROM reservations r JOIN booking_shifts s ON s.id = r.shift_id`;
@@ -59,6 +59,11 @@ export default function (broadcast) {
     if (tableIds.length) {
       const { rows: tables } = await db.query('SELECT id, name, active FROM dining_tables WHERE id = ANY($1::int[])', [tableIds]);
       if (tables.length !== tableIds.length) throw new HttpError(400, 'Tavolo non valido', 'INVALID_TABLE');
+      // I posti dei tavoli scelti devono bastare per il gruppo: un tavolo da 3 non regge 4 persone
+      const { rows: [{ party_size: party }] } = await db.query('SELECT party_size FROM reservations WHERE id = $1', [reservation.id]);
+      const { rows: [{ seats }] } = await db.query('SELECT COALESCE(SUM(seats), 0)::int AS seats FROM dining_tables WHERE id = ANY($1::int[])', [tableIds]);
+      if (seats < party)
+        throw new HttpError(409, `I tavoli scelti hanno ${seats} ${seats === 1 ? 'posto' : 'posti'}: non bastano per ${party} persone`, 'NOT_ENOUGH_SEATS');
       const inactive = tables.find(t => !t.active);
       if (inactive) throw new HttpError(409, `Il tavolo ${inactive.name} è disattivato`, 'TABLE_INACTIVE');
       const others = (await load(db, `r.date = $1 AND r.id <> $2 AND r.status IN ('requested', 'confirmed', 'seated')`, [reservation.date, reservation.id]));
@@ -79,7 +84,7 @@ export default function (broadcast) {
     if (!canTransition(rows[0].status, to))
       throw new HttpError(409, `La prenotazione è già «${rows[0].status}»: non si può passare a «${to}»`, 'INVALID_TRANSITION');
     await db.query(
-      `UPDATE reservations SET status = $1, decided_by = $2, decided_at = now(), decline_reason = COALESCE($3, decline_reason) WHERE id = $4`,
+      `UPDATE reservations SET status = $1, decided_by = $2, decided_at = now(), decline_reason = COALESCE($3, decline_reason), cancel_requested_at = NULL WHERE id = $4`,
       [to, userId ?? null, reason ?? null, id]);
     return rows[0].status;
   }
@@ -262,6 +267,11 @@ export default function (broadcast) {
           await assertBookable(db, shift, next.date, next.party_size, { ignoreCapacity: b.ignore_capacity, excludeId: cur.id });
           // spostata o cambiata di turno: i tavoli assegnati devono ancora andare bene, altrimenti si liberano
           if (next.date !== cur.date || next.shift_id !== cur.shift_id) await db.query('DELETE FROM reservation_tables WHERE reservation_id = $1', [cur.id]);
+          else if (next.party_size > cur.party_size) {
+            const { rows: [{ seats }] } = await db.query(
+              `SELECT COALESCE(SUM(t.seats), 0)::int AS seats FROM reservation_tables rt JOIN dining_tables t ON t.id = rt.table_id WHERE rt.reservation_id = $1`, [cur.id]);
+            if (seats < next.party_size) await db.query('DELETE FROM reservation_tables WHERE reservation_id = $1', [cur.id]);
+          }
         }
         await db.query(
           `UPDATE reservations SET date = $1, shift_id = $2, party_size = $3, customer_name = COALESCE($4, customer_name),
@@ -326,6 +336,40 @@ export default function (broadcast) {
       if (sendHttpError(res, err)) return;
       logger.error({ err }, 'Errore PUT /api/bookings/reservations/:id/tables');
       res.status(500).json({ error: 'Errore assegnazione tavoli' });
+    }
+  });
+
+  // Da fare per il personale: richieste da confermare e annulli chiesti dai clienti. Alimenta la campanella in testata.
+  router.get('/inbox', ...guard, authorizeWaiter, tenantScope, async (req, res) => {
+    try {
+      await expireStale(req.db);
+      const rows = await load(req.db,
+        `r.date >= CURRENT_DATE - 1 AND (r.status = 'requested' OR (r.status = 'confirmed' AND r.cancel_requested_at IS NOT NULL))`, []);
+      const items = rows.map(r => ({
+        id: r.id, kind: r.status === 'requested' ? 'request' : 'cancel_request', customer_name: r.customer_name, party_size: r.party_size,
+        date: r.date, start_time: r.start_time, shift_name: r.shift_name, at: r.status === 'requested' ? r.requested_at : r.cancel_requested_at,
+      })).sort((a, b) => new Date(a.at) - new Date(b.at));
+      res.json(items);
+    } catch (err) {
+      logger.error({ err }, 'Errore GET /api/bookings/inbox');
+      res.status(500).json({ error: 'Errore caricamento notifiche' });
+    }
+  });
+
+  // Il locale non accetta l'annullo chiesto dal cliente: la prenotazione resta confermata.
+  router.post('/reservations/:id/keep', ...guard, authorizeWaiter, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
+    try {
+      const { rowCount } = await req.db.query(
+        `UPDATE reservations SET cancel_requested_at = NULL WHERE id = $1 AND status = 'confirmed' AND cancel_requested_at IS NOT NULL`, [req.params.id]);
+      if (!rowCount) return res.status(409).json({ error: 'Nessuna richiesta di annullo da rifiutare', code: 'NO_CANCEL_REQUEST' });
+      await logAudit(req.db, req.user.id, 'BOOKING_CANCEL_REQUEST_REJECTED', { reservationId: Number(req.params.id) });
+      const reservation = await present(req.db, req.user.tenantId, req.params.id);
+      notify(req.user.tenantId, reservation);
+      res.json(reservation);
+    } catch (err) {
+      if (sendHttpError(res, err)) return;
+      logger.error({ err }, 'Errore POST /api/bookings/reservations/:id/keep');
+      res.status(500).json({ error: 'Errore aggiornamento prenotazione' });
     }
   });
 
