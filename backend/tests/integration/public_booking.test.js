@@ -16,7 +16,7 @@ describe('portale di prenotazione', () => {
 
   before(async () => {
     server = await startServer();
-    [t, other, sagra] = [await createTenant({ businessType: 'ristorante' }), await createTenant({ businessType: 'ristorante' }), await createTenant()];
+    [t, other, sagra] = [await createTenant({ businessType: 'restaurant' }), await createTenant({ businessType: 'restaurant' }), await createTenant()];
     for (const x of [t, other]) await adminDb.query(`UPDATE tenants SET modules = array_append(modules, 'bookings') WHERE id = $1`, [x.id]);
     admin = apiClient(server.port, t.host); await admin.login(t.username);
     otherApi = apiClient(server.port, other.host); await otherApi.login(other.username);

@@ -73,7 +73,7 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end }) => {
         </div>
       )}
       {step === 'end' && (
-        <EndSessionModal title={termsFor('ristorante').endTitle} sessionName={service.name} openOrders={info.openOrders || 0} openOrdersTotal={info.openOrdersTotal || 0}
+        <EndSessionModal title={termsFor('restaurant').endTitle} sessionName={service.name} openOrders={info.openOrders || 0} openOrdersTotal={info.openOrdersTotal || 0}
           onCancel={() => setStep(null)} onConfirm={(choice) => { setOpenOrdersAction(choice); setStep('cash'); }} />
       )}
       {step === 'cash' && (

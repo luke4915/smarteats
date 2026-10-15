@@ -30,12 +30,12 @@ describe('prenotazioni', () => {
 
   before(async () => {
     server = await startServer();
-    [t, other, sagra] = [await createTenant({ businessType: 'ristorante' }), await createTenant({ businessType: 'ristorante' }), await createTenant()];
+    [t, other, sagra] = [await createTenant({ businessType: 'restaurant' }), await createTenant({ businessType: 'restaurant' }), await createTenant()];
     await withBookings(t); await withBookings(other);
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
-    waiter = await user('cameriere');
-    kitchen = await user('cucina');
+    waiter = await user('waiter');
+    kitchen = await user('kitchen');
     otherApi = apiClient(server.port, other.host);
     await otherApi.login(other.username);
     sagraApi = apiClient(server.port, sagra.host);

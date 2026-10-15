@@ -31,11 +31,11 @@ L'app si apre su `https://<nome-locale>.standmanager.local:5173` (per esempio `d
 **Servono due locali di prova**, creati dal pannello master (`/master`, con la password master):
 
 1. un locale di tipo **ristorante** (es. `trattoria`), con i moduli Cucina (KDS), Statistiche e Tavoli accesi;
-2. un locale di tipo **sagra** (es. `sagra`).
+2. un locale di tipo **sagra** (es. `street_food`).
 
 Per ognuno il master crea un utente `admin` con una password temporanea: al primo accesso la cambia.
 
-**Utenti da creare** (Impostazioni → utenti, come admin del ristorante): un `cameriere`, un `cucina`, un `cassa`.
+**Utenti da creare** (Impostazioni → utenti, come admin del ristorante): un `waiter`, un `kitchen`, un `cashier`.
 
 **Due finestre.** Per le prove con la cucina apri il ristorante in **due finestre diverse del browser** (meglio una
 in incognito, o due browser): una come admin/cameriere, una come cucina. Non due schede nella stessa finestra, perché
@@ -62,7 +62,7 @@ ok, ma molto macchinoso con le freccette, metti dei trascinabili stile ordinamen
 
 ## B. Il giro del tavolo (cameriere)
 
-Accedi come `cameriere` (ideale su un telefono 📱, ma prova prima da PC).
+Accedi come `waiter` (ideale su un telefono 📱, ma prova prima da PC).
 
 - [x] In Sala vedi i tavoli. **Tocca T1**, imposta 4 coperti, **Apri tavolo**.
 - [x] Il conto mostra il coperto (4 × 2,00 €)? Il totale è giusto?
@@ -80,7 +80,7 @@ ok il dettaglio, ma su un tablet deve essere bello visibile e comunque sempre pr
 
 ## C. La cucina
 
-Apri l'altra finestra come `cucina`.
+Apri l'altra finestra come `kitchen`.
 
 - [x] Compare la comanda con **tavolo, coperti, portata e minuti**? Le bevande escono insieme agli antipasti?
 non ho controllato bevande e antipasti se escono insieme.
@@ -111,7 +111,7 @@ si però non riesco a far fare l'incasso. rimane la schermata di pagamento purtr
 
 ## E. Il cameriere non deve poter fare certe cose
 
-Come `cameriere`:
+Come `waiter`:
 
 - [x] **Non** vede «Incassa», «Omaggio o sconto», «Elimina conto», «Unisci».
 - [x] Vede «Chiedi il conto». Funziona?
@@ -178,7 +178,7 @@ Serve il modulo **Prenotazioni** acceso per il ristorante (dal pannello master).
 
 ## I. Cucina della sagra
 
-- [ ] Come `cucina`: l'ordine arriva da solo?
+- [ ] Come `kitchen`: l'ordine arriva da solo?
 - [ ] Il pulsante di completamento funziona? La scansione del QR funziona (se la usi)?
 - [ ] Il **KDS pubblico** (`/kds`, senza accesso) si aggiorna da solo su un secondo schermo?
 

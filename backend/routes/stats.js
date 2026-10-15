@@ -13,7 +13,7 @@ import { buildOccupancy, buildBookingStats } from '../utils/occupancy.js';
 
 const router = express.Router();
 
-const authorizeStats = authorizeRoles(['admin', 'responsabile'], 'Le statistiche sono riservate ad admin e responsabili');
+const authorizeStats = authorizeRoles(['admin', 'manager'], 'Le statistiche sono riservate ad admin e responsabili');
 
 // GET /api/stats?sessions=1,2&tz=Europe/Rome — statistiche aggregate dal database (nessun ordine viaggia verso il browser).
 // Senza `sessions` valgono tutte le serate. Le ore sono nel fuso `tz` del dispositivo.

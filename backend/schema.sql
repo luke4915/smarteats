@@ -1033,9 +1033,9 @@ CREATE TABLE public.tenants (
     created_at timestamp with time zone DEFAULT now(),
     expires_at timestamp with time zone,
     active boolean DEFAULT true NOT NULL,
-    business_type text DEFAULT 'sagra'::text NOT NULL,
+    business_type text DEFAULT 'street_food'::text NOT NULL,
     modules text[] DEFAULT ARRAY['kds'::text, 'stats'::text, 'qr_menu'::text] NOT NULL,
-    CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['sagra'::text, 'paninaro'::text, 'ristorante'::text])))
+    CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['street_food'::text, 'restaurant'::text])))
 );
 
 
@@ -1074,7 +1074,7 @@ CREATE TABLE public.users (
     role character varying(20) NOT NULL,
     tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
     must_change_password boolean DEFAULT false NOT NULL,
-    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'responsabile'::character varying, 'cassa'::character varying, 'cameriere'::character varying, 'cucina'::character varying])::text[])))
+    CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'manager'::character varying, 'cashier'::character varying, 'waiter'::character varying, 'kitchen'::character varying])::text[])))
 );
 
 ALTER TABLE ONLY public.users FORCE ROW LEVEL SECURITY;

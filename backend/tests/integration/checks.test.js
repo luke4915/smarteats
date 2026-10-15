@@ -34,12 +34,12 @@ describe('conti dei tavoli', () => {
 
   before(async () => {
     server = await startServer();
-    [t1, t2] = [await createTenant({ businessType: 'ristorante' }), await createTenant({ businessType: 'ristorante' })];
+    [t1, t2] = [await createTenant({ businessType: 'restaurant' }), await createTenant({ businessType: 'restaurant' })];
     [admin1, admin2, master] = [t1, t2, t1].map(t => apiClient(server.port, t.host));
     await admin1.login(t1.username);
     await admin2.login(t2.username);
-    cashier = await addUser(t1, 'cassa');
-    kitchen = await addUser(t1, 'cucina');
+    cashier = await addUser(t1, 'cashier');
+    kitchen = await addUser(t1, 'kitchen');
     room = (await admin1.post('/rooms', { name: 'Sala' })).body;
     tables = (await admin1.post(`/rooms/${room.id}/tables/bulk`, { prefix: 'T', from: 1, to: 8, seats: 4 })).body.created;
     const room2 = (await admin2.post('/rooms', { name: 'Sala' })).body;
@@ -70,7 +70,7 @@ describe('conti dei tavoli', () => {
     assert.equal(res.body.covers, 3);
     assert.equal(res.body.table_name, 'T1');
     assert.equal(res.body.room_name, 'Sala');
-    assert.equal(res.body.opened_by_name, `cassa-${t1.slug}`);
+    assert.equal(res.body.opened_by_name, `cashier-${t1.slug}`);
     assert.equal(res.body.session_id, t1.sessionId);
     assert.deepEqual([res.body.orders_count, res.body.total, res.body.paid, res.body.due], [0, 0, 0, 0]);
     assert.equal(res.body.bill_requested_at, null);
@@ -195,15 +195,15 @@ describe('conti dei tavoli', () => {
   });
 
   it('eliminare un tenant cancella anche i suoi conti; un utente eliminato lascia il conto', async () => {
-    const tmpUser = await addUser(t1, 'responsabile');
-    const { rows: [u] } = await adminDb.query(`SELECT id FROM users WHERE tenant_id = $1 AND role = 'responsabile'`, [t1.id]);
+    const tmpUser = await addUser(t1, 'manager');
+    const { rows: [u] } = await adminDb.query(`SELECT id FROM users WHERE tenant_id = $1 AND role = 'manager'`, [t1.id]);
     const made = await tmpUser.post('/checks', { table_id: tables[7].id, covers: 1 });
     assert.equal(made.status, 201);
     assert.equal((await admin1.request('DELETE', `/auth/admin/users/${u.id}`)).status, 200);
     const { rows: [row] } = await adminDb.query('SELECT opened_by FROM checks WHERE id = $1', [made.body.id]);
     assert.equal(row.opened_by, null, 'il conto resta, senza chi lo aprì');
 
-    const doomed = await createTenant({ businessType: 'ristorante' });
+    const doomed = await createTenant({ businessType: 'restaurant' });
     const api = apiClient(server.port, doomed.host);
     await api.login(doomed.username);
     const r = (await api.post('/rooms', { name: 'S' })).body;

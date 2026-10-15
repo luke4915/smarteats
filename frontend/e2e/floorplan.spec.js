@@ -3,12 +3,12 @@ import { seed, login, shot } from './support.js';
 
 // L'editor della pianta: tavoli e separatori si spostano e si ridimensionano allo stesso modo, con le maniglie.
 test('pianta: separatore tracciato, spostato e ridimensionato con le maniglie; tavolo ridimensionato', async ({ page }) => {
-  const { ristorante: r } = seed();
+  const { restaurant: r } = seed();
   await login(page, r.host, r.admin);
   await page.getByRole('link', { name: 'Impostazioni' }).click();
   await page.getByRole('button', { name: /Disegna pianta/ }).first().click();
   await expect(page.getByText('Pianta della sala')).toBeVisible();
-  await shot(page, 'pianta-01-editor');
+  await shot(page, 'floorplan-01-editor');
 
   const larghezza = () => page.getByRole('group', { name: 'larghezza' }).locator('span').first();
 
@@ -24,7 +24,7 @@ test('pianta: separatore tracciato, spostato e ridimensionato con le maniglie; t
   await expect(page.getByText('Separatore selezionato')).toBeVisible();      // appena tracciato è già selezionato
   await expect(page.getByRole('separator', { name: /Ridimensiona \(e\)/ })).toBeVisible();
   await expect(larghezza()).toHaveText('5');
-  await shot(page, 'pianta-02-separatore');
+  await shot(page, 'floorplan-02-separatore');
 
   // ── Maniglia a destra: si allunga di 2 celle ──
   const handle = page.getByRole('separator', { name: /Ridimensiona \(e\)/ });
@@ -45,7 +45,7 @@ test('pianta: separatore tracciato, spostato e ridimensionato con le maniglie; t
   await page.mouse.move(th.x + th.width / 2 + cell, th.y + th.height / 2, { steps: 4 });
   await page.mouse.up();
   await expect(larghezza()).toHaveText(String(before + 1));
-  await shot(page, 'pianta-03-tavolo');
+  await shot(page, 'floorplan-03-tavolo');
 
   // ── Salva e controlla sul server ──
   await page.locator('div.fixed').getByRole('button', { name: 'Salva', exact: true }).click();

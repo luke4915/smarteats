@@ -5,7 +5,7 @@ import { seed, shot, urlOf } from './support.js';
 test('master: creo un locale, lo trovo, allungo la licenza e lo elimino', async ({ page }) => {
   const s = seed();
   const slug = `prova-${Date.now().toString(36)}`;
-  await page.goto(`${urlOf(s.ristorante.host)}/master`);
+  await page.goto(`${urlOf(s.restaurant.host)}/master`);
   await page.getByLabel('Password master').fill(s.password);
   await page.getByRole('button', { name: 'Entra' }).click();
   await expect(page.getByRole('heading', { name: 'Console master' })).toBeVisible();

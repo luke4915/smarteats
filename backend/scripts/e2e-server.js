@@ -49,7 +49,7 @@ const addProduct = async (tenant, name, price, category, extra = {}) => {
 };
 
 // ── Ristorante: sala con 4 tavoli piazzati, portate e carta ──
-const risto = await createTenant({ businessType: 'ristorante' });
+const risto = await createTenant({ businessType: 'restaurant' });
 const { rows: [room] } = await adminDb.query(`INSERT INTO rooms (name, grid_w, grid_h, tenant_id) VALUES ('Sala', 16, 10, $1) RETURNING id`, [risto.id]);
 const layout = [['T1', 2, 2, 3, 2, 'rect', 4], ['T2', 7, 2, 3, 2, 'rect', 4], ['T3', 12, 2, 2, 2, 'round', 2], ['T4', 2, 6, 4, 2, 'rect', 6]];
 for (const [name, x, y, w, h, shape, seats] of layout)
@@ -63,16 +63,16 @@ await addProduct(risto, 'Acqua', 2, 'Bevande', { destination: 'bar' });
 // Prenotazioni: modulo acceso e due turni fissi, tutti i giorni
 await adminDb.query(`UPDATE tenants SET modules = array_append(modules, 'bookings') WHERE id = $1`, [risto.id]);
 await adminDb.query(`INSERT INTO booking_shifts (name, start_time, duration_minutes, capacity, position, tenant_id) VALUES ('Cena 19:30', '19:30', 90, 30, 0, $1), ('Cena 21:00', '21:00', 90, 20, 1, $1)`, [risto.id]);
-const ristoSeed = { host: `${risto.slug}.standmanager.local`, admin: risto.username, cucina: await addUser(risto, 'cucina'), cameriere: await addUser(risto, 'cameriere'), cassa: await addUser(risto, 'cassa') };
+const ristoSeed = { host: `${risto.slug}.standmanager.local`, admin: risto.username, kitchen: await addUser(risto, 'kitchen'), waiter: await addUser(risto, 'waiter'), cashier: await addUser(risto, 'cashier') };
 
 // ── Sagra: carta con più categorie ──
-const sagra = await createTenant({ businessType: 'sagra' });
+const sagra = await createTenant({ businessType: 'street_food' });
 for (const [name, price, category] of [['Panino con salsiccia', 5, 'Panini'], ['Patatine', 3, 'Contorni'], ['Birra', 4, 'Bevande'], ['Acqua', 1, 'Bevande'], ['Tiramisù', 4, 'Dolci']])
   await addProduct(sagra, name, price, category);
-const sagraSeed = { host: `${sagra.slug}.standmanager.local`, admin: sagra.username, cucina: await addUser(sagra, 'cucina') };
+const sagraSeed = { host: `${sagra.slug}.standmanager.local`, admin: sagra.username, kitchen: await addUser(sagra, 'kitchen') };
 
 fs.mkdirSync(path.dirname(seedFile), { recursive: true });
-fs.writeFileSync(seedFile, JSON.stringify({ port, password: PASSWORD, ristorante: ristoSeed, sagra: sagraSeed }, null, 2));
+fs.writeFileSync(seedFile, JSON.stringify({ port, password: PASSWORD, restaurant: ristoSeed, festival: sagraSeed }, null, 2));
 
 const hub = createWebSocketHub();
 const inner = createApp({ broadcast: hub.broadcast, rateLimit: false });

@@ -131,6 +131,6 @@ Prima del passo 2-3 e di ogni migrazione: backup. Dopo ogni passo: test di integ
 
 1. **Incasso dei conti:** conta quando il conto è pagato (consigliato; le comande servite ma non ancora pagate non sono denaro).
 2. **Offline dei tavoli:** non supportato in questa fase (vedi §6).
-3. **Ruolo cameriere:** nella Fase 2 bastano i ruoli esistenti (cassa, responsabile, admin); il ruolo `cameriere` con permessi
+3. **Ruolo cameriere:** nella Fase 2 bastano i ruoli esistenti (cassa, responsabile, admin); il ruolo `waiter` con permessi
    propri (nessun pagamento, sconto o annullo) arriva con la Fase 3.
 4. **Fiscale:** fuori, come deciso; la ricevuta del conto è un documento non fiscale.

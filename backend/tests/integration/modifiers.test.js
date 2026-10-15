@@ -14,12 +14,12 @@ describe('modificatori', () => {
 
   before(async () => {
     server = await startServer();
-    [t, sagra] = [await createTenant({ businessType: 'ristorante' }), await createTenant()];
+    [t, sagra] = [await createTenant({ businessType: 'restaurant' }), await createTenant()];
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
     sagraApi = apiClient(server.port, sagra.host);
     await sagraApi.login(sagra.username);
-    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cameriere', $3)`, [`w-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
+    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'waiter', $3)`, [`w-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
     waiter = apiClient(server.port, t.host);
     await waiter.login(`w-${t.slug}`);
     ({ rows: [{ id: steak }] } = await adminDb.query(`INSERT INTO products (name, price, category, tenant_id) VALUES ('Tagliata', 18, 'Secondi', $1) RETURNING id`, [t.id]));

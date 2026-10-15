@@ -13,7 +13,7 @@ export const loginSchema = z.object({
 // La password è temporanea: l'utente deve cambiarla al primo accesso.
 export const createUserSchema = z.object({
     username,
-    role: z.enum(ROLES).default('cassa'),
+    role: z.enum(ROLES).default('cashier'),
     password: passwordSchema,
 });
 

@@ -27,13 +27,13 @@ describe('stato per riga', () => {
 
   before(async () => {
     server = await startServer();
-    [t, sagra] = [await createTenant({ businessType: 'ristorante' }), await createTenant()];
+    [t, sagra] = [await createTenant({ businessType: 'restaurant' }), await createTenant()];
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
     sagraApi = apiClient(server.port, sagra.host);
     await sagraApi.login(sagra.username);
-    kitchen = await user('cucina');
-    waiter = await user('cassa');
+    kitchen = await user('kitchen');
+    waiter = await user('cashier');
     ({ rows: [{ id: beer }] } = await adminDb.query(`INSERT INTO products (name, price, category, print_destination, tenant_id) VALUES ('Birra', 4, 'Bevande', 'bar', $1) RETURNING id`, [t.id]));
     await adminDb.query(`UPDATE products SET print_destination = 'kitchen' WHERE id = $1`, [t.productId]);
     const room = (await admin.post('/rooms', { name: 'Sala' })).body;

@@ -16,7 +16,7 @@ export const createTenantSchema = z.object({
   name: z.string().trim().min(1).max(100),
   plan: z.string().trim().min(1).max(30).default('trial'),
   // senza `modules` valgono quelli proposti dal tipo di attività
-  businessType: businessType.default('sagra'),
+  businessType: businessType.default('street_food'),
   modules: modules.optional(),
   expiresInDays: z.coerce.number().int().positive().max(3650).nullish(),
   adminUsername: z.string().trim().min(1).max(50),

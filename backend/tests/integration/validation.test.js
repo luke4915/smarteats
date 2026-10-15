@@ -11,7 +11,7 @@ describe('validazione e permessi', () => {
     server = await startServer();
     t = await createTenant();
     await adminDb.query(
-      `INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cucina', $3)`,
+      `INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'kitchen', $3)`,
       [`cucina-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
     admin = apiClient(server.port, t.host);
     kitchen = apiClient(server.port, t.host);

@@ -28,7 +28,7 @@ describe('moduli per tenant', () => {
 
   it('un tenant esistente ha i moduli di oggi e tutto risponde come prima', async () => {
     const { rows } = await adminDb.query('SELECT business_type, modules FROM tenants WHERE id = $1', [t1.id]);
-    assert.equal(rows[0].business_type, 'sagra');
+    assert.equal(rows[0].business_type, 'street_food');
     assert.deepEqual(rows[0].modules, ['kds', 'stats', 'qr_menu']);
 
     assert.equal((await api1.get('/stats?tz=Europe/Rome')).status, 200);
@@ -36,12 +36,12 @@ describe('moduli per tenant', () => {
     assert.equal((await anon1.get('/orders/kds')).status, 200);
     const me = (await api1.get('/auth/me')).body;
     assert.deepEqual(me.modules, ['kds', 'stats', 'qr_menu']);
-    assert.equal(me.businessType, 'sagra');
+    assert.equal(me.businessType, 'street_food');
   });
 
   it('il login restituisce tipo di attività e moduli', async () => {
     const res = await apiClient(server.port, t1.host).login(t1.username);
-    assert.equal(res.body.businessType, 'sagra');
+    assert.equal(res.body.businessType, 'street_food');
     assert.deepEqual(res.body.modules, ['kds', 'stats', 'qr_menu']);
   });
 
@@ -101,17 +101,17 @@ describe('moduli per tenant', () => {
     assert.match(noTables.body.error, /tables/);
     assert.deepEqual((await adminDb.query('SELECT business_type, modules FROM tenants WHERE id = $1', [t1.id])).rows[0].modules, ['kds', 'stats', 'qr_menu']);
     // il tipo non si cambia: il body con businessType non ha effetto
-    await master.request('PUT', `/master/tenants/${t1.id}/modules`, { businessType: 'ristorante', modules: ['kds'] }, masterCookie);
+    await master.request('PUT', `/master/tenants/${t1.id}/modules`, { businessType: 'restaurant', modules: ['kds'] }, masterCookie);
     const { rows } = await adminDb.query('SELECT business_type, modules FROM tenants WHERE id = $1', [t1.id]);
-    assert.equal(rows[0].business_type, 'sagra');
+    assert.equal(rows[0].business_type, 'street_food');
     await setModules(t1, ['kds', 'stats', 'qr_menu']);
 
     // un ristorante non ha il menu QR
     const slug = `mod-${Math.random().toString(36).slice(2, 8)}`;
-    const body = { slug, name: `Prova ${slug}`, adminUsername: 'admin', adminPassword: 'temporanea-1', businessType: 'ristorante' };
+    const body = { slug, name: `Prova ${slug}`, adminUsername: 'admin', adminPassword: 'temporanea-1', businessType: 'restaurant' };
     const bad = await master.request('POST', '/master/tenants', { ...body, modules: ['tables', 'qr_menu'] }, masterCookie);
     assert.equal(bad.status, 400);
-    assert.equal((await master.request('POST', '/master/tenants', { ...body, businessType: 'sagra', modules: ['tables'] }, masterCookie)).status, 400);
+    assert.equal((await master.request('POST', '/master/tenants', { ...body, businessType: 'street_food', modules: ['tables'] }, masterCookie)).status, 400);
     const ok = await master.request('POST', '/master/tenants', body, masterCookie);
     assert.equal(ok.status, 201);
     created.push({ id: ok.body.tenant.id });
@@ -127,15 +127,15 @@ describe('moduli per tenant', () => {
       created.push({ id: res.body.tenant.id });
       return res.body.tenant;
     };
-    const preset = await make({ businessType: 'ristorante' });
-    assert.equal(preset.business_type, 'ristorante');
+    const preset = await make({ businessType: 'restaurant' });
+    assert.equal(preset.business_type, 'restaurant');
     assert.deepEqual(preset.modules, ['kds', 'stats', 'tables']);
 
-    const custom = await make({ businessType: 'paninaro', modules: ['qr_menu', 'kds', 'qr_menu'] });
+    const custom = await make({ businessType: 'street_food', modules: ['qr_menu', 'kds', 'qr_menu'] });
     assert.deepEqual(custom.modules, ['kds', 'qr_menu']);
 
     const plain = await make({});
-    assert.equal(plain.business_type, 'sagra');
+    assert.equal(plain.business_type, 'street_food');
     assert.deepEqual(plain.modules, ['kds', 'stats', 'qr_menu']);
   });
 
@@ -143,9 +143,9 @@ describe('moduli per tenant', () => {
     assert.equal((await master.get('/master/catalog')).status, 401);
     const { body } = await master.request('GET', '/master/catalog', undefined, masterCookie);
     assert.deepEqual(body.modules.map(m => m.id), ['kds', 'stats', 'qr_menu', 'tables', 'bookings']);
-    assert.deepEqual(body.businessTypes.map(b => b.id), ['sagra', 'paninaro', 'ristorante']);
+    assert.deepEqual(body.businessTypes.map(b => b.id), ['street_food', 'restaurant']);
     assert.ok(body.businessTypes.every(b => b.label && Array.isArray(b.modules)));
-    assert.deepEqual(body.modules.find(m => m.id === 'tables').types, ['ristorante']);
-    assert.deepEqual(body.modules.find(m => m.id === 'bookings').types, ['ristorante']);
+    assert.deepEqual(body.modules.find(m => m.id === 'tables').types, ['restaurant']);
+    assert.deepEqual(body.modules.find(m => m.id === 'bookings').types, ['restaurant']);
   });
 });

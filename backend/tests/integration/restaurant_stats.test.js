@@ -24,12 +24,12 @@ describe('statistiche ristorante', () => {
 
   before(async () => {
     server = await startServer();
-    [t, sagra] = [await createTenant({ businessType: 'ristorante' }), await createTenant()];
+    [t, sagra] = [await createTenant({ businessType: 'restaurant' }), await createTenant()];
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
     sagraApi = apiClient(server.port, sagra.host);
     await sagraApi.login(sagra.username);
-    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cassa', $3)`, [`c-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
+    await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cashier', $3)`, [`c-${t.slug}`, await bcrypt.hash(PASSWORD, 4), t.id]);
     waiter = apiClient(server.port, t.host);
     await waiter.login(`c-${t.slug}`);
     ({ rows: [{ id: wine }] } = await adminDb.query(`INSERT INTO products (name, price, category, print_destination, tenant_id) VALUES ('Vino', 20, 'Bevande', 'bar', $1) RETURNING id`, [t.id]));

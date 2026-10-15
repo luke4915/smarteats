@@ -17,25 +17,25 @@ async function segnaTuttoPronto(page) {
 }
 
 test('ristorante: apro un tavolo, ordino per portate, la cucina segna pronto, incasso', async ({ browser }) => {
-  const { ristorante: r } = seed();
+  const { restaurant: r } = seed();
   const sala = await (await browser.newContext()).newPage();
   const cucina = await (await browser.newContext()).newPage();
 
   // ── Sala ──
   await login(sala, r.host, r.admin);
   await expect(sala.getByRole('button', { name: /^T1: Libero/ })).toBeVisible();
-  await shot(sala, 'ristorante-01-sala');
+  await shot(sala, 'restaurant-01-sala');
 
   await sala.getByRole('button', { name: /^T1: Libero/ }).click();
   await sala.getByRole('button', { name: 'Apri tavolo' }).click();
   await expect(sala.getByRole('heading', { name: 'T1' })).toBeVisible();
-  await shot(sala, 'ristorante-02-conto-vuoto');
+  await shot(sala, 'restaurant-02-conto-vuoto');
 
   await sala.getByRole('button', { name: 'Aggiungi' }).click();
   await sala.getByRole('button', { name: /Bruschetta/ }).click();
   await sala.getByRole('button', { name: /Spaghetti alle vongole/ }).click();
   await sala.getByRole('button', { name: /Acqua/ }).click();
-  await shot(sala, 'ristorante-03-comanda');
+  await shot(sala, 'restaurant-03-comanda');
   await expect(sala.getByText('Esce subito')).toBeVisible();
   await expect(sala.locator('ol').getByText('Antipasti', { exact: true })).toBeVisible();
   await expect(sala.locator('ol').getByText('Primi', { exact: true })).toBeVisible();
@@ -44,22 +44,22 @@ test('ristorante: apro un tavolo, ordino per portate, la cucina segna pronto, in
   await sala.getByRole('button', { name: 'Modifica Acqua' }).click();
   await sala.getByLabel('Nota per la cucina').pressSequentially('senza ghiaccio', { delay: 20 });
   await expect(sala.getByLabel('Nota per la cucina')).toHaveValue('SENZA GHIACCIO');
-  await shot(sala, 'ristorante-03b-piatto');
+  await shot(sala, 'restaurant-03b-piatto');
   await sala.getByRole('button', { name: 'Fatto' }).click();
   await expect(sala.getByText('SENZA GHIACCIO')).toBeVisible();
 
   await sala.getByRole('button', { name: 'Invia in cucina' }).click();
   await expect(sala.getByRole('button', { name: 'Incassa' })).toBeVisible();   // si è tornati al conto
   await expect(sala.getByText(/Da mandare/).first()).toBeVisible();            // i primi restano sul conto
-  await shot(sala, 'ristorante-04-conto-con-portate');
+  await shot(sala, 'restaurant-04-conto-con-portate');
 
   // ── Cucina: vede le bevande e gli antipasti (escono insieme), non ancora i primi ──
-  await login(cucina, r.host, r.cucina);
+  await login(cucina, r.host, r.kitchen);
   await expect(cucina.getByRole('heading', { name: 'Cucina' })).toBeVisible();
   await expect(cucina.getByText('Bruschetta')).toBeVisible();
   await expect(cucina.getByText('Acqua')).toBeVisible();
   await expect(cucina.getByText('Spaghetti alle vongole')).toHaveCount(0);
-  await shot(cucina, 'ristorante-05-cucina');
+  await shot(cucina, 'restaurant-05-cucina');
   await segnaTuttoPronto(cucina);
   await expect(cucina.getByText('Bruschetta')).toHaveCount(0);
 
@@ -70,33 +70,33 @@ test('ristorante: apro un tavolo, ordino per portate, la cucina segna pronto, in
   await cucina.getByRole('button', { name: 'Pronta', exact: true }).click();
 
   await sala.getByRole('button', { name: 'Incassa' }).click();
-  await shot(sala, 'ristorante-06-incasso');
+  await shot(sala, 'restaurant-06-incasso');
   await sala.getByRole('button', { name: /^Incassa [0-9]/ }).click();
 
   // Incasso senza resto: il pannello torna da solo alla sala e il tavolo è libero
   await expect(sala.getByRole('button', { name: /^T1: Libero/ })).toBeVisible({ timeout: 10_000 });
-  await shot(sala, 'ristorante-07-tavolo-libero');
+  await shot(sala, 'restaurant-07-tavolo-libero');
 
   // Statistiche: il conto appena pagato compare, con l'occupazione dei posti e la curva del servizio
   await sala.locator('a[href="/stats"]').first().click();
   await expect(sala.getByText('Posti occupati', { exact: true })).toBeVisible();
   await expect(sala.getByText('Abbinamento gruppo-tavolo')).toBeVisible();
-  await shot(sala, 'ristorante-10-statistiche');
+  await shot(sala, 'restaurant-10-statistiche');
 });
 
 test('ristorante: il cameriere non vede incassa e sconti', async ({ page }) => {
-  const { ristorante: r } = seed();
-  await login(page, r.host, r.cameriere);
+  const { restaurant: r } = seed();
+  await login(page, r.host, r.waiter);
   await page.getByRole('button', { name: /^T3: Libero/ }).click();   // T1 è del giro principale, T2 delle prenotazioni
   await page.getByRole('button', { name: 'Apri tavolo' }).click();
   await expect(page.getByRole('button', { name: 'Aggiungi' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Incassa' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Chiedi il conto' })).toBeVisible();
-  await shot(page, 'ristorante-08-cameriere');
+  await shot(page, 'restaurant-08-cameriere');
 });
 
 test('ristorante: alla romana in 3 quote, senza uscire dalla schermata di incasso', async ({ page }) => {
-  const { ristorante: r } = seed();
+  const { restaurant: r } = seed();
   await login(page, r.host, r.admin);
   await page.getByRole('button', { name: /^T4: Libero/ }).click();
   await page.getByRole('button', { name: 'Apri tavolo' }).click();
@@ -112,7 +112,7 @@ test('ristorante: alla romana in 3 quote, senza uscire dalla schermata di incass
     await expect(page.getByRole('heading', { name: 'Incassa' })).toBeVisible();        // ancora qui
     await expect(page.getByRole('button', { name: left === 1 ? 'Tutto' : String(left), exact: true })).toHaveAttribute('aria-pressed', 'true');
   }
-  await shot(page, 'ristorante-09-romana-ultima-quota');
+  await shot(page, 'restaurant-09-romana-ultima-quota');
   await page.getByRole('button', { name: /^Incassa [0-9]/ }).click();                 // l'ultima quota chiude il conto
   await expect(page.getByRole('button', { name: /^T4: Libero/ })).toBeVisible({ timeout: 10_000 });
 });

@@ -84,7 +84,7 @@ const MasterPage = () => {
   const [modulesTarget, setModulesTarget] = useState(null);
   const [catalog, setCatalog] = useState(null);
 
-  const emptyForm = { slug: '', name: '', plan: 'trial', expiresInDays: 7, adminUsername: '', adminPassword: '', businessType: 'sagra', modules: ['kds', 'stats', 'qr_menu'] };
+  const emptyForm = { slug: '', name: '', plan: 'trial', expiresInDays: 7, adminUsername: '', adminPassword: '', businessType: 'street_food', modules: ['kds', 'stats', 'qr_menu'] };
   const [form, setForm] = useState(emptyForm);
   const [creating, setCreating] = useState(false);
   const [creatingOpen, setCreatingOpen] = useState(false);

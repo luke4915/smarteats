@@ -33,13 +33,13 @@ describe('rinforzi di sicurezza', () => {
   };
 
   it('un utente eliminato o cambiato di ruolo smette di valere subito, non alla scadenza del token', async () => {
-    const id = await addUser(`temp-${t.slug}`, 'cassa');
+    const id = await addUser(`temp-${t.slug}`, 'cashier');
     const user = apiClient(server.port, t.host);
     await user.login(`temp-${t.slug}`);
     assert.equal((await user.get('/products')).status, 200);
     assert.equal((await user.post('/orders', { items: [{ id: t.productId, name: 'x', quantity: 1 }] })).status, 200);
 
-    await adminDb.query(`UPDATE users SET role = 'cucina' WHERE id = $1`, [id]);
+    await adminDb.query(`UPDATE users SET role = 'kitchen' WHERE id = $1`, [id]);
     clearUserStatusCache();
     assert.equal((await user.post('/orders', { items: [{ id: t.productId, name: 'x', quantity: 1 }] })).status, 403);
 
@@ -94,7 +94,7 @@ describe('rinforzi di sicurezza', () => {
   });
 
   it('password sotto gli 8 caratteri rifiutata alla creazione di un utente', async () => {
-    const res = await admin.post('/auth/admin/createUser', { username: 'corta', role: 'cassa', password: '1234567' });
+    const res = await admin.post('/auth/admin/createUser', { username: 'corta', role: 'cashier', password: '1234567' });
     assert.equal(res.status, 400);
   });
 

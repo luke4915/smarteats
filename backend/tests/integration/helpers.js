@@ -47,7 +47,7 @@ export async function closePools() {
 }
 
 // Tenant di prova con un admin, un prodotto e (a richiesta) una sessione aperta.
-export async function createTenant({ openSession = true, active = true, businessType = 'sagra' } = {}) {
+export async function createTenant({ openSession = true, active = true, businessType = 'street_food' } = {}) {
   const slug = `test-${randomUUID().slice(0, 8)}`;
   const { rows: [tenant] } = await adminDb.query(
     'INSERT INTO tenants (slug, name, active, business_type, modules) VALUES ($1, $2, $3, $4, $5) RETURNING id',

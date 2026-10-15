@@ -97,7 +97,7 @@ const SmartEatsApp = () => {
 
   const guard = (id, element) => (canViewSmartEats(user.role, id, user.modules) ? element : <Navigate to={`/${home}`} replace />);
   const doLogout = async () => { try { await logout(); showToast('Sessione chiusa', 'info'); navigate('/login'); } catch (err) { console.error(err); } };
-  const canManageService = ['admin', 'responsabile', 'cassa'].includes(user.role);
+  const canManageService = ['admin', 'manager', 'cashier'].includes(user.role);
 
   return (
     <div className="se-app flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">

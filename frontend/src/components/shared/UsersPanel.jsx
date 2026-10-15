@@ -13,7 +13,7 @@ const btnClass = 'flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[
 const dangerBtnClass = 'flex items-center gap-1.5 px-3 py-2 rounded-xl border border-red-500/30 text-red-500 font-semibold text-xs hover:bg-red-500/10 transition-all disabled:opacity-50';
 const primaryBtnClass = 'flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl font-semibold text-xs transition-all disabled:opacity-50';
 
-const EMPTY_NEW = { username: '', role: 'cassa', password: '' };
+const EMPTY_NEW = { username: '', role: 'cashier', password: '' };
 
 const UsersPanel = ({ api, currentUserId = null }) => {
   const { showToast } = useToast();

@@ -35,7 +35,7 @@ import Login from './pages/LoginPage';
 import { PageBody } from './components/shared/PageHeader';
 
 // Ruoli abilitati ad applicare sconti/omaggi (specchio di DISCOUNT_ROLES nel backend)
-const DISCOUNT_ROLES = ['admin', 'responsabile'];
+const DISCOUNT_ROLES = ['admin', 'manager'];
 
 // Schermate pesanti o non usate alla cassa (grafici, PDF, lettore codici, pagine pubbliche):
 // si caricano a richiesta, così il bundle della cassa resta leggero. Il service worker le
@@ -100,7 +100,7 @@ const App = () => {
   }, { enabled: isLoggedIn, onUnauthorized: refreshSession });
 
   // ── Navigazione e finestre aperte ─────────────────────────
-  const [view, setView] = useState(user?.role === 'cucina' ? 'kitchen' : 'dashboard');
+  const [view, setView] = useState(user?.role === 'kitchen' ? 'kitchen' : 'dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [showReversePopup, setShowReversePopup] = useState(false);
@@ -126,7 +126,7 @@ const App = () => {
   }, [user?.role, user?.modules, navigate]);
 
   useEffect(() => {
-    if (user?.role === 'cucina') { setView('kitchen'); navigate('/kitchen'); }
+    if (user?.role === 'kitchen') { setView('kitchen'); navigate('/kitchen'); }
   }, [user, navigate]);
 
   // Su mobile chiude sidebar dopo navigazione
@@ -252,7 +252,7 @@ const App = () => {
 
           {/* Pagine */}
           <div className="flex-1 overflow-y-auto no-scrollbar bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-6 min-w-0">
-            {user.role === 'cucina' ? (
+            {user.role === 'kitchen' ? (
               <OrdersKitchen />
             ) : (
               <Suspense fallback={<PageLoading />}>
@@ -278,7 +278,7 @@ const App = () => {
           </div>
 
           {/* ── Carrello Desktop ──────────────────────────── */}
-          {view === 'dashboard' && user.role !== 'cucina' && (
+          {view === 'dashboard' && user.role !== 'kitchen' && (
             <div className="w-[340px] xl:w-[420px] hidden md:flex flex-col shrink-0">
               <Cart {...cartProps} />
             </div>
@@ -287,7 +287,7 @@ const App = () => {
       </main>
 
       {/* ── Carrello Mobile overlay ──────────────────────────── */}
-      {isMobile && view === 'dashboard' && user.role !== 'cucina' && (
+      {isMobile && view === 'dashboard' && user.role !== 'kitchen' && (
         <MobileCartOverlay
           isOpen={isMobileCartOpen}
           onOpen={() => setIsMobileCartOpen(true)}

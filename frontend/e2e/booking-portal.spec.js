@@ -4,7 +4,7 @@ import { seed, login, shot, urlOf } from './support.js';
 // Il portale pubblico: il titolare lo accende, un cliente (senza accesso) invia una richiesta dal telefono, vede il suo
 // link con lo stato e la annulla.
 test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annulla dal suo link', async ({ page, browser }) => {
-  const { ristorante: r } = seed();
+  const { restaurant: r } = seed();
   await login(page, r.host, r.admin);
   await page.locator('a[href="/settings"]').first().click();
   await expect(page.getByRole('switch', { name: 'Prenotazioni online' })).toBeVisible();
@@ -14,7 +14,7 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
   const toggle = page.getByRole('switch', { name: 'Prenotazioni online' });
   if (await toggle.getAttribute('aria-checked') !== 'true') await toggle.click();
   await expect(toggle).toHaveAttribute('aria-checked', 'true');
-  await shot(page, 'portale-01-impostazioni');
+  await shot(page, 'booking-portal-01-impostazioni');
 
   // Anche chi è già dentro (il titolare che prova la pagina) la vede, non viene rimandato alla Sala
   await page.goto(`${urlOf(r.host)}/book`);
@@ -36,13 +36,13 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
   await expect(phone.getByRole('button', { name: 'Invia richiesta' })).toBeDisabled();   // manca il consenso
   await phone.getByRole('checkbox').check();
   await phone.waitForTimeout(3200);                                                       // il modulo non si invia in un lampo
-  await shot(phone, 'portale-02-modulo');
+  await shot(phone, 'booking-portal-02-modulo');
   await phone.getByRole('button', { name: 'Invia richiesta' }).click();
 
   await expect(phone.getByRole('heading', { name: 'Richiesta ricevuta' })).toBeVisible();
   expect(phone.url()).toMatch(/\/book\/[A-Za-z0-9_-]{20,}$/);
   await expect(phone.getByText('Famiglia Bianchi')).toBeVisible();
-  await shot(phone, 'portale-03-ricevuta');
+  await shot(phone, 'booking-portal-03-ricevuta');
 
   await phone.getByRole('button', { name: 'Annulla la richiesta' }).click();
   await phone.getByRole('button', { name: 'Sì, annulla' }).click();
@@ -52,7 +52,7 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
 // Il body dell'app è bloccato: la pagina dei clienti deve scorrere da sola, in verticale e in orizzontale.
 for (const [name, viewport] of [['verticale', { width: 390, height: 664 }], ['orizzontale', { width: 740, height: 360 }]]) {
   test(`portale: da telefono in ${name} la pagina scorre e l'invio resta raggiungibile`, async ({ page, browser }) => {
-    const { ristorante: r } = seed();
+    const { restaurant: r } = seed();
     await login(page, r.host, r.admin);
     await page.locator('a[href="/settings"]').first().click();
     const toggle = page.getByRole('switch', { name: 'Prenotazioni online' });

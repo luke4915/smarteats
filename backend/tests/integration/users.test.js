@@ -36,7 +36,7 @@ describe('gestione utenti', () => {
   });
 
   it('chi non è admin non gestisce gli utenti', async () => {
-    const created = await api1.post('/auth/admin/createUser', { username: 'cassiera', role: 'cassa', password: 'temporanea1' });
+    const created = await api1.post('/auth/admin/createUser', { username: 'cassiera', role: 'cashier', password: 'temporanea1' });
     assert.equal(created.status, 201);
     const cassa = apiClient(server.port, t1.host);
     await cassa.login('cassiera', 'temporanea1');
@@ -49,9 +49,9 @@ describe('gestione utenti', () => {
     const id = (await api1.get('/auth/admin/users')).body.find(u => u.username === 'cassiera').id;
     assert.ok(cassiera);
 
-    const res = await api1.request('PATCH', `/auth/admin/users/${id}`, { role: 'cucina', username: 'cuoca' });
+    const res = await api1.request('PATCH', `/auth/admin/users/${id}`, { role: 'kitchen', username: 'cuoca' });
     assert.equal(res.status, 200, JSON.stringify(res.body));
-    assert.equal(res.body.role, 'cucina');
+    assert.equal(res.body.role, 'kitchen');
     assert.equal(res.body.username, 'cuoca');
 
     const dup = await api1.request('PATCH', `/auth/admin/users/${id}`, { username: t1.username });
@@ -64,11 +64,11 @@ describe('gestione utenti', () => {
     const self = await api1.request('DELETE', `/auth/admin/users/${t1.userId}`);
     assert.equal(self.status, 409);
     assert.equal(self.body.code, 'SELF_DELETE');
-    const role = await api1.request('PATCH', `/auth/admin/users/${t1.userId}`, { role: 'cassa' });
+    const role = await api1.request('PATCH', `/auth/admin/users/${t1.userId}`, { role: 'cashier' });
     assert.equal(role.body.code, 'SELF_ROLE_CHANGE');
 
     // il master prova a declassare/eliminare l'unico admin
-    const lastRole = await m('PATCH', `/${t1.id}/users/${t1.userId}`, { role: 'cassa' });
+    const lastRole = await m('PATCH', `/${t1.id}/users/${t1.userId}`, { role: 'cashier' });
     assert.equal(lastRole.status, 409);
     assert.equal(lastRole.body.code, 'LAST_ADMIN');
     const lastDel = await m('DELETE', `/${t1.id}/users/${t1.userId}`);
@@ -76,7 +76,7 @@ describe('gestione utenti', () => {
   });
 
   it('un utente eliminato perde subito l\'accesso e il suo audit resta', async () => {
-    const created = await api1.post('/auth/admin/createUser', { username: 'temp', role: 'cassa', password: 'temporanea1' });
+    const created = await api1.post('/auth/admin/createUser', { username: 'temp', role: 'cashier', password: 'temporanea1' });
     const id = created.body.user.id;
     const temp = apiClient(server.port, t1.host);
     await temp.login('temp', 'temporanea1');
@@ -93,7 +93,7 @@ describe('gestione utenti', () => {
   });
 
   it('un admin non tocca gli utenti di un altro tenant', async () => {
-    assert.equal((await api2.request('PATCH', `/auth/admin/users/${t1.userId}`, { role: 'cucina' })).status, 404);
+    assert.equal((await api2.request('PATCH', `/auth/admin/users/${t1.userId}`, { role: 'kitchen' })).status, 404);
     assert.equal((await api2.request('DELETE', `/auth/admin/users/${t1.userId}`)).status, 404);
     assert.equal((await api2.post(`/auth/admin/users/${t1.userId}/reset-password`, { password: 'nuovapass1' })).status, 404);
   });
@@ -110,7 +110,7 @@ describe('gestione utenti', () => {
 
   it('password temporanea: dall\'admin al primo accesso, passo per passo', async () => {
     // 1. l'admin crea l'utente scegliendo la password temporanea
-    const created = await api1.post('/auth/admin/createUser', { username: 'nuovo', role: 'cassa', password: 'Temp-Pass-1' });
+    const created = await api1.post('/auth/admin/createUser', { username: 'nuovo', role: 'cashier', password: 'Temp-Pass-1' });
     assert.equal(created.status, 201);
     const { rows: [row] } = await adminDb.query('SELECT password_hash, must_change_password FROM users WHERE id = $1', [created.body.user.id]);
     assert.equal(row.must_change_password, true);
@@ -130,7 +130,7 @@ describe('gestione utenti', () => {
   });
 
   it('reset password su un utente già collegato: alla richiesta successiva deve cambiarla', async () => {
-    const id = (await api1.post('/auth/admin/createUser', { username: 'collegato', role: 'cassa', password: 'Prima-Pass-1' })).body.user.id;
+    const id = (await api1.post('/auth/admin/createUser', { username: 'collegato', role: 'cashier', password: 'Prima-Pass-1' })).body.user.id;
     const user = apiClient(server.port, t1.host);
     await user.login('collegato', 'Prima-Pass-1');
     await user.post('/auth/change-password', { oldPassword: 'Prima-Pass-1', newPassword: 'Mia-Pass-123' });
@@ -148,7 +148,7 @@ describe('gestione utenti', () => {
   });
 
   it('profilo: il cambio username aggiorna anche la sessione e si registra', async () => {
-    await api1.post('/auth/admin/createUser', { username: 'vecchio', role: 'cassa', password: 'Temp-Pass-1' });
+    await api1.post('/auth/admin/createUser', { username: 'vecchio', role: 'cashier', password: 'Temp-Pass-1' });
     const user = apiClient(server.port, t1.host);
     await user.login('vecchio', 'Temp-Pass-1');
     await user.post('/auth/change-password', { oldPassword: 'Temp-Pass-1', newPassword: 'Mia-Pass-123' });
@@ -170,8 +170,8 @@ describe('gestione utenti', () => {
 
     for (let round = 0; round < 5; round++) {
       const [r1, r2] = await Promise.all([
-        api1.request('PATCH', `/auth/admin/users/${created.body.user.id}`, { role: 'cassa' }),
-        b.request('PATCH', `/auth/admin/users/${t1.userId}`, { role: 'cassa' }),
+        api1.request('PATCH', `/auth/admin/users/${created.body.user.id}`, { role: 'cashier' }),
+        b.request('PATCH', `/auth/admin/users/${t1.userId}`, { role: 'cashier' }),
       ]);
       assert.ok([200, 401, 403, 409].includes(r1.status) && [200, 401, 403, 409].includes(r2.status), `${r1.status}/${r2.status}`);
       const { rows } = await adminDb.query(`SELECT count(*)::int AS n FROM users WHERE tenant_id = $1 AND role = 'admin'`, [t1.id]);
@@ -204,19 +204,19 @@ describe('gestione utenti', () => {
     assert.ok(!list.body.some(u => u.username === t2.username), 'utenti di un altro tenant');
     assert.equal(list.body[0].password_hash, undefined);
 
-    const created = await m('POST', `/${t1.id}/users`, { username: 'dalmaster', role: 'responsabile', password: 'temporanea1' });
+    const created = await m('POST', `/${t1.id}/users`, { username: 'dalmaster', role: 'manager', password: 'temporanea1' });
     assert.equal(created.status, 201, JSON.stringify(created.body));
-    assert.equal((await m('POST', `/${t1.id}/users`, { username: 'dalmaster', role: 'cassa', password: 'temporanea1' })).status, 409);
+    assert.equal((await m('POST', `/${t1.id}/users`, { username: 'dalmaster', role: 'cashier', password: 'temporanea1' })).status, 409);
     const { rows } = await adminDb.query('SELECT tenant_id FROM users WHERE id = $1', [created.body.id]);
     assert.equal(rows[0].tenant_id, t1.id);
 
     const id = created.body.id;
-    assert.equal((await m('PATCH', `/${t1.id}/users/${id}`, { role: 'cassa' })).body.role, 'cassa');
+    assert.equal((await m('PATCH', `/${t1.id}/users/${id}`, { role: 'cashier' })).body.role, 'cashier');
     assert.equal((await m('POST', `/${t1.id}/users/${id}/reset-password`, { password: 'altrapass12' })).status, 200);
     assert.equal((await apiClient(server.port, t1.host).login('dalmaster', 'altrapass12')).status, 200);
 
     // un utente di t1 non si raggiunge passando da t2
-    assert.equal((await m('PATCH', `/${t2.id}/users/${id}`, { role: 'cucina' })).status, 404);
+    assert.equal((await m('PATCH', `/${t2.id}/users/${id}`, { role: 'kitchen' })).status, 404);
     assert.equal((await m('DELETE', `/${t2.id}/users/${id}`)).status, 404);
 
     assert.equal((await m('DELETE', `/${t1.id}/users/${id}`)).status, 200);

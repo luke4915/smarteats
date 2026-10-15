@@ -37,12 +37,12 @@ describe('pagamenti dei conti', () => {
 
   before(async () => {
     server = await startServer();
-    [t, other] = [await createTenant({ businessType: 'ristorante' }), await createTenant({ businessType: 'ristorante' })];
+    [t, other] = [await createTenant({ businessType: 'restaurant' }), await createTenant({ businessType: 'restaurant' })];
     admin = apiClient(server.port, t.host);
     await admin.login(t.username);
     otherAdmin = apiClient(server.port, other.host);
     await otherAdmin.login(other.username);
-    [cashier, manager, kitchen] = [await addUser('cassa'), await addUser('responsabile'), await addUser('cucina')];
+    [cashier, manager, kitchen] = [await addUser('cashier'), await addUser('manager'), await addUser('kitchen')];
     beer = await addProduct('Birra', 4.5);
     pizza = await addProduct('Pizza', 10);
     const room = (await admin.post('/rooms', { name: 'Sala' })).body;
@@ -299,7 +299,7 @@ describe('pagamenti dei conti', () => {
     assert.deepEqual([event.check.id, event.check.paid, event.check.due], [check, 4, 6]);
     staff.ws.close();
 
-    const doomed = await createTenant({ businessType: 'ristorante' });
+    const doomed = await createTenant({ businessType: 'restaurant' });
     const api = apiClient(server.port, doomed.host);
     await api.login(doomed.username);
     const room = (await api.post('/rooms', { name: 'S' })).body;
