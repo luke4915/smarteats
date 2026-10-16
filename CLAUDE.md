@@ -96,6 +96,7 @@ Comandi:
 | frontend | `npm run dev` | Vite su https://*.smarteats.local:5173 |
 | backend | `scripts/backup.sh` | dump del database con rotazione (vedi `docs/deployment.md`) |
 | backend | `npm run demo:seed` | crea il locale di dimostrazione `demo` (ristorante completo: sala, portate, carta, prenotazioni, asporto, serate passate e servizio in corso); `npm run demo:reset` lo ricrea. Solo su dominio `.local`. Utenti `demo`, `marta`, `luca`, `giulia`, `paolo`, `chef`, password `smarteats-demo` |
+| backend | `npm run db:prepare` | database vuoto: crea ruoli e schema (`scripts/init-db.js`, no-op se già pronto), poi migra; lo usa il container |
 | radice | `./scripts/avvia.command` | avvia l'app come un programma (doppio clic dal Finder): costruisce il frontend se serve, parte in modalità produzione e apre il browser sul locale `demo` (o quello indicato: `./scripts/avvia.command altrolocale`). Serve PostgreSQL acceso |
 | radice | `./scripts/crea-app.sh` | crea l'app Mac «SmartEats» in `~/Applications` (icona da trascinare nel Dock): avvia il server in silenzio, apre il browser e con «Esci» dal Dock ferma tutto; log in `~/Library/Logs/SmartEats.log`. Si rilancia se si sposta il progetto o cambia Node |
 | radice | `./scripts/check.sh` (`--all`) | tutti i controlli in un comando: logica, lint, build; con `--all` anche test col database e nel browser. Da lanciare prima di ogni commit |
@@ -105,6 +106,8 @@ Comandi:
 | frontend | `npm run mock:epos` | stampante Epson simulata su https://localhost:9443: disegna le copie nel terminale e può rifiutare i lavori (`-- --fail EPTR_COVER_OPEN`) |
 | frontend | `npm run build` | build di produzione |
 | frontend | `npm run e2e` | test nel browser (Playwright): costruisce il frontend, avvia `backend/scripts/e2e-server.js` (HTTPS autogenerato, locali di prova nel database di test) e fa il giro del ristorante e della sagra, anche da telefono; screenshot in `frontend/e2e/.run/schermate`. Prima volta: `npx playwright install chromium` |
+
+Produzione: immagine Docker (`Dockerfile`), stack in `deploy/` (Traefik + app + Postgres + backup, `TLS_TERMINATED_BY_PROXY=true`), rilascio con tag `v*` (workflow `release.yml`); guida in `docs/deployment.md`.
 
 Il dominio di sviluppo è `smarteats.local` (prima `standmanager.local`). Lo sviluppo locale usa certificati mkcert per `*.smarteats.local` e un sottodominio per tenant (es. `default.smarteats.local`). Gli script in `backend/scripts/*.ps1` configurano host e wildcard su Windows.
 
