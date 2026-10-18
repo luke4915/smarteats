@@ -11,7 +11,7 @@ const WEEKDAYS = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 // Un tocco sul giorno apre la sua Timeline. I numeri arrivano da `GET /bookings/summary` (solo conteggi).
 const MonthView = ({ month, shifts, today, event, selectedDate, onPickDay }) => {
   const { showToast } = useToast();
-  const weeks = monthGrid(month);
+  const weeks = useMemo(() => monthGrid(month), [month]);
   const [from, to] = [weeks[0][0].date, weeks.at(-1)[6].date];
   const key = `${from}/${to}`;
   const [data, setData] = useState({ key: null, byDay: new Map() });
