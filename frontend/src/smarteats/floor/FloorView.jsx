@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useIsMobile } from '../../hooks/useBreakpoint';
-import { Users, Receipt } from 'lucide-react';
+import { Users, Receipt, UserPlus } from 'lucide-react';
 import FloorCanvas from '../floorplan/FloorCanvas';
 import { isPlaced } from '../floorplan/geometry';
 import { tableState, formatEuro } from './checkMath';
@@ -66,7 +66,7 @@ const mapTable = (checkOf, reservedOf, selectedId, onSelect) => (table, style, c
 // (scalata per starci intera) e mostra lo stato dal vivo. I tavoli non ancora piazzati restano schede sotto la pianta.
 const FILTERS = [{ id: 'all', label: 'Tutti' }, { id: 'busy', label: 'Occupati' }, { id: 'ready', label: 'Pronti' }];
 
-const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect }) => {
+const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect, onWalkIn }) => {
   const phone = useIsMobile(640);                 // sul telefono i tavoli sono schede, non la pianta
   const [filter, setFilter] = useState('all');
   const byTable = new Map(checks.map(c => [c.table_id, c]));
@@ -91,7 +91,13 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
           ))}
         </div>
         <div className="flex items-center gap-4 text-sm font-medium text-[var(--text-muted)]">
+          {!selectedTableId && <span className="hidden md:flex items-center gap-3 text-xs" aria-hidden="true">
+            <span className="flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-sm border border-[var(--border-hover)]" />Libero</span>
+            <span className="flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-sm bg-[var(--accent)]/40 border border-[var(--accent)]/70" />Occupato</span>
+            <span className="flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-sm bg-amber-500/40 border border-amber-500/80" />Conto richiesto</span>
+          </span>}
           <span>{checks.length} {checks.length === 1 ? 'occupato' : 'occupati'} · {covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
+          {onWalkIn && <button onClick={onWalkIn} className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[var(--border)] text-[var(--text-main)] hover:bg-[var(--bg-card-2)] cursor-pointer"><UserPlus size={15} /> Walk-in</button>}
         </div>
       </div>
 

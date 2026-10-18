@@ -504,12 +504,13 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
       {/* Modal Aggiungi/Modifica */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className={`bg-[var(--bg-card)] rounded-xl shadow-2xl w-full max-w-2xl border border-[var(--border)] transform transition-all duration-300 ${popupVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'} overflow-hidden`}>
-            <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--border)]">
+          <div className={`bg-[var(--bg-card)] rounded-xl shadow-2xl w-full max-w-2xl border border-[var(--border)] transform transition-all duration-300 ${popupVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'} overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)]`}>
+            <div className="flex justify-between items-center px-6 py-4 border-b border-[var(--border)] shrink-0">
               <h3 className="text-base font-semibold tracking-tight text-[var(--text-main)]">{editingProduct ? 'Modifica prodotto' : 'Nuovo prodotto'}</h3>
               <button onClick={() => setShowForm(false)} className="p-1.5 rounded-xl hover:bg-[var(--bg-card-2)] transition-colors cursor-pointer"><X size={16} className="text-[var(--text-muted)]" /></button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6">
+            <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+              <div className="p-6 overflow-y-auto min-h-0 flex-1">
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div className="col-span-2 p-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] space-y-1.5">
                   <label className="text-xs font-semibold text-[var(--text-muted)] block">
@@ -676,13 +677,16 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
                 </div>
               </div>
 
-              <button 
-                type="submit" 
-                disabled={isFormSubmitDisabled}
-                className="w-full mt-4 py-2.5 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold text-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {editingProduct ? 'Salva modifiche' : 'Aggiungi prodotto'}
-              </button>
+              </div>
+              <div className="px-6 py-4 border-t border-[var(--border)] shrink-0">
+                <button
+                  type="submit"
+                  disabled={isFormSubmitDisabled}
+                  className="w-full py-2.5 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold text-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {editingProduct ? 'Salva modifiche' : 'Aggiungi prodotto'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
