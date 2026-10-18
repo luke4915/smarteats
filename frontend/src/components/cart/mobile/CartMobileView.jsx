@@ -2,6 +2,7 @@ import React from 'react';
 import { ShoppingCart, Check, Printer, MessageSquare, QrCode, Trash2, ShoppingBag, ChevronLeft, Minus, Plus } from 'lucide-react';
 import { getLineTotal, getAdjustmentLabel } from '../../../utils/pricing';
 import OrderDiscountPanel from '../OrderDiscountPanel';
+import ActionMenu from '../../shared/ActionMenu';
 
 // Il carrello da telefono, a tutto schermo. Dall'alto: intestazione con «indietro» e le azioni, le righe (con più e
 // meno direttamente sulla riga; un tocco sul nome apre nota e sconto), poi in basso, alla portata del pollice: totale,
@@ -52,7 +53,7 @@ const CartMobileView = ({
                 <div className="min-w-0 flex-1">
                     <h2 className="text-base font-semibold leading-tight">Ordine</h2>
                     <p className={`text-xs ${sessionActive ? 'text-green-500' : 'text-red-400'}`}>
-                        {pieces} {pieces === 1 ? 'articolo' : 'articoli'} · {sessionActive ? 'sessione attiva' : 'sessione non attiva'}
+                        {pieces} {pieces === 1 ? 'articolo' : 'articoli'}{!sessionActive && ' · serata non aperta'}
                     </p>
                 </div>
 
@@ -64,8 +65,10 @@ const CartMobileView = ({
                     <OrderDiscountPanel cart={cart} derivedOrderPercent={derivedOrderPercent} applyOrderDiscount={applyOrderDiscount}
                         buttonClassName="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center" />
                 )}
-                <button onClick={() => setIsQRScanModalOpen(true)} aria-label="Scansiona QR" className={iconBtn}><QrCode size={20} /></button>
-                <button disabled={!sessionActive} onClick={() => setIsReprintModalOpen(true)} aria-label="Ristampa" className={iconBtn}><Printer size={20} /></button>
+                <ActionMenu items={[
+                    { label: 'Importa ordine da QR', icon: QrCode, onClick: () => setIsQRScanModalOpen(true) },
+                    { label: 'Ristampa scontrini recenti', icon: Printer, onClick: () => setIsReprintModalOpen(true), disabled: !sessionActive, hint: 'Serve una serata aperta' },
+                ]} />
             </div>
 
             {/* ─── Righe ─── */}

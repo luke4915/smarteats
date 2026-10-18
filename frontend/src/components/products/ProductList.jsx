@@ -2,11 +2,13 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import QuickEditProductModal from './modals/QuickEditProductModal';
 import { useIsMobile } from '../../hooks/useBreakpoint';
 import { Minus } from 'lucide-react';
+import Segmented from '../../smarteats/floor/Segmented';
+import { input } from '../../smarteats/floor/ui';
 
 const LONG_PRESS_MS = 1500;
 const VISIBLE_THRESHOLD_PCT = 10; // sotto questa soglia il bordo resta invisibile: evita il "flash" su un click veloce
 
-// Su telefono (sotto 768 px): categorie a chip scorrevoli (un tocco, niente menu a tendina), tessere compatte con la
+// Categorie con l'interruttore comune (`Segmented`, scorre se sono molte). Su telefono (sotto 768 px): tessere compatte con la
 // quantità in carrello e un «−» per toglierne una senza aprire il carrello. Da 768 px in su resta come prima.
 const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThreshold = 15, setProducts }) => {
   const phone = useIsMobile();
@@ -99,27 +101,6 @@ const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThresh
     <div className="flex flex-col h-full overflow-hidden">
       {/* Barra Filtri: Dropdown Categoria + Search Bar */}
       <div className="flex gap-2 pb-3 shrink-0">
-        {/* Dropdown Categoria */}
-        {!phone && <div className="relative shrink-0 w-40 sm:w-48">
-          <select
-            value={activeCategory}
-            onChange={(e) => setActiveCategory(e.target.value)}
-            className="w-full h-10 pl-3 pr-8 rounded-xl bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-main)] font-semibold text-xs appearance-none cursor-pointer focus:outline-none focus:border-[var(--accent)] transition-colors"
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat} className="bg-[var(--bg-card-2)] text-[var(--text-main)] font-bold">
-                {cat}
-              </option>
-            ))}
-          </select>
-          {/* Icona Freccia Dropdown */}
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text-muted)]">
-            <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
-            </svg>
-          </div>
-        </div>}
-
         {/* Input Ricerca Rapida */}
         <div className="relative flex-1">
           <input
@@ -127,7 +108,7 @@ const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThresh
             placeholder="Cerca prodotto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-10 pl-9 pr-8 rounded-xl bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-main)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+            className={`${input} !pl-9 !pr-8`}
           />
           {/* Icona Lente d'ingrandimento */}
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none">
@@ -152,13 +133,9 @@ const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThresh
         </div>
       </div>
 
-      {phone && (
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-3 shrink-0 -mx-1 px-1" role="tablist" aria-label="Categorie">
-          {categories.map(cat => (
-            <button key={cat} role="tab" aria-selected={activeCategory === cat} onClick={() => setActiveCategory(cat)}
-              className={`shrink-0 h-9 px-4 rounded-full text-sm font-medium border transition-colors cursor-pointer ${activeCategory === cat ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] text-[var(--text-muted)]'}`}>{cat}</button>
-          ))}
-        </div>
+      {categories.length > 2 && (
+        <Segmented label="Categorie" scroll className="mb-3 shrink-0" value={activeCategory} onChange={setActiveCategory}
+          options={categories.map(cat => ({ id: cat, label: cat }))} />
       )}
 
       {/* Griglia prodotti */}

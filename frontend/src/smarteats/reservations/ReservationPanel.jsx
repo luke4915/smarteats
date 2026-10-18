@@ -3,7 +3,7 @@ import { Phone, MessageCircle, Mail, Users, Clock, StickyNote, MoreVertical } fr
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from '../floor/PanelFrame';
-import CheckMenu from '../floor/CheckMenu';
+import ActionMenu from '../../components/shared/ActionMenu';
 import { btn, btnPrimary, btnDanger, input, label } from '../floor/ui';
 import { STATUS, formatDay, whatsappLink, mailLink, telLink } from './rules';
 import StatusChip from './StatusChip';
@@ -41,7 +41,7 @@ const ReservationPanel = ({ reservation: r, tableNames, onBack, onChanged, onTab
   ];
 
   return (
-    <PanelFrame title={r.customer_name} subtitle={`${formatDay(r.date, { short: true })} · ${r.start_time}`} onBack={onBack} actions={menu && <CheckMenu items={menu} />}
+    <PanelFrame title={r.customer_name} subtitle={`${formatDay(r.date, { short: true })} · ${r.start_time}`} onBack={onBack} actions={menu && <ActionMenu items={menu} />}
       footer={
         r.status === 'requested' ? (
           declining ? (
