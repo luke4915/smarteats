@@ -11,5 +11,5 @@ test('ristorante: servizi; sagre e paninari: serate', () => {
 
 test('i due vocabolari hanno le stesse voci, tutte compilate', () => {
   assert.deepEqual(Object.keys(TERM_SETS.evening).sort(), Object.keys(TERM_SETS.service).sort());
-  for (const set of Object.values(TERM_SETS)) for (const [key, text] of Object.entries(set)) assert.ok(text.trim(), key);
+  for (const set of Object.values(TERM_SETS)) for (const [key, text] of Object.entries(set)) assert.ok((typeof text === 'function' ? text('x') : text).trim(), key);
 });

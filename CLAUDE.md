@@ -62,7 +62,9 @@ backend/            Node.js (ESM) + Express 5 + pg + ws (WSS) + pino + zod
   tests/integration/  test di integrazione: app in memoria + PostgreSQL locale con RLS
   migrations/       NNN_descrizione.sql + run.js (tabella _migrations)
 frontend/           React 19 + Vite 7 + Tailwind v4 + react-router-dom 7 + PWA (vite-plugin-pwa) + Dexie
-  src/App.jsx       shell della cassa delle sagre: collega hook e componenti, routing, finestre comuni
+  src/App.jsx       punto d'ingresso per ciò che non è SmartEats: pagine pubbliche, accesso, cambio password; poi `festival/FestivalApp.jsx`
+  src/festival/     la cassa delle sagre e dei paninari: FestivalApp (guscio), useFestivalData (dati vivi), FestivalRoutes, SetupPage, SyncStatus (rete e stampa), views/icons
+  src/components/shell/  guscio comune a SmartEats e sagre: SideNav/BottomNav, AppHeader, ServiceControl (apre e chiude il servizio o la serata, parole da `utils/terms.js`)
   src/hooks/        useCart, useProducts, useWorkSession (serata), useSound, useLiveUpdates (WebSocket), useBreakpoint
   src/pages/        pagine pubbliche/di livello alto (Login, Menu, KDS, Master)
   src/components/   per dominio: cart/, kitchen/, products/, setup/, shared/, layout/
@@ -205,7 +207,7 @@ L'isolamento tra tenant si basa sulla Row-Level Security di PostgreSQL con la va
 - **Cache offline (`offline/lastKnown.js`) con versione:** quando cambia il significato di ciò che si conserva (ruoli, tipi di locale, forma dell'utente) si alza `VERSION`: i valori di una versione precedente si scartano, non si interpretano. Un utente «vecchio» in cache, a server irraggiungibile, aprirebbe l'app sbagliata (è successo con la migrazione 048).
 - **Account e notifiche stanno nelle Impostazioni** (in fondo, con la gestione utenti), non in testata: la testata ha la campanella (per chi gestisce le prenotazioni), il tema e l'uscita. `AccountSettings` è una sezione, non una finestra.
 - **Pagine pubbliche dei clienti** (`pages/BookingPage.jsx`, menu QR): si usano soprattutto da telefono (iOS e Android), in verticale e in orizzontale. Regole: il `body` dell'app è bloccato (`overflow: hidden`), quindi la pagina ha **un proprio contenitore che scorre** (`fixed inset-0 overflow-y-auto`); campi a 16 px (sotto, iOS ingrandisce la pagina al tocco); bersagli da almeno 48 px; azione principale sempre raggiungibile (barra in basso con `env(safe-area-inset-bottom)`); in orizzontale o su schermi larghi due colonne. Ogni pagina pubblica ha un test nel browser che verifica lo scorrimento a 390×664 e 740×360.
-- `App.jsx` resta un guscio che collega i pezzi: le nuove funzionalità vanno in componenti, hook (`src/hooks/`) o pagine dedicate, non qui.
+- `App.jsx` e i gusci (`festival/FestivalApp.jsx`, `smarteats/app/SmartEatsApp.jsx`) collegano i pezzi: le nuove funzionalità vanno in componenti, hook o pagine dedicate, non qui.
 - Icone PWA in `frontend/public/` (`pwa-192.png`, `pwa-512.png`, `apple-touch-icon.png`), ricavate dal simbolo di `logo_StandManager_ESC_POS.png` con il simbolo al 56% del lato, così la 512 vale anche come maskable. Se cambi le icone, aggiorna il manifest in `vite.config.js`.
 
 ## 8. Offline-first (fase 2, in corso)
@@ -245,7 +247,7 @@ La stampa è **del client**: la cassa che batte l'ordine stampa direttamente sul
 
 Il progetto deve restare comprensibile anche a chi non è uno sviluppatore (guida: `docs/guida-al-codice.md`; controllo: `./scripts/check.sh`).
 
-1. **Un file, un compito, ~300 righe al massimo.** Oltre, si divide per responsabilità (esempio: `components/products/`: modulo, azioni, finestre, elenchi). I file grandi che restano (`PrintProfiles.jsx`, `MasterPage.jsx`, `FloorEditor.jsx`, `App.jsx`) sono nel backlog.
+1. **Un file, un compito, ~300 righe al massimo.** Oltre, si divide per responsabilità (esempio: `components/products/`: modulo, azioni, finestre, elenchi). I file grandi che restano (`PrintProfiles.jsx`, `MasterPage.jsx`, `FloorEditor.jsx`) sono nel backlog.
 2. **La logica sta fuori dalla grafica.** Calcoli e regole in file `.js` puri con un `.test.js` che li spiega con esempi; i `.jsx` li usano. Le chiamate al server stanno in un hook (`useXxx.js`) o in un file di azioni, non sparse nei componenti.
 3. **Un commento in testa a ogni file** (a cosa serve) e sopra ogni funzione non ovvia (il *perché*). In italiano.
 4. **Prima di creare, cerca.** Componenti condivisi: `components/shared/Modal.jsx` (finestre), `smarteats/floor/Segmented.jsx` (interruttori), `smarteats/floor/PanelFrame.jsx` (pannello a destra), `floor/ui.js` (stili). Se una cosa serve in due posti, diventa condivisa.

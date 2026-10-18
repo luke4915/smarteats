@@ -7,7 +7,7 @@ Questa guida serve a ritrovarti nel progetto e a fare modifiche piccole **senza 
 - **Frontend** (`frontend/`): ciò che si vede nel browser. React + Tailwind (lo stile è scritto nelle classi, es. `text-sm` = testo piccolo).
 - **Backend** (`backend/`): il server. Riceve le richieste del frontend, controlla chi sei e cosa puoi fare, parla col database.
 - **Database** (PostgreSQL): dove stanno i dati. Ogni locale (tenant) vede **solo i suoi** dati: lo garantisce il database stesso (RLS), non il codice del frontend.
-- **Tre tipi di locale:** ristorante (`restaurant`), sagra/street food (`street_food`), solo asporto (`takeaway_shop`). Il ristorante e il solo-asporto usano l'app **SmartEats** (`frontend/src/smarteats/`); la sagra usa la cassa classica (`frontend/src/App.jsx`).
+- **Tre tipi di locale:** ristorante (`restaurant`), sagra/street food (`street_food`), solo asporto (`takeaway_shop`). Il ristorante e il solo-asporto usano l'app **SmartEats** (`frontend/src/smarteats/`); la sagra usa la cassa classica (`frontend/src/festival/`).
 - **I prezzi li calcola sempre il server.** Il frontend manda solo «quali prodotti e quante unità».
 
 ## 2. Dove sta cosa
@@ -36,6 +36,7 @@ stand-manager/
     │   ├── catalog/        ← la carta (piatti e opzioni)
     │   ├── settings/       ← Impostazioni (sections.js = elenco delle sezioni)
     │   └── stats/          ← statistiche
+    ├── festival/           ← la cassa delle sagre: guscio (FestivalApp), pagine, dati vivi
     ├── components/         ← pezzi condivisi con la cassa della sagra (Modal, PageHeader, prodotti…)
     ├── pages/              ← pagine pubbliche: prenotazione clienti (/book), ordina asporto (/order), master
     ├── utils/apiClient.js  ← l'UNICO modo di parlare col server dal frontend

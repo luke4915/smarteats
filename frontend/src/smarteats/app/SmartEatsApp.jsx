@@ -6,8 +6,11 @@ import { useToast } from '../../context/useToast';
 import { visibleViews, canViewSmartEats, smartEatsHome } from './views';
 import { useLiveUpdates } from '../../hooks/useLiveUpdates';
 import { useService } from './useService';
-import AppHeader from './AppHeader';
-import { SideNav, BottomNav } from './SideNav';
+import AppHeader from '../../components/shell/AppHeader';
+import ServiceControl from '../../components/shell/ServiceControl';
+import { SideNav, BottomNav } from '../../components/shell/SideNav';
+import { termsFor } from '../../utils/terms';
+import { ICONS } from './icons';
 import NoViewAvailable from '../../components/layout/NoViewAvailable';
 import FloorPage from '../floor/FloorPage';
 import ReservationsPage from '../reservations/ReservationsPage';
@@ -69,10 +72,10 @@ const SmartEatsApp = () => {
 
   return (
     <div className="se-app flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
-      <SideNav views={views} badges={badges} />
+      <SideNav views={views} icons={ICONS} brand="SmartEats" badges={badges} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <AppHeader user={user} service={service} canManageService={canManageService} serviceActions={{ start, closingInfo, end }}
+        <AppHeader user={user} serviceControl={<ServiceControl service={service} canManage={canManageService} start={start} closingInfo={closingInfo} end={end} terms={termsFor(user.businessType)} />}
           inbox={hasInbox ? inbox : null} onOpenNotification={(i) => (i.kind === 'takeaway_request'
             ? navigate('/takeaway', { state: { orderId: i.id, date: i.date } })
             : navigate('/reservations', { state: { reservationId: i.id, date: i.date } }))}
@@ -93,7 +96,7 @@ const SmartEatsApp = () => {
           </Suspense>
         </div>
 
-        <BottomNav views={views} badges={badges} />
+        <BottomNav views={views} icons={ICONS} badges={badges} />
       </main>
     </div>
   );
