@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 
 const ROOTS = ['backend', 'frontend/src'];
-const SKIP_DIRS = new Set(['node_modules', 'dist', '.run', 'migrations']);
+const SKIP_DIRS = new Set(['node_modules', 'dist', '.run']);
 const ENTRY_POINTS = /(\.test\.|\.spec\.|main\.jsx|server\.js|\/app\.js|vite\.config|playwright|eslint|\/run\.js|\/sw\.js|debug_epos|\/scripts\/|\/tests\/)/;
 
 const files = [];
