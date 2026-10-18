@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Il tema scuro si accende con la classe `dark` sulla pagina (hooks/useTheme.js), non con le impostazioni del sistema:
+   così anche le classi `dark:` seguono la scelta dell'utente. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --bg-main: #f1f5f9;
   --bg-card: #ffffff;

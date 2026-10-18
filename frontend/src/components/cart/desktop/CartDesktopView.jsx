@@ -69,7 +69,7 @@ const CartDesktopView = ({
                     const effTotal = getLineTotal(item);
                     return (
                         <div key={cartKey(item)} onClick={() => setSelectedItem(item)}
-                            className="px-3 py-2 rounded-xl cursor-pointer border border-gray-300 dark:border-[var(--border)] bg-[var(--bg-card-2)] hover:border-[var(--accent)]/60 active:scale-[0.99] transition-all">
+                            className="px-3 py-2 rounded-xl cursor-pointer border border-[var(--border)] bg-[var(--bg-card-2)] hover:border-[var(--accent)]/60 active:scale-[0.99] transition-all">
                             <div className="flex justify-between items-center gap-2">
                                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                     <span className="bg-[var(--accent)] text-white text-xs font-semibold w-5 h-5 flex items-center justify-center rounded shrink-0">{item.quantity}</span>

@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
-import { X, Banknote, Coins, Check, Minus, Plus } from 'lucide-react';
+import { Banknote, Coins, Check, Minus, Plus } from 'lucide-react';
+import Modal from './Modal';
+import { btnPrimary } from '../../smarteats/floor/ui';
 
 const NOTES = [100, 50, 20, 10, 5];
 const COINS = [2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01];
@@ -63,65 +65,25 @@ const CashCountModal = ({ expectedCash = 0, onConfirm, onClose }) => {
   const diffColor = difference === 0 ? 'text-green-500' : Math.abs(difference) < 1 ? 'text-orange-500' : 'text-red-500';
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div
-        className="relative w-full max-w-2xl bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-2xl flex flex-col max-h-[90vh]"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center px-6 sm:px-8 py-5 border-b border-[var(--border)] shrink-0">
-          <div>
-            <h3 className="text-xl font-semibold tracking-tight text-[var(--text-main)]">Conteggio cassa</h3>
-            <p className="text-xs font-semibold text-[var(--text-muted)] mt-0.5">Conta contanti a taglio</p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[var(--bg-card-2)] transition-colors cursor-pointer">
-            <X size={18} className="text-[var(--text-muted)]" />
-          </button>
+    <Modal title="Conteggio cassa" size="max-w-2xl" onClose={onClose}
+      footer={(
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm text-[var(--text-muted)]"><span>Atteso da sistema</span><span className="tabular-nums">{expectedCash.toFixed(2)} €</span></div>
+          <div className="flex justify-between text-base font-semibold text-[var(--text-main)]"><span>Contato</span><span className="tabular-nums">{total.toFixed(2)} €</span></div>
+          <div className={`flex justify-between text-base font-semibold ${diffColor}`}><span>Differenza</span><span className="tabular-nums">{difference > 0 ? '+' : ''}{difference.toFixed(2)} €</span></div>
+          <button onClick={() => onConfirm(total)} className={`${btnPrimary} w-full !mt-3`}><Check size={18} /> Conferma chiusura</button>
         </div>
-
-        <div className="overflow-y-auto px-6 sm:px-8 py-5 no-scrollbar">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)] mb-2">
-            <Banknote size={13} /> Banconote
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
-            {NOTES.map(v => (
-              <DenomTile key={v} value={v} qty={counts[v]} onChange={(q) => setQty(v, q)} />
-            ))}
-          </div>
-
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-muted)] mb-2">
-            <Coins size={13} /> Monete
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            {COINS.map(v => (
-              <DenomTile key={v} value={v} qty={counts[v]} onChange={(q) => setQty(v, q)} />
-            ))}
-          </div>
-        </div>
-
-        <div className="px-6 sm:px-8 py-5 border-t border-[var(--border)] shrink-0 space-y-2 bg-[var(--bg-card-2)] rounded-b-3xl">
-          <div className="flex justify-between text-xs font-bold text-[var(--text-muted)]">
-            <span>Atteso da sistema</span>
-            <span>{expectedCash.toFixed(2)} €</span>
-          </div>
-          <div className="flex justify-between text-base font-semibold text-[var(--text-main)]">
-            <span>Contato</span>
-            <span>{total.toFixed(2)} €</span>
-          </div>
-          <div className={`flex justify-between text-base font-semibold ${diffColor}`}>
-            <span>Differenza</span>
-            <span>{difference > 0 ? '+' : ''}{difference.toFixed(2)} €</span>
-          </div>
-
-          <button
-            onClick={() => onConfirm(total)}
-            className="w-full mt-3 py-3.5 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2"
-          >
-            <Check size={18} /> Conferma chiusura
-          </button>
-        </div>
+      )}>
+      <p className="text-sm text-[var(--text-muted)] mb-4">Conta i contanti a taglio.</p>
+      <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] mb-2"><Banknote size={13} /> Banconote</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-6">
+        {NOTES.map(v => <DenomTile key={v} value={v} qty={counts[v]} onChange={(q) => setQty(v, q)} />)}
       </div>
-    </div>
+      <div className="flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] mb-2"><Coins size={13} /> Monete</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+        {COINS.map(v => <DenomTile key={v} value={v} qty={counts[v]} onChange={(q) => setQty(v, q)} />)}
+      </div>
+    </Modal>
   );
 };
 

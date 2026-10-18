@@ -225,7 +225,7 @@ const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThresh
                     {product.name}
                   </h3>
 
-                  <div className="w-full mt-auto pt-1 border-t border-[var(--border)] flex justify-end items-center">
+                  <div className={`w-full mt-auto pt-1 border-t border-[var(--border)] flex items-center ${phone && cartQty > 0 ? "justify-start" : "justify-end"}`}>
                     <span className="text-sm font-semibold tabular-nums leading-none" style={{ color }}>
                       {product.price.toFixed(2)}€
                     </span>

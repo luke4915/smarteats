@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { X, AlertTriangle, Clock } from 'lucide-react';
+import { AlertTriangle, Clock } from 'lucide-react';
+import Modal from './Modal';
+import { btnDanger } from '../../smarteats/floor/ui';
 import { useToast } from '../../context/useToast';
 
 import { fetchWithAuth } from '../../utils/apiClient';
@@ -54,58 +56,37 @@ const ReverseOrder = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-[var(--bg-card)] rounded-xl shadow-2xl p-6 w-full max-w-lg border border-[var(--border)]">
-        <div className="flex justify-between items-center mb-5">
-          <div>
-            <h2 className="text-xl font-semibold text-[var(--text-main)]">Storno Ordini</h2>
-            <p className="text-xs font-semibold text-[var(--text-muted)] mt-0.5">
-              Pending (avanzata) o completati da meno di 5 min (semplice)
-            </p>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-[var(--bg-card-2)] transition-colors">
-            <X size={18} className="text-[var(--text-muted)]" />
-          </button>
-        </div>
-
-        {loading ? (
-          <div className="py-10 text-center text-[var(--text-muted)] text-xs font-semibold">Caricamento...</div>
-        ) : visibleOrders.length === 0 ? (
-          <div className="py-10 text-center text-[var(--text-muted)] text-xs font-semibold">Nessun ordine da stornare</div>
-        ) : (
-          <ul className="space-y-2 max-h-96 overflow-y-auto no-scrollbar">
-            {visibleOrders.map(order => {
-              const deadline = cancelDeadline(order);
-              const isTimed = Number.isFinite(deadline);
-              const secsLeft = isTimed ? Math.max(0, Math.ceil((deadline - now) / 1000)) : null;
-
-              return (
-                <li key={order.id} className="flex justify-between items-center p-4 bg-[var(--bg-card-2)] rounded-xl border border-[var(--border)]">
-                  <div>
-                    <span className="font-semibold text-sm tracking-tight text-[var(--text-main)]">Ordine {order.display_code || `#${order.id}`}</span>
-                    <div className="text-xs text-[var(--text-muted)] mt-0.5">
-                      {order.items?.map(i => `${i.quantity}× ${i.name}`).join(', ')}
+    <Modal title="Storno ordini" size="max-w-lg" onClose={onClose}>
+      <p className="text-xs text-[var(--text-muted)] mb-4">Ordini in attesa (modalità avanzata) o completati da meno di 5 minuti (modalità semplice).</p>
+      {loading ? (
+        <p className="py-10 text-center text-sm text-[var(--text-muted)]">Caricamento...</p>
+      ) : visibleOrders.length === 0 ? (
+        <p className="py-10 text-center text-sm text-[var(--text-muted)]">Nessun ordine da stornare</p>
+      ) : (
+        <ul className="space-y-2">
+          {visibleOrders.map(order => {
+            const deadline = cancelDeadline(order);
+            const isTimed = Number.isFinite(deadline);
+            const secsLeft = isTimed ? Math.max(0, Math.ceil((deadline - now) / 1000)) : null;
+            return (
+              <li key={order.id} className="flex justify-between items-center gap-3 p-3 bg-[var(--bg-card-2)] rounded-lg border border-[var(--border)]">
+                <div className="min-w-0">
+                  <span className="font-medium text-sm text-[var(--text-main)]">Ordine {order.display_code || `#${order.id}`}</span>
+                  <div className="text-xs text-[var(--text-muted)] mt-0.5">{order.items?.map(i => `${i.quantity}× ${i.name}`).join(', ')}</div>
+                  <div className="text-xs font-medium tabular-nums text-[var(--accent)] mt-0.5">{Number(order.total || 0).toFixed(2)} €</div>
+                  {isTimed && (
+                    <div className="flex items-center gap-1 text-xs font-medium tabular-nums text-orange-500 mt-1">
+                      <Clock size={12} /> Scade tra {Math.floor(secsLeft / 60)}:{String(secsLeft % 60).padStart(2, '0')}
                     </div>
-                    <div className="text-xs font-semibold text-[var(--accent)] mt-0.5">{Number(order.total || 0).toFixed(2)} €</div>
-                    {isTimed && (
-                      <div className="flex items-center gap-1 text-xs font-semibold text-orange-400 mt-1">
-                        <Clock size={10} /> Scade tra {Math.floor(secsLeft / 60)}:{String(secsLeft % 60).padStart(2, '0')}
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => cancelOrder(order.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold text-xs transition-all"
-                  >
-                    <AlertTriangle size={12} /> Storna
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-    </div>
+                  )}
+                </div>
+                <button onClick={() => cancelOrder(order.id)} className={`${btnDanger} !h-9 shrink-0`}><AlertTriangle size={14} /> Storna</button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Modal>
   );
 };
 
