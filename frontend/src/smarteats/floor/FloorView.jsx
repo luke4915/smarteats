@@ -4,7 +4,7 @@ import { Users, Receipt, UserPlus } from 'lucide-react';
 import FloorCanvas from '../floorplan/FloorCanvas';
 import { isPlaced } from '../floorplan/geometry';
 import { tableState, formatEuro } from './checkMath';
-import { segment, segmentBox } from './ui';
+import Segmented from './Segmented';
 
 const minutesSince = (iso) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
 
@@ -82,14 +82,8 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
   return (
     <div className="h-full flex flex-col gap-3 min-h-0">
       <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-2 min-w-0 overflow-x-auto no-scrollbar" role="tablist" aria-label="Sale">
-          {activeRooms.map(r => (
-            <button key={r.id} role="tab" aria-selected={r.id === room.id} onClick={() => setRoomId(r.id)}
-              className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${r.id === room.id ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-card-2)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>
-              {r.name}{openIn(r) > 0 && <span className={`ml-2 text-xs ${r.id === room.id ? 'text-white/80' : 'text-[var(--accent)]'}`}>{openIn(r)}</span>}
-            </button>
-          ))}
-        </div>
+        {room && <Segmented label="Sale" scroll className="min-w-0" value={room.id} onChange={setRoomId}
+          options={activeRooms.map(r => ({ id: r.id, label: <>{r.name}{openIn(r) > 0 && <span className="ml-2 text-xs text-[var(--accent)]">{openIn(r)}</span>}</> }))} />}
         <div className="flex items-center gap-4 text-sm font-medium text-[var(--text-muted)]">
           {!selectedTableId && <span className="hidden md:flex items-center gap-3 text-xs" aria-hidden="true">
             <span className="flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-sm border border-[var(--border-hover)]" />Libero</span>
@@ -104,9 +98,7 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
       {!room && <p className="text-sm text-[var(--text-muted)]">Nessuna sala configurata. Un amministratore può crearle in Impostazioni.</p>}
       {phone && room && (
         <>
-          <div className={`${segmentBox} shrink-0`} role="tablist" aria-label="Filtro tavoli">
-            {FILTERS.map(f => <button key={f.id} role="tab" aria-selected={filter === f.id} className={segment(filter === f.id)} onClick={() => setFilter(f.id)}>{f.label}</button>)}
-          </div>
+          <Segmented label="Filtro tavoli" value={filter} onChange={setFilter} options={FILTERS} className="shrink-0" />
           <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
             {shown.length === 0 && <p className="text-sm text-[var(--text-muted)] py-6 text-center">Nessun tavolo</p>}
             <div className="grid grid-cols-2 gap-2.5 pb-2">

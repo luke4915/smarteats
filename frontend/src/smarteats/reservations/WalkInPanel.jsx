@@ -37,9 +37,9 @@ const WalkInPanel = ({ rooms, reservations, checks, preferredTableId = null, onB
   return (
     <PanelFrame title="Senza prenotazione" subtitle={`Adesso sono le ${clockOf(nowMin)}`} onBack={onBack}
       footer={<button className={`${btnPrimary} w-full !h-12`} disabled={busy || !suggested} onClick={() => seat(suggested)}>{busy ? 'Apertura…' : suggested ? `Fai sedere ${party} ${party === 1 ? 'persona' : 'persone'} al ${[...fits, ...rest].find(t => t.id === suggested).name}` : 'Nessun tavolo libero'}</button>}>
-      <CoversStepper value={party} onChange={setParty} />
+      <CoversStepper compact value={party} onChange={setParty} />
       <div className="mt-3 space-y-1.5">
-        {fits.length > 0 && <p className="text-xs text-[var(--text-muted)] px-1">Liberi e adatti</p>}
+        {fits.length > 0 && <p className="text-xs text-[var(--text-muted)] px-1">Liberi e adatti: tocca per scegliere un altro tavolo</p>}
         {fits.map(t => option(t, 'text-[var(--text-muted)]'))}
         {fits.length === 0 && rest.length > 0 && <p className="text-sm text-amber-500 px-1">Nessun tavolo libero ha {party} posti. Si può comunque sedere il gruppo e unire i tavoli dalla Sala.</p>}
         {fits.length === 0 && rest.length > 0 && rest.map(t => option(t, 'text-amber-500'))}

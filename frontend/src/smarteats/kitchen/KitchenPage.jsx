@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { ChefHat, Clock, Check, Volume2, VolumeX } from 'lucide-react';
 import { useKitchenOrders } from './useKitchenOrders';
+import Segmented from '../floor/Segmented';
 import { playChime } from '../../utils/chime';
 import { boardOrders, upcomingByTable, orderUrgency, ticketAction, toggleLineStatus, isDone, hasBarWork, newOrderIds, STATIONS } from './board';
 
@@ -89,12 +90,7 @@ const KitchenPage = ({ event }) => {
         </div>
         <div className="flex items-center gap-3">
           {showStations && (
-            <div className="flex gap-1 p-1 rounded-lg bg-[var(--bg-main)] border border-[var(--border)]" role="tablist" aria-label="Postazione">
-              {STATIONS.map(s => (
-                <button key={s.id} role="tab" aria-selected={station === s.id} onClick={() => setStation(s.id)}
-                  className={`h-11 px-5 rounded-md text-lg font-medium ${station === s.id ? 'bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm' : 'text-[var(--text-muted)]'}`}>{s.label}</button>
-              ))}
-            </div>
+            <Segmented label="Postazione" size="lg" value={station} onChange={setStation} options={STATIONS} />
           )}
           <button onClick={toggleSound} aria-pressed={sound} aria-label={sound ? 'Spegni il suono' : 'Accendi il suono'}
             className="h-12 w-12 rounded-lg border border-[var(--border)] flex items-center justify-center text-[var(--text-main)]">{sound ? <Volume2 size={22} /> : <VolumeX size={22} />}</button>

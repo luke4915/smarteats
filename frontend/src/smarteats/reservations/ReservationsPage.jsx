@@ -10,7 +10,8 @@ import TablePicker from './TablePicker';
 import StatusChip from './StatusChip';
 import TimelineView from './TimelineView';
 import WalkInPanel from './WalkInPanel';
-import { btnPrimary, iconBtn, btn, segment, segmentBox } from '../floor/ui';
+import { btnPrimary, iconBtn, btn } from '../floor/ui';
+import Segmented from '../floor/Segmented';
 
 const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
 
@@ -67,10 +68,7 @@ const ReservationsPage = ({ event }) => {
         <input type="date" aria-label="Vai al giorno" value={date} onChange={e => e.target.value && (setDate(e.target.value), setPanel(null))}
           className="h-10 px-2 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] text-sm text-[var(--text-main)]" />
         {date !== todayLocal() && <button className={`${btn} !h-10`} onClick={() => { setDate(todayLocal()); setPanel(null); }}>Oggi</button>}
-        <div className={`${segmentBox} w-48`} role="tablist" aria-label="Vista">
-          <button role="tab" aria-selected={view === 'timeline'} className={segment(view === 'timeline')} onClick={() => setView('timeline')}>Timeline</button>
-          <button role="tab" aria-selected={view === 'list'} className={segment(view === 'list')} onClick={() => setView('list')}>Elenco</button>
-        </div>
+        <Segmented label="Vista" value={view} onChange={setView} className="w-52" options={[{ id: 'timeline', label: 'Timeline' }, { id: 'list', label: 'Elenco' }]} />
         <div className="flex items-center gap-2 ml-auto">
           {date === todayLocal() && <button className={`${btn} !h-10`} onClick={() => setPanel({ kind: 'walkin' })}><UserPlus size={16} /> Walk-in</button>}
           <button className={`${btnPrimary} !h-10`} disabled={!activeShifts.length} onClick={() => setPanel({ kind: 'new' })}><Plus size={16} /> Prenotazione</button>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { segment, segmentBox } from '../floor/ui';
+import Segmented from '../floor/Segmented';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { useAuth } from '../../context/useAuth';
@@ -29,10 +29,7 @@ const CatalogPage = () => {
     <PageBody>
       <PageHeader title="Carta" subtitle={hasTables ? 'Piatti, prezzi, portate e opzioni.' : 'Prodotti e prezzi.'} />
       {hasTables && (
-        <div className={`${segmentBox} w-60`} role="tablist" aria-label="Sezioni della carta">
-          <button role="tab" aria-selected={tab === 'dishes'} className={segment(tab === 'dishes')} onClick={() => setTab('dishes')}>Piatti</button>
-          <button role="tab" aria-selected={tab === 'options'} className={segment(tab === 'options')} onClick={() => setTab('options')}>Opzioni</button>
-        </div>
+        <Segmented label="Sezioni della carta" value={tab} onChange={setTab} className="w-60" options={[{ id: 'dishes', label: 'Piatti' }, { id: 'options', label: 'Opzioni' }]} />
       )}
       {tab === 'dishes' && <ProductConfig hideHeader compact takeawayEnabled={!!user.modules?.includes('takeaway')} products={products} setProducts={setProducts} courses={courses} modifierGroups={hasTables ? modifiers.groups : null} onModifiersSaved={modifiers.reload} />}
       {hasTables && tab === 'options' && <ModifierSettings groups={modifiers.groups} onChanged={modifiers.reload} />}

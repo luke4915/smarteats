@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { formatEuro } from '../floor/checkMath';
-import { segment, segmentBox, input } from '../floor/ui';
+import { input } from '../floor/ui';
+import Segmented from '../floor/Segmented';
 import { HBars, HourBars, HourTable } from './Bars';
 import { Columns } from '../../components/shared/charts';
 import { PageHeader, PageBody } from '../../components/shared/PageHeader';
@@ -77,10 +78,7 @@ const StatsPage = () => {
           </div>
 
           <Card title="Incasso per ora" aside={
-            <div className={`${segmentBox} w-44`} role="tablist" aria-label="Vista">
-              <button role="tab" aria-selected={!asTable} className={segment(!asTable)} onClick={() => setAsTable(false)}>Grafico</button>
-              <button role="tab" aria-selected={asTable} className={segment(asTable)} onClick={() => setAsTable(true)}>Tabella</button>
-            </div>}>
+            <Segmented label="Vista" value={asTable ? 'table' : 'chart'} onChange={(id) => setAsTable(id === 'table')} className="w-44" options={[{ id: 'chart', label: 'Grafico' }, { id: 'table', label: 'Tabella' }]} />}>
             {asTable ? <HourTable hours={hours} label={hourLabel} /> : <HourBars hours={hours} label={hourLabel} peak={peak?.hour} />}
             {peak && !asTable && <p className="mt-3 text-xs text-[var(--text-muted)]">Ora di punta: <span className="text-[var(--text-main)] font-medium">{hourLabel(peak.hour)}</span> con {formatEuro(peak.revenue)}.</p>}
           </Card>

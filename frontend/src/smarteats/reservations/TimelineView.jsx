@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { timelineWindow, blocksForTable, unassigned, STEP, minutesNow, clockOf } from './timeline';
 import { minutesOf } from './rules';
+import { Users } from 'lucide-react';
 
 const LABEL_W = 112;       // colonna dei tavoli
 const ROW_H = 40;
@@ -43,7 +44,7 @@ const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, sele
       title={`${b.time} · ${b.title} · ${b.party}`} aria-label={`${b.time} ${b.title}, ${b.party} persone`}
       className={`absolute top-1 bottom-1 rounded-md border px-2 flex items-center gap-1.5 text-xs font-medium overflow-hidden whitespace-nowrap cursor-pointer hover:brightness-110 ${tone} ${b.kind === 'reservation' && b.id === selectedId ? 'ring-2 ring-[var(--text-main)]' : ''}`}
       style={{ left: x(b.start), width: Math.max(cell * 2, x(b.end) - x(b.start) - 2) }}>
-      <span className="tabular-nums opacity-80">{b.time}</span><span className="truncate">{b.title}</span><span className="tabular-nums opacity-80 ml-auto">{b.party}</span>
+      <span className="tabular-nums opacity-80">{b.time}</span><span className="truncate">{b.title}</span><span className="tabular-nums opacity-80 ml-auto flex items-center gap-1 shrink-0"><Users size={12} aria-hidden="true" />{b.party}</span>
     </button>
   );
 

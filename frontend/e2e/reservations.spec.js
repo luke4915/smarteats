@@ -77,6 +77,12 @@ test('walk-in: chi arriva senza prenotazione si siede al tavolo giusto e il cont
   await shot(page, 'reservations-08-walk-in');
   await page.getByRole('button', { name: 'Più coperti' }).click();      // 3 persone: il tavolo da 2 non basta più
   await expect(page.getByRole('button', { name: /^T3 · Sala/ })).toHaveCount(0);
+  // Si può scegliere un tavolo diverso da quello proposto: il pulsante in fondo lo segue
+  const options = page.getByRole('button', { name: / · Sala/ });
+  await expect(options.nth(1)).toBeVisible();
+  const other = (await options.nth(1).innerText()).split(' ')[0];
+  await options.nth(1).click();
+  await expect(page.getByRole('button', { name: new RegExp(`^Fai sedere 3 persone al ${other}$`) })).toBeVisible();
   await page.getByRole('button', { name: /^Fai sedere 3 persone/ }).click();
   await expect(page.getByText(/Aperto · 3 cop\./)).toBeVisible();   // si è nel conto appena aperto, con 3 coperti
   // Il conto di prova si elimina, così il tavolo torna libero per gli altri test
