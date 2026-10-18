@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../context/useAuth';
 import { useToast } from '../../context/useToast';
@@ -32,6 +32,7 @@ const SmartEatsApp = () => {
   const { user, logout, refreshSession } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { service, start, closingInfo, end, onEvent } = useService();
   const [event, setEvent] = useState(null);
   const [theme, setTheme] = useState('dark');
@@ -77,7 +78,7 @@ const SmartEatsApp = () => {
             : navigate('/reservations', { state: { reservationId: i.id, date: i.date } }))}
           theme={theme} onToggleTheme={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))} onLogout={doLogout} />
 
-        <div className="flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
+        <div key={pathname} className="motion-page flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
           <Suspense fallback={<Page><p className="text-[var(--text-muted)]">Caricamento…</p></Page>}>
             <Routes>
               <Route path="/floor" element={guard('floor', <FloorPage user={user} service={service} event={event} />)} />

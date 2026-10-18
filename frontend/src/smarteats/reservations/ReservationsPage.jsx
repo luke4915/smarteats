@@ -158,8 +158,8 @@ const ReservationsPage = ({ event }) => {
     return (
       <>
         <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div>
-        {/* Timeline e Mensile usano tutta la larghezza finché non si sceglie qualcosa: il pannello compare allora */}
-        {(panel || view === 'list') && <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>}
+        {/* Timeline, Elenco e Mensile usano tutta la larghezza finché non si sceglie qualcosa: il pannello compare allora */}
+        {panel && <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>}
       </>
     );
   }

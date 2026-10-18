@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from './context/useAuth';
 import { useToast } from './context/useToast';
@@ -64,6 +64,7 @@ const App = () => {
   const { user, loading, login, logout, refreshSession } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const isMobile = useIsMobile(); // telefono: sotto 768 px. Da 768 in su (tablet, PC) menu e carrello stanno in pagina
   const isLoggedIn = !loading && !!user;
 
@@ -267,7 +268,7 @@ const App = () => {
         <div className="flex-1 flex overflow-hidden p-3 sm:p-4 gap-4 min-h-0">
 
           {/* Pagine */}
-          <div className="flex-1 overflow-y-auto no-scrollbar bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-6 min-w-0">
+          <div key={pathname} className="motion-page flex-1 overflow-y-auto no-scrollbar bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-6 min-w-0">
             {user.role === 'kitchen' ? (
               <OrdersKitchen />
             ) : (
