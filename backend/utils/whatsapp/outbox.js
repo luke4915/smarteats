@@ -16,7 +16,7 @@ import { getDriver } from './driver.js';
 const REF_TYPES = ['reservation', 'takeaway'];
 
 // Lo stato attuale di una pratica, con tutto ciò che serve a scrivere il messaggio (nome del locale compreso)
-export async function loadContext(db, refType, refId) {
+async function loadContext(db, refType, refId) {
   if (refType === 'reservation') {
     const { rows } = await db.query(
       `SELECT r.id, r.status, r.customer_name, r.phone, r.party_size, r.public_token,
@@ -42,7 +42,7 @@ const VALUE_OF = {
   customer: c => String(c.customer_name).split(/\s+/)[0],
   date: c => dayLabel(c.date), time: c => c.time, party: c => String(c.party_size), total: c => euro(c.total),
 };
-export const valuesFor = (eventId, ctx) => EVENTS[eventId].vars.map(v => VALUE_OF[v](ctx));
+const valuesFor = (eventId, ctx) => EVENTS[eventId].vars.map(v => VALUE_OF[v](ctx));
 
 // Impostazioni del modulo per locale: eventi accesi e tetto mensile di pratiche. Le scrive solo il Master.
 export async function loadConfig(db) {
@@ -104,7 +104,7 @@ export async function enqueue(db, refType, refId, event, { now = new Date() } = 
 }
 
 // Chi ha scritto STOP non riceve più nulla da questo numero (per nessun locale), finché non scrive RIPRENDI
-export async function isOptedOut(db, phone) {
+async function isOptedOut(db, phone) {
   const { rows } = await db.query('SELECT 1 FROM whatsapp_optouts WHERE phone = $1', [phone]);
   return rows.length > 0;
 }

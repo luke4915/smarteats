@@ -4,7 +4,7 @@
 const toNumber = (v) => (v === null || v === undefined ? null : Number(v));
 
 // `product_id` e i prezzi sono bigint/numeric: pg li restituisce come stringhe.
-export const rowToItem = (r) => ({
+const rowToItem = (r) => ({
   line_id: r.id,
   prep_status: r.prep_status,
   id: toNumber(r.product_id),

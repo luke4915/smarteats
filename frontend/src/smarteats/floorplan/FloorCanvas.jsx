@@ -5,7 +5,7 @@ import { ELEMENT_CLASS } from './elementStyle';
 // Griglia di una sala con i suoi tavoli. Serve sia all'editor (tavoli trascinabili) sia alla Sala (tavoli con lo
 // stato dal vivo): cosa disegnare dentro a ogni tavolo lo decide `renderTable(table, style)`, che deve applicare
 // `style` (posizione e misura in pixel) al suo elemento. La cella si adatta alla larghezza disponibile; con `fit`
-// (la Sala) si adatta anche all'altezza: l'intera sala sta nell'area, centrata, senza scroll. `fit` richiede un
+// (la Sala) si adatta anche all'altezza: l'intera sala sta nell'area, in alto e centrata, senza scroll. `fit` richiede un
 // contenitore con altezza definita. Senza `fit`, `minCell` è la misura minima di una cella: una sala molto grande
 // scorre in orizzontale invece di rimpicciolire i tavoli fino a non leggerli.
 const MIN_CELL = 14;
@@ -29,7 +29,7 @@ const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderE
   }, [gridW, gridH, fit, minCell, maxCell]);
 
   return (
-    <div ref={box} className={fit ? 'w-full h-full flex items-center justify-center overflow-hidden' : 'w-full overflow-x-auto no-scrollbar'}>
+    <div ref={box} className={fit ? 'w-full h-full flex items-start justify-center overflow-hidden' : 'w-full overflow-x-auto no-scrollbar'}>
       <div
         ref={canvasRef}
         onPointerDown={onBackgroundPointerDown} onPointerMove={onBackgroundPointerMove} onPointerUp={onBackgroundPointerUp} onPointerCancel={onBackgroundPointerUp}

@@ -201,7 +201,7 @@ describe('avvisi whatsapp', () => {
 
   it('il Master configura eventi e tetto, vede il registro e invia una prova; il locale non può', async () => {
     const masterCookie = { cookie: `master_token=${jwt.sign({ master: true }, process.env.MASTER_JWT_SECRET)}` };
-    const master = apiClient(server.port, 'master.standmanager.local');
+    const master = apiClient(server.port, 'master.smarteats.local');
     const get = (await master.request('GET', `/master/tenants/${t.id}/whatsapp`, undefined, masterCookie)).body;
     assert.deepEqual([get.module_enabled, get.driver, get.quota, get.events.length], [true, 'mock', 300, 15]);
     assert.equal(get.events.find(e => e.id === 'takeaway.picked_up').enabled, false);
@@ -341,7 +341,7 @@ describe('avvisi whatsapp', () => {
 
   it('il Master vede anche i messaggi di marketing e il registro porta gli stati del webhook', async () => {
     const masterCookie = { cookie: `master_token=${jwt.sign({ master: true }, process.env.MASTER_JWT_SECRET)}` };
-    const master = apiClient(server.port, 'master.standmanager.local');
+    const master = apiClient(server.port, 'master.smarteats.local');
     const data = (await master.request('GET', `/master/tenants/${t.id}/whatsapp`, undefined, masterCookie)).body;
     assert.equal(data.events.find(e => e.id === 'reservation.thanks').category, 'marketing');
     assert.ok(data.log.some(m => m.status === 'read'));

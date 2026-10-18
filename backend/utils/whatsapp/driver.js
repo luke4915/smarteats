@@ -6,7 +6,7 @@ import crypto from 'crypto';
 // Un driver ha `send({ to, template, header, params, buttonToken })` → `{ id }` e `sendText({ to, body })` (risposta libera,
 // ammessa dentro le 24 ore dall'ultimo messaggio del cliente) oppure lancia `SendError`.
 
-export class SendError extends Error {
+class SendError extends Error {
   constructor(message, { permanent = false, code = '' } = {}) { super(message); this.permanent = permanent; this.code = code; }
 }
 
@@ -20,7 +20,7 @@ export function verifySignature(rawBody, header, secret) {
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
-export function metaDriver(env = process.env, fetchImpl = globalThis.fetch) {
+function metaDriver(env = process.env, fetchImpl = globalThis.fetch) {
   const { WHATSAPP_TOKEN: token, WHATSAPP_PHONE_NUMBER_ID: phoneId, WHATSAPP_API_VERSION: version = 'v21.0' } = env;
   return {
     id: 'meta',

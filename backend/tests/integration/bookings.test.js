@@ -285,6 +285,23 @@ describe('prenotazioni', () => {
     assert.equal((await waiter.get('/bookings/reservations?date=ieri')).status, 400);
   });
 
+  it('riepilogo del mese: prenotazioni e coperti per giorno e turno, solo attive, solo numeri', async () => {
+    const day = '2030-11-29';
+    await book({ date: day, party_size: 3 });
+    await book({ date: day, party_size: 5, customer_name: 'Verdi' });
+    const gone = (await book({ date: day, party_size: 2, customer_name: 'Neri' })).body;
+    await admin.post(`/bookings/reservations/${gone.id}/cancel`, {});
+    const res = await waiter.get(`/bookings/summary?from=2030-11-01&to=2030-11-30`);
+    assert.equal(res.status, 200);
+    const row = res.body.find(r => r.date === day && r.shift_id === dinner.id);
+    assert.deepEqual([row.reservations, row.covers], [2, 8]);
+    assert.deepEqual(Object.keys(row).sort(), ['covers', 'date', 'requested', 'reservations', 'shift_id']);
+    assert.deepEqual((await otherApi.get(`/bookings/summary?from=2030-11-01&to=2030-11-30`)).body, []);
+    assert.equal((await kitchen.get('/bookings/summary?from=2030-11-01&to=2030-11-30')).status, 403);
+    assert.equal((await waiter.get('/bookings/summary?from=2030-01-01&to=2030-12-31')).status, 400);
+    assert.equal((await waiter.get('/bookings/summary?from=2030-11-30&to=2030-11-01')).status, 400);
+  });
+
   it('un turno con prenotazioni non si elimina, si disattiva', async () => {
     const res = await admin.request('DELETE', `/bookings/shifts/${dinner.id}`);
     assert.equal(res.status, 409);

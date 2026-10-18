@@ -18,4 +18,8 @@ export async function login(page, host, username) {
 }
 
 // Cartella degli screenshot da guardare a occhio (non sono confronti automatici).
-export const shot = (page, name) => page.screenshot({ path: path.join(here, '.run', 'schermate', `${name}.png`), fullPage: false });
+// Prima aspetta la fine delle animazioni di entrata (pagine, pannelli, finestre durano al massimo 320 ms), così l'immagine è nitida.
+export const shot = async (page, name) => {
+  await page.waitForTimeout(450);
+  await page.screenshot({ path: path.join(here, '.run', 'schermate', `${name}.png`), fullPage: false });
+};

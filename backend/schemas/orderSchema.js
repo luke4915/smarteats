@@ -50,7 +50,7 @@ export const createOrderSchema = z.object({
     (o) => o.session_id === undefined || o.client_order_id !== undefined,
     { message: 'client_order_id è obbligatorio per gli ordini in ritardo' }
 );
-export const ORDER_STATUSES = ['pending', 'preparing', 'completed', 'canceled'];
+const ORDER_STATUSES = ['pending', 'preparing', 'completed', 'canceled'];
 
 export const updateOrderStatusSchema = z.object({
     status: z.enum(ORDER_STATUSES),

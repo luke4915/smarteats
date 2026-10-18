@@ -92,7 +92,7 @@ const FloorPage = ({ user, service, event }) => {
       onSent={() => { reset(); load(); }} onChanged={load}
       onSwitch={(check) => { reset(); setSelection({ table: rooms.flatMap(r => r.tables).find(t => t.id === check.table_id), checkId: check.id }); load(); }} />
   );
-  const floor = <FloorView rooms={rooms} checks={checks} reserved={reserved} service={service} selectedTableId={selection?.table.id} onSelect={select} />;
+  const floor = <FloorView rooms={rooms} checks={checks} reserved={reserved} selectedTableId={selection?.table.id} onSelect={select} onWalkIn={() => navigate('/reservations', { state: { walkIn: true } })} />;
   const menu = picking
     ? <ModifierPicker key={picking.id} product={picking} groups={modifiers.forProduct(picking)} onCancel={() => setPicking(null)} onAdd={(chosen) => { addWith(picking, chosen); setPicking(null); }} />
     : <OrderMenu products={products} cart={cart} tableName={selection?.table.name} onAdd={add} onBack={() => { setOrdering(false); setDraftOpen(false); }} />;
@@ -101,7 +101,8 @@ const FloorPage = ({ user, service, event }) => {
     return (
       <>
         <div className={`${card} flex-1 min-h-0 ${ordering ? 'overflow-y-auto no-scrollbar' : 'overflow-hidden'}`}>{ordering ? menu : floor}</div>
-        <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>
+        {/* Senza un tavolo scelto la pianta prende tutto lo spazio: il pannello compare solo quando serve */}
+        {selection && <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>}
       </>
     );
   }

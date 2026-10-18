@@ -6,6 +6,7 @@ test('pianta: separatore tracciato, spostato e ridimensionato con le maniglie; t
   const { restaurant: r } = seed();
   await login(page, r.host, r.admin);
   await page.getByRole('link', { name: 'Impostazioni' }).click();
+  await page.getByRole('button', { name: 'Sale e tavoli' }).click();
   await page.getByRole('button', { name: /Disegna pianta/ }).first().click();
   await expect(page.getByText('Pianta della sala')).toBeVisible();
   await shot(page, 'floorplan-01-editor');

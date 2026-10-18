@@ -63,7 +63,7 @@ export async function createTenant({ openSession = true, active = true, business
     ({ rows: [{ id: sessionId }] } = await adminDb.query(
       `INSERT INTO sessions (name, start_time, tenant_id) VALUES ('Serata di prova', now(), $1) RETURNING id`, [tenant.id]));
   }
-  return { id: tenant.id, slug, host: `${slug}.standmanager.local`, username: `admin-${slug}`, userId: user.id, productId: product.id, sessionId };
+  return { id: tenant.id, slug, host: `${slug}.smarteats.local`, username: `admin-${slug}`, userId: user.id, productId: product.id, sessionId };
 }
 
 const TENANT_TABLES = ['whatsapp_messages', 'app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];

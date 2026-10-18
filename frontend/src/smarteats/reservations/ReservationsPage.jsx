@@ -1,14 +1,20 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, CalendarX } from 'lucide-react';
+import { Plus, CalendarX, UserPlus } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '../../hooks/useBreakpoint';
 import { useBookings } from './useBookings';
 import { todayLocal, addDays, formatDay, agendaGroups } from './rules';
+import { monthOf, addMonths, formatMonth } from './calendar';
+import PeriodNav from './PeriodNav';
+import MonthView from './MonthView';
 import ReservationPanel from './ReservationPanel';
 import ReservationForm from './ReservationForm';
 import TablePicker from './TablePicker';
 import StatusChip from './StatusChip';
-import { btnPrimary, iconBtn, btn } from '../floor/ui';
+import TimelineView from './TimelineView';
+import WalkInPanel from './WalkInPanel';
+import { btnPrimary, btn } from '../floor/ui';
+import Segmented from '../floor/Segmented';
 
 const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
 
@@ -26,14 +32,18 @@ const ReservationsPage = ({ event }) => {
   const location = useLocation();
   const narrow = useIsMobile(900);
   const [date, setDate] = useState(() => location.state?.date ?? todayLocal());
-  const { shifts, rooms, reservations, availability, loading, reload } = useBookings(date, event);
-  const [panel, setPanel] = useState(null);     // { kind: 'detail' | 'new' | 'edit' | 'tables', id? }
+  const { shifts, rooms, checks, reservations, availability, loading, reload } = useBookings(date, event);
+  const [view, setView] = useState('timeline');   // 'timeline' (tavoli per ora) | 'list' (elenco per turno) | 'month' (calendario)
+  const [month, setMonth] = useState(() => monthOf(date));
+  const [showClosed, setShowClosed] = useState(false);   // le prenotazioni concluse o annullate stanno nascoste finché non si chiede
+  const [panel, setPanel] = useState(null);     // { kind: 'detail' | 'new' | 'edit' | 'tables' | 'walkin', id?, tableId? }
 
   const byId = useMemo(() => new Map(reservations.map(r => [r.id, r])), [reservations]);
   const tableNames = useMemo(() => { const m = new Map(rooms.flatMap(r => r.tables).map(t => [t.id, t.name])); return (ids) => ids.map(id => m.get(id)).filter(Boolean); }, [rooms]);
   // Si arriva dalla campanella: si apre il giorno e la prenotazione da decidere, poi lo stato di navigazione si butta
   useEffect(() => {
     const target = location.state;
+    if (target?.walkIn) { setView('timeline'); setPanel({ kind: 'walkin' }); navigate(location.pathname, { replace: true, state: null }); return; }
     if (!target?.reservationId) return;
     if (target.date) setDate(target.date);
     setPanel({ kind: 'detail', id: target.reservationId });
@@ -50,26 +60,33 @@ const ReservationsPage = ({ event }) => {
 
   const list = (
     <div className="flex flex-col h-full min-h-0">
-      <header className="flex flex-wrap items-center gap-3 pb-3 shrink-0">
-        <div className="flex items-center gap-1">
-          <button className={iconBtn} aria-label="Giorno precedente" onClick={() => go(-1)}><ChevronLeft size={20} /></button>
-          <div className="min-w-[10.5rem] text-center">
-            <p className="text-lg font-semibold tracking-tight text-[var(--text-main)] first-letter:uppercase leading-tight">{formatDay(date)}</p>
-            <p className="text-xs text-[var(--text-muted)]">{total} {total === 1 ? 'persona' : 'persone'}{pending > 0 && <span className="text-amber-500"> · {pending} da confermare</span>}</p>
-          </div>
-          <button className={iconBtn} aria-label="Giorno successivo" onClick={() => go(1)}><ChevronRight size={20} /></button>
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 pb-3 shrink-0">
+        {view === 'month'
+          ? <PeriodNav label={formatMonth(month)} prevLabel="Mese precedente" nextLabel="Mese successivo" onPrev={() => setMonth(m => addMonths(m, -1))} onNext={() => setMonth(m => addMonths(m, 1))}
+              isCurrent={month === monthOf(todayLocal())} onToday={() => setMonth(monthOf(todayLocal()))} todayLabel="Mese corrente" pickerType="month" pickerValue={month} onPick={setMonth} />
+          : <PeriodNav label={formatDay(date)} hint={`${total} ${total === 1 ? 'persona' : 'persone'}${pending > 0 ? ` · ${pending} da confermare` : ''}`} prevLabel="Giorno precedente" nextLabel="Giorno successivo"
+              onPrev={() => go(-1)} onNext={() => go(1)} isCurrent={date === todayLocal()} onToday={() => { setDate(todayLocal()); setPanel(null); }}
+              pickerValue={date} onPick={(d) => { setDate(d); setPanel(null); }} />}
+        <Segmented label="Vista" value={view} onChange={(v) => { if (v === 'month') setMonth(monthOf(date)); setView(v); }} className="w-72"
+          options={[{ id: 'timeline', label: 'Timeline' }, { id: 'list', label: 'Elenco' }, { id: 'month', label: 'Mensile' }]} />
+        <div className="flex items-center gap-2 ml-auto">
+          {date === todayLocal() && view !== 'month' && <button className={`${btn} !h-10`} onClick={() => setPanel({ kind: 'walkin' })}><UserPlus size={16} /> Walk-in</button>}
+          <button className={`${btnPrimary} !h-10`} disabled={!activeShifts.length} onClick={() => setPanel({ kind: 'new' })}><Plus size={16} /> Prenotazione</button>
         </div>
-        <input type="date" aria-label="Vai al giorno" value={date} onChange={e => e.target.value && (setDate(e.target.value), setPanel(null))}
-          className="h-10 px-2 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] text-sm text-[var(--text-main)]" />
-        {date !== todayLocal() && <button className={`${btn} !h-10`} onClick={() => { setDate(todayLocal()); setPanel(null); }}>Oggi</button>}
-        <button className={`${btnPrimary} !h-10 ml-auto`} disabled={!activeShifts.length} onClick={() => setPanel({ kind: 'new' })}><Plus size={16} /> Nuova</button>
       </header>
 
       {activeShifts.length === 0 && !loading && (
         <p className="text-sm text-[var(--text-muted)] py-6">Non ci sono turni attivi. Creali in <button className="text-[var(--accent)] font-medium cursor-pointer" onClick={() => navigate('/settings')}>Impostazioni</button>.</p>
       )}
 
-      <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pr-1">
+      {view === 'month' && <MonthView month={month} shifts={shifts} today={todayLocal()} event={event} selectedDate={date} onPickDay={(d) => { setDate(d); setPanel(null); setView('timeline'); }} />}
+      {view === 'timeline' && !loading && (
+        <TimelineView date={date} isToday={date === todayLocal()} shifts={shifts} rooms={rooms} reservations={reservations} checks={checks} selectedId={panel?.id}
+          onOpenReservation={(id) => setPanel({ kind: 'detail', id })}
+          onOpenCheck={(id) => { const c = checks.find(x => x.id === id); navigate('/floor', { state: { tableId: c?.table_id ?? null, checkId: id } }); }}
+          onFreeCell={(tableId) => setPanel({ kind: 'walkin', tableId })} />
+      )}
+      {view === 'list' && <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pr-1">
         {loading && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
         {!loading && activeShifts.map(shift => {
           const a = availability.find(x => x.shift_id === shift.id);
@@ -80,8 +97,8 @@ const ReservationsPage = ({ event }) => {
             <section key={shift.id} aria-label={shift.name}>
               <div className="flex items-end justify-between gap-3 mb-2">
                 <div>
-                  <h3 className="text-base font-semibold text-[var(--text-main)]">{shift.name}</h3>
-                  <p className="text-xs text-[var(--text-muted)]">{a && !a.bookable && a.reason && a.reason !== 'Al completo' ? a.reason : `${shift.start_time} · tavolo per ${shift.duration_minutes} min`}</p>
+                  <h3 className="text-base font-semibold text-[var(--text-main)]">{shift.start_time} <span className="font-normal text-[var(--text-muted)]">· {shift.name}</span></h3>
+                  {a && !a.bookable && a.reason && a.reason !== 'Al completo' && <p className="text-xs text-[var(--text-muted)]">{a.reason}</p>}
                 </div>
                 {a && (
                   <div className="text-right shrink-0 w-36">
@@ -91,9 +108,9 @@ const ReservationsPage = ({ event }) => {
                 )}
               </div>
               {groups.length === 0 && <p className="text-sm text-[var(--text-muted)] py-3 border-t border-[var(--border)]">Nessuna prenotazione.</p>}
-              {groups.map(g => (
+              {groups.filter(g => g.key !== 'closed' || showClosed).map(g => (
                 <div key={g.key} className="mb-3">
-                  <p className={`text-xs font-medium mb-1.5 ${g.key === 'requested' ? 'text-amber-500' : 'text-[var(--text-muted)]'}`}>{g.title} · {g.items.length}</p>
+                  {['requested', 'closed'].includes(g.key) && <p className={`text-xs font-medium mb-1.5 ${g.key === 'requested' ? 'text-amber-500' : 'text-[var(--text-muted)]'}`}>{g.title} · {g.items.length}</p>}
                   <ul className="space-y-1.5">
                     {g.items.map(r => (
                       <li key={r.id}>
@@ -106,21 +123,28 @@ const ReservationsPage = ({ event }) => {
                           </span>
                           {r.cancel_requested_at && r.status === 'confirmed'
                             ? <span className="inline-flex items-center h-6 px-2.5 rounded-full text-xs font-medium bg-red-500/15 text-red-500">Chiede di annullare</span>
-                            : <StatusChip status={r.status} />}
+                            : r.status !== 'confirmed' && <StatusChip status={r.status} />}
                         </button>
                       </li>
                     ))}
                   </ul>
                 </div>
               ))}
+              {!showClosed && groups.some(g => g.key === 'closed') && (
+                <button onClick={() => setShowClosed(true)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer">
+                  Mostra le {groups.find(g => g.key === 'closed').items.length} concluse o annullate
+                </button>
+              )}
             </section>
           );
         })}
-      </div>
+      </div>}
     </div>
   );
 
   const side = !panel ? <Empty />
+    : panel.kind === 'walkin' ? <WalkInPanel key={panel.tableId ?? 'any'} rooms={rooms.filter(r => r.active)} reservations={reservations} checks={checks} preferredTableId={panel.tableId ?? null} onBack={close}
+        onSeated={(check) => navigate('/floor', { state: { tableId: check.table_id, checkId: check.id } })} />
     : panel.kind === 'new' ? <ReservationForm date={date} shifts={shifts} availability={availability} onBack={close} onSaved={saved} />
     : !current ? <Empty />
     : panel.kind === 'edit' ? <ReservationForm date={date} shifts={shifts} availability={availability} reservation={current} onBack={() => setPanel({ kind: 'detail', id: current.id })} onSaved={saved} />
@@ -134,7 +158,8 @@ const ReservationsPage = ({ event }) => {
     return (
       <>
         <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div>
-        <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>
+        {/* Timeline, Elenco e Mensile usano tutta la larghezza finché non si sceglie qualcosa: il pannello compare allora */}
+        {panel && <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>}
       </>
     );
   }

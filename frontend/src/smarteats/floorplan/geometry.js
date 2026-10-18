@@ -1,6 +1,6 @@
 // Geometria della pianta di una sala. Misure e posizioni sono in celle della griglia. Le regole valgono come
 // aiuto in schermata (tavoli in rosso, scatto, posto libero): quelle vere le applica il server (utils/roomLayout.js).
-export const MAX_TABLE_SIDE = 30;
+const MAX_TABLE_SIDE = 30;
 
 export const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 export const isPlaced = (t) => t.x != null;

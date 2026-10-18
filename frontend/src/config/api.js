@@ -1,5 +1,5 @@
 // URL di API e WebSocket ricavati dall'indirizzo corrente, non fissi: ogni tenant
-// ha il suo sottodominio ("default.standmanager.local", "prova.standmanager.local"…)
+// ha il suo sottodominio ("default.smarteats.local", "prova.smarteats.local"…)
 // e chiama automaticamente il backend giusto, senza rebuild.
 // In sviluppo Vite gira sulla 5173 e il backend sulla 3000; in produzione il frontend
 // è servito dal backend stesso (o da un reverse proxy), quindi stessa origine.

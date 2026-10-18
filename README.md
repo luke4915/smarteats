@@ -5,7 +5,7 @@ Gestionale SaaS per sagre, eventi e ristorazione: cassa, ordini, comande su stam
 - `backend/`: Node.js, Express 5, PostgreSQL, WebSocket
 - `frontend/`: React 19, Vite, Tailwind v4, PWA con funzionamento offline
 
-Regole, convenzioni e struttura nel dettaglio: [`CLAUDE.md`](CLAUDE.md).
+Regole, convenzioni e struttura nel dettaglio: [`CLAUDE.md`](CLAUDE.md). **Se non sei uno sviluppatore** e vuoi capire dove sta cosa o fare una modifica piccola: [`docs/guida-al-codice.md`](docs/guida-al-codice.md).
 
 ## Requisiti
 
@@ -32,7 +32,7 @@ cp .env.example .env          # compila database, JWT_SECRET, master panel e cer
 npm install
 npm run db:baseline           # solo la prima volta: schema.sql contiene già tutte le migrazioni
 npm run migrate               # da ora in poi applica solo le migrazioni nuove
-npm run dev                   # https://<tenant>.standmanager.local:3000
+npm run dev                   # https://<tenant>.smarteats.local:3000
 ```
 
 **3. Frontend**
@@ -40,12 +40,14 @@ npm run dev                   # https://<tenant>.standmanager.local:3000
 ```bash
 cd frontend
 npm install
-npm run dev                   # https://<tenant>.standmanager.local:5173
+npm run dev                   # https://<tenant>.smarteats.local:5173
 ```
 
-Ogni tenant si apre dal suo sottodominio (es. `default.standmanager.local`): i nomi vanno risolti verso `127.0.0.1`, su Windows con gli script in `backend/scripts/`. I tenant si creano dal master panel, su `/master`.
+Ogni tenant si apre dal suo sottodominio (es. `default.smarteats.local`): i nomi vanno risolti verso `127.0.0.1`, su Windows con gli script in `backend/scripts/`. I tenant si creano dal master panel, su `/master`. Per provare l'app con dati realistici: `npm run demo:seed` (in `backend/`) crea il ristorante `demo` (vedi `CLAUDE.md` per gli utenti); serve la riga `127.0.0.1 demo.smarteats.local` in `/etc/hosts`.
 
 ## Test
+
+Il modo più semplice: `./scripts/check.sh` (veloce) o `./scripts/check.sh --all` (anche database e browser). Nel dettaglio:
 
 ```bash
 cd backend

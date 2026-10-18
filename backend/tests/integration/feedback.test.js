@@ -15,7 +15,7 @@ describe('feedback', () => {
     [t, other] = [await createTenant(), await createTenant()];
     admin = apiClient(server.port, t.host); await admin.login(t.username);
     otherApi = apiClient(server.port, other.host); await otherApi.login(other.username);
-    master = apiClient(server.port, 'master.standmanager.local');
+    master = apiClient(server.port, 'master.smarteats.local');
   });
   after(async () => {
     await deleteTenants(t, other);

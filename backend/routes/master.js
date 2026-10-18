@@ -54,7 +54,8 @@ router.post('/logout', (req, res) => {
 });
 
 // CATALOGO — moduli e tipi di attività disponibili (unica fonte: utils/modules.js)
-router.get('/catalog', authenticateMaster, (req, res) => res.json(catalog()));
+// Il catalogo di tipi e moduli, più il dominio dell'app: la console ne ricava l'indirizzo di ogni locale (slug.dominio).
+router.get('/catalog', authenticateMaster, (req, res) => res.json({ ...catalog(), appDomain: process.env.APP_DOMAIN || 'smarteats.local' }));
 
 // LISTA TENANT — tabella tenants non ha RLS, query diretta legittima
 router.get('/tenants', authenticateMaster, async (req, res) => {

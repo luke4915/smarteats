@@ -20,18 +20,18 @@ export const RECEIPT_SETTINGS_KEYS = [
 
 // Portale di prenotazione (modulo `bookings`): acceso/spento, telefono mostrato ai clienti, testo di benvenuto. Non sono
 // in PUBLIC_SETTINGS_KEYS: le legge solo il portale (routes/publicBooking.js), con le sue regole.
-export const BOOKING_PORTAL_KEYS = ['booking_portal_enabled', 'booking_portal_phone', 'booking_portal_welcome'];
+const BOOKING_PORTAL_KEYS = ['booking_portal_enabled', 'booking_portal_phone', 'booking_portal_welcome'];
 
 // cover_charge: coperto per persona, in euro (ristoranti): si fissa su ogni conto all'apertura.
 // Asporto (modulo `takeaway`): ordini dal sito pubblico acceso/spento, durata delle fasce (minuti), pizze (carico) per
 // fascia, anticipo minimo (minuti), telefono e messaggio mostrati ai clienti. Le legge solo il portale, con le sue regole.
-export const TAKEAWAY_KEYS = ['takeaway_portal_enabled', 'takeaway_slot_minutes', 'takeaway_slot_capacity', 'takeaway_min_lead_minutes', 'takeaway_phone', 'takeaway_welcome'];
+const TAKEAWAY_KEYS = ['takeaway_portal_enabled', 'takeaway_slot_minutes', 'takeaway_slot_capacity', 'takeaway_min_lead_minutes', 'takeaway_phone', 'takeaway_welcome'];
 
 export const SETTINGS_KEYS = ['welcome_message', 'cover_charge', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS, ...RECEIPT_SETTINGS_KEYS];
 export const PUBLIC_SETTINGS_KEYS = ['welcome_message'];
 
 // Chiavi che l'admin del tenant può modificare: quelle dello scontrino sono solo del master.
-export const TENANT_WRITABLE_SETTINGS_KEYS = ['welcome_message', 'cover_charge', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS];
+const TENANT_WRITABLE_SETTINGS_KEYS = ['welcome_message', 'cover_charge', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS];
 
 export const settingParamsSchema = z.object({ key: z.enum(TENANT_WRITABLE_SETTINGS_KEYS) });
 

@@ -5,13 +5,11 @@ import { afterOrderCompleted } from './whatsapp/outbox.js';
 // ricava da loro, così le due cose non si contraddicono mai. Postazioni: una riga è del bar se si stampa solo al bar,
 // altrimenti è della cucina (anche «bar + cucina»).
 
-export const LINE_STATUSES = ['new', 'preparing', 'ready', 'served'];
-
 export const stationOf = (printDestination) => (printDestination === 'bar' ? 'bar' : 'kitchen');
 
 // Stato della comanda dato lo stato delle sue righe: tutte pronte (o servite) = completata; almeno una avviata =
 // in preparazione; nessuna = in attesa. Una comanda senza righe non cambia.
-export function orderStatusFromLines(statuses) {
+function orderStatusFromLines(statuses) {
   if (!statuses.length) return null;
   if (statuses.every(s => s === 'ready' || s === 'served')) return 'completed';
   if (statuses.some(s => s !== 'new')) return 'preparing';

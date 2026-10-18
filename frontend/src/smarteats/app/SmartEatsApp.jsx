@@ -1,13 +1,17 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../context/useAuth';
 import { useToast } from '../../context/useToast';
 import { visibleViews, canViewSmartEats, smartEatsHome } from './views';
 import { useLiveUpdates } from '../../hooks/useLiveUpdates';
+import { useTheme } from '../../hooks/useTheme';
 import { useService } from './useService';
-import AppHeader from './AppHeader';
-import { SideNav, BottomNav } from './SideNav';
+import AppHeader from '../../components/shell/AppHeader';
+import ServiceControl from '../../components/shell/ServiceControl';
+import { SideNav, BottomNav } from '../../components/shell/SideNav';
+import { termsFor } from '../../utils/terms';
+import { ICONS } from './icons';
 import NoViewAvailable from '../../components/layout/NoViewAvailable';
 import FloorPage from '../floor/FloorPage';
 import ReservationsPage from '../reservations/ReservationsPage';
@@ -32,11 +36,10 @@ const SmartEatsApp = () => {
   const { user, logout, refreshSession } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { service, start, closingInfo, end, onEvent } = useService();
   const [event, setEvent] = useState(null);
-  const [theme, setTheme] = useState('dark');
-
-  useEffect(() => { document.documentElement.classList.toggle('dark', theme === 'dark'); }, [theme]);
+  const [theme, setTheme] = useTheme();
 
   const handleMessage = useCallback((msg) => { onEvent(msg); setEvent(msg); }, [onEvent]);
   useLiveUpdates(handleMessage, { enabled: !!user, onUnauthorized: refreshSession });
@@ -68,16 +71,16 @@ const SmartEatsApp = () => {
 
   return (
     <div className="se-app flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
-      <SideNav views={views} badges={badges} />
+      <SideNav views={views} icons={ICONS} brand="SmartEats" badges={badges} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <AppHeader user={user} service={service} canManageService={canManageService} serviceActions={{ start, closingInfo, end }}
+        <AppHeader user={user} serviceControl={<ServiceControl service={service} canManage={canManageService} start={start} closingInfo={closingInfo} end={end} terms={termsFor(user.businessType)} />}
           inbox={hasInbox ? inbox : null} onOpenNotification={(i) => (i.kind === 'takeaway_request'
             ? navigate('/takeaway', { state: { orderId: i.id, date: i.date } })
             : navigate('/reservations', { state: { reservationId: i.id, date: i.date } }))}
           theme={theme} onToggleTheme={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))} onLogout={doLogout} />
 
-        <div className="flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
+        <div key={pathname} className="motion-page flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
           <Suspense fallback={<Page><p className="text-[var(--text-muted)]">Caricamento…</p></Page>}>
             <Routes>
               <Route path="/floor" element={guard('floor', <FloorPage user={user} service={service} event={event} />)} />
@@ -92,7 +95,7 @@ const SmartEatsApp = () => {
           </Suspense>
         </div>
 
-        <BottomNav views={views} badges={badges} />
+        <BottomNav views={views} icons={ICONS} badges={badges} />
       </main>
     </div>
   );

@@ -3,7 +3,7 @@ import { Plus, Send, Wallet, Lock, BellRing, BellOff, Percent, Printer, Trash2, 
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from './PanelFrame';
-import CheckMenu from './CheckMenu';
+import ActionMenu from '../../components/shared/ActionMenu';
 import CheckOrders from './CheckOrders';
 import { formatEuro } from './checkMath';
 import { printFired } from './printFired';
@@ -83,7 +83,7 @@ const CheckView = ({ detail, user, service, onBack, onOrder, onPay, onAdjust, on
 
   return (
     <PanelFrame title={detail.table_name ?? 'Banco'} subtitle={subtitle} subtitleClass={subtitleClass} onBack={onBack}
-      actions={menu && <CheckMenu items={menu} />}
+      actions={menu && <ActionMenu items={menu} />}
       footer={
         <>
           <div className="space-y-0.5">

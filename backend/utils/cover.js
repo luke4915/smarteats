@@ -6,7 +6,7 @@ import { toCents, toEuro, checkBalance } from './payments.js';
 // già servita. Così totale, pagamento, incasso e statistiche la trattano come ogni altra voce (docs/design-tavoli.md).
 // Il prezzo per persona si fissa all'apertura del conto (`checks.cover_charge`, dall'impostazione `cover_charge`).
 
-export const COVER_NAME = 'Coperto';
+const COVER_NAME = 'Coperto';
 
 // Prezzo per persona dall'impostazione del locale (0 se manca o non è valido).
 export async function readCoverCharge(db) {

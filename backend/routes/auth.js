@@ -53,7 +53,7 @@ router.post('/login', validate({ body: loginSchema }), resolveTenantFromHost, as
     user.tenant_name = tenant.name;
     setCookie(res, signToken(user));
 
-    res.json({ id: user.id, username: user.username, role: user.role, needsPassword: user.must_change_password, theme: user.theme || 'dark', tenantName: user.tenant_name, businessType: tenant.business_type, modules: tenant.modules });
+    res.json({ id: user.id, username: user.username, role: user.role, needsPassword: user.must_change_password, tenantName: user.tenant_name, businessType: tenant.business_type, modules: tenant.modules });
     } catch (err) {
     logger.error({ err }, 'Errore server')
     res.status(500).json({ error: 'Errore server' });
@@ -222,7 +222,6 @@ router.get('/me', authenticateAllowingPasswordChange, async (req, res) => {
       id: req.user.id,
       username: req.user.username,
       role: req.user.role,
-      theme: 'dark', // legacy: il tema è solo stato del client
       tenantName: req.user.tenantName,
       businessType: tenant?.businessType,
       modules: tenant?.modules ?? [],

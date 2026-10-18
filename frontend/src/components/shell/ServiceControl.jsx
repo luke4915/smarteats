@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Power } from 'lucide-react';
 import { useToast } from '../../context/useToast';
+import Modal from '../../components/shared/Modal';
 import EndSessionModal from '../../components/shared/EndSessionModal';
 import CashCountModal from '../../components/shared/CashCountModal';
-import { termsFor } from '../../utils/terms';
-import { btn, btnPrimary, input } from '../floor/ui';
+import { btn, btnPrimary, input } from '../../smarteats/floor/ui';
 
 // Proposta di nome in base all'ora: pranzo fino alle 16, poi cena.
 const suggestedName = () => {
@@ -12,8 +12,9 @@ const suggestedName = () => {
   return `${now.getHours() < 16 ? 'Pranzo' : 'Cena'} ${now.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })}`;
 };
 
-// Apertura e chiusura del servizio: pulsante in testata e finestre di conferma.
-const ServiceControl = ({ service, canManage, start, closingInfo, end }) => {
+// Apertura e chiusura del servizio (o della serata, per le sagre): pulsante in testata e finestre di conferma.
+// `terms` sono le parole del tipo di locale (`termsFor`); `closingInfo` dà contanti attesi e ordini aperti.
+const ServiceControl = ({ service, canManage, start, closingInfo, end, terms }) => {
   const { showToast } = useToast();
   const [step, setStep] = useState(null); // 'start' | 'end' | 'cash'
   const [name, setName] = useState('');
@@ -36,14 +37,14 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end }) => {
   const submitStart = async (e) => {
     e.preventDefault();
     if (!name.trim()) return showToast('Inserisci un nome valido!', 'warning');
-    try { await start(name.trim()); setStep(null); showToast(`Servizio "${name.trim()}" aperto`, 'success'); }
-    catch (err) { showToast(err.message || 'Impossibile aprire il servizio', 'error'); }
+    try { await start(name.trim()); setStep(null); showToast(terms.opened(name.trim()), 'success'); }
+    catch (err) { showToast(err.message || 'Operazione non riuscita', 'error'); }
   };
 
   const confirmEnd = async (declaredCash) => {
     setStep(null);
-    try { await end(declaredCash, openOrdersAction); showToast('Servizio chiuso.', 'info'); }
-    catch (err) { showToast(err.message || 'Impossibile chiudere il servizio', 'error'); }
+    try { await end(declaredCash, openOrdersAction); showToast(terms.closed, 'info'); }
+    catch (err) { showToast(err.message || 'Operazione non riuscita', 'error'); }
   };
 
   return (
@@ -53,27 +54,18 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end }) => {
           ${service ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-red-500/10 border-red-500/30 text-red-500'}
           ${canManage ? 'cursor-pointer enabled:hover:opacity-80' : 'cursor-default'}`}>
         <Power size={16} className="pointer-events-none" />
-        <span className="hidden sm:inline">{service ? `${service.name} · Chiudi` : 'Apri servizio'}</span>
+        <span className="hidden sm:inline">{service ? `${service.name} · Chiudi` : terms.open}</span>
       </button>
 
       {step === 'start' && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end sm:items-center z-[2000] px-4 pb-4 sm:pb-0">
-          <form onSubmit={submitStart} className="bg-[var(--bg-card)] p-6 rounded-xl shadow-2xl w-full max-w-md border border-[var(--border)] space-y-5">
-            <div>
-              <h2 className="text-lg font-semibold text-[var(--text-main)]">Apri il servizio</h2>
-              <p className="text-sm text-[var(--text-muted)] mt-1">Senza un servizio aperto non si aprono i tavoli</p>
-            </div>
-            <input type="text" autoFocus value={name} onChange={e => setName(e.target.value)}
-              className={input} />
-            <div className="flex gap-3">
-              <button type="button" onClick={() => setStep(null)} className={`${btn} flex-1`}>Annulla</button>
-              <button type="submit" className={`${btnPrimary} flex-1`}>Apri il servizio</button>
-            </div>
-          </form>
-        </div>
+        <Modal title={terms.startTitle} onClose={() => setStep(null)} onSubmit={submitStart}
+          footer={<div className="flex gap-3"><button type="button" onClick={() => setStep(null)} className={`${btn} flex-1`}>Annulla</button><button type="submit" className={`${btnPrimary} flex-1`}>{terms.startAction}</button></div>}>
+          <p className="text-sm text-[var(--text-muted)] mb-4">{terms.startHint}</p>
+          <input type="text" autoFocus value={name} onChange={e => setName(e.target.value)} aria-label="Nome del servizio" className={input} />
+        </Modal>
       )}
       {step === 'end' && (
-        <EndSessionModal title={termsFor('restaurant').endTitle} sessionName={service.name} openOrders={info.openOrders || 0} openOrdersTotal={info.openOrdersTotal || 0}
+        <EndSessionModal title={terms.endTitle} sessionName={service.name} openOrders={info.openOrders || 0} openOrdersTotal={info.openOrdersTotal || 0}
           onCancel={() => setStep(null)} onConfirm={(choice) => { setOpenOrdersAction(choice); setStep('cash'); }} />
       )}
       {step === 'cash' && (

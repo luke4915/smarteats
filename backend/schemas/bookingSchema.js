@@ -69,3 +69,7 @@ export const arrivedSchema = z.object({ table_id: idSchema.optional() });
 
 export const reservationsQuerySchema = z.object({ date, shift_id: idSchema.optional() });
 export const availabilityQuerySchema = z.object({ date });
+// Riepilogo per il calendario del mese: al massimo 62 giorni per volta
+export const summaryQuerySchema = z.object({ from: date, to: date })
+  .refine(v => v.to >= v.from, { message: 'La data finale è prima di quella iniziale', path: ['to'] })
+  .refine(v => (Date.parse(v.to) - Date.parse(v.from)) / 86400000 <= 62, { message: 'Al massimo 62 giorni per volta', path: ['to'] });

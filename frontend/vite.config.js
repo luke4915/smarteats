@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    mkcert({ hosts: ['localhost', '127.0.0.1', '*.standmanager.local'] }),
+    mkcert({ hosts: ['localhost', '127.0.0.1', '*.smarteats.local'] }),
     VitePWA({
       registerType: 'autoUpdate',
       // Icone in public/: il simbolo occupa il 56% del lato, quindi la 512 vale anche
@@ -38,6 +38,6 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     // Il punto iniziale ammette tutti i sottodomini: ogni tenant ha il suo.
-    allowedHosts: ['.standmanager.local'],
+    allowedHosts: ['.smarteats.local'],
   },
 })

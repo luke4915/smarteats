@@ -1,6 +1,6 @@
 // Pagine dell'app SmartEats (ristoranti e pizzerie): chi le vede dipende dal ruolo e dai moduli del locale.
 // Come in components/layout/viewRoles.js, vale per il menu e per le route; le autorizzazioni vere sono sul server.
-export const VIEWS = [
+const VIEWS = [
   { id: 'floor', label: 'Sala', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'tables' },
   { id: 'reservations', label: 'Prenotazioni', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'bookings' },
   { id: 'takeaway', label: 'Asporto', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'takeaway' },

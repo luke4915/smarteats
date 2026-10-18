@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { MoreVertical } from 'lucide-react';
-import { iconBtn } from './ui';
+import { iconBtn } from '../../smarteats/floor/ui';
 
-// Menu «⋯» del conto: raccoglie le azioni secondarie così il pannello ne mostra solo due (Aggiungi, Incassa).
+// Menu «⋯» condiviso (conto in sala, carrello della cassa, prenotazioni): raccoglie le azioni secondarie così la schermata ne mostra solo le principali.
 // `items`: [{ label, icon, onClick, danger?, disabled?, hint? }]; le voci false si saltano.
-const CheckMenu = ({ items }) => {
+const ActionMenu = ({ items }) => {
   const [open, setOpen] = useState(false);
   const box = useRef(null);
 
@@ -40,4 +40,4 @@ const CheckMenu = ({ items }) => {
   );
 };
 
-export default CheckMenu;
+export default ActionMenu;

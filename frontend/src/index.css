@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Il tema scuro si accende con la classe `dark` sulla pagina (hooks/useTheme.js), non con le impostazioni del sistema:
+   così anche le classi `dark:` seguono la scelta dell'utente. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --bg-main: #f1f5f9;
   --bg-card: #ffffff;
@@ -55,13 +59,35 @@ body {
   display: none;
 }
 
+/* ── Movimento uniforme in tutta l'app (SmartEats e cassa delle sagre) ───────────────────────────────
+   Una sola curva e tre durate. Entrano con dissolvenza e un piccolo spostamento: le pagine (--dur-slow), i pannelli
+   a destra, le finestre e il loro sfondo. Chi preferisce meno movimento (impostazione del sistema) non li vede. */
+:root {
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 320ms;
+}
+@keyframes motion-fade { from { opacity: 0; } }
+@keyframes motion-rise { from { opacity: 0; transform: translateY(6px); } }
+@keyframes motion-slide-in { from { opacity: 0; transform: translateX(14px); } }
+@keyframes motion-pop { from { opacity: 0; transform: translateY(8px) scale(0.97); } }
+.motion-page { animation: motion-rise var(--dur-slow) var(--ease) both; }
+.motion-panel { animation: motion-slide-in var(--dur-base) var(--ease) both; }
+/* Finestre: lo sfondo sfuma, la scheda sale appena. Vale per ogni sfondo scuro a tutto schermo e ogni role="dialog". */
+:where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) { animation: motion-fade var(--dur-base) var(--ease) both; }
+:where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) > :first-child, :where([role="dialog"]) { animation: motion-pop var(--dur-base) var(--ease) both; }
+@media (prefers-reduced-motion: reduce) {
+  .motion-page, .motion-panel, :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]), :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) > :first-child, :where([role="dialog"]) { animation: none; }
+}
+
 /* Transizioni smooth cambio tema */
 *,
 *::before,
 *::after {
   transition-property: background-color, border-color;
-  transition-duration: 300ms;
-  transition-timing-function: ease;
+  transition-duration: var(--dur-slow);
+  transition-timing-function: var(--ease);
 }
 
 /* Escludi transizioni su elementi interattivi per non rallentare i click */
@@ -71,7 +97,8 @@ input,
 select,
 textarea {
   transition-property: background-color, border-color, color, opacity, transform, box-shadow;
-  transition-duration: 150ms;
+  transition-duration: var(--dur-fast);
+  transition-timing-function: var(--ease);
 }
 
 /* Hover uniforme per ogni bottone bordato dell'app: bordo più chiaro/marcato

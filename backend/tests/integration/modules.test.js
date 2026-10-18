@@ -145,6 +145,7 @@ describe('moduli per tenant', () => {
     assert.deepEqual(body.modules.map(m => m.id), ['kds', 'stats', 'qr_menu', 'tables', 'bookings', 'takeaway', 'whatsapp']);
     assert.deepEqual(body.businessTypes.map(b => b.id), ['street_food', 'restaurant', 'takeaway_shop']);
     assert.ok(body.businessTypes.every(b => b.label && Array.isArray(b.modules)));
+    assert.ok(body.appDomain, 'il dominio serve alla console per comporre gli indirizzi dei locali');
     assert.deepEqual(body.modules.find(m => m.id === 'tables').types, ['restaurant']);
     assert.deepEqual(body.modules.find(m => m.id === 'bookings').types, ['restaurant']);
     assert.deepEqual(body.modules.find(m => m.id === 'takeaway').types.slice().sort(), ['restaurant', 'street_food', 'takeaway_shop']);

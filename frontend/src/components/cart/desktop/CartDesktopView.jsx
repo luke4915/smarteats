@@ -1,7 +1,9 @@
 import React from 'react';
-import { ShoppingCart, Check, Printer, MessageSquare, QrCode, ShoppingBag, Undo2, Send, Trash } from 'lucide-react';
+import { ShoppingCart, Printer, MessageSquare, QrCode, ShoppingBag, Undo2, Send, Trash } from 'lucide-react';
 import { getLineTotal, getAdjustmentLabel } from '../../../utils/pricing';
 import OrderDiscountPanel from '../OrderDiscountPanel';
+import ActionMenu from '../../shared/ActionMenu';
+import { iconBtn, btnPrimary, btnDanger } from '../../../smarteats/floor/ui';
 
 const CartDesktopView = ({
     // Props passate dal Container padre
@@ -32,60 +34,26 @@ const CartDesktopView = ({
     return (
         <div className="flex flex-col h-full bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
 
-            {/* Header */}
-            <div className="px-5 py-3 flex justify-between items-center border-b border-[var(--border)]">
-                <div>
-                    <h2 className="text-xl font-semibold text-[var(--text-main)]">Carrello</h2>
-                    <span className={`text-[11px] font-semibold ${sessionActive ? 'text-green-500' : 'text-red-400'}`}>
-                        {sessionActive ? '● Sessione attiva' : '● Sessione non attiva'}
-                    </span>
-                </div>
-                <div className="flex items-center gap-2">
-
-                    {/* Pulsante Storno ordini */}
-                    <button
-                        disabled={!sessionActive}
-                        onClick={() => setShowReversePopup(true)}
-                        title="Storno Ordine"
-                        className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:text-red-500 hover:border-red-500/50 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-                    >
-                        <Undo2 size={22} />
-                    </button>
-
-                    {/* Pulsante Asporto */}
+            {/* Intestazione: Asporto e Sconto subito, il resto nel menu «⋯» */}
+            <div className="px-4 py-3 flex justify-between items-center border-b border-[var(--border)]">
+                <h2 className="text-xl font-semibold text-[var(--text-main)]">Carrello</h2>
+                <div className="flex items-center gap-1.5">
                     <button
                         disabled={cart.length === 0}
                         onClick={() => setIsTakeaway(v => !v)}
+                        aria-pressed={isTakeaway}
                         title={isTakeaway ? 'Disattiva asporto' : 'Segna come asporto'}
-                        className={`p-2 rounded-xl border transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${isTakeaway
-                            ? 'bg-green-500 border-green-500 text-white'
-                            : 'border-[var(--border)] text-[var(--text-muted)] hover:text-green-500 hover:border-green-500/50'}`}>
-                        <ShoppingBag size={22} />
+                        className={`${iconBtn} ${isTakeaway ? '!bg-green-500 !text-white' : ''}`}>
+                        <ShoppingBag size={20} />
                     </button>
-
-                    {/* Pannello Sconto / Omaggio sull'intero ordine (solo admin/responsabile) */}
                     {canDiscount && (
                         <OrderDiscountPanel cart={cart} derivedOrderPercent={derivedOrderPercent} applyOrderDiscount={applyOrderDiscount} />
                     )}
-
-                    {/* Pulsante QR Code */}
-                    <button
-                        onClick={() => setIsQRScanModalOpen(true)}
-                        title="Importa ordine da QR"
-                        className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)]/50 transition-all duration-200 active:scale-95 cursor-pointer"
-                    >
-                        <QrCode size={22} />
-                    </button>
-
-                    {/* Pulsante Ristampa Stampante */}
-                    <button
-                        disabled={!sessionActive}
-                        onClick={() => setIsReprintModalOpen(true)}
-                        title="Ristampa scontrini recenti"
-                        className="p-2 rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--accent)] hover:border-[var(--accent)]/50 transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
-                    >
-                        <Printer size={22} />
-                    </button>
+                    <ActionMenu items={[
+                        { label: 'Storno ordini', icon: Undo2, onClick: () => setShowReversePopup(true), disabled: !sessionActive, hint: 'Serve una serata aperta' },
+                        { label: 'Importa ordine da QR', icon: QrCode, onClick: () => setIsQRScanModalOpen(true) },
+                        { label: 'Ristampa scontrini recenti', icon: Printer, onClick: () => setIsReprintModalOpen(true), disabled: !sessionActive, hint: 'Serve una serata aperta' },
+                    ]} />
                 </div>
             </div>
 
@@ -101,7 +69,7 @@ const CartDesktopView = ({
                     const effTotal = getLineTotal(item);
                     return (
                         <div key={cartKey(item)} onClick={() => setSelectedItem(item)}
-                            className="px-3 py-2 rounded-xl cursor-pointer border border-gray-300 dark:border-[var(--border)] bg-[var(--bg-card-2)] hover:border-[var(--accent)]/60 active:scale-[0.99] transition-all">
+                            className="px-3 py-2 rounded-xl cursor-pointer border border-[var(--border)] bg-[var(--bg-card-2)] hover:border-[var(--accent)]/60 active:scale-[0.99] transition-all">
                             <div className="flex justify-between items-center gap-2">
                                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
                                     <span className="bg-[var(--accent)] text-white text-xs font-semibold w-5 h-5 flex items-center justify-center rounded shrink-0">{item.quantity}</span>
@@ -186,24 +154,11 @@ const CartDesktopView = ({
                 </div>
 
                 <div className="flex gap-2 w-full">
-                    {/* Bottone Invia ordine */}
-                    <button
-                        onClick={handleSendOrder}
-                        disabled={cart.length === 0 || !sessionActive || sending}
-                        className="flex-1 h-11 px-2 bg-[var(--accent)] hover:enabled:bg-[var(--accent-hover)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 disabled:text-[var(--text-muted)] text-white rounded-xl font-semibold text-xs sm:text-sm active:enabled:scale-[0.99] transition-all flex items-center justify-center gap-1.5"
-                    >
-                        <Send size={16} />
-                        <span>Invia ordine</span>
+                    <button onClick={handleSendOrder} disabled={cart.length === 0 || !sessionActive || sending} className={`${btnPrimary} flex-1 !h-12 text-base`}>
+                        <Send size={18} /> Invia ordine
                     </button>
-
-                    {/* Bottone Svuota Carrello */}
-                    <button
-                        onClick={() => cart.length > 0 && setIsClearModalOpen(true)}
-                        disabled={cart.length === 0}
-                        className="flex-1 h-11 px-2 bg-[var(--error)] hover:enabled:bg-[var(--error-hover)] cursor-pointer disabled:cursor-not-allowed disabled:opacity-30 disabled:text-[var(--text-muted)] text-white dark:border-red-900/40 rounded-xl font-semibold text-xs sm:text-sm active:enabled:scale-[0.99] transition-all flex items-center justify-center gap-1.5"
-                    >
-                        <Trash size={16} />
-                        <span>Svuota</span>
+                    <button onClick={() => cart.length > 0 && setIsClearModalOpen(true)} disabled={cart.length === 0} className={`${btnDanger} !h-12`}>
+                        <Trash size={16} /> Svuota
                     </button>
                 </div>
             </div>

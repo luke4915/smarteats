@@ -6,7 +6,7 @@ const getContext = () => {
   try { ctx ??= new (window.AudioContext || window.webkitAudioContext)(); return ctx; } catch { return null; }
 };
 
-export function unlockAudio() {
+function unlockAudio() {
   const c = getContext();
   if (c && c.state === 'suspended') c.resume().catch(() => {});
 }

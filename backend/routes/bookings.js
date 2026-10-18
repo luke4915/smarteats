@@ -11,7 +11,7 @@ import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { idParamsSchema } from '../schemas/common.js';
 import {
   shiftSchema, closureSchema, closuresQuerySchema, createReservationSchema, updateReservationSchema, declineSchema,
-  reservationTablesSchema, arrivedSchema, reservationsQuerySchema, availabilityQuerySchema,
+  reservationTablesSchema, arrivedSchema, reservationsQuerySchema, availabilityQuerySchema, summaryQuerySchema,
 } from '../schemas/bookingSchema.js';
 import { canTransition, freeSeats, shiftOpenOn, tableConflicts, confirmationMessage } from '../utils/bookings.js';
 import { SHIFT_COLUMNS, CLOSURE_COLUMNS, lockShift, closuresOn, assertBookable } from '../utils/bookingDb.js';
@@ -204,6 +204,23 @@ export default function (broadcast) {
     } catch (err) {
       logger.error({ err }, 'Errore GET /api/bookings/availability');
       res.status(500).json({ error: 'Errore calcolo disponibilità' });
+    }
+  });
+
+  // Per il calendario del mese: per ogni giorno e turno, quante prenotazioni attive e quanti coperti (solo numeri, niente clienti).
+  router.get('/summary', ...guard, authorizeWaiter, validate({ query: summaryQuerySchema }), tenantScope, async (req, res) => {
+    const { from, to } = req.validQuery;
+    try {
+      await expireStale(req.db);
+      const { rows } = await req.db.query(
+        `SELECT to_char(r.date, 'YYYY-MM-DD') AS date, r.shift_id, COUNT(*)::int AS reservations, SUM(r.party_size)::int AS covers,
+                COUNT(*) FILTER (WHERE r.status = 'requested')::int AS requested
+         FROM reservations r WHERE r.date BETWEEN $1 AND $2 AND r.status IN ('requested', 'confirmed', 'seated', 'completed')
+         GROUP BY r.date, r.shift_id ORDER BY r.date, r.shift_id`, [from, to]);
+      res.json(rows);
+    } catch (err) {
+      logger.error({ err }, 'Errore GET /api/bookings/summary');
+      res.status(500).json({ error: 'Errore caricamento riepilogo' });
     }
   });
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Segmented from '../floor/Segmented';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { useAuth } from '../../context/useAuth';
@@ -16,6 +17,7 @@ const CatalogPage = () => {
   const [products, setProducts] = useState(null);
   const [courses, setCourses] = useState(null);
   const modifiers = useModifiers();
+  const [tab, setTab] = useState('dishes');
   useEffect(() => {
     // Le portate e le opzioni esistono solo con il modulo dei tavoli: un locale di solo asporto ha la carta semplice
     Promise.all([fetchWithAuth('/products'), hasTables ? fetchWithAuth('/courses') : []])
@@ -26,8 +28,11 @@ const CatalogPage = () => {
   return (
     <PageBody>
       <PageHeader title="Carta" subtitle={hasTables ? 'Piatti, prezzi, portate e opzioni.' : 'Prodotti e prezzi.'} />
-      <ProductConfig hideHeader takeawayEnabled={!!user.modules?.includes('takeaway')} products={products} setProducts={setProducts} courses={courses} modifierGroups={hasTables ? modifiers.groups : null} onModifiersSaved={modifiers.reload} />
-      {hasTables && <ModifierSettings groups={modifiers.groups} onChanged={modifiers.reload} />}
+      {hasTables && (
+        <Segmented label="Sezioni della carta" value={tab} onChange={setTab} className="w-60" options={[{ id: 'dishes', label: 'Piatti' }, { id: 'options', label: 'Opzioni' }]} />
+      )}
+      {tab === 'dishes' && <ProductConfig hideHeader compact takeawayEnabled={!!user.modules?.includes('takeaway')} products={products} setProducts={setProducts} courses={courses} modifierGroups={hasTables ? modifiers.groups : null} onModifiersSaved={modifiers.reload} />}
+      {hasTables && tab === 'options' && <ModifierSettings groups={modifiers.groups} onChanged={modifiers.reload} />}
     </PageBody>
   );
 };

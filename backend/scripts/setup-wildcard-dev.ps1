@@ -7,7 +7,7 @@ Write-Host "1/2 - Certificato wildcard (copre TUTTI i tenant futuri)..."
 New-Item -ItemType Directory -Force "backend\certs" | Out-Null
 Set-Location "backend\certs"
 mkcert -install
-mkcert "*.standmanager.local" "standmanager.local" "localhost" "127.0.0.1" "::1"
+mkcert "*.smarteats.local" "smarteats.local" "localhost" "127.0.0.1" "::1"
 Set-Location "..\.."
 
 Write-Host "2/2 - Aggiorna HTTPS_KEY_PATH/HTTPS_CERT_PATH nel .env del backend"

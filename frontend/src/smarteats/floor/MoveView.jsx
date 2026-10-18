@@ -3,7 +3,8 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from './PanelFrame';
 import { formatEuro } from './checkMath';
-import { label, row, segment, segmentBox } from './ui';
+import { label, row } from './ui';
+import Segmented from './Segmented';
 
 // Cambio di posto: «Sposta» il conto su un tavolo libero, «Unisci» lo riunisce a quello di un altro tavolo
 // (comande, pagamenti e coperti confluiscono lì). Tutto nello stesso pannello del conto.
@@ -33,10 +34,7 @@ const MoveView = ({ detail, canMerge, onBack, onMoved, onMerged }) => {
   return (
     <PanelFrame title="Cambio di posto" subtitle={`Ora: ${detail.table_name}`} onBack={onBack}>
       {canMerge && (
-        <div className={segmentBox} role="tablist" aria-label="Cosa fare">
-          <button role="tab" aria-selected={mode === 'move'} className={segment(mode === 'move')} onClick={() => setMode('move')}>Sposta</button>
-          <button role="tab" aria-selected={mode === 'merge'} className={segment(mode === 'merge')} onClick={() => setMode('merge')}>Unisci</button>
-        </div>
+        <Segmented label="Cosa fare" value={mode} onChange={setMode} options={[{ id: 'move', label: 'Sposta' }, { id: 'merge', label: 'Unisci' }]} />
       )}
 
       {!rooms && <p className="text-sm text-[var(--text-muted)] px-1 pt-2">Caricamento…</p>}

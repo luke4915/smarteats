@@ -5,6 +5,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { btn, btnPrimary, iconBtn, input, label } from '../floor/ui';
 import { formatDay } from './rules';
+import Switch from '../../components/shared/Switch';
 
 const DAYS = [[1, 'Lun'], [2, 'Mar'], [3, 'Mer'], [4, 'Gio'], [5, 'Ven'], [6, 'Sab'], [0, 'Dom']];
 const EMPTY = { name: '', start_time: '19:30', duration_minutes: 90, weekdays: [0, 1, 2, 3, 4, 5, 6], capacity: 30, active: true };
@@ -66,11 +67,8 @@ const BookingSettings = () => {
           <div className="grid lg:grid-cols-[1fr_auto] gap-6 max-w-3xl">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <button type="button" role="switch" aria-checked={portal.enabled} aria-label="Prenotazioni online"
-                  onClick={() => { const enabled = !portal.enabled; setPortal(p => ({ ...p, enabled })); savePortal('booking_portal_enabled', enabled ? '1' : '0', enabled ? 'Prenotazioni online accese' : 'Prenotazioni online spente'); }}
-                  className={`shrink-0 w-11 h-6 p-0.5 rounded-full flex items-center cursor-pointer transition-colors ${portal.enabled ? 'bg-[var(--accent)] justify-end' : 'bg-[var(--border-hover)] justify-start'}`}>
-                  <span className="block w-5 h-5 bg-white rounded-full" />
-                </button>
+                <Switch checked={portal.enabled} label="Prenotazioni online"
+                  onChange={(enabled) => { setPortal(p => ({ ...p, enabled })); savePortal('booking_portal_enabled', enabled ? '1' : '0', enabled ? 'Prenotazioni online accese' : 'Prenotazioni online spente'); }} />
                 <span className="text-sm text-[var(--text-main)]">{portal.enabled ? 'Accese: i clienti possono inviare richieste' : 'Spente: la pagina non è raggiungibile'}</span>
               </div>
               <div>

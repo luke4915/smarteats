@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
+import Modal from '../../shared/Modal';
+import { btn, btnPrimary } from '../../../smarteats/floor/ui';
 import jsQR from 'jsqr';
 
 // ─── Componente di supporto per iOS (Evita il lock hardware della fotocamera) ───
@@ -134,79 +136,46 @@ const QRScanModal = ({ currentCart, onMerge, onReplace, onClose }) => {
     const hasCart = currentCart.length > 0;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-            <div className="relative w-full max-w-sm bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-
-                <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                    <div>
-                        <p className="text-[11px] font-semibold text-[var(--text-muted)] mb-0.5">Importa ordine</p>
-                        <h3 className="font-semibold text-sm tracking-tight text-[var(--text-main)]">Scansiona QR cliente</h3>
+        <Modal title="Importa ordine da QR" onClose={onClose}>
+            {!scanned && (
+                <div className="flex flex-col items-center gap-3">
+                    <div className="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-[var(--accent)] bg-black flex items-center justify-center">
+                        {scanning ? <CameraStream videoRef={videoRef} /> : <p className="text-xs text-gray-400">Inizializzazione della fotocamera…</p>}
+                        <div className="absolute inset-0 border-2 border-dashed border-white/30 m-4 pointer-events-none rounded-lg" />
                     </div>
+                    {scannerError && <p className="text-red-500 text-xs font-medium text-center bg-red-500/10 p-2 rounded-lg border border-red-500/20 w-full">{scannerError}</p>}
+                    <button onClick={onClose} className={`${btn} w-full`}>Annulla scansione</button>
                 </div>
+            )}
 
-                <div className="p-5 space-y-4">
-                    {!scanned && (
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="relative w-full aspect-video rounded-xl overflow-hidden border-2 border-[var(--accent)] bg-black flex items-center justify-center">
-                                {scanning ? (
-                                    <CameraStream videoRef={videoRef} />
-                                ) : (
-                                    <p className="text-xs text-gray-400">Inizializzazione cam...</p>
-                                )}
-                                <div className="absolute inset-0 border-2 border-dashed border-white/30 m-4 pointer-events-none rounded-lg" />
+            {scanned && (
+                <div className="space-y-4">
+                    <div className="bg-[var(--bg-card-2)] rounded-lg border border-[var(--border)] p-4 space-y-1.5">
+                        <p className="text-xs font-medium text-[var(--text-muted)] mb-2">Ordine scansionato</p>
+                        {scanned.map((item, idx) => (
+                            <div key={idx} className="flex justify-between text-sm">
+                                <span className="font-medium text-[var(--text-main)]">×{item.quantity} {item.name}</span>
+                                <span className="text-[var(--text-muted)] tabular-nums">€{(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
                             </div>
-
-                            {scannerError && <p className="text-red-500 text-xs font-bold text-center bg-red-500/10 p-2 rounded-lg border border-red-500/20 w-full">{scannerError}</p>}
-
-                            <button onClick={onClose}
-                                className="w-full py-2.5 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl cursor-pointer font-semibold text-xs transition-all hover:bg-red-500 hover:text-white">
-                                Annulla Scansione
-                            </button>
+                        ))}
+                        <div className="flex justify-between font-semibold text-[var(--text-main)] border-t border-[var(--border)] pt-2 mt-2">
+                            <span>Totale</span>
+                            <span className="text-[var(--accent)] tabular-nums">€{scanned.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0).toFixed(2)}</span>
                         </div>
-                    )}
+                    </div>
 
-                    {scanned && (
-                        <div className="space-y-4">
-                            <div className="bg-[var(--bg-card-2)] rounded-xl border border-[var(--border)] p-4 space-y-1.5">
-                                <p className="text-[11px] font-semibold text-[var(--text-muted)] mb-2">Ordine scansionato</p>
-                                {scanned.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between text-sm">
-                                        <span className="font-bold text-[var(--text-main)]">×{item.quantity} {item.name}</span>
-                                        <span className="text-[var(--text-muted)] tabular-nums">€{(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
-                                    </div>
-                                ))}
-                                <div className="flex justify-between font-semibold text-[var(--text-main)] border-t border-[var(--border)] pt-2 mt-2">
-                                    <span>Totale</span>
-                                    <span className="text-[var(--accent)]">€{scanned.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0).toFixed(2)}</span>
-                                </div>
-                            </div>
+                    {!hasCart && <button onClick={() => onReplace(scanned)} className={`${btnPrimary} w-full`}><Check size={16} /> Carica nel carrello</button>}
 
-                            {!hasCart && (
-                                <button onClick={() => onReplace(scanned)}
-                                    className="w-full py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-2">
-                                    <Check size={14} /> Carica nel carrello
-                                </button>
-                            )}
-
-                            {hasCart && (
-                                <div className="space-y-2">
-                                    <p className="text-xs text-[var(--text-muted)] font-bold text-center">Il carrello ha già degli articoli</p>
-                                    <button onClick={() => onMerge(scanned)}
-                                        className="w-full py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl font-semibold text-xs transition-all">
-                                        Unisci ordini
-                                    </button>
-                                    <button onClick={() => onReplace(scanned)}
-                                        className="w-full py-3 bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-main)] hover:border-[var(--accent)] rounded-xl font-semibold text-xs transition-all">
-                                        Sostituisci carrello
-                                    </button>
-                                </div>
-                            )}
+                    {hasCart && (
+                        <div className="space-y-2">
+                            <p className="text-xs text-[var(--text-muted)] text-center">Il carrello ha già degli articoli</p>
+                            <button onClick={() => onMerge(scanned)} className={`${btnPrimary} w-full`}>Unisci ordini</button>
+                            <button onClick={() => onReplace(scanned)} className={`${btn} w-full`}>Sostituisci il carrello</button>
                         </div>
                     )}
                 </div>
-            </div>
-        </div>
+            )}
+        </Modal>
     );
 };
 

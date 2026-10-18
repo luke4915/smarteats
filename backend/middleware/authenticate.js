@@ -57,7 +57,7 @@ export function authorizeAdmin(req, res, next) {
 // Ruoli che lavorano alla cassa: creano ordini, li stornano, li ristampano, gestiscono lo stock.
 // La cucina vede gli ordini e ne fa avanzare lo stato, nient'altro.
 export const CASH_ROLES = ['admin', 'manager', 'cashier'];
-export const STOCK_ROLES = CASH_ROLES;
+const STOCK_ROLES = CASH_ROLES;
 // Ruoli che lavorano in sala (modulo `tables`): ai tavoli, oltre alla cassa, c'è il cameriere. Prende gli ordini, manda
 // le portate e serve; non incassa, non storna, non fa sconti e non tocca lo stock (restano ai CASH_ROLES).
 export const WAITER_ROLES = [...CASH_ROLES, 'waiter'];

@@ -24,9 +24,9 @@ const OrderDiscountPanel = ({ cart, derivedOrderPercent, applyOrderDiscount, but
                 disabled={cart.length === 0}
                 onClick={() => { setValue(derivedOrderPercent ?? 0); setOpen(v => !v); }}
                 title="Sconto sull'intero ordine"
-                className={`${buttonClassName} rounded-xl border transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${isActive
-                    ? 'bg-orange-500 border-orange-500 text-white hover:bg-orange-500/90'
-                    : 'border-[var(--border)] text-[var(--text-muted)] hover:text-orange-500 hover:border-orange-500/50'
+                className={`${buttonClassName} rounded-lg transition active:scale-95 cursor-pointer disabled:opacity-40 disabled:pointer-events-none ${isActive
+                    ? 'bg-orange-500 text-white hover:bg-orange-500/90'
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-2)]'
                     }`}
             >
                 <Percent size={20} />
