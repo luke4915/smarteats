@@ -247,7 +247,7 @@ La stampa è **del client**: la cassa che batte l'ordine stampa direttamente sul
 
 Il progetto deve restare comprensibile anche a chi non è uno sviluppatore (guida: `docs/guida-al-codice.md`; controllo: `./scripts/check.sh`).
 
-1. **Un file, un compito, ~300 righe al massimo.** Oltre, si divide per responsabilità (esempio: `components/products/`: modulo, azioni, finestre, elenchi). I file grandi che restano (`PrintProfiles.jsx`, `MasterPage.jsx`, `FloorEditor.jsx`) sono nel backlog.
+1. **Un file, un compito, ~300 righe al massimo.** Oltre, si divide per responsabilità (esempio: `components/products/`: modulo, azioni, finestre, elenchi). I file grandi che restano (`PrintProfiles.jsx`, `FloorEditor.jsx`) sono nel backlog.
 2. **La logica sta fuori dalla grafica.** Calcoli e regole in file `.js` puri con un `.test.js` che li spiega con esempi; i `.jsx` li usano. Le chiamate al server stanno in un hook (`useXxx.js`) o in un file di azioni, non sparse nei componenti.
 3. **Un commento in testa a ogni file** (a cosa serve) e sopra ogni funzione non ovvia (il *perché*). In italiano.
 4. **Prima di creare, cerca.** Componenti condivisi: `components/shared/Modal.jsx` (finestre), `smarteats/floor/Segmented.jsx` (interruttori), `smarteats/floor/PanelFrame.jsx` (pannello a destra), `floor/ui.js` (stili). Se una cosa serve in due posti, diventa condivisa.
