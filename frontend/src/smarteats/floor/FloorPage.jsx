@@ -6,6 +6,7 @@ import { useToast } from '../../context/useToast';
 import { useIsMobile } from '../../hooks/useBreakpoint';
 import FloorView from './FloorView';
 import SidePanel from './SidePanel';
+import SlidePanel from './SlidePanel';
 import OrderMenu from './OrderMenu';
 import { useProducts } from './useProducts';
 import { useCourses } from './useCourses';
@@ -103,7 +104,7 @@ const FloorPage = ({ user, service, event }) => {
       <>
         <div className={`${card} flex-1 min-h-0 ${ordering ? 'overflow-y-auto no-scrollbar' : 'overflow-hidden'}`}>{ordering ? menu : floor}</div>
         {/* Senza un tavolo scelto la pianta prende tutto lo spazio: il pannello compare solo quando serve */}
-        {selection && <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>}
+        <SlidePanel open={!!selection}>{side}</SlidePanel>
       </>
     );
   }
@@ -113,7 +114,7 @@ const FloorPage = ({ user, service, event }) => {
     <>
       <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{floor}</div>
       {selection && (
-        <div className="fixed inset-0 z-[1700] bg-[var(--bg-main)] p-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+        <div className="motion-page fixed inset-0 z-[1700] bg-[var(--bg-main)] p-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
           {ordering ? (
             <div className="flex flex-col h-full gap-3">
               <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{menu}</div>

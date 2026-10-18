@@ -1,3 +1,4 @@
+import SlidePanel from '../floor/SlidePanel';
 import { useState, useMemo, useEffect } from 'react';
 import { Plus, CalendarX, UserPlus } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -159,7 +160,7 @@ const ReservationsPage = ({ event }) => {
       <>
         <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div>
         {/* Timeline, Elenco e Mensile usano tutta la larghezza finché non si sceglie qualcosa: il pannello compare allora */}
-        {panel && <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>}
+        <SlidePanel open={!!panel}>{side}</SlidePanel>
       </>
     );
   }
@@ -167,7 +168,7 @@ const ReservationsPage = ({ event }) => {
     <>
       <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div>
       {panel && (
-        <div className="fixed inset-0 z-[1700] bg-[var(--bg-main)] p-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>{side}</div>
+        <div className="motion-page fixed inset-0 z-[1700] bg-[var(--bg-main)] p-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>{side}</div>
       )}
     </>
   );
