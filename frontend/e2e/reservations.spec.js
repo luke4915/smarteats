@@ -91,3 +91,18 @@ test('walk-in: chi arriva senza prenotazione si siede al tavolo giusto e il cont
   await page.getByRole('button', { name: 'Sì, elimina' }).click();
   await expect(page.getByText(/Aperto · 3 cop\./)).toHaveCount(0);
 });
+
+test('mese: il calendario riassume i giorni e un tocco porta alla Timeline di quel giorno', async ({ page }) => {
+  const { restaurant: r } = seed();
+  await login(page, r.host, r.admin);
+  await page.getByRole('link', { name: 'Prenotazioni' }).click();
+  await page.getByRole('tab', { name: 'Mese' }).click();
+  await expect(page.getByRole('region', { name: 'Calendario del mese' })).toBeVisible();
+  await shot(page, 'reservations-09-mese');
+  await page.getByRole('button', { name: 'Mese successivo' }).click();
+  await expect(page.getByRole('button', { name: 'Mese corrente' })).toBeVisible();
+  await page.getByRole('button', { name: 'Mese corrente' }).click();
+  // Un giorno con prenotazioni mostra le persone: si apre la Timeline di quel giorno
+  await page.getByRole('button', { name: /persone$/ }).first().click();
+  await expect(page.getByRole('region', { name: /Timeline dei tavoli/ })).toBeVisible();
+});

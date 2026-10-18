@@ -4,7 +4,8 @@ import { minutesOf } from './rules';
 import { Users } from 'lucide-react';
 
 const LABEL_W = 112;       // colonna dei tavoli
-const ROW_H = 40;
+const ROW_H = 44;
+const MIN_CELL = 20;
 
 const BLOCK = {
   confirmed: 'bg-[var(--accent)]/20 border-[var(--accent)]/60 text-[var(--text-main)]',
@@ -16,20 +17,32 @@ const BLOCK = {
 // La giornata per tavolo: una riga per tavolo (raggruppate per sala), le ore in colonna, un blocco per ogni prenotazione
 // o conto aperto. Una riga in cima raccoglie le prenotazioni senza tavolo. La linea rossa è l'ora di adesso (solo oggi).
 // Un tocco su un blocco apre la prenotazione (o il conto); su una cella libera propone un walk-in a quel tavolo.
-const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, selectedId, onOpenReservation, onOpenCheck, onFreeCell, cell = 22 }) => {
+const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, selectedId, onOpenReservation, onOpenCheck, onFreeCell }) => {
   const [now, setNow] = useState(minutesNow());
   useEffect(() => { const t = setInterval(() => setNow(minutesNow()), 60000); return () => clearInterval(t); }, []);
 
   const openedMinutes = isToday ? checks.map(c => { const d = new Date(c.opened_at); return d.getHours() * 60 + d.getMinutes(); }) : [];
   const { start, end } = timelineWindow(shifts, reservations, openedMinutes);
   const cols = Math.ceil((end - start) / STEP);
+  // La colonna si adatta alla larghezza: se tutta la giornata ci sta, niente scorrimento; altrimenti ha una misura minima leggibile
+  const scroller = useRef(null);
+  const [boxW, setBoxW] = useState(0);
+  useEffect(() => {
+    const el = scroller.current;
+    if (!el) return undefined;
+    const measure = () => setBoxW(el.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  const cell = Math.min(40, Math.max(MIN_CELL, Math.floor((boxW - LABEL_W - 2) / cols) || MIN_CELL));
   const x = (minutes) => ((Math.min(Math.max(minutes, start), end) - start) / STEP) * cell;
   const width = cols * cell;
   const hours = [];
   for (let m = Math.ceil(start / 60) * 60; m < end; m += 60) hours.push(m);
   const waiting = unassigned(reservations);
   // All'apertura la vista si porta sull'ora di adesso (oggi) o sulla prima prenotazione del giorno
-  const scroller = useRef(null);
   const firstStart = reservations.filter(r => ['requested', 'confirmed', 'seated'].includes(r.status)).map(r => minutesOf(r.start_time)).sort((a, b) => a - b)[0];
   useEffect(() => {
     const target = isToday ? now - 30 : firstStart;

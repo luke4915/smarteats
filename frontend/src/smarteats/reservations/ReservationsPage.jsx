@@ -1,16 +1,19 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Plus, CalendarX, UserPlus } from 'lucide-react';
+import { Plus, CalendarX, UserPlus } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useIsMobile } from '../../hooks/useBreakpoint';
 import { useBookings } from './useBookings';
 import { todayLocal, addDays, formatDay, agendaGroups } from './rules';
+import { monthOf, addMonths, formatMonth } from './calendar';
+import PeriodNav from './PeriodNav';
+import MonthView from './MonthView';
 import ReservationPanel from './ReservationPanel';
 import ReservationForm from './ReservationForm';
 import TablePicker from './TablePicker';
 import StatusChip from './StatusChip';
 import TimelineView from './TimelineView';
 import WalkInPanel from './WalkInPanel';
-import { btnPrimary, iconBtn, btn } from '../floor/ui';
+import { btnPrimary, btn } from '../floor/ui';
 import Segmented from '../floor/Segmented';
 
 const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
@@ -30,7 +33,8 @@ const ReservationsPage = ({ event }) => {
   const narrow = useIsMobile(900);
   const [date, setDate] = useState(() => location.state?.date ?? todayLocal());
   const { shifts, rooms, checks, reservations, availability, loading, reload } = useBookings(date, event);
-  const [view, setView] = useState('timeline');   // 'list' (elenco per turno) | 'timeline' (tavoli per ora)
+  const [view, setView] = useState('timeline');   // 'timeline' (tavoli per ora) | 'list' (elenco per turno) | 'month' (calendario)
+  const [month, setMonth] = useState(() => monthOf(date));
   const [showClosed, setShowClosed] = useState(false);   // le prenotazioni concluse o annullate stanno nascoste finché non si chiede
   const [panel, setPanel] = useState(null);     // { kind: 'detail' | 'new' | 'edit' | 'tables' | 'walkin', id?, tableId? }
 
@@ -56,21 +60,17 @@ const ReservationsPage = ({ event }) => {
 
   const list = (
     <div className="flex flex-col h-full min-h-0">
-      <header className="flex flex-wrap items-center gap-3 pb-3 shrink-0">
-        <div className="flex items-center gap-1">
-          <button className={iconBtn} aria-label="Giorno precedente" onClick={() => go(-1)}><ChevronLeft size={20} /></button>
-          <div className="min-w-[10.5rem] text-center">
-            <p className="text-lg font-semibold tracking-tight text-[var(--text-main)] first-letter:uppercase leading-tight">{formatDay(date)}</p>
-            <p className="text-xs text-[var(--text-muted)]">{total} {total === 1 ? 'persona' : 'persone'}{pending > 0 && <span className="text-amber-500"> · {pending} da confermare</span>}</p>
-          </div>
-          <button className={iconBtn} aria-label="Giorno successivo" onClick={() => go(1)}><ChevronRight size={20} /></button>
-        </div>
-        <input type="date" aria-label="Vai al giorno" value={date} onChange={e => e.target.value && (setDate(e.target.value), setPanel(null))}
-          className="h-10 px-2 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] text-sm text-[var(--text-main)]" />
-        {date !== todayLocal() && <button className={`${btn} !h-10`} onClick={() => { setDate(todayLocal()); setPanel(null); }}>Oggi</button>}
-        <Segmented label="Vista" value={view} onChange={setView} className="w-52" options={[{ id: 'timeline', label: 'Timeline' }, { id: 'list', label: 'Elenco' }]} />
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 pb-3 shrink-0">
+        {view === 'month'
+          ? <PeriodNav label={formatMonth(month)} prevLabel="Mese precedente" nextLabel="Mese successivo" onPrev={() => setMonth(m => addMonths(m, -1))} onNext={() => setMonth(m => addMonths(m, 1))}
+              isCurrent={month === monthOf(todayLocal())} onToday={() => setMonth(monthOf(todayLocal()))} todayLabel="Mese corrente" pickerType="month" pickerValue={month} onPick={setMonth} />
+          : <PeriodNav label={formatDay(date)} hint={`${total} ${total === 1 ? 'persona' : 'persone'}${pending > 0 ? ` · ${pending} da confermare` : ''}`} prevLabel="Giorno precedente" nextLabel="Giorno successivo"
+              onPrev={() => go(-1)} onNext={() => go(1)} isCurrent={date === todayLocal()} onToday={() => { setDate(todayLocal()); setPanel(null); }}
+              pickerValue={date} onPick={(d) => { setDate(d); setPanel(null); }} />}
+        <Segmented label="Vista" value={view} onChange={(v) => { if (v === 'month') setMonth(monthOf(date)); setView(v); }} className="w-72"
+          options={[{ id: 'timeline', label: 'Timeline' }, { id: 'list', label: 'Elenco' }, { id: 'month', label: 'Mese' }]} />
         <div className="flex items-center gap-2 ml-auto">
-          {date === todayLocal() && <button className={`${btn} !h-10`} onClick={() => setPanel({ kind: 'walkin' })}><UserPlus size={16} /> Walk-in</button>}
+          {date === todayLocal() && view !== 'month' && <button className={`${btn} !h-10`} onClick={() => setPanel({ kind: 'walkin' })}><UserPlus size={16} /> Walk-in</button>}
           <button className={`${btnPrimary} !h-10`} disabled={!activeShifts.length} onClick={() => setPanel({ kind: 'new' })}><Plus size={16} /> Prenotazione</button>
         </div>
       </header>
@@ -79,6 +79,7 @@ const ReservationsPage = ({ event }) => {
         <p className="text-sm text-[var(--text-muted)] py-6">Non ci sono turni attivi. Creali in <button className="text-[var(--accent)] font-medium cursor-pointer" onClick={() => navigate('/settings')}>Impostazioni</button>.</p>
       )}
 
+      {view === 'month' && <MonthView month={month} shifts={shifts} today={todayLocal()} event={event} selectedDate={date} onPickDay={(d) => { setDate(d); setPanel(null); setView('timeline'); }} />}
       {view === 'timeline' && !loading && (
         <TimelineView date={date} isToday={date === todayLocal()} shifts={shifts} rooms={rooms} reservations={reservations} checks={checks} selectedId={panel?.id}
           onOpenReservation={(id) => setPanel({ kind: 'detail', id })}
@@ -157,7 +158,8 @@ const ReservationsPage = ({ event }) => {
     return (
       <>
         <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div>
-        <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>
+        {/* Timeline e Mese usano tutta la larghezza finché non si sceglie qualcosa: il pannello compare allora */}
+        {(panel || view === 'list') && <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>}
       </>
     );
   }
