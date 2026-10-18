@@ -12,21 +12,29 @@ const MIN_CELL = 14;
 const MAX_CELL = 56;
 const MIN_FIT_CELL = 8;
 
-const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderElement, showGrid = false, fit = false, minCell = MIN_CELL, maxCell = MAX_CELL, onBackgroundPointerDown, onBackgroundPointerMove, onBackgroundPointerUp, canvasRef }) => {
+const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderElement, showGrid = false, fit = false, reserve = 0, minCell = MIN_CELL, maxCell = MAX_CELL, onBackgroundPointerDown, onBackgroundPointerMove, onBackgroundPointerUp, canvasRef }) => {
   const box = useRef(null);
-  const [cell, setCell] = useState(32);
+  const [size, setSize] = useState({ w: 0, h: 0 });
 
   useLayoutEffect(() => {
     const el = box.current;
-    const measure = () => {
-      if (fit) setCell(Math.max(MIN_FIT_CELL, Math.floor(Math.min(el.clientWidth / gridW, el.clientHeight / gridH))));
-      else setCell(clamp(Math.floor(el.clientWidth / gridW), minCell, maxCell));
-    };
+    const measure = () => setSize({ w: el.clientWidth, h: el.clientHeight });
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [gridW, gridH, fit, minCell, maxCell]);
+  }, []);
+
+  const cell = fit ? Math.max(MIN_FIT_CELL, Math.floor(Math.min(size.w / gridW, size.h / gridH) || 0)) : clamp(Math.floor(size.w / gridW) || 32, minCell, maxCell);
+
+  // `reserve` (solo con `fit`): un pannello copre la destra. La pianta non si ridisegna: resta della misura piena e si
+  // rimpicciolisce e si sposta con un transform, che il browser anima in modo fluido (e si ferma a metà senza scatti).
+  let transform = 'translate(0px, 0px) scale(1)';
+  if (fit && reserve > 0 && size.w > 0) {
+    const availW = Math.max(size.w - reserve, gridW * MIN_FIT_CELL);
+    const scale = Math.min(1, Math.min(availW / gridW, size.h / gridH) / cell);
+    transform = `translate(${(availW - gridW * cell * scale) / 2 - (size.w - gridW * cell) / 2}px, 0px) scale(${scale})`;
+  }
 
   return (
     <div ref={box} className={fit ? 'w-full h-full flex items-start justify-center overflow-hidden' : 'w-full overflow-x-auto no-scrollbar'}>
@@ -36,6 +44,7 @@ const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderE
         className="relative rounded-xl border border-[var(--border)] bg-[var(--bg-card-2)] select-none"
         style={{
           width: gridW * cell, height: gridH * cell,
+          ...(fit && { transform, transformOrigin: '0 0', transition: 'transform 420ms cubic-bezier(0.32, 0.72, 0, 1)' }),
           ...(showGrid && {
             backgroundImage: 'linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px)',
             backgroundSize: `${cell}px ${cell}px`,

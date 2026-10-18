@@ -99,7 +99,7 @@ const Arrivals = ({ reserved, onOpen }) => {
 // Le sale con i tavoli: la pianta disegnata dall'admin occupa tutta l'area (scalata per starci intera) e mostra lo stato dal
 // vivo. Il selettore delle sale compare solo se sono più di una; il filtro (Tutti, Liberi, Occupati, Pronti) smorza i
 // tavoli che non c'entrano. I tavoli non ancora piazzati restano schede sotto la pianta.
-const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect, onWalkIn, onOpenReservation }) => {
+const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect, onWalkIn, onOpenReservation, reserve = 0 }) => {
   const phone = useIsMobile(640);                 // sul telefono i tavoli sono schede, non la pianta
   const [filter, setFilter] = useState('all');
   const [roomId, setRoomId] = useState(null);
@@ -112,10 +112,11 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
   const loose = room ? room.tables.filter(t => !isPlaced(t)) : [];
   const shown = (room?.tables ?? []).filter(t => t.active && matches(filter, checkOf(t)));
   const dim = (t) => !matches(filter, checkOf(t));
+  const aside = { paddingRight: reserve };        // con il pannello aperto l'intestazione e il resto si fanno da parte
 
   return (
     <div className="h-full flex flex-col gap-3 min-h-0">
-      <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
+      <div style={aside} className="flex flex-wrap items-center justify-between gap-3 shrink-0 transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]">
         <div className="flex flex-wrap items-center gap-3 min-w-0">
           {activeRooms.length > 1 && <Segmented label="Sale" scroll className="min-w-0" value={room.id} onChange={setRoomId}
             options={activeRooms.map(r => ({ id: r.id, label: <>{r.name}{openIn(r) > 0 && <span className="ml-2 text-xs text-[var(--accent)]">{openIn(r)}</span>}</> }))} />}
@@ -138,17 +139,17 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
       )}
       {!phone && room && room.tables.some(isPlaced) && (
         <div className="flex-1 min-h-[200px]">
-          <FloorCanvas fit gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements}
+          <FloorCanvas fit reserve={reserve} gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements}
             renderTable={mapTable({ checkOf, reservedOf: (t) => reserved.get(t.id), selectedId: selectedTableId, filter, onSelect })} />
         </div>
       )}
       {!phone && loose.length > 0 && (
-        <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 shrink-0 max-h-[40%] overflow-y-auto no-scrollbar">
+        <div style={aside} className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 shrink-0 max-h-[40%] overflow-y-auto no-scrollbar transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]">
           {loose.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} reservation={reserved.get(t.id)} selected={t.id === selectedTableId} dim={dim(t)} onSelect={onSelect} />)}
         </div>
       )}
       {room && !room.tables.length && <p className="text-sm text-[var(--text-muted)]">Nessun tavolo in questa sala.</p>}
-      {onOpenReservation && <Arrivals reserved={reserved} onOpen={onOpenReservation} />}
+      {onOpenReservation && <div style={aside} className="shrink-0 transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]"><Arrivals reserved={reserved} onOpen={onOpenReservation} /></div>}
     </div>
   );
 };

@@ -4,7 +4,7 @@
    così anche le classi `dark:` seguono la scelta dell'utente. */
 /* Ogni `transition` di Tailwind usa la stessa curva e durata di tutto il movimento dell'app. */
 @theme {
-  --default-transition-duration: 400ms;
+  --default-transition-duration: 200ms;
   --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 

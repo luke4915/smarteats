@@ -7,6 +7,7 @@ import { useIsMobile } from '../../hooks/useBreakpoint';
 import FloorView from './FloorView';
 import SidePanel from './SidePanel';
 import SlidePanel from './SlidePanel';
+import { usePanelReserve } from './usePanelReserve';
 import OrderMenu from './OrderMenu';
 import { useProducts } from './useProducts';
 import { useCourses } from './useCourses';
@@ -36,6 +37,7 @@ const FloorPage = ({ user, service, event }) => {
   const products = useProducts(ordering);
   const courses = useCourses();
   const modifiers = useModifiers();
+  const reserve = usePanelReserve(!!selection && !narrow);   // spazio che il pannello toglie all'area di lavoro
   const [picking, setPicking] = useState(null);       // piatto con opzioni da scegliere prima di aggiungerlo
 
   const load = useCallback(async () => {
@@ -93,7 +95,7 @@ const FloorPage = ({ user, service, event }) => {
       onSent={() => { reset(); load(); }} onChanged={load}
       onSwitch={(check) => { reset(); setSelection({ table: rooms.flatMap(r => r.tables).find(t => t.id === check.table_id), checkId: check.id }); load(); }} />
   );
-  const floor = <FloorView rooms={rooms} checks={checks} reserved={reserved} selectedTableId={selection?.table.id} onSelect={select} onWalkIn={() => navigate('/reservations', { state: { walkIn: true } })}
+  const floor = <FloorView reserve={reserve} rooms={rooms} checks={checks} reserved={reserved} selectedTableId={selection?.table.id} onSelect={select} onWalkIn={() => navigate('/reservations', { state: { walkIn: true } })}
     onOpenReservation={(r) => navigate('/reservations', { state: { reservationId: r.id, date: r.date } })} />;
   const menu = picking
     ? <ModifierPicker key={picking.id} product={picking} groups={modifiers.forProduct(picking)} onCancel={() => setPicking(null)} onAdd={(chosen) => { addWith(picking, chosen); setPicking(null); }} />
@@ -101,11 +103,13 @@ const FloorPage = ({ user, service, event }) => {
 
   if (!narrow) {
     return (
-      <>
-        <div className={`${card} flex-1 min-h-0 ${ordering ? 'overflow-y-auto no-scrollbar' : 'overflow-hidden'}`}>{ordering ? menu : floor}</div>
-        {/* Senza un tavolo scelto la pianta prende tutto lo spazio: il pannello compare solo quando serve */}
+      <div className="relative flex-1 min-h-0 min-w-0">
+        {/* Il riquadro di lavoro ha sempre la stessa misura: con la comanda la carta si fa da parte con il padding, la pianta con un transform */}
+        <div style={{ paddingRight: ordering && reserve ? reserve + 20 : undefined }}
+          className={`${card} h-full transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${ordering ? 'overflow-y-auto no-scrollbar' : 'overflow-hidden'}`}>{ordering ? menu : floor}</div>
+        {/* Senza un tavolo scelto la pianta prende tutto lo spazio: il pannello scorre dentro solo quando serve */}
         <SlidePanel open={!!selection}>{side}</SlidePanel>
-      </>
+      </div>
     );
   }
 

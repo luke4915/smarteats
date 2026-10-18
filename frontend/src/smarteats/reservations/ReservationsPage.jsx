@@ -1,4 +1,5 @@
 import SlidePanel from '../floor/SlidePanel';
+import { usePanelReserve } from '../floor/usePanelReserve';
 import { useState, useMemo, useEffect } from 'react';
 import { Plus, CalendarX, UserPlus } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -38,6 +39,7 @@ const ReservationsPage = ({ event }) => {
   const [month, setMonth] = useState(() => monthOf(date));
   const [showClosed, setShowClosed] = useState(false);   // le prenotazioni concluse o annullate stanno nascoste finché non si chiede
   const [panel, setPanel] = useState(null);     // { kind: 'detail' | 'new' | 'edit' | 'tables' | 'walkin', id?, tableId? }
+  const reserve = usePanelReserve(!!panel && !narrow);   // spazio che il pannello toglie al riquadro di lavoro
 
   const byId = useMemo(() => new Map(reservations.map(r => [r.id, r])), [reservations]);
   const tableNames = useMemo(() => { const m = new Map(rooms.flatMap(r => r.tables).map(t => [t.id, t.name])); return (ids) => ids.map(id => m.get(id)).filter(Boolean); }, [rooms]);
@@ -157,11 +159,13 @@ const ReservationsPage = ({ event }) => {
 
   if (!narrow) {
     return (
-      <>
-        <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div>
-        {/* Timeline, Elenco e Mensile usano tutta la larghezza finché non si sceglie qualcosa: il pannello compare allora */}
+      <div className="relative flex-1 min-h-0 min-w-0">
+        {/* Timeline, Elenco e Mensile usano tutta la larghezza finché non si sceglie qualcosa: il pannello scorre dentro
+            sopra il riquadro, che intanto si stringe con dolcezza (padding) invece di saltare */}
+        <div style={{ paddingRight: reserve ? reserve + 20 : undefined }}
+          className={`${card} h-full overflow-hidden transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]`}>{list}</div>
         <SlidePanel open={!!panel}>{side}</SlidePanel>
-      </>
+      </div>
     );
   }
   return (

@@ -33,7 +33,7 @@ const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, sele
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-  const cell = Math.min(40, Math.max(MIN_CELL, Math.floor((boxW - LABEL_W - 2) / cols) || MIN_CELL));
+  const cell = Math.min(40, Math.max(MIN_CELL, ((boxW - LABEL_W - 2) / cols) || MIN_CELL));
   const x = (minutes) => ((Math.min(Math.max(minutes, start), end) - start) / STEP) * cell;
   const width = cols * cell;
   const hours = [];
