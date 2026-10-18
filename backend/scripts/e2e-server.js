@@ -26,11 +26,11 @@ if (!fs.existsSync(path.join(dist, 'index.html'))) {
   process.exit(1);
 }
 
-// Certificato autogenerato per *.standmanager.local (vale pochi giorni, solo per le prove)
+// Certificato autogenerato per *.smarteats.local (vale pochi giorni, solo per le prove)
 const certDir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-cert-'));
 const key = path.join(certDir, 'key.pem'), cert = path.join(certDir, 'cert.pem');
 execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '2',
-  '-subj', '/CN=standmanager.local', '-addext', 'subjectAltName=DNS:*.standmanager.local,DNS:standmanager.local'], { stdio: 'ignore' });
+  '-subj', '/CN=smarteats.local', '-addext', 'subjectAltName=DNS:*.smarteats.local,DNS:smarteats.local'], { stdio: 'ignore' });
 
 const hash = await bcrypt.hash(PASSWORD, 4);
 // Avvisi WhatsApp: driver finto (non esce nulla), qualunque sia NODE_ENV
@@ -68,13 +68,13 @@ await adminDb.query(`UPDATE tenants SET modules = array_cat(modules, ARRAY['book
 for (let weekday = 0; weekday < 7; weekday += 1)
   await adminDb.query(`INSERT INTO takeaway_hours (weekday, open_time, close_time, tenant_id) VALUES ($1, '00:00', '23:45', $2)`, [weekday, risto.id]);
 await adminDb.query(`INSERT INTO booking_shifts (name, start_time, duration_minutes, capacity, position, tenant_id) VALUES ('Cena 19:30', '19:30', 90, 30, 0, $1), ('Cena 21:00', '21:00', 90, 20, 1, $1)`, [risto.id]);
-const ristoSeed = { host: `${risto.slug}.standmanager.local`, admin: risto.username, kitchen: await addUser(risto, 'kitchen'), waiter: await addUser(risto, 'waiter'), cashier: await addUser(risto, 'cashier') };
+const ristoSeed = { host: `${risto.slug}.smarteats.local`, admin: risto.username, kitchen: await addUser(risto, 'kitchen'), waiter: await addUser(risto, 'waiter'), cashier: await addUser(risto, 'cashier') };
 
 // ── Sagra: carta con più categorie ──
 const sagra = await createTenant({ businessType: 'street_food' });
 for (const [name, price, category] of [['Panino con salsiccia', 5, 'Panini'], ['Patatine', 3, 'Contorni'], ['Birra', 4, 'Bevande'], ['Acqua', 1, 'Bevande'], ['Tiramisù', 4, 'Dolci']])
   await addProduct(sagra, name, price, category);
-const sagraSeed = { host: `${sagra.slug}.standmanager.local`, admin: sagra.username, kitchen: await addUser(sagra, 'kitchen') };
+const sagraSeed = { host: `${sagra.slug}.smarteats.local`, admin: sagra.username, kitchen: await addUser(sagra, 'kitchen') };
 
 // ── Pizzeria di solo asporto: nessun tavolo, nessuna prenotazione ──
 const shop = await createTenant({ businessType: 'takeaway_shop' });
@@ -82,7 +82,7 @@ for (const [name, price, category] of [['Margherita', 6, 'Pizze'], ['Diavola', 8
   await addProduct(shop, name, price, category);
 for (let weekday = 0; weekday < 7; weekday += 1)
   await adminDb.query(`INSERT INTO takeaway_hours (weekday, open_time, close_time, tenant_id) VALUES ($1, '00:00', '23:45', $2)`, [weekday, shop.id]);
-const shopSeed = { host: `${shop.slug}.standmanager.local`, admin: shop.username, kitchen: await addUser(shop, 'kitchen') };
+const shopSeed = { host: `${shop.slug}.smarteats.local`, admin: shop.username, kitchen: await addUser(shop, 'kitchen') };
 
 fs.mkdirSync(path.dirname(seedFile), { recursive: true });
 fs.writeFileSync(seedFile, JSON.stringify({ port, password: PASSWORD, restaurant: ristoSeed, festival: sagraSeed, shop: shopSeed }, null, 2));

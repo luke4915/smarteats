@@ -26,7 +26,7 @@ cd backend && npm run dev          # il server
 cd frontend && npm run dev         # l'interfaccia
 ```
 
-L'app si apre su `https://<nome-locale>.standmanager.local:5173` (per esempio `default.standmanager.local`).
+L'app si apre su `https://<nome-locale>.smarteats.local:5173` (per esempio `default.smarteats.local`).
 
 **Servono due locali di prova**, creati dal pannello master (`/master`, con la password master):
 

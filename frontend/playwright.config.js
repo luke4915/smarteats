@@ -17,11 +17,11 @@ export default defineConfig({
     locale: 'it-IT',
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
-    launchOptions: { args: ['--host-resolver-rules=MAP *.standmanager.local 127.0.0.1'] },
+    launchOptions: { args: ['--host-resolver-rules=MAP *.smarteats.local 127.0.0.1'] },
   },
   projects: [
     { name: 'desktop', testIgnore: /\.phone\.spec\.js/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
-    { name: 'phone', testMatch: /\.phone\.spec\.js/, use: { ...devices['Pixel 7'], launchOptions: { args: ['--host-resolver-rules=MAP *.standmanager.local 127.0.0.1'] } } },
+    { name: 'phone', testMatch: /\.phone\.spec\.js/, use: { ...devices['Pixel 7'], launchOptions: { args: ['--host-resolver-rules=MAP *.smarteats.local 127.0.0.1'] } } },
   ],
   webServer: {
     command: 'node ../backend/scripts/e2e-server.js',

@@ -30,8 +30,8 @@ if (missing.length || (weak.length && process.env.NODE_ENV === 'production')) {
 if (weak.length) logger.warn({ problems: weak }, 'Segreti deboli: in produzione l\'app non partirebbe');
 
 // Certificati HTTPS (mkcert in sviluppo): percorsi da env, con fallback sui file locali
-const keyPath = process.env.HTTPS_KEY_PATH || path.resolve(__dirname, '_wildcard.standmanager.local+4-key.pem');
-const certPath = process.env.HTTPS_CERT_PATH || path.resolve(__dirname, '_wildcard.standmanager.local+4.pem');
+const keyPath = process.env.HTTPS_KEY_PATH || path.resolve(__dirname, '_wildcard.smarteats.local+4-key.pem');
+const certPath = process.env.HTTPS_CERT_PATH || path.resolve(__dirname, '_wildcard.smarteats.local+4.pem');
 let httpsOptions;
 try {
   httpsOptions = { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };

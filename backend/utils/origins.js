@@ -3,11 +3,11 @@
 // sottostringa: "https://localhost.sito-esterno.com" non deve passare.
 //
 // APP_DOMAIN è il dominio dell'app (ogni tenant è un suo sottodominio):
-// standmanager.local in sviluppo, il dominio reale in produzione.
+// smarteats.local in sviluppo, il dominio reale in produzione.
 // Host locali e IP della rete LAN sono ammessi solo fuori dalla produzione.
 const LAN_IP = /^192\.168\.\d{1,3}\.\d{1,3}$/;
 
-const appDomain = () => process.env.APP_DOMAIN || 'standmanager.local';
+const appDomain = () => process.env.APP_DOMAIN || 'smarteats.local';
 
 function isLocalHost(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1' || LAN_IP.test(hostname);

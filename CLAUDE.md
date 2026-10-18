@@ -91,15 +91,16 @@ Comandi:
 | backend | `npm run db:baseline` | solo su un database appena creato da `schema.sql`: registra le migrazioni come già applicate |
 | backend | `npm test` | test unitari (`node --test`) |
 | backend | `npm run test:integration` | test di integrazione (serve `backend/.env.test`, vedi `.env.test.example`) |
-| frontend | `npm run dev` | Vite su https://*.standmanager.local:5173 |
+| frontend | `npm run dev` | Vite su https://*.smarteats.local:5173 |
 | backend | `scripts/backup.sh` | dump del database con rotazione (vedi `docs/deployment.md`) |
+| backend | `npm run demo:seed` | crea il locale di dimostrazione `demo` (ristorante completo: sala, portate, carta, prenotazioni, asporto, serate passate e servizio in corso); `-- --reset` lo ricrea. Solo su dominio `.local`. Utenti `demo`, `marta`, `luca`, `giulia`, `paolo`, `chef`, password `smarteats-demo` |
 | frontend | `npm run lint` | ESLint — deve passare prima di ogni commit |
 | frontend | `npm test` | test (`node --test`) del motore di stampa in `src/print/`, anche contro la stampante simulata |
 | frontend | `npm run mock:epos` | stampante Epson simulata su https://localhost:9443: disegna le copie nel terminale e può rifiutare i lavori (`-- --fail EPTR_COVER_OPEN`) |
 | frontend | `npm run build` | build di produzione |
 | frontend | `npm run e2e` | test nel browser (Playwright): costruisce il frontend, avvia `backend/scripts/e2e-server.js` (HTTPS autogenerato, locali di prova nel database di test) e fa il giro del ristorante e della sagra, anche da telefono; screenshot in `frontend/e2e/.run/schermate`. Prima volta: `npx playwright install chromium` |
 
-Lo sviluppo locale usa certificati mkcert per `*.standmanager.local` e un sottodominio per tenant (es. `default.standmanager.local`). Gli script in `backend/scripts/*.ps1` configurano host e wildcard su Windows.
+Il dominio di sviluppo è `smarteats.local` (prima `standmanager.local`). Lo sviluppo locale usa certificati mkcert per `*.smarteats.local` e un sottodominio per tenant (es. `default.smarteats.local`). Gli script in `backend/scripts/*.ps1` configurano host e wildcard su Windows.
 
 ## 3. Multi-tenancy e RLS — regole **MUST**
 

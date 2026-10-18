@@ -32,7 +32,7 @@ cp .env.example .env          # compila database, JWT_SECRET, master panel e cer
 npm install
 npm run db:baseline           # solo la prima volta: schema.sql contiene già tutte le migrazioni
 npm run migrate               # da ora in poi applica solo le migrazioni nuove
-npm run dev                   # https://<tenant>.standmanager.local:3000
+npm run dev                   # https://<tenant>.smarteats.local:3000
 ```
 
 **3. Frontend**
@@ -40,10 +40,10 @@ npm run dev                   # https://<tenant>.standmanager.local:3000
 ```bash
 cd frontend
 npm install
-npm run dev                   # https://<tenant>.standmanager.local:5173
+npm run dev                   # https://<tenant>.smarteats.local:5173
 ```
 
-Ogni tenant si apre dal suo sottodominio (es. `default.standmanager.local`): i nomi vanno risolti verso `127.0.0.1`, su Windows con gli script in `backend/scripts/`. I tenant si creano dal master panel, su `/master`.
+Ogni tenant si apre dal suo sottodominio (es. `default.smarteats.local`): i nomi vanno risolti verso `127.0.0.1`, su Windows con gli script in `backend/scripts/`. I tenant si creano dal master panel, su `/master`. Per provare l'app con dati realistici: `npm run demo:seed` (in `backend/`) crea il ristorante `demo` (vedi `CLAUDE.md` per gli utenti); serve la riga `127.0.0.1 demo.smarteats.local` in `/etc/hosts`.
 
 ## Test
 
