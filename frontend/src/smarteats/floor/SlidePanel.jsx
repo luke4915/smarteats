@@ -15,7 +15,7 @@ const SlidePanel = ({ open, children }) => {
   return (
     <div style={{ width }} inert={!open}
       onTransitionEnd={(e) => { if (e.target === e.currentTarget && !open) setMounted(false); }}
-      className={`absolute right-0 top-0 bottom-0 z-10 transition-[transform,opacity] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${open ? 'translate-x-0 opacity-100' : 'translate-x-[calc(100%+1rem)] opacity-0'}`}>
+      className={`absolute right-0 top-0 bottom-0 z-10 transition-[transform,box-shadow] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${open ? 'translate-x-0 shadow-[-28px_0_40px_-28px_rgba(0,0,0,0.55)]' : 'translate-x-[calc(100%+1.5rem)]'}`}>
       {mounted && <div className="h-full">{open ? children : kept}</div>}
     </div>
   );

@@ -116,15 +116,15 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
 
   return (
     <div className="h-full flex flex-col gap-3 min-h-0">
-      <div style={aside} className="flex flex-wrap items-center justify-between gap-3 shrink-0 transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]">
-        <div className="flex flex-wrap items-center gap-3 min-w-0">
+      <div style={aside} className="flex items-center justify-between gap-3 shrink-0 transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]">
+        <div className="flex items-center gap-3 min-w-0">
           {activeRooms.length > 1 && <Segmented label="Sale" scroll className="min-w-0" value={room.id} onChange={setRoomId}
             options={activeRooms.map(r => ({ id: r.id, label: <>{r.name}{openIn(r) > 0 && <span className="ml-2 text-xs text-[var(--accent)]">{openIn(r)}</span>}</> }))} />}
           <Segmented label="Filtro tavoli" value={filter} onChange={setFilter} options={FILTERS} />
         </div>
-        <div className="flex items-center gap-4 text-sm font-medium text-[var(--text-muted)]">
-          <span className="tabular-nums">{checks.length} {checks.length === 1 ? 'occupato' : 'occupati'} · {covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
-          {onWalkIn && <button onClick={onWalkIn} className={`${btn} !h-9`}><UserPlus size={15} /> Walk-in</button>}
+        <div className="flex items-center gap-4 text-sm font-medium text-[var(--text-muted)] min-w-0">
+          <span className="tabular-nums whitespace-nowrap truncate min-w-0">{checks.length} {checks.length === 1 ? 'occupato' : 'occupati'} · {covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
+          {onWalkIn && <button onClick={onWalkIn} className={`${btn} !h-9 shrink-0`}><UserPlus size={15} /> Walk-in</button>}
         </div>
       </div>
 
