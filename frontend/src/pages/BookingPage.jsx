@@ -14,11 +14,11 @@ const STATUS_TEXT = {
   requested: { title: 'Richiesta ricevuta', body: 'Il locale la conferma a breve. Finché non è confermata non è ancora una prenotazione.' },
   confirmed: { title: 'Prenotazione confermata', body: 'Vi aspettiamo. Se cambiano i programmi, potete chiedere l\'annullo da qui fino a un\'ora prima del turno; dopo, chiamateci.' },
   declined: { title: 'Richiesta non accettata', body: 'Purtroppo non è stato possibile accettarla. Potete provare un altro giorno o chiamarci.' },
-  cancelled: { title: 'Richiesta annullata', body: 'Il posto è stato liberato.' },
+  cancelled: { title: 'Prenotazione annullata', body: 'Il posto è stato liberato.' },
   expired: { title: 'Richiesta scaduta', body: 'Il locale non ha risposto in tempo e il posto è stato liberato. Potete inviarne una nuova o chiamarci.' },
   seated: { title: 'Siete al tavolo', body: 'Buon appetito!' },
   completed: { title: 'Grazie della visita', body: 'A presto!' },
-  no_show: { title: 'Non vi abbiamo visti', body: 'Se è un errore, chiamateci.' },
+  no_show: { title: 'Non siete riusciti a venire da noi?', body: 'Fateci sapere, se è un errore, chiamateci.' },
 };
 
 const Shell = ({ info, children }) => <PublicShell info={info} kicker="Prenota un tavolo">{children}</PublicShell>;
@@ -73,7 +73,7 @@ const Status = ({ token, info }) => {
       ) : <button className={`${btn} w-full`} onClick={() => setAsking(true)}>Ritira la richiesta</button>)}
       {data.cancel === 'request' && (asking ? (
         <div className="rounded-xl border border-[var(--border)] p-4 space-y-3">
-          <p className="text-sm">La prenotazione è confermata: non si annulla da qui. Inviamo al locale la richiesta di annullo, e sarà il locale a confermarla.</p>
+          <p className="text-sm">La prenotazione è già confermata! Procedi per inviare una richiesta di annullamento prenotazione al locale.</p>
           <div className="grid grid-cols-2 gap-2">
             <button className={btn} onClick={() => setAsking(false)}>Indietro</button>
             <button className={btnPrimary} disabled={busy} onClick={cancel}>Invia la richiesta</button>
