@@ -25,16 +25,13 @@ const stateOf = (check, reservation) => {
   return inMinutes <= SOON_MINUTES ? 'reserved' : 'free';
 };
 
-const FILTERS = [{ id: 'all', label: 'Tutti' }, { id: 'free', label: 'Liberi' }, { id: 'busy', label: 'Occupati' }, { id: 'ready', label: 'Pronti' }];
-const matches = (filter, check) => filter === 'all' || (filter === 'free' && !check) || (filter === 'busy' && !!check) || (filter === 'ready' && check?.ready_items > 0);
-
 // Scheda di un tavolo (telefono, e tavoli non ancora piazzati sulla pianta)
-const TableCard = ({ table, check, reservation, selected, dim, onSelect }) => {
+const TableCard = ({ table, check, reservation, selected, onSelect }) => {
   const state = stateOf(check, reservation);
   const label = STATE_LABEL[tableState(check)];
   return (
     <button disabled={!table.active} onClick={() => onSelect(table, check)} aria-label={`${table.name}: ${label}`}
-      className={`text-left rounded-lg border p-3.5 min-h-[104px] flex flex-col justify-between ${tone[state]} ${table.active ? interactive : 'opacity-40'} ${dim ? 'opacity-30' : ''} ${selected ? ring : ''}`}>
+      className={`text-left rounded-lg border p-3.5 min-h-[104px] flex flex-col justify-between ${tone[state]} ${table.active ? interactive : 'opacity-40'} ${selected ? ring : ''}`}>
       <div className="w-full">
         <span className="block text-2xl font-semibold leading-none text-[var(--text-main)]">{table.name}</span>
         <span className="mt-2 flex items-center gap-1.5 text-base font-medium tabular-nums text-[var(--text-muted)]"><Users size={16} aria-hidden="true" />{check ? check.covers : table.seats}</span>
@@ -50,7 +47,7 @@ const TableCard = ({ table, check, reservation, selected, dim, onSelect }) => {
 };
 
 // Un tavolo sulla pianta: forma e misura scelte dall'admin; colore, tempo e conto dallo stato dal vivo.
-const mapTable = ({ checkOf, reservedOf, selectedId, filter, onSelect }) => (table, style, cell) => {
+const mapTable = ({ checkOf, reservedOf, selectedId, onSelect }) => (table, style, cell) => {
   const check = checkOf(table);
   const reservation = !check ? reservedOf(table) : null;
   const state = stateOf(check, reservation);
@@ -59,7 +56,7 @@ const mapTable = ({ checkOf, reservedOf, selectedId, filter, onSelect }) => (tab
   return (
     <button key={table.id} style={style} disabled={!table.active} onClick={() => onSelect(table, check)}
       title={`${table.name} · ${label}`} aria-label={`${table.name}: ${label}`}
-      className={`flex flex-col items-center justify-center border-2 box-border overflow-hidden text-center ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${tone[state]} ${table.active ? interactive : 'opacity-40'} ${matches(filter, check) ? '' : 'opacity-25'} ${table.id === selectedId ? `${ring} z-10` : ''}`}>
+      className={`flex flex-col items-center justify-center border-2 box-border overflow-hidden text-center ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${tone[state]} ${table.active ? interactive : 'opacity-40'} ${table.id === selectedId ? `${ring} z-10` : ''}`}>
       <span className="font-semibold leading-none text-[var(--text-main)] truncate max-w-full px-1" style={{ fontSize: Math.max(14, Math.min(cell * 0.5, 26)) }}>{table.name}</span>
       {check?.ready_items > 0 && (
         <span title={`${check.ready_items} ${check.ready_items === 1 ? 'pronto' : 'pronti'}`} className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-[var(--accent)] text-white text-xs font-semibold leading-none flex items-center justify-center">{check.ready_items}</span>
@@ -97,11 +94,9 @@ const Arrivals = ({ reserved, onOpen }) => {
 };
 
 // Le sale con i tavoli: la pianta disegnata dall'admin occupa tutta l'area (scalata per starci intera) e mostra lo stato dal
-// vivo. Il selettore delle sale compare solo se sono più di una; il filtro (Tutti, Liberi, Occupati, Pronti) smorza i
-// tavoli che non c'entrano. I tavoli non ancora piazzati restano schede sotto la pianta.
+// vivo. Il selettore delle sale compare solo se sono più di una; lo stato si legge dai colori e dai numeri sul tavolo, senza filtri. I tavoli non ancora piazzati restano schede sotto la pianta.
 const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect, onWalkIn, onOpenReservation, reserve = 0 }) => {
   const phone = useIsMobile(640);                 // sul telefono i tavoli sono schede, non la pianta
-  const [filter, setFilter] = useState('all');
   const [roomId, setRoomId] = useState(null);
   const byTable = new Map(checks.map(c => [c.table_id, c]));
   const checkOf = (t) => byTable.get(t.id);
@@ -110,17 +105,15 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
   const covers = checks.reduce((s, c) => s + c.covers, 0);
   const openIn = (r) => r.tables.filter(t => byTable.has(t.id)).length;
   const loose = room ? room.tables.filter(t => !isPlaced(t)) : [];
-  const shown = (room?.tables ?? []).filter(t => t.active && matches(filter, checkOf(t)));
-  const dim = (t) => !matches(filter, checkOf(t));
+  const shown = (room?.tables ?? []).filter(t => t.active);
   const aside = { paddingRight: reserve };        // con il pannello aperto l'intestazione e il resto si fanno da parte
 
   return (
     <div className="h-full flex flex-col gap-3 min-h-0">
       <div style={aside} className="flex items-center justify-between gap-3 shrink-0 transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]">
         <div className="flex items-center gap-3 min-w-0">
-          {activeRooms.length > 1 && <Segmented label="Sale" scroll className="min-w-0" value={room.id} onChange={setRoomId}
+          {activeRooms.length > 1 && <Segmented label="Sale" scroll className="shrink-0 max-w-full" value={room.id} onChange={setRoomId}
             options={activeRooms.map(r => ({ id: r.id, label: <>{r.name}{openIn(r) > 0 && <span className="ml-2 text-xs text-[var(--accent)]">{openIn(r)}</span>}</> }))} />}
-          <Segmented label="Filtro tavoli" value={filter} onChange={setFilter} options={FILTERS} />
         </div>
         <div className="flex items-center gap-4 text-sm font-medium text-[var(--text-muted)] min-w-0">
           <span className="tabular-nums whitespace-nowrap truncate min-w-0">{checks.length} {checks.length === 1 ? 'occupato' : 'occupati'} · {covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
@@ -140,12 +133,12 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
       {!phone && room && room.tables.some(isPlaced) && (
         <div className="flex-1 min-h-[200px]">
           <FloorCanvas fit reserve={reserve} gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements}
-            renderTable={mapTable({ checkOf, reservedOf: (t) => reserved.get(t.id), selectedId: selectedTableId, filter, onSelect })} />
+            renderTable={mapTable({ checkOf, reservedOf: (t) => reserved.get(t.id), selectedId: selectedTableId, onSelect })} />
         </div>
       )}
       {!phone && loose.length > 0 && (
         <div style={aside} className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 shrink-0 max-h-[40%] overflow-y-auto no-scrollbar transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]">
-          {loose.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} reservation={reserved.get(t.id)} selected={t.id === selectedTableId} dim={dim(t)} onSelect={onSelect} />)}
+          {loose.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} reservation={reserved.get(t.id)} selected={t.id === selectedTableId} onSelect={onSelect} />)}
         </div>
       )}
       {room && !room.tables.length && <p className="text-sm text-[var(--text-muted)]">Nessun tavolo in questa sala.</p>}

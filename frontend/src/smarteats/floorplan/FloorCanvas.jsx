@@ -33,11 +33,12 @@ const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderE
   if (fit && reserve > 0 && size.w > 0) {
     const availW = Math.max(size.w - reserve, gridW * MIN_FIT_CELL);
     const scale = Math.min(1, Math.min(availW / gridW, size.h / gridH) / cell);
-    transform = `translate(${(availW - gridW * cell * scale) / 2 - (size.w - gridW * cell) / 2}px, 0px) scale(${scale})`;
+    const dy = (size.h - gridH * cell * scale) / 2 - (size.h - gridH * cell) / 2;      // resta centrata anche in verticale
+    transform = `translate(${(availW - gridW * cell * scale) / 2 - (size.w - gridW * cell) / 2}px, ${dy}px) scale(${scale})`;
   }
 
   return (
-    <div ref={box} className={fit ? 'w-full h-full flex items-start justify-center overflow-hidden' : 'w-full overflow-x-auto no-scrollbar'}>
+    <div ref={box} className={fit ? 'w-full h-full flex items-center justify-center overflow-hidden' : 'w-full overflow-x-auto no-scrollbar'}>
       <div
         ref={canvasRef}
         onPointerDown={onBackgroundPointerDown} onPointerMove={onBackgroundPointerMove} onPointerUp={onBackgroundPointerUp} onPointerCancel={onBackgroundPointerUp}
