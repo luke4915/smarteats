@@ -2,6 +2,12 @@
 
 /* Il tema scuro si accende con la classe `dark` sulla pagina (hooks/useTheme.js), non con le impostazioni del sistema:
    così anche le classi `dark:` seguono la scelta dell'utente. */
+/* Ogni `transition` di Tailwind usa la stessa curva e durata di tutto il movimento dell'app. */
+@theme {
+  --default-transition-duration: 400ms;
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
@@ -81,7 +87,10 @@ body {
   .motion-page, .motion-panel, :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]), :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) > :first-child, :where([role="dialog"]) { animation: none; }
 }
 
-/* Transizioni smooth cambio tema */
+/* Transizioni di base: cambio tema e passaggio del mouse. Stanno nel livello `base` perché le classi di Tailwind
+   (transition, transition-[width]…) sono in un livello successivo e devono poterle sostituire: fuori dal livello, queste
+   regole vincerebbero sempre e ogni transizione scritta sui componenti resterebbe senza effetto. */
+@layer base {
 *,
 *::before,
 *::after {
@@ -90,7 +99,7 @@ body {
   transition-timing-function: var(--ease);
 }
 
-/* Escludi transizioni su elementi interattivi per non rallentare i click */
+/* Elementi interattivi: risposta più rapida */
 button,
 a,
 input,
@@ -99,6 +108,7 @@ textarea {
   transition-property: background-color, border-color, color, opacity, transform, box-shadow;
   transition-duration: var(--dur-fast);
   transition-timing-function: var(--ease);
+}
 }
 
 /* Hover uniforme per ogni bottone bordato dell'app: bordo più chiaro/marcato
