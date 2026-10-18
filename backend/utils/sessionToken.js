@@ -17,7 +17,7 @@ export const signToken = (user, loginAt = Math.floor(Date.now() / 1000)) => {
   const sessionEndS = loginAt + MAX_SESSION_MS / 1000;
   const expiresIn = Math.max(1, Math.min(TOKEN_TTL_S, sessionEndS - Math.floor(Date.now() / 1000)));
   return jwt.sign(
-    { id: user.id, username: user.username, role: user.role, theme: user.theme || 'dark', tenantId: user.tenant_id, tenantName: user.tenant_name, mustChangePassword: !!user.must_change_password, loginAt },
+    { id: user.id, username: user.username, role: user.role, tenantId: user.tenant_id, tenantName: user.tenant_name, mustChangePassword: !!user.must_change_password, loginAt },
     process.env.JWT_SECRET,
     { ...SIGN_OPTIONS, expiresIn }
   );

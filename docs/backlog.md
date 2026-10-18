@@ -9,9 +9,6 @@ Elenco verificato sul codice. Quando ne risolvi una, toglila da qui nello stesso
 - `config.js`, `printOrder.js` e `usePrintQueue.js` (che dipendono da `apiClient` e React) non hanno test automatici; coda, archivio locale e driver sì (`offline.test.js`).
 - La scritta "COPIA INTERNA ASSOCIAZIONE" e i nomi delle copie sono fissi nei template.
 
-**Codice legacy**
-- `theme` nel JWT e in `/auth/me` vale sempre `'dark'`: `users` non ha una colonna `theme` e il tema è solo stato del client.
-
 **Frontend e offline**
 - Gli ordini rimasti in coda da prima dell'aggiornamento non hanno `client_order_id` né `session_id`, quindi vanno nella sessione aperta al momento della sincronizzazione.
 
