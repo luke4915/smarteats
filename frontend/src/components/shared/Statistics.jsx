@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, X, Check, FileText } from 'lucide-react';
+import { Download, Check, FileText } from 'lucide-react';
 
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
@@ -11,6 +11,9 @@ import { exportStatsPdf } from './statistics/pdfExport';
 import { useAuth } from '../../context/useAuth';
 import { termsFor } from '../../utils/terms';
 import { PageHeader, PageBody } from './PageHeader';
+import Modal from './Modal';
+import Segmented from '../../smarteats/floor/Segmented';
+import { btn, iconBtn } from '../../smarteats/floor/ui';
 
 // Le fasce orarie attive (da prima a ultima con valori), riordinate dalle 12:00 come nel resto dell'app.
 const hourItems = (data, key) => activeHours(reorderHours(data), key).map(d => ({ key: d.ora, label: `${d.ora}`, short: String(d.ora).slice(0, 2), value: d[key] ?? 0 }));
@@ -66,11 +69,11 @@ const Statistics = () => {
     <PageBody>
       <PageHeader title="Statistiche" subtitle={selectedSessionIds.length > 0 ? `${selectedSessionIds.length} ${selectedSessionIds.length === 1 ? 'sessione selezionata' : 'sessioni selezionate'}` : 'Tutte le sessioni'}>
           <button onClick={() => setIsExportModalOpen(true)}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-main)] hover:bg-[var(--bg-card-2)] cursor-pointer transition-colors">
+            className={btn}>
             <Download size={15} /> Esporta CSV
           </button>
           <button onClick={() => exportStatsPdf(stats, sessions, selectedSessionIds, terms)}
-            className="inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-[var(--border)] text-sm font-medium text-[var(--text-main)] hover:bg-[var(--bg-card-2)] cursor-pointer transition-colors">
+            className={btn}>
             <FileText size={15} /> Esporta PDF
           </button>
       </PageHeader>
@@ -158,14 +161,7 @@ const Statistics = () => {
 
           <ChartCard
             title="Prodotti più venduti"
-            action={
-              <div className="flex gap-1 p-1 rounded-lg bg-[var(--bg-main)] border border-[var(--border)]" role="tablist" aria-label="Metrica">
-                {[['count', 'Quantità'], ['revenue', 'Incasso']].map(([id, name]) => (
-                  <button key={id} role="tab" aria-selected={topProductsMetric === id} onClick={() => setTopProductsMetric(id)}
-                    className={`h-8 px-3 rounded-md text-sm font-medium transition cursor-pointer ${topProductsMetric === id ? 'bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm' : 'text-[var(--text-muted)]'}`}>{name}</button>
-                ))}
-              </div>
-            }
+            action={<Segmented label="Metrica" value={topProductsMetric} onChange={setTopProductsMetric} options={[{ id: 'count', label: 'Quantità' }, { id: 'revenue', label: 'Incasso' }]} />}
           >
             <HBars rows={sortedTopProdotti.map(p => ({ key: p.prodotto, label: p.prodotto, ...p }))} valueOf={r => r[topProductsMetric]}
               format={v => (topProductsMetric === 'revenue' ? formatEuro(v) : `${v} pz`)} />
@@ -219,36 +215,24 @@ const Statistics = () => {
       )}
 
       {isExportModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl w-full max-w-md shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
-              <div>
-                <h3 className="text-base font-semibold text-[var(--text-main)]">Esporta report CSV</h3>
-                <p className="text-xs text-[var(--text-muted)] mt-0.5">Solo sessioni concluse</p>
-              </div>
-              <button onClick={() => setIsExportModalOpen(false)} className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-main)] rounded-lg hover:bg-[var(--bg-input)] transition-colors">
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-4 max-h-72 overflow-y-auto space-y-2 no-scrollbar">
-              {closedSessions.length === 0 ? (
-                <p className="text-sm text-center text-[var(--text-muted)] py-6">{terms.none}</p>
-              ) : closedSessions.map(s => (
-                <div key={s.id} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] hover:border-[var(--border-hover)] transition-colors">
-                  <div className="min-w-0 flex-1 pr-2">
-                    <p className="text-sm font-medium text-[var(--text-main)] truncate">{s.name || `${terms.column} ${s.id}`}</p>
-                    <p className="text-xs text-[var(--text-muted)]">
-                      Chiusa il {new Date(s.end_time).toLocaleDateString('it-IT')} alle {new Date(s.end_time).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  <button onClick={() => handleExportCSV(s)} className="p-2 rounded-lg bg-[var(--accent)]/10 hover:bg-[var(--accent)] text-[var(--accent)] hover:text-white transition-all shrink-0">
-                    <Download size={14} />
-                  </button>
+        <Modal title="Esporta report CSV" size="max-w-md" onClose={() => setIsExportModalOpen(false)}>
+          <p className="text-xs text-[var(--text-muted)] mb-3">Solo sessioni concluse</p>
+          <div className="space-y-2">
+            {closedSessions.length === 0 ? (
+              <p className="text-sm text-center text-[var(--text-muted)] py-6">{terms.none}</p>
+            ) : closedSessions.map(s => (
+              <div key={s.id} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)]">
+                <div className="min-w-0 flex-1 pr-2">
+                  <p className="text-sm font-medium text-[var(--text-main)] truncate">{s.name || `${terms.column} ${s.id}`}</p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    Chiusa il {new Date(s.end_time).toLocaleDateString('it-IT')} alle {new Date(s.end_time).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
-              ))}
-            </div>
+                <button onClick={() => handleExportCSV(s)} aria-label={`Scarica ${s.name || s.id}`} className={`${iconBtn} shrink-0`}><Download size={16} /></button>
+              </div>
+            ))}
           </div>
-        </div>
+        </Modal>
       )}
     </PageBody>
   );

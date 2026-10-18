@@ -5,6 +5,7 @@ import { useAuth } from '../../context/useAuth';
 import { useToast } from '../../context/useToast';
 import { visibleViews, canViewSmartEats, smartEatsHome } from './views';
 import { useLiveUpdates } from '../../hooks/useLiveUpdates';
+import { useTheme } from '../../hooks/useTheme';
 import { useService } from './useService';
 import AppHeader from '../../components/shell/AppHeader';
 import ServiceControl from '../../components/shell/ServiceControl';
@@ -38,9 +39,7 @@ const SmartEatsApp = () => {
   const { pathname } = useLocation();
   const { service, start, closingInfo, end, onEvent } = useService();
   const [event, setEvent] = useState(null);
-  const [theme, setTheme] = useState('dark');
-
-  useEffect(() => { document.documentElement.classList.toggle('dark', theme === 'dark'); }, [theme]);
+  const [theme, setTheme] = useTheme();
 
   const handleMessage = useCallback((msg) => { onEvent(msg); setEvent(msg); }, [onEvent]);
   useLiveUpdates(handleMessage, { enabled: !!user, onUnauthorized: refreshSession });

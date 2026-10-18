@@ -1,23 +1,24 @@
-import { PageBody } from '../components/shared/PageHeader';
-import AppearanceSettings from '../components/setup/AppearanceSettings';
-import OrderSettings from '../components/setup/OrderSettings';
+import SectionsPage from '../components/shell/SectionsPage';
 import PrintProfiles from '../components/setup/PrintProfiles';
 import MenuSettings from '../components/setup/MenuSettings';
 import UsersSettings from '../components/setup/UsersSettings';
 import AccountSettings from '../components/shared/AccountSettings';
 import FeedbackBox from '../components/shared/FeedbackBox';
 import TakeawaySettings from '../smarteats/takeaway/TakeawaySettings';
+import DeviceSettings from './DeviceSettings';
+import { festivalSections } from './sections';
 
-// Le impostazioni della cassa: un elenco di sezioni, ognuna visibile secondo il ruolo.
-const SetupPage = ({ user, theme, setTheme, isSoundEnabled, setIsSoundEnabled, orderMode, setOrderMode }) => (
-  <PageBody>
-    <AppearanceSettings theme={theme} setTheme={setTheme} isSoundEnabled={isSoundEnabled} setIsSoundEnabled={setIsSoundEnabled} />
-    {user.role === 'admin' && user.modules?.includes('takeaway') && <TakeawaySettings />}
-    {user.role !== 'kitchen' && <><MenuSettings /><OrderSettings orderMode={orderMode} setOrderMode={setOrderMode} /><PrintProfiles /></>}
-    {user.role === 'admin' && <UsersSettings />}
-    <FeedbackBox modules={['pos', 'kitchen', 'catalog', 'stats', 'settings']} />
-    <AccountSettings />
-  </PageBody>
-);
+// Le impostazioni della cassa: il menu di sezioni è lo stesso di SmartEats (`SectionsPage`), qui c'è solo cosa mostra ognuna.
+const SetupPage = ({ user, ...device }) => {
+  const content = {
+    device: () => <DeviceSettings {...device} />,
+    takeaway: () => <TakeawaySettings />,
+    menu: () => <MenuSettings />,
+    printing: () => <PrintProfiles />,
+    staff: () => <UsersSettings />,
+    account: () => <><AccountSettings /><FeedbackBox modules={['pos', 'kitchen', 'catalog', 'stats', 'settings']} /></>,
+  };
+  return <SectionsPage title="Sistema" sections={festivalSections(user)} content={content} />;
+};
 
 export default SetupPage;

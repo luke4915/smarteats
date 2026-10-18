@@ -17,13 +17,15 @@ const Ticket = ({ order, fresh, onLines }) => {
   const takeaway = order.pickup_at != null;
   const pickupTime = takeaway ? new Date(order.pickup_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : null;
   const action = ticketAction(order);
-  const where = order.table_name ? `Tavolo ${order.table_name}` : takeaway ? `Ritiro ${pickupTime}` : order.is_takeaway ? 'Asporto' : 'Banco';
+  // Senza tavolo né ritiro (banco della sagra) il titolo è il numero dell'ordine, quello che si chiama a voce
+  const named = order.table_name || takeaway || order.is_takeaway;
+  const where = order.table_name ? `Tavolo ${order.table_name}` : takeaway ? `Ritiro ${pickupTime}` : order.is_takeaway ? 'Asporto' : `#${order.display_code}`;
   return (
     <article className={`flex flex-col rounded-xl overflow-hidden bg-[var(--bg-card)] border-2 ${fresh ? 'border-[var(--accent)] ring-4 ring-[var(--accent)]/30' : 'border-[var(--border)]'}`}>
       <header className={`flex items-center justify-between gap-3 px-4 py-3 ${HEAD[level]}`}>
         <div className="min-w-0">
           <h3 className="text-3xl font-bold leading-none truncate">{where}</h3>
-          <p className="mt-1 text-base font-medium opacity-90 truncate">{[order.pickup_name, order.course_name, order.covers > 0 && `${order.covers} cop.`, `#${order.display_code}`].filter(Boolean).join(' · ')}</p>
+          <p className="mt-1 text-base font-medium opacity-90 truncate">{[order.pickup_name, order.course_name, order.covers > 0 && `${order.covers} cop.`, named && `#${order.display_code}`].filter(Boolean).join(' · ')}</p>
         </div>
         <span className="flex items-center gap-1.5 text-2xl font-bold tabular-nums shrink-0"><Clock size={22} />{takeaway ? Math.abs(order.pickupIn) : order.minutes}<span className="text-base font-medium">{takeaway ? (order.pickupIn < 0 ? 'min fa' : 'min al ritiro') : 'min'}</span></span>
       </header>
@@ -53,7 +55,8 @@ const Ticket = ({ order, fresh, onLines }) => {
   );
 };
 
-const KitchenPage = ({ event }) => {
+// `actions`: pulsanti in più nella testata (la cassa delle sagre ci mette la scansione dello scontrino).
+const KitchenPage = ({ event, actions }) => {
   const { orders, setLines } = useKitchenOrders(event);
   const [station, setStation] = useState('all');
   const [now, setNow] = useState(() => Date.now());
@@ -92,6 +95,7 @@ const KitchenPage = ({ event }) => {
           {showStations && (
             <Segmented label="Postazione" size="lg" value={station} onChange={setStation} options={STATIONS} />
           )}
+          {actions}
           <button onClick={toggleSound} aria-pressed={sound} aria-label={sound ? 'Spegni il suono' : 'Accendi il suono'}
             className="h-12 w-12 rounded-lg border border-[var(--border)] flex items-center justify-center text-[var(--text-main)]">{sound ? <Volume2 size={22} /> : <VolumeX size={22} />}</button>
         </div>

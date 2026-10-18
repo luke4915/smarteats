@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { btn, btnPrimary, iconBtn, input, label } from '../floor/ui';
+import Switch from '../../components/shared/Switch';
 
 const DAYS = [[1, 'Lunedì'], [2, 'Martedì'], [3, 'Mercoledì'], [4, 'Giovedì'], [5, 'Venerdì'], [6, 'Sabato'], [0, 'Domenica']];
 const SLOT_OPTIONS = [10, 15, 20, 30, 60];
@@ -54,11 +55,8 @@ const TakeawaySettings = () => {
       <div className="grid lg:grid-cols-[1fr_auto] gap-6 max-w-3xl">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <button type="button" role="switch" aria-checked={s.enabled} aria-label="Ordini online"
-              onClick={() => { const enabled = !s.enabled; setS(x => ({ ...x, enabled })); save('takeaway_portal_enabled', enabled ? '1' : '0', enabled ? 'Ordini online accesi' : 'Ordini online spenti'); }}
-              className={`shrink-0 w-11 h-6 p-0.5 rounded-full flex items-center cursor-pointer transition-colors ${s.enabled ? 'bg-[var(--accent)] justify-end' : 'bg-[var(--border-hover)] justify-start'}`}>
-              <span className="block w-5 h-5 bg-white rounded-full" />
-            </button>
+            <Switch checked={s.enabled} label="Ordini online"
+              onChange={(enabled) => { setS(x => ({ ...x, enabled })); save('takeaway_portal_enabled', enabled ? '1' : '0', enabled ? 'Ordini online accesi' : 'Ordini online spenti'); }} />
             <span className="text-sm text-[var(--text-main)]">{s.enabled ? 'Accesi: i clienti possono ordinare dal sito' : 'Spenti: la pagina non è raggiungibile'}</span>
           </div>
           <div className="grid sm:grid-cols-3 gap-3">

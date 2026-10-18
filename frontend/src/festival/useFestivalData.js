@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useToast } from '../context/useToast';
 import { useSound } from '../hooks/useSound';
+import { useTheme } from '../hooks/useTheme';
 import { useCart } from '../hooks/useCart';
 import { useProducts } from '../hooks/useProducts';
 import { useWorkSession } from '../hooks/useWorkSession';
@@ -16,11 +17,10 @@ export function useFestivalData(user) {
   const { refreshSession } = useAuth();
 
   // Preferenze del dispositivo
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useTheme();
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [orderMode, setOrderMode] = useState('simple');
   const playSound = useSound(isSoundEnabled);
-  useEffect(() => { document.documentElement.classList.toggle('dark', theme === 'dark'); }, [theme]);
 
   // Catalogo, serata, carrello
   useDevicePairing();
