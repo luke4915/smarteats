@@ -47,7 +47,7 @@ Ogni tenant si apre dal suo sottodominio (es. `default.smarteats.local`): i nomi
 
 ## Test
 
-Il modo più semplice: `./scripts/check.sh` (veloce) o `./scripts/check.sh --tutto` (anche database e browser). Nel dettaglio:
+Il modo più semplice: `./scripts/check.sh` (veloce) o `./scripts/check.sh --all` (anche database e browser). Nel dettaglio:
 
 ```bash
 cd backend

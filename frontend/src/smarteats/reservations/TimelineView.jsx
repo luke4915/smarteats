@@ -16,6 +16,7 @@ const BLOCK = {
 
 // La giornata per tavolo: una riga per tavolo (raggruppate per sala), le ore in colonna, un blocco per ogni prenotazione
 // o conto aperto. Una riga in cima raccoglie le prenotazioni senza tavolo. La linea rossa è l'ora di adesso (solo oggi).
+// Il blocco mostra solo nome e persone (l'ora d'arrivo è la sua posizione sulla scala, e compare passandoci sopra).
 // Un tocco su un blocco apre la prenotazione (o il conto); su una cella libera propone un walk-in a quel tavolo.
 const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, selectedId, onOpenReservation, onOpenCheck, onFreeCell }) => {
   const [now, setNow] = useState(minutesNow());
@@ -57,7 +58,7 @@ const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, sele
       title={`${b.time} · ${b.title} · ${b.party}`} aria-label={`${b.time} ${b.title}, ${b.party} persone`}
       className={`absolute top-1 bottom-1 rounded-md border px-2 flex items-center gap-1.5 text-xs font-medium overflow-hidden whitespace-nowrap cursor-pointer hover:brightness-110 ${tone} ${b.kind === 'reservation' && b.id === selectedId ? 'ring-2 ring-[var(--text-main)]' : ''}`}
       style={{ left: x(b.start), width: Math.max(cell * 2, x(b.end) - x(b.start) - 2) }}>
-      <span className="tabular-nums opacity-80">{b.time}</span><span className="truncate">{b.title}</span><span className="tabular-nums opacity-80 ml-auto flex items-center gap-1 shrink-0"><Users size={12} aria-hidden="true" />{b.party}</span>
+      <span className="truncate">{b.title}</span><span className="tabular-nums opacity-80 ml-auto flex items-center gap-1 shrink-0"><Users size={12} aria-hidden="true" />{b.party}</span>
     </button>
   );
 

@@ -1,3 +1,4 @@
+import { Moon, Sun, Users, Clock } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
@@ -7,7 +8,8 @@ import { monthGrid, summaryByDay, dayLoad, busiestAndQuietest, heat } from './ca
 const WEEKDAYS = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 
 // Il mese come mappa di calore: più un giorno è pieno (persone prenotate su posti dei turni), più il riquadro è colorato.
-// Dentro, una riga per turno con la sua barra e «prenotati / posti». Sopra, il giorno più carico e il più libero.
+// In alto il numero del giorno e le persone prenotate; poi una riga per turno (sole = pranzo, luna = cena) con barra e «prenotati / posti»;
+// in basso, in giallo, le richieste da confermare. Sopra, il giorno più carico e il più libero.
 // Un tocco sul giorno apre la sua Timeline. I numeri arrivano da `GET /bookings/summary` (solo conteggi).
 const MonthView = ({ month, shifts, today, event, selectedDate, onPickDay }) => {
   const { showToast } = useToast();
@@ -53,16 +55,20 @@ const MonthView = ({ month, shifts, today, event, selectedDate, onPickDay }) => 
               style={{ backgroundColor: `color-mix(in srgb, var(--accent) ${heat(load.pct) * 100}%, transparent)` }}
               className={`min-h-[92px] p-1.5 border-b border-r border-[var(--border)] text-left flex flex-col gap-1 cursor-pointer hover:brightness-110 transition ${inMonth ? '' : 'opacity-35'} ${date === selectedDate ? 'ring-2 ring-inset ring-[var(--text-main)]' : ''}`}>
               <span className="flex items-center justify-between gap-1">
-                {load.requested > 0 ? <span className="text-[11px] font-medium text-amber-500">{load.requested} da confermare</span> : <span />}
                 <span className={`text-xs tabular-nums w-6 h-6 flex items-center justify-center rounded-full ${date === today ? 'bg-[var(--accent)] text-white font-semibold' : 'text-[var(--text-muted)]'}`}>{day}</span>
+                {load.covers > 0 && <span className="flex items-center gap-1 text-xs font-medium tabular-nums text-[var(--text-main)]" title={`${load.covers} persone prenotate`}><Users size={12} aria-hidden="true" />{load.covers}</span>}
               </span>
-              {load.perShift.filter(p => p.covers > 0).map(p => (
-                <span key={p.shift.id} className="flex items-center gap-1.5 text-[11px] tabular-nums text-[var(--text-main)]" title={`${p.shift.name}: ${p.reservations} prenotazioni, ${p.covers} persone su ${p.shift.capacity} posti`}>
-                  <span className="w-9 shrink-0 text-[var(--text-muted)]">{p.shift.start_time}</span>
-                  <span className="flex-1 h-1.5 rounded-full bg-[var(--text-main)]/10 overflow-hidden"><i className={`block h-full rounded-full ${p.pct > 100 ? 'bg-red-500' : p.pct >= 85 ? 'bg-amber-500' : 'bg-[var(--accent)]'}`} style={{ width: `${Math.min(p.pct, 100)}%` }} /></span>
-                  <span className={`w-12 text-right ${p.pct > 100 ? 'text-red-500' : ''}`}>{p.covers}/{p.shift.capacity}</span>
-                </span>
-              ))}
+              {load.perShift.filter(p => p.covers > 0).map(p => {
+                const Icon = Number(p.shift.start_time.slice(0, 2)) < 16 ? Sun : Moon;      // pranzo o cena
+                return (
+                  <span key={p.shift.id} className="flex items-center gap-1.5 text-[11px] tabular-nums text-[var(--text-main)]" title={`${p.shift.name} (${p.shift.start_time}): ${p.reservations} prenotazioni, ${p.covers} persone su ${p.shift.capacity} posti`}>
+                    <Icon size={12} className="shrink-0 text-[var(--text-muted)]" aria-hidden="true" />
+                    <span className="flex-1 h-1.5 rounded-full bg-[var(--text-main)]/10 overflow-hidden"><i className={`block h-full rounded-full ${p.pct > 100 ? 'bg-red-500' : p.pct >= 85 ? 'bg-amber-500' : 'bg-[var(--accent)]'}`} style={{ width: `${Math.min(p.pct, 100)}%` }} /></span>
+                    <span className={`w-10 text-right ${p.pct > 100 ? 'text-red-500' : ''}`}>{p.covers}/{p.shift.capacity}</span>
+                  </span>
+                );
+              })}
+              {load.requested > 0 && <span className="mt-auto flex items-center gap-1 text-[11px] font-medium text-amber-500" title={`${load.requested} da confermare`}><Clock size={12} aria-hidden="true" />{load.requested} da confermare</span>}
             </button>
           ))}
         </div>

@@ -2,7 +2,7 @@
 # Tutti i controlli del progetto con un solo comando. Da lanciare dalla cartella principale, PRIMA di salvare le modifiche.
 #
 #   ./scripts/check.sh            controlli veloci (1-2 minuti): test della logica, lint, build
-#   ./scripts/check.sh --tutto    in più i test con il database (serve backend/.env.test) e quelli nel browser
+#   ./scripts/check.sh --all    in più i test con il database (serve backend/.env.test) e quelli nel browser
 #
 # Si ferma al primo errore e dice dove guardare. Se tutto è verde, le modifiche non hanno rotto nulla di ciò che è provato.
 set -euo pipefail
@@ -27,7 +27,7 @@ step "Frontend: costruzione dell'app"
 (cd frontend && npm run build --silent > /tmp/stand-manager-build.log 2>&1) || { cat /tmp/stand-manager-build.log; exit 1; }
 ok "Build a posto"
 
-if [[ "${1:-}" == "--tutto" ]]; then
+if [[ "${1:-}" == "--all" ]]; then
   step "Backend: test con il database"
   (cd backend && npm run test:integration --silent 2>&1 | grep -E "^ℹ (tests|pass|fail)")
   ok "Database: tutto a posto"

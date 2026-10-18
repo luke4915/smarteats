@@ -75,7 +75,7 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
   await shot(page, 'booking-portal-06-annullo');
   await page.getByRole('button', { name: "Conferma l'annullo" }).click();
   await phone.reload();
-  await expect(phone.getByRole('heading', { name: 'Richiesta annullata' })).toBeVisible();
+  await expect(phone.getByRole('heading', { name: 'Prenotazione annullata' })).toBeVisible();
 });
 
 // Il body dell'app è bloccato: la pagina dei clienti deve scorrere da sola, in verticale e in orizzontale.

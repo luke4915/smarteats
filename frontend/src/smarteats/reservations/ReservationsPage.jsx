@@ -68,7 +68,7 @@ const ReservationsPage = ({ event }) => {
               onPrev={() => go(-1)} onNext={() => go(1)} isCurrent={date === todayLocal()} onToday={() => { setDate(todayLocal()); setPanel(null); }}
               pickerValue={date} onPick={(d) => { setDate(d); setPanel(null); }} />}
         <Segmented label="Vista" value={view} onChange={(v) => { if (v === 'month') setMonth(monthOf(date)); setView(v); }} className="w-72"
-          options={[{ id: 'timeline', label: 'Timeline' }, { id: 'list', label: 'Elenco' }, { id: 'month', label: 'Mese' }]} />
+          options={[{ id: 'timeline', label: 'Timeline' }, { id: 'list', label: 'Elenco' }, { id: 'month', label: 'Mensile' }]} />
         <div className="flex items-center gap-2 ml-auto">
           {date === todayLocal() && view !== 'month' && <button className={`${btn} !h-10`} onClick={() => setPanel({ kind: 'walkin' })}><UserPlus size={16} /> Walk-in</button>}
           <button className={`${btnPrimary} !h-10`} disabled={!activeShifts.length} onClick={() => setPanel({ kind: 'new' })}><Plus size={16} /> Prenotazione</button>
@@ -158,7 +158,7 @@ const ReservationsPage = ({ event }) => {
     return (
       <>
         <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div>
-        {/* Timeline e Mese usano tutta la larghezza finché non si sceglie qualcosa: il pannello compare allora */}
+        {/* Timeline e Mensile usano tutta la larghezza finché non si sceglie qualcosa: il pannello compare allora */}
         {(panel || view === 'list') && <div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>}
       </>
     );

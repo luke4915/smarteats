@@ -30,7 +30,7 @@ stand-manager/
     │   ├── app/            ← il guscio: menu laterale (SideNav), testata (AppHeader), elenco pagine (views.js)
     │   ├── floor/          ← la Sala e il conto del tavolo  (ui.js = stili comuni, Segmented.jsx = interruttore)
     │   ├── floorplan/      ← disegno e editor della pianta
-    │   ├── reservations/   ← prenotazioni: Timeline, Elenco, Mese, walk-in
+    │   ├── reservations/   ← prenotazioni: Timeline, Elenco, Mensile, walk-in
     │   ├── takeaway/       ← asporto
     │   ├── kitchen/        ← schermo cucina
     │   ├── catalog/        ← la carta (piatti e opzioni)
@@ -48,7 +48,7 @@ stand-manager/
 
 ```bash
 ./scripts/check.sh            # 1-2 minuti: logica, lint, costruzione dell'app
-./scripts/check.sh --tutto    # in più i test col database e quelli nel browser (5 minuti)
+./scripts/check.sh --all    # in più i test col database e quelli nel browser (5 minuti)
 ```
 
 Se compare un errore rosso, **non salvare**: il messaggio dice quale file e quale riga. Se non lo capisci, copia le ultime righe e chiedi aiuto. Verde = non hai rotto nulla di ciò che è provato.

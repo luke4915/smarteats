@@ -96,7 +96,7 @@ test('mese: il calendario riassume i giorni e un tocco porta alla Timeline di qu
   const { restaurant: r } = seed();
   await login(page, r.host, r.admin);
   await page.getByRole('link', { name: 'Prenotazioni' }).click();
-  await page.getByRole('tab', { name: 'Mese' }).click();
+  await page.getByRole('tab', { name: 'Mensile' }).click();
   await expect(page.getByRole('region', { name: 'Calendario del mese' })).toBeVisible();
   await shot(page, 'reservations-09-mese');
   await page.getByRole('button', { name: 'Mese successivo' }).click();

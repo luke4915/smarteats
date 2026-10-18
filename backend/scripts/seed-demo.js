@@ -2,7 +2,7 @@
 //
 // Uso (dalla cartella backend, con il database locale acceso):
 //   npm run demo:seed            crea il locale (se esiste già, non fa nulla)
-//   npm run demo:seed -- --reset lo cancella e lo ricrea da zero
+//   npm run demo:reset          lo cancella e lo ricrea da zero
 //
 // Usa MIGRATION_DATABASE_URL (utente privilegiato) solo per creare il locale e spostare indietro gli orari dei dati
 // di una serata passata; tutto il resto passa dalle API vere (stessi controlli, stessi prezzi, stesso stock), con
@@ -97,7 +97,7 @@ async function recreateTenant() {
   const { rows: [old] } = await admin.query('SELECT id FROM tenants WHERE slug = $1', [SLUG]);
   if (old) {
     if (!RESET) {
-      console.log(`Il locale «${SLUG}» esiste già: non tocco nulla (usa -- --reset per ricrearlo).`);
+      console.log(`Il locale «${SLUG}» esiste già: non tocco nulla (usa npm run demo:reset per ricrearlo).`);
       return false;
     }
     for (const table of TENANT_TABLES) await admin.query(`DELETE FROM ${table} WHERE tenant_id = $1`, [old.id]);
