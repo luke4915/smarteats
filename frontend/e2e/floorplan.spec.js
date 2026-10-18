@@ -14,7 +14,7 @@ test('pianta: separatore tracciato, spostato e ridimensionato con le maniglie; t
   const larghezza = () => page.getByRole('group', { name: 'larghezza' }).locator('span').first();
 
   // ── Separatore: strumento, si traccia trascinando sulla griglia ──
-  await page.getByRole('button', { name: 'Separatore', exact: true }).click();
+  await page.getByRole('tab', { name: 'Separatore' }).click();
   const canvas = page.locator('div.relative.rounded-xl.border').first();
   const box = await canvas.boundingBox();
   const cell = box.width / 16;

@@ -1,123 +1,154 @@
 import { useState } from 'react';
 import { useIsMobile } from '../../hooks/useBreakpoint';
-import { Users, Receipt, UserPlus } from 'lucide-react';
+import { Users, Receipt, UserPlus, Clock } from 'lucide-react';
 import FloorCanvas from '../floorplan/FloorCanvas';
 import { isPlaced } from '../floorplan/geometry';
 import { tableState, formatEuro } from './checkMath';
+import { minutesOf } from '../reservations/rules';
 import Segmented from './Segmented';
+import { tone, btn } from './ui';
 
 const minutesSince = (iso) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
+const SOON_MINUTES = 60;           // una prenotazione entro l'ora colora già il tavolo
 
-const STATE_STYLE = {
-  free: 'border-[var(--border-hover)] bg-[var(--bg-card-2)] text-[var(--text-muted)]',
-  busy: 'border-[var(--accent)]/70 bg-[var(--accent)]/10 text-[var(--text-main)]',
-  bill: 'border-amber-500/80 bg-amber-500/10 text-[var(--text-main)]',
-};
+// Il nome dello stato non dipende dall'ora (un tavolo prenotato è «Libero» finché non si siedono): solo il colore avvisa.
 const STATE_LABEL = { free: 'Libero', busy: 'Occupato', bill: 'Conto richiesto' };
-const interactive = 'cursor-pointer hover:brightness-110 active:scale-[0.98] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]';
+const interactive = 'cursor-pointer hover:brightness-110 active:scale-[0.98] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]';
 const ring = 'ring-2 ring-offset-2 ring-offset-[var(--bg-card)] ring-[var(--text-main)]';
 
-// Scheda di un tavolo (per i tavoli non ancora piazzati sulla pianta)
-const TableCard = ({ table, check, reservation, selected, onSelect }) => {
+// Lo stato mostrato di un tavolo: i colori sono quelli della Timeline (floor/ui.js, `tone`).
+const stateOf = (check, reservation) => {
   const state = tableState(check);
+  if (state !== 'free' || !reservation) return state;
+  const inMinutes = minutesOf(reservation.start_time) - nowMinutes();
+  return inMinutes <= SOON_MINUTES ? 'reserved' : 'free';
+};
+
+const FILTERS = [{ id: 'all', label: 'Tutti' }, { id: 'free', label: 'Liberi' }, { id: 'busy', label: 'Occupati' }, { id: 'ready', label: 'Pronti' }];
+const matches = (filter, check) => filter === 'all' || (filter === 'free' && !check) || (filter === 'busy' && !!check) || (filter === 'ready' && check?.ready_items > 0);
+
+// Scheda di un tavolo (telefono, e tavoli non ancora piazzati sulla pianta)
+const TableCard = ({ table, check, reservation, selected, dim, onSelect }) => {
+  const state = stateOf(check, reservation);
+  const label = STATE_LABEL[tableState(check)];
   return (
-    <button disabled={!table.active} onClick={() => onSelect(table, check)} aria-label={`${table.name}: ${STATE_LABEL[state]}`}
-      className={`text-left rounded-lg border p-3.5 min-h-[104px] flex flex-col justify-between ${STATE_STYLE[state]} ${table.active ? interactive : 'opacity-40'} ${selected ? ring : ''}`}>
+    <button disabled={!table.active} onClick={() => onSelect(table, check)} aria-label={`${table.name}: ${label}`}
+      className={`text-left rounded-lg border p-3.5 min-h-[104px] flex flex-col justify-between ${tone[state]} ${table.active ? interactive : 'opacity-40'} ${dim ? 'opacity-30' : ''} ${selected ? ring : ''}`}>
       <div className="w-full">
         <span className="block text-2xl font-semibold leading-none text-[var(--text-main)]">{table.name}</span>
         <span className="mt-2 flex items-center gap-1.5 text-base font-medium tabular-nums text-[var(--text-muted)]"><Users size={16} aria-hidden="true" />{check ? check.covers : table.seats}</span>
       </div>
       <div className="text-xs">
-        <p className="font-semibold">{table.active ? STATE_LABEL[state] : 'Non in uso'}</p>
-        {check && <p className="mt-0.5 flex items-center gap-1.5 text-[var(--text-muted)]"><Receipt size={12} /> {formatEuro(check.total)} · {minutesSince(check.opened_at)} min</p>}
+        <p className="font-semibold text-[var(--text-main)]">{table.active ? label : 'Non in uso'}</p>
+        {check && <p className="mt-0.5 flex items-center gap-1.5 text-[var(--text-muted)] tabular-nums"><Receipt size={12} /> {formatEuro(check.total)} · {minutesSince(check.opened_at)} min</p>}
         {!check && reservation && <p className="mt-0.5 font-medium text-[var(--accent)] truncate">{reservation.start_time} · {reservation.customer_name} · {reservation.party_size}</p>}
-        {check?.ready_items > 0 && <p className="mt-0.5 font-semibold text-emerald-500">{check.ready_items} {check.ready_items === 1 ? "pronto" : "pronti"}</p>}
+        {check?.ready_items > 0 && <p className="mt-0.5 font-semibold text-[var(--accent)]">{check.ready_items} {check.ready_items === 1 ? 'pronto' : 'pronti'}</p>}
       </div>
     </button>
   );
 };
 
-// Un tavolo sulla pianta: forma e misura scelte dall'admin, colore dallo stato.
-const mapTable = (checkOf, reservedOf, selectedId, onSelect) => (table, style, cell) => {
+// Un tavolo sulla pianta: forma e misura scelte dall'admin; colore, tempo e conto dallo stato dal vivo.
+const mapTable = ({ checkOf, reservedOf, selectedId, filter, onSelect }) => (table, style, cell) => {
   const check = checkOf(table);
   const reservation = !check ? reservedOf(table) : null;
-  const state = tableState(check);
+  const state = stateOf(check, reservation);
+  const label = STATE_LABEL[tableState(check)];
+  const height = cell * table.h;
   return (
     <button key={table.id} style={style} disabled={!table.active} onClick={() => onSelect(table, check)}
-      title={`${table.name} · ${STATE_LABEL[state]}`} aria-label={`${table.name}: ${STATE_LABEL[state]}`}
-      className={`flex flex-col items-center justify-center border box-border overflow-hidden text-center ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${STATE_STYLE[state]} ${table.active ? interactive : 'opacity-40'} ${table.id === selectedId ? `${ring} z-10` : ''}`}>
+      title={`${table.name} · ${label}`} aria-label={`${table.name}: ${label}`}
+      className={`flex flex-col items-center justify-center border-2 box-border overflow-hidden text-center ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${tone[state]} ${table.active ? interactive : 'opacity-40'} ${matches(filter, check) ? '' : 'opacity-25'} ${table.id === selectedId ? `${ring} z-10` : ''}`}>
       <span className="font-semibold leading-none text-[var(--text-main)] truncate max-w-full px-1" style={{ fontSize: Math.max(14, Math.min(cell * 0.5, 26)) }}>{table.name}</span>
       {check?.ready_items > 0 && (
-        <span title={`${check.ready_items} ${check.ready_items === 1 ? 'pronto' : 'pronti'}`} className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-emerald-500 text-white text-xs font-semibold leading-none flex items-center justify-center">{check.ready_items}</span>
+        <span title={`${check.ready_items} ${check.ready_items === 1 ? 'pronto' : 'pronti'}`} className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-[var(--accent)] text-white text-xs font-semibold leading-none flex items-center justify-center">{check.ready_items}</span>
       )}
-      {cell * table.h >= 34 && (
+      {height >= 34 && (
         <span className="flex items-center gap-1 leading-none mt-1.5 font-medium text-[var(--text-muted)] tabular-nums" style={{ fontSize: Math.max(12, Math.min(cell * 0.36, 18)) }}>
           <Users size={Math.max(12, Math.min(cell * 0.34, 18))} aria-hidden="true" />{check ? check.covers : table.seats}
         </span>
       )}
-      {!check && reservation && cell * table.h >= 56 && (
-        <span className="leading-none mt-1 text-[var(--accent)] truncate max-w-full px-1" style={{ fontSize: Math.max(10, Math.min(cell * 0.26, 13)) }}>{reservation.start_time}</span>
+      {check && height >= 76 && (
+        <span className="leading-none mt-1.5 text-[var(--text-main)] tabular-nums truncate max-w-full px-1" style={{ fontSize: Math.max(11, Math.min(cell * 0.3, 15)) }}>{formatEuro(check.total)} · {minutesSince(check.opened_at)}′</span>
+      )}
+      {!check && reservation && height >= 56 && (
+        <span className="leading-none mt-1.5 font-medium text-[var(--accent)] truncate max-w-full px-1" style={{ fontSize: Math.max(11, Math.min(cell * 0.3, 15)) }}>{reservation.start_time}</span>
       )}
     </button>
   );
 };
 
-// Le sale con i tavoli: un selettore in alto sceglie la sala, la pianta disegnata dall'admin occupa tutta l'area
-// (scalata per starci intera) e mostra lo stato dal vivo. I tavoli non ancora piazzati restano schede sotto la pianta.
-const FILTERS = [{ id: 'all', label: 'Tutti' }, { id: 'busy', label: 'Occupati' }, { id: 'ready', label: 'Pronti' }];
+// Le prossime prenotazioni confermate (una per prenotazione, anche se hanno più tavoli): un tocco apre la prenotazione.
+const Arrivals = ({ reserved, onOpen }) => {
+  const list = [...new Map([...reserved.values()].map(r => [r.id, r])).values()].sort((a, b) => minutesOf(a.start_time) - minutesOf(b.start_time)).slice(0, 6);
+  if (!list.length) return null;
+  return (
+    <div className="shrink-0 flex items-center gap-2 overflow-x-auto no-scrollbar" aria-label="Prossimi arrivi">
+      <span className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)]"><Clock size={14} aria-hidden="true" /> In arrivo</span>
+      {list.map(r => (
+        <button key={r.id} onClick={() => onOpen(r)} className={`${btn} !h-9 !px-3 shrink-0 text-xs`}>
+          <span className="tabular-nums text-[var(--accent)]">{r.start_time}</span>{r.customer_name}
+          <span className="flex items-center gap-1 text-[var(--text-muted)] tabular-nums"><Users size={12} aria-hidden="true" />{r.party_size}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
 
-const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect, onWalkIn }) => {
+// Le sale con i tavoli: la pianta disegnata dall'admin occupa tutta l'area (scalata per starci intera) e mostra lo stato dal
+// vivo. Il selettore delle sale compare solo se sono più di una; il filtro (Tutti, Liberi, Occupati, Pronti) smorza i
+// tavoli che non c'entrano. I tavoli non ancora piazzati restano schede sotto la pianta.
+const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect, onWalkIn, onOpenReservation }) => {
   const phone = useIsMobile(640);                 // sul telefono i tavoli sono schede, non la pianta
   const [filter, setFilter] = useState('all');
+  const [roomId, setRoomId] = useState(null);
   const byTable = new Map(checks.map(c => [c.table_id, c]));
   const checkOf = (t) => byTable.get(t.id);
   const activeRooms = rooms.filter(r => r.active);
-  const [roomId, setRoomId] = useState(null);
   const room = activeRooms.find(r => r.id === roomId) ?? activeRooms[0];
   const covers = checks.reduce((s, c) => s + c.covers, 0);
   const openIn = (r) => r.tables.filter(t => byTable.has(t.id)).length;
   const loose = room ? room.tables.filter(t => !isPlaced(t)) : [];
-  const shown = (room?.tables ?? []).filter(t => t.active && (filter === 'all' || (filter === 'busy' && byTable.has(t.id)) || (filter === 'ready' && byTable.get(t.id)?.ready_items > 0)));
+  const shown = (room?.tables ?? []).filter(t => t.active && matches(filter, checkOf(t)));
+  const dim = (t) => !matches(filter, checkOf(t));
 
   return (
     <div className="h-full flex flex-col gap-3 min-h-0">
       <div className="flex flex-wrap items-center justify-between gap-3 shrink-0">
-        {room && <Segmented label="Sale" scroll className="min-w-0" value={room.id} onChange={setRoomId}
-          options={activeRooms.map(r => ({ id: r.id, label: <>{r.name}{openIn(r) > 0 && <span className="ml-2 text-xs text-[var(--accent)]">{openIn(r)}</span>}</> }))} />}
+        <div className="flex flex-wrap items-center gap-3 min-w-0">
+          {activeRooms.length > 1 && <Segmented label="Sale" scroll className="min-w-0" value={room.id} onChange={setRoomId}
+            options={activeRooms.map(r => ({ id: r.id, label: <>{r.name}{openIn(r) > 0 && <span className="ml-2 text-xs text-[var(--accent)]">{openIn(r)}</span>}</> }))} />}
+          <Segmented label="Filtro tavoli" value={filter} onChange={setFilter} options={FILTERS} />
+        </div>
         <div className="flex items-center gap-4 text-sm font-medium text-[var(--text-muted)]">
-          {!selectedTableId && <span className="hidden md:flex items-center gap-3 text-xs" aria-hidden="true">
-            <span className="flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-sm border border-[var(--border-hover)]" />Libero</span>
-            <span className="flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-sm bg-[var(--accent)]/40 border border-[var(--accent)]/70" />Occupato</span>
-            <span className="flex items-center gap-1.5"><i className="w-2.5 h-2.5 rounded-sm bg-amber-500/40 border border-amber-500/80" />Conto richiesto</span>
-          </span>}
-          <span>{checks.length} {checks.length === 1 ? 'occupato' : 'occupati'} · {covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
-          {onWalkIn && <button onClick={onWalkIn} className="flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[var(--border)] text-[var(--text-main)] hover:bg-[var(--bg-card-2)] cursor-pointer"><UserPlus size={15} /> Walk-in</button>}
+          <span className="tabular-nums">{checks.length} {checks.length === 1 ? 'occupato' : 'occupati'} · {covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
+          {onWalkIn && <button onClick={onWalkIn} className={`${btn} !h-9`}><UserPlus size={15} /> Walk-in</button>}
         </div>
       </div>
 
       {!room && <p className="text-sm text-[var(--text-muted)]">Nessuna sala configurata. Un amministratore può crearle in Impostazioni.</p>}
       {phone && room && (
-        <>
-          <Segmented label="Filtro tavoli" value={filter} onChange={setFilter} options={FILTERS} className="shrink-0" />
-          <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
-            {shown.length === 0 && <p className="text-sm text-[var(--text-muted)] py-6 text-center">Nessun tavolo</p>}
-            <div className="grid grid-cols-2 gap-2.5 pb-2">
-              {shown.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} reservation={reserved.get(t.id)} selected={t.id === selectedTableId} onSelect={onSelect} />)}
-            </div>
+        <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
+          {shown.length === 0 && <p className="text-sm text-[var(--text-muted)] py-6 text-center">Nessun tavolo</p>}
+          <div className="grid grid-cols-2 gap-2.5 pb-2">
+            {shown.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} reservation={reserved.get(t.id)} selected={t.id === selectedTableId} onSelect={onSelect} />)}
           </div>
-        </>
+        </div>
       )}
       {!phone && room && room.tables.some(isPlaced) && (
         <div className="flex-1 min-h-[200px]">
-          <FloorCanvas fit gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements} renderTable={mapTable(checkOf, (t) => reserved.get(t.id), selectedTableId, onSelect)} />
+          <FloorCanvas fit gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements}
+            renderTable={mapTable({ checkOf, reservedOf: (t) => reserved.get(t.id), selectedId: selectedTableId, filter, onSelect })} />
         </div>
       )}
       {!phone && loose.length > 0 && (
         <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 shrink-0 max-h-[40%] overflow-y-auto no-scrollbar">
-          {loose.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} reservation={reserved.get(t.id)} selected={t.id === selectedTableId} onSelect={onSelect} />)}
+          {loose.map(t => <TableCard key={t.id} table={t} check={checkOf(t)} reservation={reserved.get(t.id)} selected={t.id === selectedTableId} dim={dim(t)} onSelect={onSelect} />)}
         </div>
       )}
       {room && !room.tables.length && <p className="text-sm text-[var(--text-muted)]">Nessun tavolo in questa sala.</p>}
+      {onOpenReservation && <Arrivals reserved={reserved} onOpen={onOpenReservation} />}
     </div>
   );
 };

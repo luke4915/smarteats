@@ -2,17 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { timelineWindow, blocksForTable, unassigned, STEP, minutesNow, clockOf } from './timeline';
 import { minutesOf } from './rules';
 import { Users } from 'lucide-react';
+import { tone } from '../floor/ui';
 
 const LABEL_W = 112;       // colonna dei tavoli
 const ROW_H = 44;
 const MIN_CELL = 20;
 
-const BLOCK = {
-  confirmed: 'bg-[var(--accent)]/20 border-[var(--accent)]/60 text-[var(--text-main)]',
-  requested: 'bg-amber-500/15 border-amber-500/60 border-dashed text-[var(--text-main)]',
-  seated: 'bg-emerald-500/20 border-emerald-500/60 text-[var(--text-main)]',
-  walkin: 'bg-emerald-500/20 border-emerald-500/60 text-[var(--text-main)]',
-};
+const BLOCK = { confirmed: tone.reserved, requested: tone.requested, seated: tone.busy, walkin: tone.busy };
 
 // La giornata per tavolo: una riga per tavolo (raggruppate per sala), le ore in colonna, un blocco per ogni prenotazione
 // o conto aperto. Una riga in cima raccoglie le prenotazioni senza tavolo. La linea rossa è l'ora di adesso (solo oggi).
@@ -53,10 +49,10 @@ const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, sele
   }, [date, start, end]);
   const activeRooms = rooms.filter(r => r.active && r.tables.some(t => t.active));
 
-  const bar = (b, tone) => (
+  const bar = (b, toneClass) => (
     <button key={`${b.kind}-${b.id}`} onClick={() => (b.kind === 'check' ? onOpenCheck(b.id) : onOpenReservation(b.id))}
       title={`${b.time} · ${b.title} · ${b.party}`} aria-label={`${b.time} ${b.title}, ${b.party} persone`}
-      className={`absolute top-1 bottom-1 rounded-md border px-2 flex items-center gap-1.5 text-xs font-medium overflow-hidden whitespace-nowrap cursor-pointer hover:brightness-110 ${tone} ${b.kind === 'reservation' && b.id === selectedId ? 'ring-2 ring-[var(--text-main)]' : ''}`}
+      className={`absolute top-1 bottom-1 rounded-md border px-2 flex items-center gap-1.5 text-xs font-medium text-[var(--text-main)] overflow-hidden whitespace-nowrap cursor-pointer hover:brightness-110 ${toneClass} ${b.kind === 'reservation' && b.id === selectedId ? 'ring-2 ring-[var(--text-main)]' : ''}`}
       style={{ left: x(b.start), width: Math.max(cell * 2, x(b.end) - x(b.start) - 2) }}>
       <span className="truncate">{b.title}</span><span className="tabular-nums opacity-80 ml-auto flex items-center gap-1 shrink-0"><Users size={12} aria-hidden="true" />{b.party}</span>
     </button>

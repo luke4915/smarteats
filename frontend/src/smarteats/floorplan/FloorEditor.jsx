@@ -3,6 +3,7 @@ import { X, Undo2, Redo2, Save, Minus, Plus, Square, Circle, Eraser, Wand2, Mous
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import FloorCanvas from './FloorCanvas';
+import Segmented from '../floor/Segmented';
 import { useDraft } from './useDraft';
 import { conflictIds, moveBy, resizeBy, resizeFrom, defaultSize, findFreeSpot, isPlaced, clamp, lineBetween, HANDLES } from './geometry';
 import { ELEMENT_CLASS } from './elementStyle';
@@ -263,25 +264,19 @@ const FloorEditor = ({ room, onClose, onSaved }) => {
 
         <aside className="lg:w-72 shrink-0 space-y-4">
           <section className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] space-y-3">
-            <p className={label}>Misura della sala (celle)</p>
+            <p className={label}>Dimensioni della sala</p>
             <div className="flex items-center gap-2 text-sm text-[var(--text-main)]">
               <input className={numInput} type="number" min={4} max={60} aria-label="Larghezza della sala" value={gridW} onChange={e => setGrid('gridW', e.target.value)} />
               <span>×</span>
               <input className={numInput} type="number" min={4} max={60} aria-label="Altezza della sala" value={gridH} onChange={e => setGrid('gridH', e.target.value)} />
             </div>
+            <p className="text-xs text-[var(--text-muted)]">Larghezza × altezza, in quadretti della griglia.</p>
           </section>
 
           <section className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] space-y-3">
             <p className={label}>Strumento</p>
-            <div className="grid grid-cols-2 gap-2" role="group" aria-label="Strumento">
-              {TOOLS.map((t) => {
-                const Icon = t.icon;
-                return (
-                  <button key={t.id} aria-pressed={tool === t.id} onClick={() => setTool(t.id)}
-                    className={`${btn} justify-center ${tool === t.id ? '!bg-[var(--accent)] !text-white border-transparent' : ''}`}><Icon size={14} />{t.name}</button>
-                );
-              })}
-            </div>
+            <Segmented label="Strumento" value={tool} onChange={setTool}
+              options={TOOLS.map(t => { const Icon = t.icon; return { id: t.id, label: <span className="inline-flex items-center gap-1.5"><Icon size={14} aria-hidden="true" />{t.name}</span> }; })} />
           </section>
 
           <section className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] space-y-3">
