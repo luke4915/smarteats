@@ -92,7 +92,7 @@ const FloorPage = ({ user, service, event }) => {
       onSent={() => { reset(); load(); }} onChanged={load}
       onSwitch={(check) => { reset(); setSelection({ table: rooms.flatMap(r => r.tables).find(t => t.id === check.table_id), checkId: check.id }); load(); }} />
   );
-  const floor = <FloorView rooms={rooms} checks={checks} reserved={reserved} service={service} selectedTableId={selection?.table.id} onSelect={select} />;
+  const floor = <FloorView rooms={rooms} checks={checks} reserved={reserved} selectedTableId={selection?.table.id} onSelect={select} />;
   const menu = picking
     ? <ModifierPicker key={picking.id} product={picking} groups={modifiers.forProduct(picking)} onCancel={() => setPicking(null)} onAdd={(chosen) => { addWith(picking, chosen); setPicking(null); }} />
     : <OrderMenu products={products} cart={cart} tableName={selection?.table.name} onAdd={add} onBack={() => { setOrdering(false); setDraftOpen(false); }} />;

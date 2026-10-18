@@ -66,7 +66,7 @@ const mapTable = (checkOf, reservedOf, selectedId, onSelect) => (table, style, c
 // (scalata per starci intera) e mostra lo stato dal vivo. I tavoli non ancora piazzati restano schede sotto la pianta.
 const FILTERS = [{ id: 'all', label: 'Tutti' }, { id: 'busy', label: 'Occupati' }, { id: 'ready', label: 'Pronti' }];
 
-const FloorView = ({ rooms, checks, reserved = new Map(), service, selectedTableId, onSelect }) => {
+const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect }) => {
   const phone = useIsMobile(640);                 // sul telefono i tavoli sono schede, non la pianta
   const [filter, setFilter] = useState('all');
   const byTable = new Map(checks.map(c => [c.table_id, c]));
@@ -91,9 +91,7 @@ const FloorView = ({ rooms, checks, reserved = new Map(), service, selectedTable
           ))}
         </div>
         <div className="flex items-center gap-4 text-sm font-medium text-[var(--text-muted)]">
-          <span className={service ? 'text-green-500' : 'text-red-400'}>● {service ? service.name : 'Servizio chiuso'}</span>
-          <span>{checks.length} {checks.length === 1 ? 'tavolo occupato' : 'tavoli occupati'}</span>
-          <span>{covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
+          <span>{checks.length} {checks.length === 1 ? 'occupato' : 'occupati'} · {covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
         </div>
       </div>
 

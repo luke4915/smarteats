@@ -8,6 +8,7 @@ test('asporto: ordine dal sito → approvazione → cucina → ritiro; ordine al
   const { restaurant: r } = seed();
   await login(page, r.host, r.admin);
   await page.locator('a[href="/settings"]').first().click();
+  await page.getByRole('button', { name: 'Asporto' }).first().click();
   const toggle = page.getByRole('switch', { name: 'Ordini online' });
   await expect(toggle).toBeVisible();
   if (await toggle.getAttribute('aria-checked') !== 'true') await toggle.click();

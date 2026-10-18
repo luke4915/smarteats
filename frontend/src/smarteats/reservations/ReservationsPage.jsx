@@ -27,6 +27,7 @@ const ReservationsPage = ({ event }) => {
   const narrow = useIsMobile(900);
   const [date, setDate] = useState(() => location.state?.date ?? todayLocal());
   const { shifts, rooms, reservations, availability, loading, reload } = useBookings(date, event);
+  const [showClosed, setShowClosed] = useState(false);   // le prenotazioni concluse o annullate stanno nascoste finché non si chiede
   const [panel, setPanel] = useState(null);     // { kind: 'detail' | 'new' | 'edit' | 'tables', id? }
 
   const byId = useMemo(() => new Map(reservations.map(r => [r.id, r])), [reservations]);
@@ -80,8 +81,8 @@ const ReservationsPage = ({ event }) => {
             <section key={shift.id} aria-label={shift.name}>
               <div className="flex items-end justify-between gap-3 mb-2">
                 <div>
-                  <h3 className="text-base font-semibold text-[var(--text-main)]">{shift.name}</h3>
-                  <p className="text-xs text-[var(--text-muted)]">{a && !a.bookable && a.reason && a.reason !== 'Al completo' ? a.reason : `${shift.start_time} · tavolo per ${shift.duration_minutes} min`}</p>
+                  <h3 className="text-base font-semibold text-[var(--text-main)]">{shift.start_time} <span className="font-normal text-[var(--text-muted)]">· {shift.name}</span></h3>
+                  {a && !a.bookable && a.reason && a.reason !== 'Al completo' && <p className="text-xs text-[var(--text-muted)]">{a.reason}</p>}
                 </div>
                 {a && (
                   <div className="text-right shrink-0 w-36">
@@ -91,9 +92,9 @@ const ReservationsPage = ({ event }) => {
                 )}
               </div>
               {groups.length === 0 && <p className="text-sm text-[var(--text-muted)] py-3 border-t border-[var(--border)]">Nessuna prenotazione.</p>}
-              {groups.map(g => (
+              {groups.filter(g => g.key !== 'closed' || showClosed).map(g => (
                 <div key={g.key} className="mb-3">
-                  <p className={`text-xs font-medium mb-1.5 ${g.key === 'requested' ? 'text-amber-500' : 'text-[var(--text-muted)]'}`}>{g.title} · {g.items.length}</p>
+                  {['requested', 'closed'].includes(g.key) && <p className={`text-xs font-medium mb-1.5 ${g.key === 'requested' ? 'text-amber-500' : 'text-[var(--text-muted)]'}`}>{g.title} · {g.items.length}</p>}
                   <ul className="space-y-1.5">
                     {g.items.map(r => (
                       <li key={r.id}>
@@ -106,13 +107,18 @@ const ReservationsPage = ({ event }) => {
                           </span>
                           {r.cancel_requested_at && r.status === 'confirmed'
                             ? <span className="inline-flex items-center h-6 px-2.5 rounded-full text-xs font-medium bg-red-500/15 text-red-500">Chiede di annullare</span>
-                            : <StatusChip status={r.status} />}
+                            : r.status !== 'confirmed' && <StatusChip status={r.status} />}
                         </button>
                       </li>
                     ))}
                   </ul>
                 </div>
               ))}
+              {!showClosed && groups.some(g => g.key === 'closed') && (
+                <button onClick={() => setShowClosed(true)} className="text-xs text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer">
+                  Mostra le {groups.find(g => g.key === 'closed').items.length} concluse o annullate
+                </button>
+              )}
             </section>
           );
         })}

@@ -4,6 +4,7 @@ import { X, Edit, Trash2, Search, Plus, CheckSquare, Square, Eye, EyeOff } from 
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { PageHeader } from '../shared/PageHeader';
+import CompactCatalog from './CompactCatalog';
 
 const Combobox = ({ name, value, onChange, options, placeholder }) => {
   const [open, setOpen] = useState(false);
@@ -59,9 +60,10 @@ const Combobox = ({ name, value, onChange, options, placeholder }) => {
   );
 };
 
+// `compact` (SmartEats): la lista in compatto di `CompactCatalog` al posto di barra e schede della cassa; il form è lo stesso.
 // `courses` (solo ristoranti): le portate del locale; con la lista il prodotto ne sceglie una.
 // `modifierGroups` (solo ristoranti): i gruppi di modificatori; il prodotto sceglie quali chiedere. `onModifiersSaved` li rilegge.
-const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved, hideHeader = false, takeawayEnabled = false }) => {
+const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved, hideHeader = false, takeawayEnabled = false, compact = false }) => {
   const { showToast } = useToast();
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState({ 
@@ -337,6 +339,10 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
     <div className="max-w-5xl mx-auto w-full space-y-5 relative">
       {!hideHeader && <PageHeader title="Menu" subtitle="Gestione prodotti" />}
 
+      {compact ? (
+        <CompactCatalog products={products} courses={courses} onAdd={openAddForm} onEdit={openEditForm} onDelete={setDeleteTarget} onToggleVisible={handleToggleSingleVisibility} />
+      ) : (
+        <>
       {/* Top Bar Unificata */}
       <div className="flex items-center justify-between flex-wrap gap-2.5 w-full">
         {/* Filtri a Sinistra: Dropdown Categoria + Search Input */}
@@ -491,6 +497,9 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
           </div>
         ))}
       </div>
+
+        </>
+      )}
 
       {/* Modal Aggiungi/Modifica */}
       {showForm && (
