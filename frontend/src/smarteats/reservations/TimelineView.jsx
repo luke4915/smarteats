@@ -64,7 +64,7 @@ const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, sele
   const row = (key, label, sub, content, tableId) => (
     <div key={key} className="flex border-b border-[var(--border)]" style={{ height: ROW_H }}>
       <div className="sticky left-0 z-10 shrink-0 bg-[var(--bg-card)] border-r border-[var(--border)] px-3 flex items-center justify-between gap-2" style={{ width: LABEL_W }}>
-        <span className="text-sm font-medium text-[var(--text-main)] truncate">{label}</span>{sub && <span className="text-xs text-[var(--text-muted)] tabular-nums">{sub}</span>}
+        <span className="text-sm font-medium text-[var(--text-main)] truncate">{label}</span>{sub != null && <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] tabular-nums shrink-0" title={`${sub} ${sub === 1 ? 'posto' : 'posti'}`}><Users size={12} aria-hidden="true" />{sub}</span>}
       </div>
       <div className="relative shrink-0" style={{ width, backgroundImage: `repeating-linear-gradient(to right, var(--border) 0, var(--border) 1px, transparent 1px, transparent ${cell * 4}px)` }}
         onClick={tableId && isToday ? (e) => {

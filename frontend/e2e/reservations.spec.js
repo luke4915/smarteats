@@ -103,6 +103,6 @@ test('mese: il calendario riassume i giorni e un tocco porta alla Timeline di qu
   await expect(page.getByRole('button', { name: 'Mese corrente' })).toBeVisible();
   await page.getByRole('button', { name: 'Mese corrente' }).click();
   // Un giorno con prenotazioni mostra le persone: si apre la Timeline di quel giorno
-  await page.getByRole('button', { name: /persone$/ }).first().click();
+  await page.getByRole('button', { name: /pieno$/ }).first().click();
   await expect(page.getByRole('region', { name: /Timeline dei tavoli/ })).toBeVisible();
 });

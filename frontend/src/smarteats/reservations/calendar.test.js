@@ -35,3 +35,51 @@ test('il riepilogo si raggruppa per giorno e turno', () => {
   assert.equal(map.get('2026-10-18')[2].covers, 2);
   assert.equal(map.get('2026-10-19'), undefined);
 });
+
+import { dayLoad, busiestAndQuietest, heat } from './calendar.js';
+const shifts = [
+  { id: 1, capacity: 40, weekdays: [0, 6], active: true },          // pranzo: sabato e domenica
+  { id: 2, capacity: 36, weekdays: [0, 1, 2, 3, 4, 5, 6], active: true },
+  { id: 3, capacity: 10, weekdays: [0, 1, 2, 3, 4, 5, 6], active: false },
+];
+
+test('il carico di un giorno conta solo i turni aperti quel giorno', () => {
+  // 2026-10-18 è una domenica: pranzo e cena aperti, il turno spento non conta
+  const load = dayLoad('2026-10-18', shifts, { 1: { covers: 10, reservations: 3, requested: 1 }, 2: { covers: 18, reservations: 5, requested: 0 } });
+  assert.deepEqual([load.covers, load.capacity, load.pct, load.requested], [28, 76, 37, 1]);
+  assert.equal(load.perShift.length, 2);
+});
+
+test('un lunedì ha solo la cena: il pranzo non si conta', () => {
+  assert.equal(dayLoad('2026-10-19', shifts, {}).capacity, 36);
+});
+
+test('senza turni aperti il carico non esiste', () => {
+  assert.equal(dayLoad('2026-10-19', [], {}).pct, null);
+});
+
+test('giorno più carico e più libero (i giorni vuoti non contano)', () => {
+  const days = [
+    { date: 'a', load: { pct: 10 } }, { date: 'b', load: { pct: 90 } }, { date: 'c', load: { pct: null } }, { date: 'd', load: { pct: 40 } }, { date: 'e', load: { pct: 0 } },
+  ];
+  const { busiest, quietest } = busiestAndQuietest(days);
+  assert.equal(busiest.date, 'b');
+  assert.equal(quietest.date, 'a');
+});
+
+test('con un solo giorno prenotato c\'è il più carico ma non il più libero', () => {
+  const { busiest, quietest } = busiestAndQuietest([{ date: 'a', load: { pct: 30 } }, { date: 'b', load: { pct: 0 } }]);
+  assert.deepEqual([busiest.date, quietest], ['a', null]);
+});
+
+test('con tutti i giorni vuoti non c\'è né il più carico né il più libero', () => {
+  const { busiest, quietest } = busiestAndQuietest([{ date: 'a', load: { pct: 0 } }, { date: 'b', load: { pct: 0 } }]);
+  assert.deepEqual([busiest, quietest], [null, null]);
+});
+
+test('il colore cresce col carico e non supera il massimo', () => {
+  assert.equal(heat(0), 0);
+  assert.ok(heat(50) < heat(100));
+  assert.equal(heat(150), heat(100));
+  assert.equal(heat(null), 0);
+});
