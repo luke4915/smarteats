@@ -6,7 +6,7 @@ import { fetchWithAuth } from '../utils/apiClient';
 // funziona anche senza rete. IndexedDB è separato per sottodominio, cioè per tenant.
 const DEVICE_KEY = 'device';
 
-export async function getDevice() {
+async function getDevice() {
   return (await db.meta.get(DEVICE_KEY)) ?? null;
 }
 

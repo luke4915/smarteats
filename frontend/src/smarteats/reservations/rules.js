@@ -78,7 +78,7 @@ export const telLink = (phone) => (String(phone ?? '').trim() ? `tel:${String(ph
 // Due tavoli si possono unire se, sulla pianta, il vuoto tra i loro bordi è al massimo di MAX_GAP celle (in
 // orizzontale più in verticale). Un insieme è unibile se è «connesso»: ogni tavolo è vicino ad almeno un altro e,
 // seguendo i vicini, si arriva da uno qualsiasi a tutti. Un tavolo non piazzato sulla pianta non si unisce a nessuno.
-export const MAX_GAP = 2;
+const MAX_GAP = 2;
 
 const placed = (t) => [t.x, t.y, t.w, t.h].every(v => Number.isFinite(v));
 export function gapBetween(a, b) {

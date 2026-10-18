@@ -6,15 +6,15 @@ export const minutesSince = (order, now = Date.now()) =>
   Math.max(0, Math.floor((now - new Date(order.fired_at ?? order.created_at).getTime()) / 60000));
 
 // Soglie in minuti: oltre `warn` è da sbrigare, oltre `late` è in ritardo.
-export const WARN_MINUTES = 10;
-export const LATE_MINUTES = 20;
+const WARN_MINUTES = 10;
+const LATE_MINUTES = 20;
 export const urgency = (minutes) => (minutes >= LATE_MINUTES ? 'late' : minutes >= WARN_MINUTES ? 'warn' : 'ok');
 
 // Asporto: l'ordine ha un orario di ritiro. Minuti da adesso al ritiro (negativi = in ritardo); `null` per gli altri.
 export const pickupIn = (order, now = Date.now()) =>
   (order.pickup_at ? Math.round((new Date(order.pickup_at).getTime() - now) / 60000) : null);
 // Per l'asporto l'urgenza è quanto manca al ritiro: in ritardo se è già passato, da sbrigare se manca poco.
-export const PICKUP_WARN_MINUTES = 15;
+const PICKUP_WARN_MINUTES = 15;
 export const orderUrgency = (order) => (order.pickupIn === null || order.pickupIn === undefined ? urgency(order.minutes)
   : order.pickupIn < 0 ? 'late' : order.pickupIn <= PICKUP_WARN_MINUTES ? 'warn' : 'ok');
 // Quando va iniziata una comanda: dall'uscita (tavoli) o 15 minuti prima del ritiro (asporto)

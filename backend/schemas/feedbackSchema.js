@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const FEEDBACK_MODULES = ['general', 'pos', 'floor', 'reservations', 'takeaway', 'kitchen', 'catalog', 'stats', 'settings'];
+const FEEDBACK_MODULES = ['general', 'pos', 'floor', 'reservations', 'takeaway', 'kitchen', 'catalog', 'stats', 'settings'];
 
 export const feedbackSchema = z.object({
   module: z.enum(FEEDBACK_MODULES).default('general'),

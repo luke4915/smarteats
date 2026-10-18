@@ -71,7 +71,7 @@ function textBigNumber(printer, code) {
   printer.align('CT').size(4, 4).style('B').text(`# ${code} #`).size(1, 1).style('NORMAL');
 }
 
-export async function renderNumberSlip(printer, order, ctx) {
+async function renderNumberSlip(printer, order, ctx) {
   printer.align('CT').size(2, 2).style('B').text('IL TUO NUMERO ORDINE:').size(1, 1).style('NORMAL');
   printer.feed(1);
 
@@ -215,7 +215,7 @@ function renderFooter(printer, ctx, { total, pickupId, showTotal = false }) {
   printer.cut();
 }
 
-export async function renderCustomer(printer, order, ctx) {
+async function renderCustomer(printer, order, ctx) {
   await renderHeader(printer, ctx, { title: ctx.branding.title });
   renderItems(printer, ctx, order.items, 'customer');
   if (order.is_takeaway) {
@@ -225,13 +225,13 @@ export async function renderCustomer(printer, order, ctx) {
   renderFooter(printer, ctx, { total: order.total, pickupId: encodeOrderId(order.id, new Date(order.created_at)), showTotal: true });
 }
 
-export async function renderAssociation(printer, order, ctx) {
+async function renderAssociation(printer, order, ctx) {
   await renderHeader(printer, ctx, { title: ctx.branding.title, subtitle: 'COPIA INTERNA ASSOCIAZIONE' });
   renderItems(printer, ctx, order.items, 'association');
   renderFooter(printer, ctx, { total: order.total, pickupId: encodeOrderId(order.id, new Date(order.created_at)), showTotal: true });
 }
 
-export async function renderKitchen(printer, order, ctx) {
+async function renderKitchen(printer, order, ctx) {
   const items = filterItems(order.items, 'kitchen');
   if (!items.length) return;
   renderTableBanner(printer, order);
@@ -240,7 +240,7 @@ export async function renderKitchen(printer, order, ctx) {
   renderFooter(printer, ctx, {});
 }
 
-export async function renderGastronomy(printer, order, ctx) {
+async function renderGastronomy(printer, order, ctx) {
   const items = filterItems(order.items, 'kitchen');
   if (!items.length) return;
 
@@ -259,7 +259,7 @@ export async function renderGastronomy(printer, order, ctx) {
   renderFooter(printer, ctx, { pickupId: encodeOrderId(order.id, new Date(order.created_at || Date.now())) });
 }
 
-export async function renderBar(printer, order, ctx) {
+async function renderBar(printer, order, ctx) {
   const items = filterItems(order.items, 'bar');
   if (!items.length) return;
 

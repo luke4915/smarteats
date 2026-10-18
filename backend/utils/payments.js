@@ -34,7 +34,7 @@ const LINES_SQL = `
 
 // Importo e quote di un pagamento per voce. La quota di una riga è proporzionale alla quantità pagata; l'ultima quota
 // prende il resto, così le quote di una riga sommano esattamente il suo totale.
-export async function priceItemPayment(db, checkId, items) {
+async function priceItemPayment(db, checkId, items) {
   const { rows } = await db.query(
     `${LINES_SQL} WHERE oi.id = ANY($2::int[]) GROUP BY oi.id`, [checkId, items.map(i => i.order_item_id)]);
   const byId = new Map(rows.map(r => [r.id, r]));

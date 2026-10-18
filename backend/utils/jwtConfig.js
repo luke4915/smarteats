@@ -1,6 +1,6 @@
 // Impostazioni comuni dei token: algoritmo fissato (un token con "alg: none" o con un altro
 // algoritmo non è mai valido) e controllo dei segreti all'avvio.
-export const JWT_ALGORITHM = 'HS256';
+const JWT_ALGORITHM = 'HS256';
 export const VERIFY_OPTIONS = { algorithms: [JWT_ALGORITHM] };
 export const SIGN_OPTIONS = { algorithm: JWT_ALGORITHM };
 

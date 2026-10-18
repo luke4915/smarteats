@@ -13,7 +13,7 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 // Credenziali dell'utente applicativo, soggetto a RLS.
 // MIGRATION_DATABASE_URL (utente privilegiato per le DDL) NON va mai usata qui:
 // l'app girerebbe con un utente che può scavalcare la RLS. La usa solo migrations/run.js.
-export const appConnectionConfig = {
+const appConnectionConfig = {
   user: process.env.PG_USER,
   host: process.env.PG_HOST,
   database: process.env.PG_DATABASE,

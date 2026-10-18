@@ -94,6 +94,8 @@ Comandi:
 | frontend | `npm run dev` | Vite su https://*.smarteats.local:5173 |
 | backend | `scripts/backup.sh` | dump del database con rotazione (vedi `docs/deployment.md`) |
 | backend | `npm run demo:seed` | crea il locale di dimostrazione `demo` (ristorante completo: sala, portate, carta, prenotazioni, asporto, serate passate e servizio in corso); `-- --reset` lo ricrea. Solo su dominio `.local`. Utenti `demo`, `marta`, `luca`, `giulia`, `paolo`, `chef`, password `smarteats-demo` |
+| radice | `./scripts/check.sh` (`--tutto`) | tutti i controlli in un comando: logica, lint, build; con `--tutto` anche test col database e nel browser. Da lanciare prima di ogni commit |
+| radice | `node scripts/find-dead-code.mjs` | elenca file e export che nessuno usa |
 | frontend | `npm run lint` | ESLint — deve passare prima di ogni commit |
 | frontend | `npm test` | test (`node --test`) del motore di stampa in `src/print/`, anche contro la stampante simulata |
 | frontend | `npm run mock:epos` | stampante Epson simulata su https://localhost:9443: disegna le copie nel terminale e può rifiutare i lavori (`-- --fail EPTR_COVER_OPEN`) |
@@ -239,6 +241,18 @@ La stampa è **del client**: la cassa che batte l'ordine stampa direttamente sul
 7. Se una richiesta contraddice queste regole (soprattutto §3 e §4), fermati e chiedi.
 8. A fine feature, aggiorna questo file se è nata una convenzione nuova.
 
-## 11. Difetti noti e lavoro previsto
+## 11. Leggibilità e manutenzione — regole per ogni modifica
+
+Il progetto deve restare comprensibile anche a chi non è uno sviluppatore (guida: `docs/guida-al-codice.md`; controllo: `./scripts/check.sh`).
+
+1. **Un file, un compito, ~300 righe al massimo.** Oltre, si divide per responsabilità (esempio: `components/products/`: modulo, azioni, finestre, elenchi). I file grandi che restano (`PrintProfiles.jsx`, `MasterPage.jsx`, `FloorEditor.jsx`, `App.jsx`) sono nel backlog.
+2. **La logica sta fuori dalla grafica.** Calcoli e regole in file `.js` puri con un `.test.js` che li spiega con esempi; i `.jsx` li usano. Le chiamate al server stanno in un hook (`useXxx.js`) o in un file di azioni, non sparse nei componenti.
+3. **Un commento in testa a ogni file** (a cosa serve) e sopra ogni funzione non ovvia (il *perché*). In italiano.
+4. **Prima di creare, cerca.** Componenti condivisi: `components/shared/Modal.jsx` (finestre), `smarteats/floor/Segmented.jsx` (interruttori), `smarteats/floor/PanelFrame.jsx` (pannello a destra), `floor/ui.js` (stili). Se una cosa serve in due posti, diventa condivisa.
+5. **Il backend è a strati:** `routes/` risponde (permessi, validazione, risposta, avvisi), `utils/` fa il lavoro sui dati (esempio: `utils/createOrder.js` per `POST /orders`), `schemas/` dice cosa si può mandare. Una route non contiene regole di business lunghe.
+6. **Niente codice morto:** un export non usato da nessuno si toglie. Si trovano con `node scripts/find-dead-code.mjs` (non cancella nulla, elenca).
+7. **Ogni refactor passa dai test** (`./scripts/check.sh --tutto`) e, se tocca una schermata senza test nel browser, ne guadagna uno (`frontend/e2e/`).
+
+## 12. Difetti noti e lavoro previsto
 
 I difetti noti stanno in `docs/backlog.md`; il piano per SmartEats e la piattaforma (moduli, tavoli, prenotazioni…) in `docs/requirements.md`, da aggiornare a ogni passo. Quando ne risolvi uno, toglilo da lì nello stesso commit.

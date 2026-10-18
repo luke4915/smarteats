@@ -3,12 +3,12 @@
 // registrati su Meta devono corrispondere a `body` qui sotto.
 
 export const REMINDER_HOURS = 3;            // promemoria prima dell'inizio del turno
-export const RECEIVED_DELAY_MINUTES = 2;    // «ricevuta» ritardata: se nel frattempo è gestita, non parte
+const RECEIVED_DELAY_MINUTES = 2;    // «ricevuta» ritardata: se nel frattempo è gestita, non parte
 export const TAKEAWAY_EXPIRE_MINUTES = 10;  // una richiesta di asporto non gestita scade a così tanto dal ritiro
 export const MAX_MESSAGES_PER_CASE = 6;     // massimo di avvisi per pratica
 export const DEFAULT_MONTHLY_QUOTA = 300;   // pratiche al mese incluse (impostabile dal Master)
-export const MAX_ATTEMPTS = 5;
-export const RETRY_MINUTES = [1, 5, 15, 60, 180];
+const MAX_ATTEMPTS = 5;
+const RETRY_MINUTES = [1, 5, 15, 60, 180];
 
 // `vars`: i segnaposto del corpo, nell'ordine ({{1}}, {{2}}…). L'intestazione è sempre «SmartEats × {{locale}}».
 export const EVENTS = {
@@ -125,9 +125,6 @@ const STILL = {
 };
 export const staleReason = (eventId, context) => STILL[eventId](context);
 
-// Il mese di una data, per il contatore delle pratiche (`2026-10`)
-export const monthKey = (date = new Date()) => `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
-
 // Giorno e ora per i testi (fuso del locale): «venerdì 23 ottobre», «20:00»
 export const dayLabel = (isoDate) => {
   const [y, m, d] = isoDate.split('-').map(Number);
@@ -136,9 +133,9 @@ export const dayLabel = (isoDate) => {
 export const euro = (n) => `${Number(n).toFixed(2).replace('.', ',')} €`;
 
 // ─── Fidelizzazione ──────────────────────────────────────────────────────────────────────────────────────────────
-export const THANKS_DELAY_HOURS = 2;      // dopo la fine del turno
-export const THANKS_LATEST = { h: 22, m: 30 };   // oltre quest'ora (nel fuso del locale) si rimanda alla mattina dopo
-export const THANKS_MORNING = { h: 10, m: 0 };
+const THANKS_DELAY_HOURS = 2;      // dopo la fine del turno
+const THANKS_LATEST = { h: 22, m: 30 };   // oltre quest'ora (nel fuso del locale) si rimanda alla mattina dopo
+const THANKS_MORNING = { h: 10, m: 0 };
 
 // Ora e giorno di `date` nel fuso `tz`: { y, mo, d, h, mi }
 function localParts(date, tz) {

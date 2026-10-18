@@ -18,7 +18,6 @@ export async function getTenantModules(tenantId) {
 }
 
 export const invalidateTenantModules = (tenantId) => cache.delete(Number(tenantId));
-export const clearTenantModulesCache = () => cache.clear();
 
 // Blocca la route se il tenant non ha il modulo. Il tenant arriva dal token (route autenticate) o dal
 // sottodominio (route pubbliche): mai dal client. Va messo dopo authenticate / resolveTenantFromHost.

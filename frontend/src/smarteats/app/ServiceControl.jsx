@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Power } from 'lucide-react';
 import { useToast } from '../../context/useToast';
+import Modal from '../../components/shared/Modal';
 import EndSessionModal from '../../components/shared/EndSessionModal';
 import CashCountModal from '../../components/shared/CashCountModal';
 import { termsFor } from '../../utils/terms';
@@ -57,20 +58,11 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end }) => {
       </button>
 
       {step === 'start' && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-end sm:items-center z-[2000] px-4 pb-4 sm:pb-0">
-          <form onSubmit={submitStart} className="bg-[var(--bg-card)] p-6 rounded-xl shadow-2xl w-full max-w-md border border-[var(--border)] space-y-5">
-            <div>
-              <h2 className="text-lg font-semibold text-[var(--text-main)]">Apri il servizio</h2>
-              <p className="text-sm text-[var(--text-muted)] mt-1">Senza un servizio aperto non si aprono i tavoli</p>
-            </div>
-            <input type="text" autoFocus value={name} onChange={e => setName(e.target.value)}
-              className={input} />
-            <div className="flex gap-3">
-              <button type="button" onClick={() => setStep(null)} className={`${btn} flex-1`}>Annulla</button>
-              <button type="submit" className={`${btnPrimary} flex-1`}>Apri il servizio</button>
-            </div>
-          </form>
-        </div>
+        <Modal title="Apri il servizio" onClose={() => setStep(null)} onSubmit={submitStart}
+          footer={<div className="flex gap-3"><button type="button" onClick={() => setStep(null)} className={`${btn} flex-1`}>Annulla</button><button type="submit" className={`${btnPrimary} flex-1`}>Apri il servizio</button></div>}>
+          <p className="text-sm text-[var(--text-muted)] mb-4">Senza un servizio aperto non si aprono i tavoli</p>
+          <input type="text" autoFocus value={name} onChange={e => setName(e.target.value)} aria-label="Nome del servizio" className={input} />
+        </Modal>
       )}
       {step === 'end' && (
         <EndSessionModal title={termsFor('restaurant').endTitle} sessionName={service.name} openOrders={info.openOrders || 0} openOrdersTotal={info.openOrdersTotal || 0}

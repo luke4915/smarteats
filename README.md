@@ -5,7 +5,7 @@ Gestionale SaaS per sagre, eventi e ristorazione: cassa, ordini, comande su stam
 - `backend/`: Node.js, Express 5, PostgreSQL, WebSocket
 - `frontend/`: React 19, Vite, Tailwind v4, PWA con funzionamento offline
 
-Regole, convenzioni e struttura nel dettaglio: [`CLAUDE.md`](CLAUDE.md).
+Regole, convenzioni e struttura nel dettaglio: [`CLAUDE.md`](CLAUDE.md). **Se non sei uno sviluppatore** e vuoi capire dove sta cosa o fare una modifica piccola: [`docs/guida-al-codice.md`](docs/guida-al-codice.md).
 
 ## Requisiti
 
@@ -46,6 +46,8 @@ npm run dev                   # https://<tenant>.smarteats.local:5173
 Ogni tenant si apre dal suo sottodominio (es. `default.smarteats.local`): i nomi vanno risolti verso `127.0.0.1`, su Windows con gli script in `backend/scripts/`. I tenant si creano dal master panel, su `/master`. Per provare l'app con dati realistici: `npm run demo:seed` (in `backend/`) crea il ristorante `demo` (vedi `CLAUDE.md` per gli utenti); serve la riga `127.0.0.1 demo.smarteats.local` in `/etc/hosts`.
 
 ## Test
+
+Il modo più semplice: `./scripts/check.sh` (veloce) o `./scripts/check.sh --tutto` (anche database e browser). Nel dettaglio:
 
 ```bash
 cd backend

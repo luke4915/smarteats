@@ -13,7 +13,7 @@ import { checkTenantAccess } from './middleware/tenantScope.js';
 // 4401: token mancante, scaduto o non valido → il client fa refresh e si riconnette.
 // 4403: tenant non coerente, disattivato o con licenza scaduta.
 export const WS_CLOSE_UNAUTHORIZED = 4401;
-export const WS_CLOSE_FORBIDDEN = 4403;
+const WS_CLOSE_FORBIDDEN = 4403;
 
 const HEARTBEAT_MS = 30 * 1000;
 

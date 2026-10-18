@@ -2,7 +2,7 @@ import { minutesOf, isActive } from './rules.js';
 
 // Logica pura della vista Timeline (tavoli in riga, ore in colonna) e dei walk-in. Tutti gli orari sono minuti dalla mezzanotte.
 export const STEP = 15;                  // una colonna = 15 minuti
-export const WALK_IN_MINUTES = 75;       // quanto si considera occupato un tavolo dato a chi arriva senza prenotazione
+const WALK_IN_MINUTES = 75;       // quanto si considera occupato un tavolo dato a chi arriva senza prenotazione
 const DEFAULT_WINDOW = { start: 12 * 60, end: 24 * 60 };
 
 export const minutesNow = (now = new Date()) => now.getHours() * 60 + now.getMinutes();

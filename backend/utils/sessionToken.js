@@ -12,7 +12,7 @@ export const MAX_SESSION_MS = 7 * 24 * 60 * 60 * 1000;
 // `loginAt` (secondi, come iat/exp) è l'istante del login: il refresh lo conserva,
 // così la durata massima della sessione non si allunga a ogni rinnovo.
 // Il token dura TOKEN_TTL_S, ma mai oltre la fine della sessione massima.
-export const TOKEN_TTL_S = 8 * 60 * 60;
+const TOKEN_TTL_S = 8 * 60 * 60;
 export const signToken = (user, loginAt = Math.floor(Date.now() / 1000)) => {
   const sessionEndS = loginAt + MAX_SESSION_MS / 1000;
   const expiresIn = Math.max(1, Math.min(TOKEN_TTL_S, sessionEndS - Math.floor(Date.now() / 1000)));

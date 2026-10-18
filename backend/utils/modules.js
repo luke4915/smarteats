@@ -29,9 +29,6 @@ export const BUSINESS_TYPE_IDS = Object.keys(BUSINESS_TYPES);
 // Ritorna i moduli in ordine di catalogo e senza doppioni.
 export const normalizeModules = (modules) => MODULE_IDS.filter(id => modules.includes(id));
 
-// Moduli che esistono per un tipo di attività.
-export const modulesForType = (businessType) => MODULE_IDS.filter(id => MODULES[id].types.includes(businessType));
-
 // Primo modulo non ammesso per il tipo, o undefined se vanno bene tutti.
 export const firstModuleNotAllowed = (businessType, modules) => modules.find(id => !MODULES[id]?.types.includes(businessType));
 

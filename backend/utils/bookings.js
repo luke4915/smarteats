@@ -2,8 +2,6 @@
 // Niente database: sono funzioni con test (tests/bookings.test.js). Le date sono stringhe `YYYY-MM-DD` nel locale,
 // le ore sono `HH:MM` o `HH:MM:SS`.
 
-export const STATUSES = ['requested', 'confirmed', 'declined', 'cancelled', 'seated', 'completed', 'no_show', 'expired'];
-
 // Da quali stati si può passare a quali. Gli stati finali non hanno uscite.
 const TRANSITIONS = {
   requested: ['confirmed', 'declined', 'cancelled', 'expired'],
@@ -18,7 +16,7 @@ const TRANSITIONS = {
 export const canTransition = (from, to) => (TRANSITIONS[from] ?? []).includes(to);
 
 // Stati che occupano posti nel turno e tavoli: una richiesta in attesa tiene il posto finché non si decide.
-export const HOLDS_SEATS = ['requested', 'confirmed', 'seated'];
+const HOLDS_SEATS = ['requested', 'confirmed', 'seated'];
 export const holdsSeats = (status) => HOLDS_SEATS.includes(status);
 
 // Dopo quante ore una richiesta non decisa decade da sola e il posto torna libero.

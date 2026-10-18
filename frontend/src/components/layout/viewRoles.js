@@ -1,7 +1,7 @@
 // Quali pagine vede un utente: dipende dal ruolo e dai moduli accesi per il suo locale. Vale per il menu laterale
 // e per le route: nascondere la voce non basta, perché l'URL (o la PWA riaperta sull'ultima pagina) porterebbe
 // comunque lì. Le autorizzazioni vere sono sul server (ruoli e requireModule).
-export const VIEW_ROLES = {
+const VIEW_ROLES = {
   dashboard: ['admin', 'manager', 'cashier'],
   kitchen: ['admin', 'kitchen'],
   takeaway: ['admin', 'manager', 'cashier'],
@@ -11,7 +11,7 @@ export const VIEW_ROLES = {
 };
 
 // Pagine che dipendono da un modulo; le altre fanno parte del nucleo e ci sono sempre.
-export const VIEW_MODULES = {
+const VIEW_MODULES = {
   kitchen: 'kds',
   takeaway: 'takeaway',
   statistics: 'stats',
