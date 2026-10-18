@@ -253,7 +253,8 @@ Il progetto deve restare comprensibile anche a chi non è uno sviluppatore (guid
 4. **Prima di creare, cerca.** Componenti condivisi: `components/shared/Modal.jsx` (finestre), `smarteats/floor/Segmented.jsx` (interruttori), `smarteats/floor/PanelFrame.jsx` (pannello a destra), `floor/ui.js` (stili). Se una cosa serve in due posti, diventa condivisa.
 5. **Il backend è a strati:** `routes/` risponde (permessi, validazione, risposta, avvisi), `utils/` fa il lavoro sui dati (esempio: `utils/createOrder.js` per `POST /orders`), `schemas/` dice cosa si può mandare. Una route non contiene regole di business lunghe.
 6. **Niente codice morto:** un export non usato da nessuno si toglie. Si trovano con `node scripts/find-dead-code.mjs` (non cancella nulla, elenca).
-7. **Ogni refactor passa dai test** (`./scripts/check.sh --all`) e, se tocca una schermata senza test nel browser, ne guadagna uno (`frontend/e2e/`).
+7. **Le regole si controllano da sole:** `frontend/src/styleRules.test.js` (parte con `npm test` e `check.sh`) fa fallire il controllo se un file supera 300 righe, se nasce una finestra fatta a mano invece di `Modal`, se compaiono `tracking-widest`, `font-black` o `alert()`. I file lunghi già noti sono in elenco nel test e non devono crescere.
+8. **Ogni refactor passa dai test** (`./scripts/check.sh --all`) e, se tocca una schermata senza test nel browser, ne guadagna uno (`frontend/e2e/`).
 
 ## 12. Difetti noti e lavoro previsto
 

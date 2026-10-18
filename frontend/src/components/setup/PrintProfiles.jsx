@@ -5,6 +5,8 @@ import { useAuth } from '../../context/useAuth';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { refreshPrintConfig } from '../../print/config';
 import PrinterCheck from './PrinterCheck';
+import Modal from '../shared/Modal';
+import { btn, btnPrimary, btnDanger, input, label as uiLabel } from '../../smarteats/floor/ui';
 const BACKEND_TEMPLATES = ['Cliente', 'Associazione', 'Cucina', 'Ritiro Bar', 'Ritiro Gastronomia', 'Numeretto'];
 
 const PrintProfiles = () => {
@@ -383,20 +385,11 @@ const PrintProfiles = () => {
         />
       )}
 
-      {/* Conferma eliminazione */}
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-          <div className="bg-[var(--bg-card)] rounded-xl shadow-xl p-6 w-full max-w-sm text-center border border-[var(--border)]">
-            <p className="text-[var(--text-main)] mb-2 font-bold">Eliminare questo tipo di copia?</p>
-            <p className="text-sm text-[var(--text-muted)] mb-6">Tutte le impostazioni associate verranno perse.</p>
-            <div className="flex justify-center gap-4">
-              <button onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 rounded-xl bg-[var(--bg-card-2)] text-[var(--text-main)] text-sm">Annulla</button>
-              <button onClick={() => deleteCopyType(confirmDelete)}
-                className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-bold">Elimina</button>
-            </div>
-          </div>
-        </div>
+        <Modal title="Eliminare questo tipo di copia?" onClose={() => setConfirmDelete(null)}
+          footer={<div className="flex gap-3"><button onClick={() => setConfirmDelete(null)} className={`${btn} flex-1`}>Annulla</button><button onClick={() => deleteCopyType(confirmDelete)} className={`${btnDanger} flex-1`}>Elimina</button></div>}>
+          <p className="text-sm text-[var(--text-muted)]">Tutte le impostazioni associate verranno perse.</p>
+        </Modal>
       )}
     </div>
   );
@@ -416,38 +409,25 @@ const CopyTypeModal = ({ initial, templatesOptions, onSave, onClose }) => {
     finally { setSaving(false); }
   };
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <div className="bg-[var(--bg-card)] rounded-xl shadow-xl p-6 w-full max-w-sm border border-[var(--border)]">
-        <h3 className="font-semibold text-sm text-[var(--text-muted)] mb-4 flex items-center gap-2">
-          <Printer size={14} /> {initial ? 'Modifica tipo copia' : 'Nuovo tipo copia'}
-        </h3>
-        <div className="flex flex-col gap-3">
-          <div>
-            <select
-              className="w-full px-3 py-2 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:opacity-50"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              disabled={!!initial}
-            >
-              <option value="">Seleziona template...</option>
-              {templatesOptions.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-[var(--text-muted)] mb-1">Etichetta UI <span className="font-normal opacity-60">(es. Copia Associazione)</span></label>
-            <input className="w-full px-3 py-2 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]"
-              value={label} onChange={e => setLabel(e.target.value)} placeholder="Copia Associazione" />
-          </div>
+    <Modal title={initial ? 'Modifica tipo copia' : 'Nuovo tipo copia'} onClose={onClose}
+      footer={(
+        <div className="flex gap-3">
+          <button onClick={onClose} className={`${btn} flex-1`}>Annulla</button>
+          <button onClick={submit} disabled={saving || !name.trim() || !label.trim()} className={`${btnPrimary} flex-1`}>{saving ? 'Salvataggio...' : 'Salva'}</button>
         </div>
-        {error && <p className="mt-4 text-xs font-bold text-red-500">{error}</p>}
-        <div className="flex justify-end gap-3 mt-6">
-          <button onClick={onClose} className="px-4 py-2 rounded-xl bg-[var(--bg-card-2)] text-[var(--text-main)] text-sm">Annulla</button>
-          <button onClick={submit}
-            disabled={saving || !name.trim() || !label.trim()}
-            className="px-4 py-2 rounded-xl bg-[var(--accent)] text-white text-sm font-bold disabled:opacity-50">{saving ? 'Salvataggio...' : 'Salva'}</button>
+      )}>
+      <div className="flex flex-col gap-4">
+        <select aria-label="Template" className={input} value={name} onChange={e => setName(e.target.value)} disabled={!!initial}>
+          <option value="">Seleziona template...</option>
+          {templatesOptions.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <div>
+          <label htmlFor="copy-label" className={`${uiLabel} block mb-1.5`}>Etichetta <span className="font-normal opacity-70">(es. Copia Associazione)</span></label>
+          <input id="copy-label" className={input} value={label} onChange={e => setLabel(e.target.value)} placeholder="Copia Associazione" />
         </div>
       </div>
-    </div>
+      {error && <p className="mt-4 text-xs font-medium text-red-500">{error}</p>}
+    </Modal>
   );
 };
 

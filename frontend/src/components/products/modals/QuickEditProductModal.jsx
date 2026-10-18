@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Check } from 'lucide-react';
 import { fetchWithAuth } from '../../../utils/apiClient';
 import { useToast } from '../../../context/useToast';
+import Modal from '../../shared/Modal';
+import Switch from '../../shared/Switch';
+import { btn, btnPrimary, input, label } from '../../../smarteats/floor/ui';
 
 const QuickEditProductModal = ({ product, onClose, onSaved }) => {
   const { showToast } = useToast();
@@ -72,61 +75,26 @@ const QuickEditProductModal = ({ product, onClose, onSaved }) => {
   const isSaveDisabled = saving || (stockEnabled && (stock === '' || isNaN(parseInt(stock, 10)) || parseInt(stock, 10) < 0));
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div className="relative w-full max-w-sm bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-        <h3 className="text-base font-semibold tracking-tight text-[var(--text-main)] mb-4">{product.name}</h3>
-
-        <label className="text-xs font-semibold text-[var(--text-muted)] block mb-1.5">Prezzo</label>
-        <input
-          type="text"
-          inputMode="decimal"
-          value={price}
-          onChange={handlePriceChange}
-          placeholder="Prezzo (es. 8.50 o 8,50)"
-          className="w-full p-2.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] font-medium text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] mb-4"
-        />
-
-        <div className="p-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] space-y-2">
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="qe_stock_enabled"
-              checked={stockEnabled}
-              onChange={(e) => setStockEnabled(e.target.checked)}
-              className="w-4 h-4 rounded cursor-pointer"
-            />
-            <label htmlFor="qe_stock_enabled" className="text-xs font-bold text-[var(--text-main)] cursor-pointer">Disponibilità limitata</label>
-          </div>
-          {stockEnabled && (
-            <input
-              type="number"
-              min="0"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              placeholder="Quantità disponibile"
-              className="w-full p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            />
-          )}
+    <Modal title={product.name} onClose={onClose}
+      footer={(
+        <div className="flex gap-3">
+          <button onClick={onClose} className={`${btn} flex-1`}>Annulla</button>
+          <button onClick={handleSave} disabled={isSaveDisabled} className={`${btnPrimary} flex-1`}><Check size={16} /> {saving ? 'Salvataggio...' : 'Salva'}</button>
         </div>
+      )}>
+      <label htmlFor="qe_price" className={`${label} block mb-1.5`}>Prezzo</label>
+      <input id="qe_price" type="text" inputMode="decimal" value={price} onChange={handlePriceChange} placeholder="Prezzo (es. 8.50 o 8,50)" className={`${input} mb-4`} />
 
-        <div className="flex gap-3 mt-5">
-          <button
-            onClick={onClose}
-            className="flex-1 h-11 rounded-xl border border-red-500/30 text-red-500 font-semibold text-xs hover:bg-red-500/10 transition-all cursor-pointer"
-          >
-            Annulla
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={isSaveDisabled}
-            className="flex-1 h-11 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Check size={16} /> {saving ? 'Salvataggio...' : 'Salva'}
-          </button>
+      <div className="p-3 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <label htmlFor="qe_stock_enabled" className="text-sm font-medium text-[var(--text-main)]">Disponibilità limitata</label>
+          <Switch checked={stockEnabled} onChange={setStockEnabled} label="Disponibilità limitata" />
         </div>
+        {stockEnabled && (
+          <input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} placeholder="Quantità disponibile" aria-label="Quantità disponibile" className={input} />
+        )}
       </div>
-    </div>
+    </Modal>
   );
 };
 

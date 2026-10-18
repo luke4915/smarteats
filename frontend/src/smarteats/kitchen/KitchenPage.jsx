@@ -3,7 +3,7 @@ import { ChefHat, Clock, Check, Volume2, VolumeX } from 'lucide-react';
 import { useKitchenOrders } from './useKitchenOrders';
 import Segmented from '../floor/Segmented';
 import { playChime } from '../../utils/chime';
-import { boardOrders, upcomingByTable, orderUrgency, ticketAction, toggleLineStatus, isDone, hasBarWork, newOrderIds, STATIONS } from './board';
+import { boardOrders, upcomingByTable, orderUrgency, ticketAction, toggleLineStatus, isDone, hasBarWork, newVisibleOrderIds, STATIONS } from './board';
 
 // Il monitor della cucina: fatto per essere letto da lontano e premuto con le mani sporche. Testi grandi, l'attesa
 // colora tutta l'intestazione (verde, ambra, rosso), un solo pulsante enorme per comanda, le più vecchie per prime.
@@ -66,20 +66,21 @@ const KitchenPage = ({ event, actions }) => {
   useEffect(() => { const t = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(t); }, []);
 
   const showStations = hasBarWork(orders ?? []);
+  const everything = useMemo(() => boardOrders(orders ?? [], 'all', now), [orders, now]);   // tutte le postazioni: serve a capire cosa è davvero nuovo
   const active = useMemo(() => boardOrders(orders ?? [], showStations ? station : 'all', now), [orders, station, showStations, now]);
   const upcoming = useMemo(() => upcomingByTable(orders ?? []), [orders]);
 
   // Comanda nuova: si evidenzia per qualche secondo e suona
   useEffect(() => {
     if (!orders) return;
-    const news = newOrderIds(seen.current, active);
-    seen.current = new Set(active.map(o => o.id));
+    const news = newVisibleOrderIds(seen.current, everything, active);
+    seen.current = new Set(everything.map(o => o.id));
     if (!news.length) return;
     setFresh(f => [...f, ...news]);
     if (sound) beep();
     const t = setTimeout(() => setFresh(f => f.filter(id => !news.includes(id))), 8000);
     return () => clearTimeout(t);
-  }, [active, orders, sound]);
+  }, [everything, active, orders, sound]);
 
   const toggleSound = () => setSound(s => { try { localStorage.setItem('kitchen_sound', s ? 'off' : 'on'); } catch { /* senza archivio locale */ } if (!s) beep(); return !s; });
 

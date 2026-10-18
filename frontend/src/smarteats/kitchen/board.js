@@ -70,3 +70,10 @@ export const newOrderIds = (previous, orders) => {
   if (previous === null) return [];
   return orders.filter(o => !previous.has(o.id)).map(o => o.id);
 };
+
+// Come sopra, ma «nuova» si decide su TUTTE le comande (`all`), mentre si avvisa solo per quelle che la postazione
+// scelta mostra (`visible`). Così cambiare scheda (Tutto / Cucina / Bar) non fa suonare comande che c'erano già.
+export const newVisibleOrderIds = (previous, all, visible) => {
+  const shown = new Set(visible.map(o => o.id));
+  return newOrderIds(previous, all).filter(id => shown.has(id));
+};

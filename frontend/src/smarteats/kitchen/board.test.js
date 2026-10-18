@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { minutesSince, urgency, boardOrders, ticketAction, toggleLineStatus, upcomingByTable, withLineStatus, stationOf, hasBarWork, newOrderIds, orderUrgency, pickupIn } from './board.js';
+import { minutesSince, urgency, boardOrders, ticketAction, toggleLineStatus, upcomingByTable, withLineStatus, stationOf, hasBarWork, newOrderIds, newVisibleOrderIds, orderUrgency, pickupIn } from './board.js';
 
 const NOW = new Date('2026-10-05T20:00:00Z').getTime();
 const ago = (min) => new Date(NOW - min * 60000).toISOString();
@@ -90,4 +90,15 @@ test('asporto: urgenza dal ritiro, e l\'ordine si inizia 15 minuti prima', () =>
   assert.deepEqual(board.map(orderUrgency), ['late', 'warn', 'ok', 'ok']);
   assert.equal(board.find(o => o.id === 1).pickupIn, 60);
   assert.equal(pickupIn({}, now), null);
+});
+
+test('cambiare postazione non fa suonare comande che c\'erano già; una comanda davvero nuova sì', () => {
+  const kitchen = order(1, 'pending', 3, [item(10, 'kitchen')]);
+  const bar = order(2, 'pending', 3, [item(20, 'bar')]);
+  // prima ero su «Cucina» e vedevo solo la 1; passo a «Bar»: la 2 compare nella vista ma c'era già
+  assert.deepEqual(newVisibleOrderIds(new Set([1, 2]), [kitchen, bar], [bar]), []);
+  // arriva la 3 (bar) mentre guardo il bar: avvisa. Se guardo la cucina, no.
+  const bar2 = order(3, 'pending', 0, [item(30, 'bar')]);
+  assert.deepEqual(newVisibleOrderIds(new Set([1, 2]), [kitchen, bar, bar2], [bar, bar2]), [3]);
+  assert.deepEqual(newVisibleOrderIds(new Set([1, 2]), [kitchen, bar, bar2], [kitchen]), []);
 });

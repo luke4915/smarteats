@@ -4,13 +4,33 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { ShoppingCart, Plus, Minus, X, ChefHat, Trash2, Download, QrCode } from 'lucide-react';
 
 import { apiFetch } from '../utils/apiClient';
+import Modal from '../components/shared/Modal';
+import { btn, btnDanger } from '../smarteats/floor/ui';
+
+// Le righe del carrello e il totale, uguali nel riepilogo e nella finestra del QR.
+const CartSummary = ({ items, total }) => (
+    <>
+        <ul className="space-y-1.5">
+            {items.map(item => (
+                <li key={item.id} className="flex justify-between text-sm">
+                    <span className="text-[var(--text-main)] font-medium">×{item.quantity} {item.name}</span>
+                    <span className="text-[var(--text-muted)] tabular-nums">€{(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+                </li>
+            ))}
+        </ul>
+        <div className="flex justify-between font-semibold text-[var(--text-main)] border-t border-[var(--border)] pt-3 mt-3">
+            <span>Totale</span>
+            <span className="text-[var(--accent)] tabular-nums">€{total.toFixed(2)}</span>
+        </div>
+    </>
+);
 const ProductCard = ({ product, quantity, onAdd, onRemove }) => (
     <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border)]">
         <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: product.color || 'var(--accent)' }} />
             <div className="min-w-0">
-                <p className="font-black text-sm uppercase tracking-tight text-[var(--text-main)] truncate">{product.name}</p>
-                <p className="text-[var(--accent)] font-black text-sm mt-0.5">€{parseFloat(product.price).toFixed(2)}</p>
+                <p className="font-semibold text-sm uppercase tracking-tight text-[var(--text-main)] truncate">{product.name}</p>
+                <p className="text-[var(--accent)] font-semibold text-sm mt-0.5">€{parseFloat(product.price).toFixed(2)}</p>
             </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -20,7 +40,7 @@ const ProductCard = ({ product, quantity, onAdd, onRemove }) => (
                         className="w-8 h-8 flex items-center justify-center rounded-xl bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-muted)] hover:text-red-500 transition-all active:scale-95">
                         <Minus size={14} />
                     </button>
-                    <span className="w-6 text-center font-black text-[var(--text-main)]">{quantity}</span>
+                    <span className="w-6 text-center font-semibold text-[var(--text-main)]">{quantity}</span>
                 </>
             )}
             <button onClick={() => onAdd(product)}
@@ -108,14 +128,14 @@ export default function MenuPage() {
 
     if (loading) return (
         <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
-            <p className="text-[var(--text-muted)] text-sm font-black uppercase tracking-widest">Caricamento...</p>
+            <p className="text-[var(--text-muted)] text-sm font-semibold">Caricamento...</p>
         </div>
     );
 
     if (error) return (
         <div className="min-h-screen bg-[var(--bg-main)] flex flex-col items-center justify-center gap-4 px-6">
             <ChefHat size={48} className="text-[var(--text-muted)] opacity-30" />
-            <p className="text-[var(--text-muted)] font-black uppercase tracking-widest text-sm text-center">{error}</p>
+            <p className="text-[var(--text-muted)] font-semibold text-sm text-center">{error}</p>
         </div>
     );
 
@@ -126,9 +146,9 @@ export default function MenuPage() {
                 {/* Header */}
                 <div className="sticky top-0 z-10 bg-[var(--bg-main)] border-b border-[var(--border)] px-4 py-4">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-[var(--accent)] rounded-xl flex items-center justify-center font-black text-white shadow-lg shadow-[var(--accent-shadow)]">S</div>
+                        <div className="w-9 h-9 bg-[var(--accent)] rounded-xl flex items-center justify-center font-semibold text-white shadow-lg shadow-[var(--accent-shadow)]">S</div>
                         <div>
-                            <p className="font-black text-base text-[var(--text-main)] leading-none">{sessionName}</p>
+                            <p className="font-semibold text-base text-[var(--text-main)] leading-none">{sessionName}</p>
                             <p className="text-xs text-[var(--text-muted)] mt-0.5">Scegli i tuoi prodotti</p>
                         </div>
                     </div>
@@ -145,7 +165,7 @@ export default function MenuPage() {
                 <div className="px-4 pt-5 space-y-6">
                     {Object.entries(grouped).map(([category, items]) => (
                         <div key={category}>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-3">{category}</p>
+                            <p className="text-[10px] font-semibold text-[var(--text-muted)] mb-3">{category}</p>
                             <div className="space-y-2">
                                 {items.map(product => (
                                     <ProductCard key={product.id} product={product}
@@ -167,9 +187,9 @@ export default function MenuPage() {
                             <Trash2 size={18} />
                         </button>
                         <button onClick={() => setShowCart(true)}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-main)] rounded-2xl font-black text-sm transition-all active:scale-95">
+                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-main)] rounded-2xl font-semibold text-sm transition-all active:scale-95">
                             <ShoppingCart size={18} />
-                            <span className="uppercase tracking-widest">{totalItems}</span>
+                            <span className="uppercase">{totalItems}</span>
                             <span className="text-[var(--text-muted)] font-bold">€{total.toFixed(2)}</span>
                         </button>
                         <button onClick={() => setShowQR(true)}
@@ -180,96 +200,32 @@ export default function MenuPage() {
                 </div>
             )}
 
-            {/* Modal conferma svuota */}
             {showClearConfirm && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 px-4">
-                    <div className="w-full max-w-sm bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] p-6 space-y-4 text-center">
-                        <p className="font-black text-lg text-[var(--text-main)]">Svuotare il carrello?</p>
-                        <p className="text-sm text-[var(--text-muted)]">Tutti i prodotti selezionati verranno rimossi.</p>
-                        <div className="flex gap-3 pt-2">
-                            <button onClick={() => setShowClearConfirm(false)}
-                                className="flex-1 py-3 border border-[var(--border)] text-[var(--text-main)] rounded-2xl font-black text-sm hover:bg-[var(--bg-card-2)] transition-all">
-                                ANNULLA
-                            </button>
-                            <button onClick={clearCart}
-                                className="flex-1 py-3 bg-red-500 text-white rounded-2xl font-black text-sm hover:bg-red-600 transition-all">
-                                SVUOTA
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <Modal title="Svuotare il carrello?" onClose={() => setShowClearConfirm(false)}
+                    footer={<div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className={`${btn} flex-1`}>Annulla</button><button onClick={clearCart} className={`${btnDanger} flex-1`}>Svuota</button></div>}>
+                    <p className="text-sm text-[var(--text-muted)]">Tutti i prodotti selezionati verranno rimossi.</p>
+                </Modal>
             )}
 
-            {/* Modal riepilogo carrello */}
             {showCart && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4">
-                    <div className="w-full max-w-sm bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] p-6 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="font-black text-lg text-[var(--text-main)]">Il tuo carrello</h2>
-                            <button onClick={() => setShowCart(false)}
-                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-[var(--bg-card-2)] text-[var(--text-muted)] transition-colors">
-                                <X size={16} />
-                            </button>
-                        </div>
-                        <ul className="space-y-1.5">
-                            {cartItems.map(item => (
-                                <li key={item.id} className="flex justify-between text-sm">
-                                    <span className="text-[var(--text-main)] font-bold">×{item.quantity} {item.name}</span>
-                                    <span className="text-[var(--text-muted)]">€{(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
-                                </li>
-                            ))}
-                        </ul>
-                        <div className="flex justify-between font-black text-[var(--text-main)] border-t border-[var(--border)] pt-3">
-                            <span>Totale</span>
-                            <span className="text-[var(--accent)]">€{total.toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>
+                <Modal title="Il tuo carrello" onClose={() => setShowCart(false)}>
+                    <CartSummary items={cartItems} total={total} />
+                </Modal>
             )}
 
-            {/* Modal QR */}
             {showQR && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 px-4 pb-4">
-                    <div className="w-full max-w-sm bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] p-6 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="font-black text-lg text-[var(--text-main)]">Il tuo ordine</h2>
-                            <button onClick={() => setShowQR(false)}
-                                className="w-8 h-8 flex items-center justify-center rounded-xl bg-[var(--bg-card-2)] text-[var(--text-muted)] transition-colors">
-                                <X size={16} />
-                            </button>
-                        </div>
-
-                        <ul className="space-y-1.5">
-                            {cartItems.map(item => (
-                                <li key={item.id} className="flex justify-between text-sm">
-                                    <span className="text-[var(--text-main)] font-bold">×{item.quantity} {item.name}</span>
-                                    <span className="text-[var(--text-muted)]">€{(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
-                                </li>
-                            ))}
-                        </ul>
-                        <div className="flex justify-between font-black text-[var(--text-main)] border-t border-[var(--border)] pt-3">
-                            <span>Totale</span>
-                            <span className="text-[var(--accent)]">€{total.toFixed(2)}</span>
-                        </div>
-
+                <Modal title="Il tuo ordine" onClose={() => setShowQR(false)}>
+                    <div className="space-y-4">
+                        <CartSummary items={cartItems} total={total} />
                         <div className="flex flex-col items-center gap-3">
-                            {/* Sostituisci il vecchio contenitore del QR con questo cliccabile */}
-                            {/* 🚀 CODICE CORRETTO: Sostituisci il blocco del QR con questo */}
-                            <div
-                                onClick={() => setEnlargedQR(true)}
-                                className="p-4 bg-white rounded-2xl cursor-pointer hover:scale-105 transition-transform"
-                                title="Clicca per ingrandire"
-                            >
+                            <button onClick={() => setEnlargedQR(true)} className="p-4 bg-white rounded-xl cursor-pointer hover:scale-105 transition-transform" title="Tocca per ingrandire" aria-label="Ingrandisci il codice QR">
                                 <QRCodeCanvas id="qr-canvas" value={qrData} size={200} />
-                            </div>
-                            <p className="text-xs text-[var(--text-muted)] text-center font-bold">Mostra questo QR alla cassa</p>
-                            <button onClick={downloadQR}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-main)] rounded-xl font-black text-xs uppercase tracking-widest hover:bg-[var(--accent)]/10 transition-all">
-                                <Download size={14} /> Salva QR
                             </button>
+                            <p className="text-xs text-[var(--text-muted)] text-center">Mostra questo QR alla cassa</p>
+                            <button onClick={downloadQR} className={btn}><Download size={16} /> Salva QR</button>
                         </div>
                     </div>
-                </div>
+                </Modal>
             )}
 
             {/* 📱 NUOVO: Modal QR a Schermo Intero (Ottimizzato per iOS e Android) */}
@@ -292,7 +248,7 @@ export default function MenuPage() {
                         </div>
 
                         <div>
-                            <p className="font-black text-lg text-white uppercase tracking-wider">Il tuo codice QR:</p>
+                            <p className="font-semibold text-lg text-white uppercase tracking-wider">Il tuo codice QR:</p>
                             <p className="text-xs text-white/60 mt-1">Mostralo direttamente in cassa!</p>
                         </div>
                     </div>

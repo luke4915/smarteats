@@ -51,7 +51,7 @@ const Login = ({ onLogin }) => {
         className="w-40 mb-6 drop-shadow-md border-2 border-black bg-white p-2"
       />
 
-      <h1 className="text-2xl font-black mb-6 text-[var(--text-main)]">
+      <h1 className="text-2xl font-semibold mb-6 text-[var(--text-main)]">
         Login Stand Manager
       </h1>
 
@@ -75,7 +75,7 @@ const Login = ({ onLogin }) => {
         <button
           onClick={handleLogin}
           disabled={loading}
-          className={`w-full py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-[var(--accent)]/30 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""
+          className={`w-full py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl font-semibold text-sm shadow-lg shadow-[var(--accent)]/30 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""
             }`}
         >
           {loading ? "Accesso in corso..." : "Login"}
