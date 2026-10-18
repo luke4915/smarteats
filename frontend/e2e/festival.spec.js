@@ -30,6 +30,7 @@ test('sagra: in modalità avanzata l\'ordine va in cucina e lo chef lo segna pro
   await page.getByRole('button', { name: /Invia ordine/i }).click();
   await page.getByRole('link', { name: 'Cucina' }).click();
   await expect(page.getByRole('heading', { name: 'Cucina' })).toBeVisible();
+  await expect(page).toHaveTitle(/^Cucina · /);                          // la scheda del browser dice dove sei
   await expect(page.getByRole('article').getByText(/Panino con salsiccia/)).toBeVisible({ timeout: 10_000 });
   await shot(page, 'festival-04-cucina');
   await page.getByRole('button', { name: 'Pronta', exact: true }).click();

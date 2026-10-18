@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useCallback, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 import { useAuth } from '../../context/useAuth';
@@ -6,6 +6,7 @@ import { useToast } from '../../context/useToast';
 import { visibleViews, canViewSmartEats, smartEatsHome } from './views';
 import { useLiveUpdates } from '../../hooks/useLiveUpdates';
 import { useTheme } from '../../hooks/useTheme';
+import { usePageTitle } from '../../hooks/usePageTitle';
 import { useService } from './useService';
 import AppHeader from '../../components/shell/AppHeader';
 import ServiceControl from '../../components/shell/ServiceControl';
@@ -54,14 +55,8 @@ const SmartEatsApp = () => {
     reservations: inbox.items.filter(i => i.kind !== 'takeaway_request').length,
     takeaway: inbox.items.filter(i => i.kind === 'takeaway_request').length,
   };
-  // Con la scheda in secondo piano il numero si vede comunque nel titolo («(2) SmartEats»)
-  useEffect(() => {
-    const base = document.title.replace(/^\(\d+\)\s*/, '');
-    document.title = inbox.items.length ? `(${inbox.items.length}) ${base}` : base;
-    return () => { document.title = base; };
-  }, [inbox.items.length]);
-
   const views = visibleViews(user.role, user.modules);
+  usePageTitle(views.find(v => pathname === `/${v.id}`)?.label, user.tenantName, inbox.items.length);
   const home = smartEatsHome(user.role, user.modules);
   if (!home) return <NoViewAvailable onLogout={logout} />;
 
