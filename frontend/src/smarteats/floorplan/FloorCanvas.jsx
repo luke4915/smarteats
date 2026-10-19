@@ -29,8 +29,10 @@ const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderE
 
   // `reserve` + `focusTable` (solo con `fit`): un pannello copre la destra. La pianta resta della misura piena e, se il tavolo
   // scelto finirebbe sotto il pannello, scivola di lato quanto basta a lasciarlo in vista (mai oltre il bordo sinistro).
-  // Si sposta con un transform, che il browser anima in modo fluido; se il tavolo è già visibile non si muove.
+  // Si sposta con un transform, che il browser anima in modo fluido; se il tavolo è già visibile non si muove. Mentre è
+// spostata, il bordo sinistro sfuma (`--fade`, vedi `.floor-fade` in index.css) invece di tagliare i tavoli di netto.
   let transform = 'translate(0px, 0px)';
+  let shifted = false;
   if (fit && reserve > 0 && focusTable && size.w > 0) {
     const MARGIN = 16;
     const left = (size.w - gridW * cell) / 2;                         // dove sta la pianta a riposo
@@ -39,10 +41,12 @@ const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderE
     const needed = Math.min(0, size.w - reserve - MARGIN - tableRight);   // quanto spostare a sinistra
     const dx = Math.max(needed, MARGIN - tableLeft);                       // ma il tavolo non esce a sinistra
     transform = `translate(${Math.min(0, dx)}px, 0px)`;
+    shifted = dx < -1;
   }
 
   return (
-    <div ref={box} className={fit ? 'w-full h-full flex items-center justify-center overflow-hidden' : 'w-full overflow-x-auto no-scrollbar'}>
+    <div ref={box} className={fit ? 'w-full h-full flex items-center justify-center overflow-hidden floor-fade' : 'w-full overflow-x-auto no-scrollbar'}
+      style={fit ? { '--fade': shifted ? '72px' : '0px' } : undefined}>
       <div
         ref={canvasRef}
         onPointerDown={onBackgroundPointerDown} onPointerMove={onBackgroundPointerMove} onPointerUp={onBackgroundPointerUp} onPointerCancel={onBackgroundPointerUp}
