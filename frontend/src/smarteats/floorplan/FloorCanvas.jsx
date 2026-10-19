@@ -27,21 +27,31 @@ const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderE
 
   const cell = fit ? Math.max(MIN_FIT_CELL, Math.floor(Math.min(size.w / gridW, size.h / gridH) || 0)) : clamp(Math.floor(size.w / gridW) || 32, minCell, maxCell);
 
-  // `reserve` + `focusTable` (solo con `fit`): un pannello copre la destra. La pianta resta della misura piena e, se il tavolo
-  // scelto finirebbe sotto il pannello, scivola di lato quanto basta a lasciarlo in vista (mai oltre il bordo sinistro).
-  // Si sposta con un transform, che il browser anima in modo fluido; se il tavolo è già visibile non si muove. Mentre è
-// spostata, il bordo sinistro sfuma (`--fade`, vedi `.floor-fade` in index.css) invece di tagliare i tavoli di netto.
+  // `reserve` (solo con `fit`): un pannello copre la destra. La pianta resta della misura piena e si sposta con un transform
+  // (il browser lo anima in modo fluido, senza ridisegnare):
+  //  - con `focusTable` (un tavolo scelto) scivola di lato solo se quel tavolo finirebbe sotto il pannello, senza uscire a sinistra;
+  //  - senza (per esempio il walk-in, dove servono tutti i tavoli) si rimpicciolisce per starci tutta accanto al pannello.
+  // Mentre è spostata il bordo sinistro sfuma (`--fade`, vedi `.floor-fade` in index.css) invece di tagliare i tavoli di netto.
   let transform = 'translate(0px, 0px)';
   let shifted = false;
-  if (fit && reserve > 0 && focusTable && size.w > 0) {
+  if (fit && reserve > 0 && size.w > 0) {
     const MARGIN = 16;
-    const left = (size.w - gridW * cell) / 2;                         // dove sta la pianta a riposo
-    const tableLeft = left + focusTable.x * cell;
-    const tableRight = left + (focusTable.x + focusTable.w) * cell;
-    const needed = Math.min(0, size.w - reserve - MARGIN - tableRight);   // quanto spostare a sinistra
-    const dx = Math.max(needed, MARGIN - tableLeft);                       // ma il tavolo non esce a sinistra
-    transform = `translate(${Math.min(0, dx)}px, 0px)`;
-    shifted = dx < -1;
+    const mapW = gridW * cell, mapH = gridH * cell;
+    if (focusTable) {
+      const left = (size.w - mapW) / 2;                                   // dove sta la pianta a riposo
+      const tableLeft = left + focusTable.x * cell;
+      const tableRight = left + (focusTable.x + focusTable.w) * cell;
+      const needed = Math.min(0, size.w - reserve - MARGIN - tableRight);   // quanto spostare a sinistra
+      const dx = Math.min(0, Math.max(needed, MARGIN - tableLeft));         // ma il tavolo non esce a sinistra
+      transform = `translate(${dx}px, 0px)`;
+      shifted = dx < -1;
+    } else {
+      const availW = Math.max(size.w - reserve, gridW * MIN_FIT_CELL);
+      const scale = Math.min(1, availW / mapW);
+      const dx = (availW - mapW * scale) / 2 - (size.w - mapW) / 2;
+      const dy = (size.h - mapH * scale) / 2 - (size.h - mapH) / 2;         // resta centrata anche in verticale
+      transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+    }
   }
 
   return (
@@ -53,7 +63,7 @@ const FloorCanvas = ({ gridW, gridH, tables, elements = [], renderTable, renderE
         className="relative rounded-xl border border-[var(--border)] bg-[var(--bg-card-2)] select-none"
         style={{
           width: gridW * cell, height: gridH * cell,
-          ...(fit && { transform, transition: 'transform 420ms cubic-bezier(0.32, 0.72, 0, 1)' }),
+          ...(fit && { transform, transformOrigin: '0 0', transition: 'transform 420ms cubic-bezier(0.32, 0.72, 0, 1)' }),
           ...(showGrid && {
             backgroundImage: 'linear-gradient(to right, var(--border) 1px, transparent 1px), linear-gradient(to bottom, var(--border) 1px, transparent 1px)',
             backgroundSize: `${cell}px ${cell}px`,

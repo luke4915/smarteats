@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { timelineWindow, blocksForTable, unassigned, walkInTables, clockOf } from './timeline.js';
+import { timelineWindow, blocksForTable, unassigned, walkInTables, clockOf, scrollToShow } from './timeline.js';
 
 const shifts = [{ start_time: '19:30', duration_minutes: 90, active: true }, { start_time: '21:15', duration_minutes: 90, active: true }];
 const res = (o) => ({ id: 1, status: 'confirmed', start_time: '19:30', duration_minutes: 90, table_ids: [], party_size: 2, customer_name: 'Rossi', check_id: null, ...o });
@@ -81,4 +81,14 @@ test('walk-in con intervalli: il tavolo dove il gruppo sta nell\'intervallo vien
   assert.deepEqual(two.map(t => [t.name, t.under]), [['B', false], ['A', true], ['C', true]], '2 persone: B va bene, gli altri sono grandi');
   const five = walkInTables(5, ranged, [], [], { nowMin: 600 }).fits;
   assert.deepEqual(five.map(t => [t.name, t.under]), [['A', false], ['C', true]], '5 persone: A è perfetto; B non basta');
+});
+
+test('Timeline: lo scorrimento tiene in vista l\'ora di adesso quando lo spazio si restringe', () => {
+  // vista da 600 px con 100 px di colonna tavoli; l'ora di adesso sta a 900 px del contenuto
+  assert.equal(scrollToShow(0, 600, 100, [900]), 600, 'finiva fuori a destra: si porta verso il centro');
+  assert.equal(scrollToShow(500, 600, 100, [900]), 500, 'già in vista: non si muove');
+  assert.equal(scrollToShow(0, 600, 100, [300]), 0, 'a sinistra e visibile: resta');
+  assert.equal(scrollToShow(0, 600, 100, [900, 700]), 450, 'adesso e prenotazione aperta insieme: si vedono entrambi');
+  assert.equal(scrollToShow(0, 600, 100, [2000, 100]), 1700, 'troppo distanti per vederli insieme: vince il primo');
+  assert.equal(scrollToShow(50, 600, 100, [10]), 0, 'mai negativo');
 });

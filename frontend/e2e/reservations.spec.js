@@ -92,6 +92,26 @@ test('walk-in: chi arriva senza prenotazione si siede al tavolo giusto e il cont
   await expect(page.getByText(/Aperto · 3 cop\./)).toHaveCount(0);
 });
 
+test('walk-in dalla Sala: la mappa resta visibile, evidenzia i tavoli adatti e un tocco sceglie il tavolo', async ({ page }) => {
+  const { restaurant: r } = seed();
+  await login(page, r.host, r.admin);
+  await page.getByRole('button', { name: 'Walk-in' }).click();
+  await expect(page.getByText('Liberi e adatti')).toBeVisible();
+  // la pianta c'è ancora: i tavoli si toccano per scegliere dove far sedere il gruppo
+  await expect(page.getByRole('button', { name: /^T4: Libero/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Più coperti' }).click();         // 3 persone
+  await page.getByRole('button', { name: /^T4: Libero/ }).click();
+  await expect(page.getByRole('button', { name: /^Fai sedere 3 persone al T4$/ })).toBeVisible();
+  await shot(page, 'reservations-10-walk-in-sala');
+  await page.getByRole('button', { name: /^Fai sedere 3 persone/ }).click();
+  await expect(page.getByText(/Aperto · 3 cop\./)).toBeVisible();
+  // il conto di prova si elimina, così il tavolo torna libero per gli altri test
+  await page.getByRole('button', { name: 'Altre azioni' }).click();
+  await page.getByRole('menuitem', { name: 'Elimina conto' }).click();
+  await page.getByRole('button', { name: 'Sì, elimina' }).click();
+  await expect(page.getByText(/Aperto · 3 cop\./)).toHaveCount(0);
+});
+
 test('mese: il calendario riassume i giorni e un tocco porta alla Timeline di quel giorno', async ({ page }) => {
   const { restaurant: r } = seed();
   await login(page, r.host, r.admin);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { timelineWindow, blocksForTable, unassigned, STEP, minutesNow, clockOf } from './timeline';
+import { timelineWindow, blocksForTable, unassigned, STEP, minutesNow, clockOf, scrollToShow } from './timeline';
 import { minutesOf } from './rules';
 import { Users } from 'lucide-react';
 import { tone } from '../floor/ui';
@@ -49,6 +49,25 @@ const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, sele
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, start, end]);
   const activeRooms = rooms.filter(r => r.active && r.tables.some(t => t.active));
+
+  // Quando lo spazio cambia (si apre o si chiude il pannello a destra) l'ora di adesso e la prenotazione aperta devono restare in
+  // vista: si aspetta la fine del movimento del pannello, poi si scorre solo se serve (`scrollToShow`).
+  const selectedStart = (() => { const r = reservations.find(x => x.id === selectedId); return r ? minutesOf(r.start_time) : null; })();
+  const lastBox = useRef(0);
+  useEffect(() => {
+    if (!boxW || Math.abs(boxW - lastBox.current) < 40) { lastBox.current = lastBox.current || boxW; return undefined; }
+    lastBox.current = boxW;
+    const timer = setTimeout(() => {
+      const el = scroller.current;
+      const points = [isToday && now >= start && now <= end ? LABEL_W + x(now) : null, selectedStart != null ? LABEL_W + x(selectedStart) : null].filter(p => p !== null);
+      if (!el || !points.length) return;
+      const target = scrollToShow(el.scrollLeft, el.clientWidth, LABEL_W, points);
+      if (target !== Math.round(el.scrollLeft)) el.scrollTo({ left: target, behavior: 'smooth' });
+    }, 480);
+    return () => clearTimeout(timer);
+    // si riesamina solo al cambio di larghezza
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boxW]);
 
   const bar = (b, toneClass) => (
     <button key={`${b.kind}-${b.id}`} onClick={() => (b.kind === 'check' ? onOpenCheck(b.id) : onOpenReservation(b.id))}

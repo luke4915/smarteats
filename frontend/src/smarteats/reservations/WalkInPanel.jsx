@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from '../floor/PanelFrame';
@@ -9,15 +9,24 @@ import { walkInTables, minutesNow, clockOf } from './timeline';
 
 // Chi arriva senza prenotazione: si scelgono le persone, si vedono i tavoli liberi adesso (e per i prossimi 75 minuti,
 // senza toccare una prenotazione in arrivo) dal più adatto, e un tocco apre il conto. `preferredTableId` arriva da un
-// tocco su una cella libera della Timeline.
-const WalkInPanel = ({ rooms, reservations, checks, preferredTableId = null, onBack, onSeated }) => {
+// tocco su una cella libera della Timeline. Nella Sala il pannello è «controllato» (`chosen`, `onChoose`, `onPreview`): la
+// mappa evidenzia i tavoli adatti e un tocco sulla mappa sceglie il tavolo, così si vede la sistemazione.
+const WalkInPanel = ({ rooms, reservations, checks, preferredTableId = null, chosen: chosenProp, onChoose, onPreview, onBack, onSeated }) => {
   const { showToast } = useToast();
   const [party, setParty] = useState(2);
-  const [chosen, setChosen] = useState(preferredTableId);
+  const [localChosen, setLocalChosen] = useState(preferredTableId);
+  const chosen = onChoose ? chosenProp : localChosen;
+  const setChosen = onChoose ?? setLocalChosen;
   const [busy, setBusy] = useState(false);
   const nowMin = minutesNow();
   const { fits, rest } = walkInTables(party, rooms, reservations, checks, { nowMin });
   const suggested = chosen && [...fits, ...rest].some(t => t.id === chosen) ? chosen : fits[0]?.id ?? null;
+  // Dice alla Sala quali tavoli evidenziare (adatti, liberi, e quello proposto)
+  const fitIds = fits.map(t => t.id).join(), freeIds = [...fits, ...rest].map(t => t.id).join();
+  useEffect(() => {
+    onPreview?.(fits.map(t => t.id), [...fits, ...rest].map(t => t.id), suggested);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitIds, freeIds, suggested]);
 
   const seat = async (tableId) => {
     setBusy(true);

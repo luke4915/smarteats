@@ -48,7 +48,16 @@ const TableCard = ({ table, check, reservation, selected, onSelect }) => {
 };
 
 // Un tavolo sulla pianta: forma e misura scelte dall'admin; colore, tempo e conto dallo stato dal vivo.
-const mapTable = ({ checkOf, reservedOf, selectedId, onSelect }) => (table, style, cell) => {
+// Mentre si cerca un posto per chi arriva senza prenotazione (`walkIn`): i tavoli adatti hanno un anello azzurro, quello scelto
+// è in evidenza, gli altri liberi restano normali e gli occupati si abbassano. Un tocco sceglie il tavolo.
+const walkInClass = (walkIn, table) => {
+  if (!walkIn) return '';
+  if (!walkIn.free.includes(table.id)) return 'opacity-35';
+  if (table.id === (walkIn.chosen ?? walkIn.suggested)) return 'ring-4 ring-[var(--accent)] z-10';
+  return walkIn.fits.includes(table.id) ? 'ring-2 ring-[var(--accent)]/70' : '';
+};
+
+const mapTable = ({ checkOf, reservedOf, selectedId, onSelect, walkIn }) => (table, style, cell) => {
   const check = checkOf(table);
   const reservation = !check ? reservedOf(table) : null;
   const state = stateOf(check, reservation);
@@ -57,7 +66,7 @@ const mapTable = ({ checkOf, reservedOf, selectedId, onSelect }) => (table, styl
   return (
     <button key={table.id} style={style} disabled={!table.active} onClick={() => onSelect(table, check)}
       title={`${table.name} · ${label}`} aria-label={`${table.name}: ${label}`}
-      className={`flex flex-col items-center justify-center border-2 box-border overflow-hidden text-center ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${tone[state]} ${table.active ? interactive : 'opacity-40'} ${table.id === selectedId ? `${ring} z-10` : ''}`}>
+      className={`flex flex-col items-center justify-center border-2 box-border overflow-hidden text-center ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${tone[state]} ${table.active ? interactive : 'opacity-40'} ${walkIn ? walkInClass(walkIn, table) : (table.id === selectedId ? `${ring} z-10` : '')}`}>
       <span className="font-semibold leading-none text-[var(--text-main)] truncate max-w-full px-1" style={{ fontSize: Math.max(14, Math.min(cell * 0.5, 26)) }}>{table.name}</span>
       {check?.ready_items > 0 && (
         <span title={`${check.ready_items} ${check.ready_items === 1 ? 'pronto' : 'pronti'}`} className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 rounded-full bg-[var(--accent)] text-white text-xs font-semibold leading-none flex items-center justify-center">{check.ready_items}</span>
@@ -96,7 +105,7 @@ const Arrivals = ({ reserved, onOpen }) => {
 
 // Le sale con i tavoli: la pianta disegnata dall'admin occupa tutta l'area (scalata per starci intera) e mostra lo stato dal
 // vivo. Il selettore delle sale compare solo se sono più di una; lo stato si legge dai colori e dai numeri sul tavolo, senza filtri. I tavoli non ancora piazzati restano schede sotto la pianta.
-const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect, onWalkIn, onOpenReservation, reserve = 0 }) => {
+const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSelect, onWalkIn, onOpenReservation, reserve = 0, walkIn = null }) => {
   const phone = useIsMobile(640);                 // sul telefono i tavoli sono schede, non la pianta
   const [roomId, setRoomId] = useState(null);
   const byTable = new Map(checks.map(c => [c.table_id, c]));
@@ -133,8 +142,8 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
       )}
       {!phone && room && room.tables.some(isPlaced) && (
         <div className="flex-1 min-h-[200px]">
-          <FloorCanvas fit reserve={reserve} focusTable={room.tables.find(t => t.id === selectedTableId)} gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements}
-            renderTable={mapTable({ checkOf, reservedOf: (t) => reserved.get(t.id), selectedId: selectedTableId, onSelect })} />
+          <FloorCanvas fit reserve={reserve} focusTable={walkIn ? null : room.tables.find(t => t.id === selectedTableId)} gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements}
+            renderTable={mapTable({ checkOf, reservedOf: (t) => reserved.get(t.id), selectedId: selectedTableId, onSelect, walkIn })} />
         </div>
       )}
       {!phone && loose.length > 0 && (

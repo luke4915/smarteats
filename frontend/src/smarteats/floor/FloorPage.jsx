@@ -6,6 +6,7 @@ import { useToast } from '../../context/useToast';
 import { useIsMobile } from '../../hooks/useBreakpoint';
 import FloorView from './FloorView';
 import SidePanel from './SidePanel';
+import WalkInPanel from '../reservations/WalkInPanel';
 import SlidePanel from './SlidePanel';
 import { usePanelReserve } from './usePanelReserve';
 import OrderMenu from './OrderMenu';
@@ -29,6 +30,7 @@ const FloorPage = ({ user, service, event }) => {
   const [checks, setChecks] = useState([]);
   const [reservations, setReservations] = useState([]);   // prenotazioni di oggi (modulo bookings): per segnare i tavoli prenotati
   const [selection, setSelection] = useState(null);   // { table, checkId|null }
+  const [walkIn, setWalkIn] = useState(null);         // chi arriva senza prenotazione: { chosen: id del tavolo scelto|null, fits: id dei tavoli adatti, free: id dei tavoli liberi }
   const location = useLocation();
   const navigate = useNavigate();
   const [ordering, setOrdering] = useState(false);
@@ -37,7 +39,7 @@ const FloorPage = ({ user, service, event }) => {
   const products = useProducts(ordering);
   const courses = useCourses();
   const modifiers = useModifiers();
-  const reserve = usePanelReserve(!!selection && !narrow);   // spazio che il pannello toglie all'area di lavoro
+  const reserve = usePanelReserve(!!(selection || walkIn) && !narrow);   // spazio che il pannello toglie all'area di lavoro
   const [picking, setPicking] = useState(null);       // piatto con opzioni da scegliere prima di aggiungerlo
 
   const load = useCallback(async () => {
@@ -73,10 +75,17 @@ const FloorPage = ({ user, service, event }) => {
   const reset = () => { setPicking(null); setOrdering(false); setDraftOpen(false); setCart([]); };
   const close = () => { reset(); setSelection(null); load(); };
   const select = (table, check) => {
+    if (walkIn) return pickForWalkIn(table);
     if (!check && !service) return showToast('Apri il servizio per aprire i tavoli', 'warning');
     if (selection?.checkId !== (check?.id ?? null) || selection?.table.id !== table.id) reset();
     setSelection({ table, checkId: check?.id ?? null });
   };
+  // Walk-in: un tocco sulla mappa sceglie il tavolo (solo se è libero adesso)
+  const pickForWalkIn = (table) => {
+    if (!walkIn.free.includes(table.id)) return showToast(`${table.name} non è libero: scegline uno libero`, 'warning');
+    setWalkIn(w => ({ ...w, chosen: table.id }));
+  };
+  const closeWalkIn = () => setWalkIn(null);
   const addWith = (product, chosen = []) => {
     const res = addToCart(cart, { ...product, course_id: courseOfProduct(product, courses) }, 1, chosen);
     if (res.blocked) return showToast(`"${product.name}": disponibilità esaurita`, 'warning');
@@ -87,7 +96,16 @@ const FloorPage = ({ user, service, event }) => {
 
   if (!rooms) return <div className={`${card} flex-1`}><p className="text-[var(--text-muted)]">Caricamento sala…</p></div>;
 
-  const side = (
+  const seatedWalkIn = (check) => {
+    const table = rooms.flatMap(r => r.tables).find(t => t.id === check.table_id);
+    setWalkIn(null); setSelection({ table, checkId: check.id }); load();
+  };
+  const walkInPanel = walkIn && (
+    <WalkInPanel rooms={rooms.filter(r => r.active)} reservations={reservations} checks={checks} chosen={walkIn.chosen}
+      onChoose={(id) => setWalkIn(w => ({ ...w, chosen: id }))} onPreview={(fits, free, suggested) => setWalkIn(w => (w && (w.fits.join() !== fits.join() || w.free.join() !== free.join() || w.suggested !== suggested) ? { ...w, fits, free, suggested } : w))}
+      onBack={closeWalkIn} onSeated={seatedWalkIn} />
+  );
+  const side = walkInPanel || (
     <SidePanel selection={selection} reservation={selection ? reserved.get(selection.table.id) : null} user={user} service={service} event={event} ordering={ordering}
       cart={cart} setCart={setCart} products={products} courses={courses}
       onBack={close} onOpened={(check) => { setSelection(s => ({ ...s, checkId: check.id })); load(); }} onBusy={close}
@@ -95,7 +113,7 @@ const FloorPage = ({ user, service, event }) => {
       onSent={() => { reset(); load(); }} onChanged={load}
       onSwitch={(check) => { reset(); setSelection({ table: rooms.flatMap(r => r.tables).find(t => t.id === check.table_id), checkId: check.id }); load(); }} />
   );
-  const floor = <FloorView reserve={reserve} rooms={rooms} checks={checks} reserved={reserved} selectedTableId={selection?.table.id} onSelect={select} onWalkIn={() => navigate('/reservations', { state: { walkIn: true } })}
+  const floor = <FloorView reserve={reserve} rooms={rooms} checks={checks} reserved={reserved} selectedTableId={selection?.table.id} onSelect={select} walkIn={walkIn} onWalkIn={() => { reset(); setSelection(null); setWalkIn({ chosen: null, suggested: null, fits: [], free: [] }); }}
     onOpenReservation={(r) => navigate('/reservations', { state: { reservationId: r.id, date: r.date } })} />;
   const menu = picking
     ? <ModifierPicker key={picking.id} product={picking} groups={modifiers.forProduct(picking)} onCancel={() => setPicking(null)} onAdd={(chosen) => { addWith(picking, chosen); setPicking(null); }} />
@@ -108,7 +126,7 @@ const FloorPage = ({ user, service, event }) => {
         <div style={{ paddingRight: ordering && reserve ? reserve + 20 : undefined }}
           className={`${card} h-full transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)] ${ordering ? 'overflow-y-auto no-scrollbar' : 'overflow-hidden'}`}>{ordering ? menu : floor}</div>
         {/* Senza un tavolo scelto la pianta prende tutto lo spazio: il pannello scorre dentro solo quando serve */}
-        <SlidePanel open={!!selection}>{side}</SlidePanel>
+        <SlidePanel open={!!(selection || walkIn)}>{side}</SlidePanel>
       </div>
     );
   }
@@ -117,7 +135,7 @@ const FloorPage = ({ user, service, event }) => {
   return (
     <>
       <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{floor}</div>
-      {selection && (
+      {(selection || walkIn) && (
         <div className="motion-page fixed inset-0 z-[1700] bg-[var(--bg-main)] p-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
           {ordering ? (
             <div className="flex flex-col h-full gap-3">

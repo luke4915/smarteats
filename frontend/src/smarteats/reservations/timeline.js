@@ -67,3 +67,22 @@ export function walkInTables(party, rooms, reservations, checks, { nowMin, horiz
   const rest = free.filter(t => t.seats < party).sort((a, b) => b.seats - a.seats || a.name.localeCompare(b.name, 'it', { numeric: true }));
   return { fits, rest };
 }
+
+// Dove far scorrere la Timeline perché i punti importanti (l'ora di adesso, l'inizio della prenotazione aperta) restino in vista
+// quando lo spazio si restringe (si apre il pannello a destra). `points` sono posizioni in pixel sul contenuto (colonna dei tavoli
+// compresa), il primo ha la precedenza; `labelW` è la colonna fissa dei tavoli, che copre i primi pixel. Se i punti già si vedono
+// non si muove nulla (ritorna `scrollLeft`).
+export function scrollToShow(scrollLeft, viewW, labelW, points, margin = 28) {
+  const visible = viewW - labelW;
+  const fit = (list) => {
+    const lo = Math.min(...list), hi = Math.max(...list);
+    const min = hi + margin - viewW;               // non oltre: l'ultimo punto uscirebbe a destra
+    const max = lo - labelW - margin;              // non prima: il primo punto finirebbe sotto i tavoli
+    if (min > max) return null;
+    if (scrollLeft >= min && scrollLeft <= max) return scrollLeft;
+    const preferred = (lo + hi) / 2 - labelW - visible * (list.length > 1 ? 0.5 : 0.4);   // quando si scorre, il punto va verso il centro
+    return Math.min(Math.max(preferred, min), max);
+  };
+  const next = points.length > 1 ? fit(points) ?? fit(points.slice(0, 1)) : fit(points);
+  return Math.max(0, Math.round(next ?? scrollLeft));
+}
