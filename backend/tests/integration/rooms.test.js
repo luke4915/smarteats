@@ -73,7 +73,7 @@ describe('sale e tavoli', () => {
     const [a, b] = [(await admin1.post('/rooms', { name: 'Sala A' })).body, (await admin1.post('/rooms', { name: 'Sala B' })).body];
     const t = await admin1.post(`/rooms/${a.id}/tables`, { name: 'T1', seats: 4 });
     assert.equal(t.status, 201, JSON.stringify(t.body));
-    assert.deepEqual(t.body, { id: t.body.id, room_id: a.id, name: 'T1', seats: 4, active: true, x: null, y: null, w: null, h: null, shape: 'rect' });
+    assert.deepEqual(t.body, { id: t.body.id, room_id: a.id, name: 'T1', seats: 4, seats_min: 4, active: true, x: null, y: null, w: null, h: null, shape: 'rect' });
     assert.equal((await admin1.post(`/rooms/${a.id}/tables`, { name: 't1' })).status, 409);
     assert.equal((await admin1.post(`/rooms/${b.id}/tables`, { name: 'T1' })).status, 201, 'stesso nome in un\'altra sala');
     assert.equal((await admin1.post(`/rooms/${a.id}/tables`, { name: 'T2' })).body.seats, 2, 'posti predefiniti');
@@ -87,6 +87,22 @@ describe('sale e tavoli', () => {
     assert.equal((await admin1.put(`/tables/${t.body.id}`, {})).status, 400);
     assert.equal((await admin1.put('/tables/999999999', { seats: 2 })).status, 404);
     assert.equal((await cashier.put(`/tables/${t.body.id}`, { seats: 2 })).status, 403);
+  });
+
+  it('tavoli: intervallo di posti (minimo e massimo), il minimo non supera mai il massimo', async () => {
+    const room = (await admin1.post('/rooms', { name: `Intervallo ${Date.now()}` })).body;
+    const t = (await admin1.post(`/rooms/${room.id}/tables`, { name: 'R1', seats: 6, seats_min: 4 })).body;
+    assert.deepEqual([t.seats_min, t.seats], [4, 6]);
+    assert.equal((await admin1.post(`/rooms/${room.id}/tables`, { name: 'R2', seats: 4, seats_min: 5 })).status, 400, 'minimo oltre il massimo');
+    assert.equal((await admin1.put(`/tables/${t.id}`, { seats_min: 7 })).status, 400, 'minimo oltre i posti attuali');
+    assert.equal((await admin1.put(`/tables/${t.id}`, { seats_min: 2 })).body.seats_min, 2);
+    // se il massimo scende sotto il minimo, il minimo lo segue; se sale, il minimo non cambia
+    assert.deepEqual((await admin1.put(`/tables/${t.id}`, { seats: 1 })).body, { ...t, seats: 1, seats_min: 1 });
+    const up = (await admin1.put(`/tables/${t.id}`, { seats: 8 })).body;
+    assert.deepEqual([up.seats_min, up.seats], [1, 8]);
+    const bulk = await admin1.post(`/rooms/${room.id}/tables/bulk`, { prefix: 'B', from: 1, to: 2, seats: 6, seats_min: 4 });
+    assert.ok(bulk.body.created.every(x => x.seats === 6 && x.seats_min === 4));
+    assert.equal((await admin1.post(`/rooms/${room.id}/tables/bulk`, { prefix: 'C', from: 1, to: 2, seats: 2, seats_min: 3 })).status, 400);
   });
 
   it('tavoli in serie: prefisso e numeri, i nomi già presenti si saltano, limite di 100', async () => {

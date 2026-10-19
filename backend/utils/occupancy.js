@@ -52,7 +52,7 @@ export function buildOccupancy({ checks, seats, revenue }) {
     peak,
     fit: {
       rate: seatsSum ? round(coversSum / seatsSum, 3) : null,
-      oversized: withTable.filter(c => Number(c.seats) - Number(c.covers) >= 2).length,
+      oversized: withTable.filter(c => Number(c.seats_min ?? c.seats) - Number(c.covers) >= 2).length,
       checks: withTable.length,
     },
   };

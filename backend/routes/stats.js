@@ -106,7 +106,7 @@ router.get('/restaurant', authenticate, requireModule('stats'), requireModule('t
       req.db.query(
         `SELECT c.session_id, EXTRACT(EPOCH FROM c.opened_at)::float8 AS opened_at, EXTRACT(EPOCH FROM c.closed_at)::float8 AS closed_at,
                 (EXTRACT(hour FROM c.opened_at AT TIME ZONE $2) * 60 + EXTRACT(minute FROM c.opened_at AT TIME ZONE $2))::int AS start,
-                c.covers, t.seats
+                c.covers, t.seats, t.seats_min
          FROM checks c LEFT JOIN dining_tables t ON t.id = c.table_id
          WHERE c.status = 'paid' AND c.closed_at IS NOT NULL ${checkSessions}`, [sf, tz]),
       req.db.query(`SELECT COALESCE(SUM(seats), 0)::int AS seats FROM dining_tables WHERE active`),

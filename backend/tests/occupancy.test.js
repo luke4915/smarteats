@@ -45,6 +45,13 @@ test('abbinamento gruppo-tavolo: coperti ÷ posti, e quanti tavoli avevano almen
   assert.equal(o.fit.oversized, 1);
 });
 
+test('un tavolo con intervallo (4-6): è troppo grande solo se il gruppo sta almeno 2 sotto il minimo', () => {
+  const range = (covers) => ({ ...check(1, 1200, 60, covers, 6), seats_min: 4 });
+  const o = buildOccupancy({ checks: [range(2), range(3), range(5)], seats: 12, revenue: 0 });
+  assert.equal(o.fit.oversized, 1, 'solo il gruppo da 2 (4 − 2 ≥ 2); 3 e 5 stanno bene');
+  assert.equal(o.fit.rate, +(10 / 18).toFixed(3), 'il riempimento si misura sul massimo dei posti');
+});
+
 test('prenotazioni: non presentati sui soli arrivati o assenti, annullati e portale sul totale, anticipo medio', () => {
   assert.equal(buildBookingStats([]), null);
   const b = buildBookingStats([
