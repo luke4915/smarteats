@@ -95,7 +95,7 @@ const FloorPage = ({ user, service, event }) => {
       onSent={() => { reset(); load(); }} onChanged={load}
       onSwitch={(check) => { reset(); setSelection({ table: rooms.flatMap(r => r.tables).find(t => t.id === check.table_id), checkId: check.id }); load(); }} />
   );
-  const floor = <FloorView reserve={0} rooms={rooms} checks={checks} reserved={reserved} selectedTableId={selection?.table.id} onSelect={select} onWalkIn={() => navigate('/reservations', { state: { walkIn: true } })}
+  const floor = <FloorView reserve={reserve} rooms={rooms} checks={checks} reserved={reserved} selectedTableId={selection?.table.id} onSelect={select} onWalkIn={() => navigate('/reservations', { state: { walkIn: true } })}
     onOpenReservation={(r) => navigate('/reservations', { state: { reservationId: r.id, date: r.date } })} />;
   const menu = picking
     ? <ModifierPicker key={picking.id} product={picking} groups={modifiers.forProduct(picking)} onCancel={() => setPicking(null)} onAdd={(chosen) => { addWith(picking, chosen); setPicking(null); }} />

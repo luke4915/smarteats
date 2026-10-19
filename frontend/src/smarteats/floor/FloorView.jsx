@@ -132,7 +132,7 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
       )}
       {!phone && room && room.tables.some(isPlaced) && (
         <div className="flex-1 min-h-[200px]">
-          <FloorCanvas fit reserve={reserve} gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements}
+          <FloorCanvas fit reserve={reserve} focusTable={room.tables.find(t => t.id === selectedTableId)} gridW={room.grid_w} gridH={room.grid_h} tables={room.tables} elements={room.elements}
             renderTable={mapTable({ checkOf, reservedOf: (t) => reserved.get(t.id), selectedId: selectedTableId, onSelect })} />
         </div>
       )}
