@@ -54,19 +54,19 @@ const at = (id, seats, x, y, extra = {}) => ({ id, seats, roomId: 1, x, y, w: 2,
 
 test('tavolo consigliato: il più piccolo che basta (meno posti sprecati)', () => {
   const free = [at(1, 2, 0, 0), at(2, 6, 4, 0), at(3, 4, 8, 0), at(4, 5, 12, 0)];
-  assert.deepEqual(suggestTables(4, free), { ids: [3], seats: 4, waste: 0 });
-  assert.deepEqual(suggestTables(3, free), { ids: [3], seats: 4, waste: 1 }, 'tre persone: il da 4, non il da 6');
-  assert.deepEqual(suggestTables(1, free), { ids: [1], seats: 2, waste: 1 });
+  assert.deepEqual(suggestTables(4, free), { ids: [3], seats: 4, seatsMin: 4, waste: 0, under: false });
+  assert.deepEqual(suggestTables(3, free), { ids: [3], seats: 4, seatsMin: 4, waste: 1, under: false }, 'tre persone: il da 4, non il da 6');
+  assert.deepEqual(suggestTables(1, free), { ids: [1], seats: 2, seatsMin: 2, waste: 1, under: false });
 });
 
 test('tavoli vicini: si uniscono solo se sono a pochi passi, non agli antipodi della sala', () => {
   // T1 e T4 hanno i posti giusti ma sono in capi opposti della sala; T1 e T2 sono affiancati
   const free = [at(1, 4, 0, 0), at(2, 4, 3, 0), at(3, 4, 20, 0), at(4, 4, 20, 8)];
-  assert.deepEqual(suggestTables(8, free), { ids: [1, 2], seats: 8, waste: 0 });
+  assert.deepEqual(suggestTables(8, free), { ids: [1, 2], seats: 8, seatsMin: 8, waste: 0, under: false });
   // senza una coppia vicina non si suggerisce nulla (si sceglie a mano)
   assert.equal(suggestTables(8, [at(1, 4, 0, 0), at(3, 4, 20, 0)]), null);
   // tra due coppie vicine vince quella con meno posti sprecati
-  assert.deepEqual(suggestTables(7, [at(1, 4, 0, 0), at(2, 4, 3, 0), at(3, 6, 10, 0), at(4, 4, 13, 0)]), { ids: [1, 2], seats: 8, waste: 1 });
+  assert.deepEqual(suggestTables(7, [at(1, 4, 0, 0), at(2, 4, 3, 0), at(3, 6, 10, 0), at(4, 4, 13, 0)]), { ids: [1, 2], seats: 8, seatsMin: 8, waste: 1, under: false });
 });
 
 test('tavoli vicini: gap, connessione e tavoli non piazzati', () => {
@@ -85,4 +85,30 @@ test('tavolo consigliato: a parità di tutto vince la sala indicata', () => {
   const free = [at(1, 4, 0, 0), { ...at(2, 4, 0, 0), roomId: 2 }];
   assert.deepEqual(suggestTables(4, free, { preferRoomId: 2 }).ids, [2]);
   assert.deepEqual(suggestTables(4, free).ids, [1]);
+});
+
+test('intervalli: il tavolo dove il gruppo sta nell\'intervallo vince; sotto il minimo si siede lo stesso', () => {
+  const range = (id, min, max, x, extra = {}) => ({ ...at(id, max, x, 0, extra), seatsMin: min });
+  // 5 persone: il «4–6» è perfetto; il «2–4» non basta; l'«8–10» è troppo grande
+  const free = [range(1, 2, 4, 0), range(2, 4, 6, 4), range(3, 8, 10, 8)];
+  assert.deepEqual(suggestTables(5, free), { ids: [2], seats: 6, seatsMin: 4, waste: 1, under: false });
+  // 2 persone: il «2–4» (sotto di niente) batte il «4–6» (sotto di 2)
+  assert.deepEqual(suggestTables(2, free).ids, [1]);
+  // 2 persone con solo tavoli grandi: ci si siede lo stesso, al meno peggio, e il risultato lo dice (`under`)
+  const big = suggestTables(2, [range(2, 4, 6, 4), range(3, 8, 10, 8)]);
+  assert.deepEqual([big.ids, big.under], [[2], true]);
+  // gruppo oltre tutti i tavoli singoli: si uniscono tavoli vicini, i minimi e i massimi si sommano
+  const joined = suggestTables(9, [range(1, 4, 6, 0), range(2, 4, 6, 3), range(3, 2, 2, 20)]);
+  assert.deepEqual([joined.ids, joined.seatsMin, joined.seats], [[1, 2], 8, 12]);
+});
+
+test('4 persone: meglio due tavoli piccoli vicini di un tavolo enorme', () => {
+  const free = [{ ...at(1, 2, 0, 0), seatsMin: 2 }, { ...at(2, 2, 3, 0), seatsMin: 2 }, { ...at(3, 10, 10, 0), seatsMin: 8 }];
+  assert.deepEqual(suggestTables(4, free).ids, [1, 2]);
+});
+
+test('un gruppo grande una sistemazione la trova anche con molti tavoli piccoli (fino a 5 uniti)', () => {
+  const free = [1, 2, 3, 4, 5].map(i => at(i, 2, (i - 1) * 3, 0));
+  assert.equal(suggestTables(10, free)?.ids.length, 5);
+  assert.equal(suggestTables(11, free), null, 'oltre tutti i posti non c\'è nulla da suggerire');
 });

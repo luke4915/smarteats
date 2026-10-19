@@ -7,6 +7,7 @@ import { tableState, formatEuro } from './checkMath';
 import { minutesOf } from '../reservations/rules';
 import Segmented from './Segmented';
 import { tone, btn } from './ui';
+import { seatsLabel } from './seats';
 
 const minutesSince = (iso) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
 const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
@@ -34,7 +35,7 @@ const TableCard = ({ table, check, reservation, selected, onSelect }) => {
       className={`text-left rounded-lg border p-3.5 min-h-[104px] flex flex-col justify-between ${tone[state]} ${table.active ? interactive : 'opacity-40'} ${selected ? ring : ''}`}>
       <div className="w-full">
         <span className="block text-2xl font-semibold leading-none text-[var(--text-main)]">{table.name}</span>
-        <span className="mt-2 flex items-center gap-1.5 text-base font-medium tabular-nums text-[var(--text-muted)]"><Users size={16} aria-hidden="true" />{check ? check.covers : table.seats}</span>
+        <span className="mt-2 flex items-center gap-1.5 text-base font-medium tabular-nums text-[var(--text-muted)]"><Users size={16} aria-hidden="true" />{check ? check.covers : seatsLabel(table)}</span>
       </div>
       <div className="text-xs">
         <p className="font-semibold text-[var(--text-main)]">{table.active ? label : 'Non in uso'}</p>
@@ -63,7 +64,7 @@ const mapTable = ({ checkOf, reservedOf, selectedId, onSelect }) => (table, styl
       )}
       {height >= 34 && (
         <span className="flex items-center gap-1 leading-none mt-1.5 font-medium text-[var(--text-muted)] tabular-nums" style={{ fontSize: Math.max(12, Math.min(cell * 0.36, 18)) }}>
-          <Users size={Math.max(12, Math.min(cell * 0.34, 18))} aria-hidden="true" />{check ? check.covers : table.seats}
+          <Users size={Math.max(12, Math.min(cell * 0.34, 18))} aria-hidden="true" />{check ? check.covers : seatsLabel(table)}
         </span>
       )}
       {check && height >= 76 && (

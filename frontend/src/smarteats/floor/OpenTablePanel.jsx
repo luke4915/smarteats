@@ -4,12 +4,13 @@ import { useToast } from '../../context/useToast';
 import PanelFrame from './PanelFrame';
 import CoversStepper from './CoversStepper';
 import { btnPrimary, btn } from './ui';
+import { minOf, seatsLabel } from './seats';
 
 // Un tavolo libero: si scelgono i coperti e si apre il conto, nello stesso pannello del conto. Se il tavolo ha una
 // prenotazione confermata compare in cima, con «Arrivato»: apre il conto con i coperti della prenotazione.
 const OpenTablePanel = ({ table, reservation = null, onBack, onOpened, onBusy }) => {
   const { showToast } = useToast();
-  const [covers, setCovers] = useState(reservation?.party_size ?? table.seats);
+  const [covers, setCovers] = useState(reservation?.party_size ?? minOf(table));
   const [busy, setBusy] = useState(false);
 
   const run = async (action) => {
@@ -24,7 +25,7 @@ const OpenTablePanel = ({ table, reservation = null, onBack, onOpened, onBusy })
   const arrived = () => run(async () => (await fetchWithAuth(`/bookings/reservations/${reservation.id}/arrived`, { method: 'POST', body: { table_id: table.id } })).check);
 
   return (
-    <PanelFrame title={table.name} subtitle={`Libero · ${table.seats} posti`} onBack={onBack}
+    <PanelFrame title={table.name} subtitle={`Libero · ${seatsLabel(table)} posti`} onBack={onBack}
       footer={
         reservation ? (
           <div className="space-y-2">

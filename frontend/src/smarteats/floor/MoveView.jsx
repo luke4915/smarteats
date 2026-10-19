@@ -5,6 +5,7 @@ import PanelFrame from './PanelFrame';
 import { formatEuro } from './checkMath';
 import { label, row } from './ui';
 import Segmented from './Segmented';
+import { seatsLabel } from './seats';
 
 // Cambio di posto: «Sposta» il conto su un tavolo libero, «Unisci» lo riunisce a quello di un altro tavolo
 // (comande, pagamenti e coperti confluiscono lì). Tutto nello stesso pannello del conto.
@@ -49,7 +50,7 @@ const MoveView = ({ detail, canMerge, onBack, onMoved, onMerged }) => {
               {free.map(t => (
                 <button key={t.id} disabled={busy} onClick={() => run('move', { table_id: t.id }, onMoved)}
                   className={`${row} text-center font-semibold text-sm text-[var(--text-main)] hover:!border-[var(--accent)] active:scale-95 transition-all disabled:opacity-50`}>
-                  {t.name}<span className="block text-xs font-bold text-[var(--text-muted)]">{t.seats} posti</span>
+                  {t.name}<span className="block text-xs font-bold text-[var(--text-muted)]">{seatsLabel(t)} posti</span>
                 </button>
               ))}
             </div>

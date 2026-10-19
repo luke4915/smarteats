@@ -1,4 +1,5 @@
 import { minutesOf, isActive } from './rules.js';
+import { effectiveMin, fitOf, fitCost } from '../floor/seats.js';
 
 // Logica pura della vista Timeline (tavoli in riga, ore in colonna) e dei walk-in. Tutti gli orari sono minuti dalla mezzanotte.
 export const STEP = 15;                  // una colonna = 15 minuti
@@ -56,7 +57,13 @@ export function walkInTables(party, rooms, reservations, checks, { nowMin, horiz
     if (start < window.end && window.start < start + Number(r.duration_minutes)) r.table_ids.forEach(id => reserved.add(id));
   }
   const free = rooms.flatMap(room => room.tables.filter(t => t.active && !busy.has(t.id) && !reserved.has(t.id)).map(t => ({ ...t, roomName: room.name })));
-  const fits = free.filter(t => t.seats >= party).sort((a, b) => (a.seats - party) - (b.seats - party) || a.name.localeCompare(b.name, 'it', { numeric: true }));
+  // Dal tavolo dove il gruppo sta meglio (floor/seats.js): nell'intervallo di posti e senza spreco; sotto il minimo ci si siede
+  // comunque, ma dopo. `under` dice che il tavolo è più grande di ciò che il gruppo richiederebbe.
+  const withFit = free.filter(t => t.seats >= party).map(t => {
+    const fit = fitOf(party, effectiveMin(t), t.seats);
+    return { ...t, under: fit.shortfall > 0, cost: fitCost(fit) };
+  });
+  const fits = withFit.sort((a, b) => a.cost - b.cost || a.name.localeCompare(b.name, 'it', { numeric: true }));
   const rest = free.filter(t => t.seats < party).sort((a, b) => b.seats - a.seats || a.name.localeCompare(b.name, 'it', { numeric: true }));
   return { fits, rest };
 }

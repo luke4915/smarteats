@@ -1,6 +1,8 @@
 // Logica pura della vista Prenotazioni (date, gruppi dell'agenda, tavoli occupati, collegamenti per il messaggio).
 // Le regole vere (posti, tavoli, stati) le applica il server (backend/utils/bookings.js): qui servono solo a mostrare.
 
+import { minOf, effectiveMin, fitOf, fitCost } from '../floor/seats.js';
+
 const pad = (n) => String(n).padStart(2, '0');
 
 // La data di oggi sul dispositivo, `AAAA-MM-GG`. Il locale prenota nel proprio giorno, senza fusi orari.
@@ -100,35 +102,42 @@ export function tablesConnected(tables, maxGap = MAX_GAP) {
   return seen.size === tables.length;
 }
 
-// Il tavolo (o i tavoli) migliori per un gruppo: pochi tavoli, vicini fra loro, meno posti sprecati possibile, nella
-// stessa sala. `candidates` = [{ id, seats, roomId, x, y, w, h }] già liberi per quel turno. Un solo tavolo che basta
-// vince sempre su due uniti; fra più tavoli contano nell'ordine: quanti sono, i posti sprecati, la sala indicata
-// (`preferRoomId`) e la distanza complessiva. Si uniscono al massimo tre tavoli, tutti vicini. Ritorna
-// { ids, seats, waste } oppure null se nulla basta (allora si sceglie a mano).
+// Il tavolo (o i tavoli) migliori per un gruppo: quello che riempie meglio il locale. Ogni tavolo ha un intervallo di posti
+// (`seatsMin`…`seats`): il gruppo non deve superare il massimo, mentre sotto il minimo si siede comunque (il modo si trova
+// sempre) ma con un costo. Vince la scelta di costo più basso (vedi floor/seats.js): pochi posti vuoti, il tavolo giusto
+// e non uno più grande del necessario, pochi tavoli uniti. A parità contano la sala indicata (`preferRoomId`) e la
+// distanza fra i tavoli. I tavoli uniti devono essere vicini e della stessa sala. Si provano fino a 3 tavoli e, se non
+// basta, fino a 5: un gruppo grande una soluzione la trova se i tavoli liberi ci sono.
+// `candidates` = [{ id, seats, seatsMin?, roomId, x, y, w, h }] già liberi per quel turno.
+// Ritorna { ids, seats (massimo totale), seatsMin (minimo totale), waste (posti vuoti), under (gruppo sotto il minimo) }
+// oppure null se nemmeno tutti i tavoli liberi insieme bastano (allora si sceglie a mano).
 export function suggestTables(party, candidates, { preferRoomId = null, maxTables = 3 } = {}) {
-  let best = null;
-  const consider = (combo) => {
-    const seats = combo.reduce((n, c) => n + c.seats, 0);
-    if (seats < party || !tablesConnected(combo)) return;
-    let spread = 0;
-    for (let i = 0; i < combo.length; i++) for (let j = i + 1; j < combo.length; j++) spread += gapBetween(combo[i], combo[j]);
-    const candidate = { combo, seats, waste: seats - party, count: combo.length, room: combo[0].roomId === preferRoomId ? 0 : 1, spread };
-    const keys = ['count', 'waste', 'room', 'spread'];
-    if (!best || keys.some((k, n) => candidate[k] !== best[k] && keys.slice(0, n).every(p => candidate[p] === best[p]) && candidate[k] < best[k])) best = candidate;
-  };
   const byRoom = new Map();
   for (const c of candidates.filter(c => c.seats > 0)) byRoom.set(c.roomId, [...(byRoom.get(c.roomId) ?? []), c]);
-  for (const list of byRoom.values()) {
-    const n = list.length;
-    for (let i = 0; i < n; i++) {
-      consider([list[i]]);
-      if (maxTables < 2) continue;
-      for (let j = i + 1; j < n; j++) {
-        consider([list[i], list[j]]);
-        if (maxTables < 3) continue;
-        for (let k = j + 1; k < n; k++) consider([list[i], list[j], list[k]]);
-      }
-    }
-  }
-  return best ? { ids: best.combo.map(c => c.id), seats: best.seats, waste: best.waste } : null;
+
+  const search = (limit) => {
+    let best = null;
+    const consider = (combo) => {
+      const maxSum = combo.reduce((n, c) => n + c.seats, 0);
+      const minSum = combo.reduce((n, c) => n + effectiveMin(c), 0);
+      const fit = fitOf(party, minSum, maxSum);
+      if (!fit || !tablesConnected(combo)) return;
+      let spread = 0;
+      for (let i = 0; i < combo.length; i++) for (let j = i + 1; j < combo.length; j++) spread += gapBetween(combo[i], combo[j]);
+      const candidate = { combo, maxSum, minSum: combo.reduce((n, c) => n + minOf(c), 0), fit, cost: fitCost(fit, combo.length), room: combo[0].roomId === preferRoomId ? 0 : 1, spread };
+      const keys = ['cost', 'room', 'spread'];
+      if (!best || keys.some((k, n) => candidate[k] !== best[k] && keys.slice(0, n).every(p => candidate[p] === best[p]) && candidate[k] < best[k])) best = candidate;
+    };
+    // tutte le combinazioni di 1…limit tavoli della stessa sala
+    const grow = (list, start, combo) => {
+      if (combo.length) consider(combo);
+      if (combo.length === limit) return;
+      for (let i = start; i < list.length; i++) grow(list, i + 1, [...combo, list[i]]);
+    };
+    for (const list of byRoom.values()) grow(list, 0, []);
+    return best;
+  };
+
+  const best = search(maxTables) ?? (maxTables < 5 ? search(5) : null);
+  return best ? { ids: best.combo.map(c => c.id), seats: best.maxSum, seatsMin: best.minSum, waste: best.fit.waste, under: best.fit.shortfall > 0 } : null;
 }

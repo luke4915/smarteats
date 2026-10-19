@@ -7,10 +7,11 @@ import Segmented from '../floor/Segmented';
 import { useDraft } from './useDraft';
 import { conflictIds, moveBy, resizeBy, resizeFrom, defaultSize, findFreeSpot, isPlaced, clamp, lineBetween, HANDLES } from './geometry';
 import { ELEMENT_CLASS } from './elementStyle';
+import { seatsLabel } from '../floor/seats';
 
 const toDraft = (room) => ({
   gridW: room.grid_w, gridH: room.grid_h,
-  tables: room.tables.map(({ id, name, seats, active, x, y, w, h, shape }) => ({ id, name, seats, active, x, y, w, h, shape })),
+  tables: room.tables.map(({ id, name, seats, seats_min, active, x, y, w, h, shape }) => ({ id, name, seats, seats_min, active, x, y, w, h, shape })),
   // id solo lato client ("e12" salvati, "n3" nuovi): il server li risalva tutti insieme alla pianta
   elements: (room.elements ?? []).map(({ id, kind, x, y, w, h }) => ({ id: `e${id}`, kind, x, y, w, h })),
 });
@@ -201,7 +202,7 @@ const FloorEditor = ({ room, onClose, onSaved }) => {
         <div className={`w-full h-full flex flex-col items-center justify-center border-2 box-border overflow-hidden ${t.shape === 'round' ? 'rounded-full' : 'rounded-lg'}
           ${bad ? 'border-red-500 bg-red-500/20' : 'border-[var(--accent)] bg-[var(--accent)]/15'} ${isSel ? 'ring-2 ring-offset-1 ring-[var(--text-main)]' : ''}`}>
           <span className="font-semibold text-[var(--text-main)] leading-none truncate max-w-full px-1" style={{ fontSize: Math.max(10, Math.min(cell * 0.45, 18)) }}>{t.name}</span>
-          {cell >= 24 && t.h > 1 && <span className="text-[var(--text-muted)] leading-none mt-0.5" style={{ fontSize: Math.max(9, cell * 0.3) }}>{t.seats} posti</span>}
+          {cell >= 24 && t.h > 1 && <span className="text-[var(--text-muted)] leading-none mt-0.5" style={{ fontSize: Math.max(9, cell * 0.3) }}>{seatsLabel(t)} posti</span>}
         </div>
         {isSel && tool === 'select' && renderHandles(t.id, cell)}
       </div>
@@ -287,7 +288,7 @@ const FloorEditor = ({ room, onClose, onSaved }) => {
             {pending.length === 0
               ? <p className="text-sm text-[var(--text-muted)]">Tutti i tavoli sono sulla pianta. I nuovi si creano in Impostazioni → Sala e tavoli.</p>
               : <div className="flex flex-wrap gap-2">{pending.map(t => (
-                <button key={t.id} className={btn} onClick={() => place(t)} title="Piazza sulla pianta">{t.name}<span className="text-[var(--text-muted)]">{t.seats}p</span></button>
+                <button key={t.id} className={btn} onClick={() => place(t)} title="Piazza sulla pianta">{t.name}<span className="text-[var(--text-muted)]">{seatsLabel(t)}p</span></button>
               ))}</div>}
           </section>
 
@@ -295,7 +296,7 @@ const FloorEditor = ({ room, onClose, onSaved }) => {
             <p className={label}>{selectedEl ? 'Separatore selezionato' : 'Tavolo selezionato'}</p>
             {item ? (
               <>
-                {selected && <p className="font-semibold text-[var(--text-main)]">{selected.name} <span className="font-normal text-[var(--text-muted)] text-sm">· {selected.seats} posti</span></p>}
+                {selected && <p className="font-semibold text-[var(--text-main)]">{selected.name} <span className="font-normal text-[var(--text-muted)] text-sm">· {seatsLabel(selected)} posti</span></p>}
                 <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-main)]">Larghezza</span>
                   <Stepper name="larghezza" value={item.w} min={1} max={Math.min(selectedEl ? MAX_ELEMENT_SIDE : 30, gridW - item.x)} onChange={w => commit(patchItem(item.id, { w }))} /></div>
                 <div className="flex items-center justify-between"><span className="text-sm text-[var(--text-main)]">Altezza</span>

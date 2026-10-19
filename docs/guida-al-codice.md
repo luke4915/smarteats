@@ -81,7 +81,7 @@ Le sezioni sono in `frontend/src/smarteats/settings/sections.js` (nome, chi la v
 
 ### Aggiungere un campo a un prodotto (es. «allergeni»)
 Sono quattro posti, sempre gli stessi:
-1. **Database:** una nuova migrazione `backend/migrations/055_…sql` (il numero è il successivo all'ultimo). Mai modificare una migrazione già esistente. Poi aggiorna `backend/schema.sql` (vedi `CLAUDE.md` §6).
+1. **Database:** una nuova migrazione `backend/migrations/056_…sql` (il numero è il successivo all'ultimo). Mai modificare una migrazione già esistente. Poi aggiorna `backend/schema.sql` (vedi `CLAUDE.md` §6).
 2. **Server:** `backend/schemas/productSchema.js` (il campo è ammesso) e `backend/routes/products.js` (lo salva).
 3. **Modulo:** `frontend/src/components/products/productForm.js` (valore iniziale) e `ProductFormModal.jsx` (il campo che si vede).
 4. **Test:** una riga in `productForm.test.js`.

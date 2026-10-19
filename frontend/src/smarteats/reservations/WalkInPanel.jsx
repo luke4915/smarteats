@@ -4,6 +4,7 @@ import { useToast } from '../../context/useToast';
 import PanelFrame from '../floor/PanelFrame';
 import CoversStepper from '../floor/CoversStepper';
 import { btnPrimary } from '../floor/ui';
+import { seatsLabel } from '../floor/seats';
 import { walkInTables, minutesNow, clockOf } from './timeline';
 
 // Chi arriva senza prenotazione: si scelgono le persone, si vedono i tavoli liberi adesso (e per i prossimi 75 minuti,
@@ -30,7 +31,7 @@ const WalkInPanel = ({ rooms, reservations, checks, preferredTableId = null, onB
     <button key={t.id} onClick={() => setChosen(t.id)} aria-pressed={t.id === suggested} disabled={busy}
       className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border text-left cursor-pointer transition ${t.id === suggested ? 'border-[var(--accent)] bg-[var(--accent)]/10' : 'border-[var(--border)] bg-[var(--bg-card-2)] hover:border-[var(--border-hover)]'}`}>
       <span className="text-sm font-medium text-[var(--text-main)]">{t.name} <span className="text-xs font-normal text-[var(--text-muted)]">· {t.roomName}</span></span>
-      <span className={`text-xs tabular-nums ${tone}`}>{t.seats} posti</span>
+      <span className={`text-xs tabular-nums ${tone}`}>{seatsLabel(t)} posti{t.under ? ' · più grande del necessario' : ''}</span>
     </button>
   );
 

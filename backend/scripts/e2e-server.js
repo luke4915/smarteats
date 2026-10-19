@@ -55,7 +55,7 @@ const risto = await createTenant({ businessType: 'restaurant' });
 const { rows: [room] } = await adminDb.query(`INSERT INTO rooms (name, grid_w, grid_h, tenant_id) VALUES ('Sala', 16, 10, $1) RETURNING id`, [risto.id]);
 const layout = [['T1', 2, 2, 3, 2, 'rect', 4], ['T2', 7, 2, 3, 2, 'rect', 4], ['T3', 12, 2, 2, 2, 'round', 2], ['T4', 2, 6, 4, 2, 'rect', 6]];
 for (const [name, x, y, w, h, shape, seats] of layout)
-  await adminDb.query(`INSERT INTO dining_tables (room_id, name, seats, x, y, w, h, shape, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [room.id, name, seats, x, y, w, h, shape, risto.id]);
+  await adminDb.query(`INSERT INTO dining_tables (room_id, name, seats, seats_min, x, y, w, h, shape, tenant_id) VALUES ($1,$2,$3,$3,$4,$5,$6,$7,$8,$9)`, [room.id, name, seats, x, y, w, h, shape, risto.id]);
 const { rows: [antipasti] } = await adminDb.query(`INSERT INTO courses (name, position, tenant_id) VALUES ('Antipasti', 0, $1) RETURNING id`, [risto.id]);
 const { rows: [primi] } = await adminDb.query(`INSERT INTO courses (name, position, tenant_id) VALUES ('Primi', 1, $1) RETURNING id`, [risto.id]);
 await addProduct(risto, 'Bruschetta', 6, 'Antipasti', { courseId: antipasti.id, destination: 'kitchen' });

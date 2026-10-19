@@ -70,3 +70,15 @@ test('walk-in: se nessun tavolo basta, si propongono i più capienti', () => {
 });
 
 test('clockOf formatta le ore', () => assert.equal(clockOf(19 * 60 + 5), '19:05'));
+
+test('walk-in con intervalli: il tavolo dove il gruppo sta nell\'intervallo viene prima, sotto il minimo si siede lo stesso', () => {
+  const ranged = [{ id: 1, name: 'Sala', active: true, tables: [
+    { id: 1, name: 'A', seats: 6, seats_min: 4, active: true },
+    { id: 2, name: 'B', seats: 4, seats_min: 2, active: true },
+    { id: 3, name: 'C', seats: 10, seats_min: 8, active: true },
+  ] }];
+  const two = walkInTables(2, ranged, [], [], { nowMin: 600 }).fits;
+  assert.deepEqual(two.map(t => [t.name, t.under]), [['B', false], ['A', true], ['C', true]], '2 persone: B va bene, gli altri sono grandi');
+  const five = walkInTables(5, ranged, [], [], { nowMin: 600 }).fits;
+  assert.deepEqual(five.map(t => [t.name, t.under]), [['A', false], ['C', true]], '5 persone: A è perfetto; B non basta');
+});
