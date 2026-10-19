@@ -89,7 +89,7 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
       footer={
         <>
           {auto && selected.length > 0 && (
-            <p className="text-xs text-[var(--accent)] flex items-center gap-1.5"><Sparkles size={13} /> {suggestion?.under ? 'Nessun tavolo ideale: questo è il meno sprecone. Puoi cambiarlo.' : 'Preselezionato il più adatto: riempie meglio la sala. Puoi cambiarlo.'}</p>
+            <p className="text-xs text-[var(--accent)] flex items-center gap-1.5"><Sparkles size={13} /> {suggestion?.under ? 'Nessun tavolo ideale: questo è quello che spreca meno posti. Puoi cambiarlo.' : 'Preselezionato il più adatto: riempie meglio la sala. Puoi cambiarlo.'}</p>
           )}
           {!auto && suggestion && JSON.stringify([...selected].sort()) !== JSON.stringify([...suggestion.ids].sort()) && (
             <button className="text-xs text-[var(--accent)] font-medium cursor-pointer flex items-center gap-1.5" onClick={useSuggestion}>

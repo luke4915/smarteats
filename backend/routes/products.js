@@ -48,7 +48,7 @@ router.patch('/bulk-visibility', authenticate, authorizeAdmin, validate({ body: 
     res.json({ message: `Aggiornati ${rowCount} prodotti`, updatedCount: rowCount });
   } catch (err) {
     logger.error({ err }, 'Errore bulk-visibility');
-    res.status(500).json({ error: 'Errore aggiornamento massivo' });
+    res.status(500).json({ error: 'Errore aggiornamento multiplo' });
   }
 });
 

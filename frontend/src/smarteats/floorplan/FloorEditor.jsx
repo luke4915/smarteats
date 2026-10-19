@@ -12,7 +12,7 @@ import { seatsLabel } from '../floor/seats';
 const toDraft = (room) => ({
   gridW: room.grid_w, gridH: room.grid_h,
   tables: room.tables.map(({ id, name, seats, seats_min, active, x, y, w, h, shape }) => ({ id, name, seats, seats_min, active, x, y, w, h, shape })),
-  // id solo lato client ("e12" salvati, "n3" nuovi): il server li risalva tutti insieme alla pianta
+  // id solo lato client ("e12" salvati, "n3" nuovi): il server li salva di nuovo tutti insieme alla pianta
   elements: (room.elements ?? []).map(({ id, kind, x, y, w, h }) => ({ id: `e${id}`, kind, x, y, w, h })),
 });
 const TOOLS = [

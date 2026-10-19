@@ -71,7 +71,7 @@ export function stockProblem(form) {
 // Ciò che si manda al server per salvare il prodotto (il prezzo diventa un numero).
 export const buildPayload = (form) => ({ ...form, price: parseFloat(String(form.price).replace(',', '.')) || 0 });
 
-// Le categorie con il loro colore, una sola volta ciascuna (per le pastiglie di scelta rapida del colore).
+// Le categorie con il loro colore, una sola volta ciascuna (per i pallini di scelta rapida del colore).
 export function categoryColors(products) {
   return [...new Map(products.filter(p => p.category && p.color).map(p => [p.category.toLowerCase(), p])).values()]
     .map(p => ({ id: p.id, category: p.category, color: p.color }));

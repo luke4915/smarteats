@@ -243,7 +243,7 @@ export default function MenuPage() {
                     {/* Contenitore centrale del QR gigante */}
                     <div className="w-full max-w-xs px-4 flex flex-col items-center gap-6 text-center">
                         <div className="p-6 bg-white rounded-3xl shadow-2xl">
-                            {/* Ne disegnamo un secondo, più grande (300px), per facilitare la scansione laser */}
+                            {/* Ne disegniamo un secondo, più grande (300px), per facilitare la scansione laser */}
                             <QRCodeCanvas value={qrData} size={280} />
                         </div>
 
