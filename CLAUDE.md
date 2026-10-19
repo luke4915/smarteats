@@ -97,6 +97,7 @@ Comandi:
 | backend | `scripts/backup.sh` | dump del database con rotazione (vedi `docs/deployment.md`) |
 | backend | `npm run demo:seed` | crea il locale di dimostrazione `demo` (ristorante completo: sala, portate, carta, prenotazioni, asporto, serate passate e servizio in corso); `npm run demo:reset` lo ricrea. Solo su dominio `.local`. Utenti `demo`, `marta`, `luca`, `giulia`, `paolo`, `chef`, password `smarteats-demo` |
 | radice | `./scripts/avvia.command` | avvia l'app come un programma (doppio clic dal Finder): costruisce il frontend se serve, parte in modalità produzione e apre il browser sul locale `demo` (o quello indicato: `./scripts/avvia.command altrolocale`). Serve PostgreSQL acceso |
+| radice | `./scripts/crea-app.sh` | crea l'app Mac «SmartEats» in `~/Applications` (icona da trascinare nel Dock): avvia il server in silenzio, apre il browser e con «Esci» dal Dock ferma tutto; log in `~/Library/Logs/SmartEats.log`. Si rilancia se si sposta il progetto o cambia Node |
 | radice | `./scripts/check.sh` (`--all`) | tutti i controlli in un comando: logica, lint, build; con `--all` anche test col database e nel browser. Da lanciare prima di ogni commit |
 | radice | `node scripts/find-dead-code.mjs` | elenca file e export che nessuno usa |
 | frontend | `npm run lint` | ESLint — deve passare prima di ogni commit |
