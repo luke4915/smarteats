@@ -14,6 +14,7 @@ import ReservationForm from './ReservationForm';
 import TablePicker from './TablePicker';
 import StatusChip from './StatusChip';
 import TimelineView from './TimelineView';
+import CheckInfoPanel from './CheckInfoPanel';
 import WalkInPanel from './WalkInPanel';
 import { btnPrimary, btn } from '../floor/ui';
 import Segmented from '../floor/Segmented';
@@ -38,7 +39,7 @@ const ReservationsPage = ({ event }) => {
   const [view, setView] = useState('timeline');   // 'timeline' (tavoli per ora) | 'list' (elenco per turno) | 'month' (calendario)
   const [month, setMonth] = useState(() => monthOf(date));
   const [showClosed, setShowClosed] = useState(false);   // le prenotazioni concluse o annullate stanno nascoste finché non si chiede
-  const [panel, setPanel] = useState(null);     // { kind: 'detail' | 'new' | 'edit' | 'tables' | 'walkin', id?, tableId? }
+  const [panel, setPanel] = useState(null);     // { kind: 'detail' | 'new' | 'edit' | 'tables' | 'walkin' | 'check', id?, tableId? }
   const reserve = usePanelReserve(!!panel && !narrow);   // spazio che il pannello toglie al riquadro di lavoro
 
   const byId = useMemo(() => new Map(reservations.map(r => [r.id, r])), [reservations]);
@@ -53,7 +54,8 @@ const ReservationsPage = ({ event }) => {
     navigate(location.pathname, { replace: true, state: null });
   }, [location, navigate]);
 
-  const current = panel?.id ? byId.get(panel.id) : null;
+  const current = panel?.id && panel.kind !== 'check' ? byId.get(panel.id) : null;
+  const checkInfo = panel?.kind === 'check' ? checks.find(c => c.id === panel.id) : null;   // un conto senza prenotazione: riepilogo nel pannello
   const activeShifts = shifts.filter(s => s.active);
   const total = reservations.filter(r => ['requested', 'confirmed', 'seated'].includes(r.status)).reduce((s, r) => s + r.party_size, 0);
   const pending = reservations.filter(r => r.status === 'requested').length;
@@ -86,7 +88,7 @@ const ReservationsPage = ({ event }) => {
       {view === 'timeline' && !loading && (
         <TimelineView date={date} isToday={date === todayLocal()} shifts={shifts} rooms={rooms} reservations={reservations} checks={checks} selectedId={panel?.id}
           onOpenReservation={(id) => setPanel({ kind: 'detail', id })}
-          onOpenCheck={(id) => { const c = checks.find(x => x.id === id); navigate('/floor', { state: { tableId: c?.table_id ?? null, checkId: id } }); }}
+          onOpenCheck={(id) => setPanel({ kind: 'check', id })}
           onFreeCell={(tableId) => setPanel({ kind: 'walkin', tableId })} />
       )}
       {view === 'list' && <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pr-1">
@@ -149,6 +151,8 @@ const ReservationsPage = ({ event }) => {
     : panel.kind === 'walkin' ? <WalkInPanel key={panel.tableId ?? 'any'} rooms={rooms.filter(r => r.active)} reservations={reservations} checks={checks} preferredTableId={panel.tableId ?? null} onBack={close}
         onSeated={(check) => navigate('/floor', { state: { tableId: check.table_id, checkId: check.id } })} />
     : panel.kind === 'new' ? <ReservationForm date={date} shifts={shifts} availability={availability} onBack={close} onSaved={saved} />
+    : panel.kind === 'check' ? (checkInfo ? <CheckInfoPanel key={checkInfo.id} check={checkInfo} tableName={tableNames([checkInfo.table_id])[0]} onBack={close}
+        onOpen={() => navigate('/floor', { state: { tableId: checkInfo.table_id, checkId: checkInfo.id } })} /> : <Empty />)
     : !current ? <Empty />
     : panel.kind === 'edit' ? <ReservationForm date={date} shifts={shifts} availability={availability} reservation={current} onBack={() => setPanel({ kind: 'detail', id: current.id })} onSaved={saved} />
     : panel.kind === 'tables' ? <TablePicker reservation={current} rooms={rooms} all={reservations} onBack={() => setPanel({ kind: 'detail', id: current.id })} onSaved={saved} />
