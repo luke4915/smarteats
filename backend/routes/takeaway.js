@@ -12,7 +12,7 @@ import { idParamsSchema } from '../schemas/common.js';
 import { staffOrderSchema, acceptSchema, rejectSchema, pickedUpSchema, ordersQuerySchema, slotsQuerySchema, hoursSchema } from '../schemas/takeawaySchema.js';
 import { localNow, PORTAL_TZ } from '../utils/bookingPortal.js';
 import { slotStates, slotWithinWindow, pickupIsDue, isSlot } from '../utils/takeaway.js';
-import { loadSettings, loadHours, loadByTime, loadOfItems, createKitchenOrder, cancelKitchenOrder } from '../utils/takeawayDb.js';
+import { loadSettings, loadHours, loadByTime, loadOfItems, createKitchenOrder, announceKitchenOrder, cancelKitchenOrder } from '../utils/takeawayDb.js';
 import { verifyOrderItems } from '../utils/orderLines.js';
 import { expireTakeaway } from '../utils/caseExpiry.js';
 import { enqueue } from '../utils/whatsapp/outbox.js';
@@ -131,14 +131,7 @@ export default function (broadcast) {
     return created;
   }
 
-  const announce = (req, created, row, pickupAt) => {
-    created.stockUpdates.forEach(product => broadcast?.(req.user.tenantId, { type: 'product_stock_updated', product }));
-    broadcast?.(req.user.tenantId, { type: 'order_created', order: {
-      id: created.order.id, check_id: null, table_name: null, covers: null, check_number: null, display_code: created.order.display_code,
-      status: 'pending', created_at: created.order.created_at, items: created.items, total: created.total, is_takeaway: true,
-      pickup_at: pickupAt, pickup_name: row.customer_name,
-    } });
-  };
+  const announce = (req, created, row, pickupAt) => announceKitchenOrder(broadcast, req.user.tenantId, created, row, pickupAt);
 
   // POST /orders — ordine inserito al banco o al telefono: nasce già accettato (e va in cucina)
   router.post('/orders', ...guard, validate({ body: staffOrderSchema }), tenantScope, async (req, res) => {

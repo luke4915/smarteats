@@ -180,6 +180,32 @@ describe('asporto', () => {
     await adminDb.query('UPDATE products SET stock_enabled = false, stock = NULL WHERE id = $1', [t.productId]);
   });
 
+  it('all\'apertura della serata nascono gli ordini di cucina degli asporti accettati in anticipo; uno che non riesce non blocca gli altri', async () => {
+    await adminDb.query('UPDATE products SET stock_enabled = true, stock = 10 WHERE id = $1', [t.productId]);
+    const mk = (name, items) => cashier.post('/takeaway/orders', { date: tomorrow, time: '20:30', items, customer_name: name, source: 'phone' });
+    const ok = await mk('Per domani', [pizza(2)]);
+    const doomed = await mk('Prodotto sparito', [{ id: drink, quantity: 1 }]);
+    assert.deepEqual([ok.body.order_id, doomed.body.order_id], [null, null], 'accettati, senza ordine di cucina');
+
+    // «domani» arriva: il ritiro diventa oggi, la serata si chiude e se ne apre una nuova
+    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = pickup_at - interval '1 day' WHERE id = ANY($1)`, [[ok.body.id, doomed.body.id]]);
+    await adminDb.query('UPDATE sessions SET end_time = now() WHERE tenant_id = $1 AND end_time IS NULL', [t.id]);
+    await adminDb.query('DELETE FROM products WHERE id = $1', [drink]);      // uno dei due ordini non potrà più partire
+    const start = await admin.post('/sessions/start', { name: 'Cena di domani' });
+    assert.equal(start.status, 200, JSON.stringify(start.body));
+
+    const inKitchen = (await admin.get('/orders?session=active')).body.filter(o => o.is_takeaway);
+    assert.deepEqual(inKitchen.map(o => o.pickup_name), ['Per domani'], 'solo quello che poteva partire');
+    const listed = (await cashier.get(`/takeaway/orders?date=${today}`)).body;
+    assert.ok(listed.find(o => o.id === ok.body.id).order_id, 'ora ha il suo ordine di cucina');
+    assert.equal(listed.find(o => o.id === doomed.body.id).order_id, null, 'quello che non è partito resta in attesa');
+    // l\'apertura azzera lo stock: l\'ordine nato dopo lo trova già «illimitato», quindi non c\'è nulla da scalare
+    assert.equal((await adminDb.query('SELECT stock FROM products WHERE id = $1', [t.productId])).rows[0].stock, null);
+    await adminDb.query(`INSERT INTO products (name, price, category, takeaway_load, tenant_id) VALUES ('Acqua', 2, 'Bevande', 0, $1) RETURNING id`, [t.id])
+      .then(({ rows: [{ id }] }) => { drink = id; });
+    await adminDb.query(`INSERT INTO sessions (name, start_time, tenant_id) SELECT 'Ripristino', now(), $1 WHERE NOT EXISTS (SELECT 1 FROM sessions WHERE tenant_id = $1 AND end_time IS NULL)`, [t.id]);
+  });
+
   it('rifiuto, annullo del locale (lo stock torna) e ordine inserito al banco o al telefono', async () => {
     const rid = (await (async () => { await post([pizza()], { time: '21:30', customer_name: 'Rifiutato' }); return (await cashier.get(`/takeaway/orders?date=${tomorrow}`)).body.find(x => x.customer_name === 'Rifiutato').id; })());
     const rej = await cashier.post(`/takeaway/orders/${rid}/reject`, { reason: 'Forno fermo' });

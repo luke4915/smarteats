@@ -8,6 +8,7 @@ import { startSessionSchema, endSessionSchema } from '../schemas/sessionSchema.j
 import { validate } from '../middleware/validate.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { computeExpectedCash, countOpenOrders, countOpenChecks } from '../utils/session.js';
+import { fireDueTakeaway, announceKitchenOrder } from '../utils/takeawayDb.js';
 
 const router = express.Router();
 
@@ -71,6 +72,13 @@ export default function (broadcast) {
       await logAudit(req.db, req.user.id, 'START_SESSION', { sessionId: session.id, sessionName: session.name });
 
       if (broadcast) broadcast(req.user.tenantId, { type: 'session_started', session });
+      // Gli asporti accettati nei giorni scorsi con ritiro per oggi nascono adesso in cucina (e scalano lo stock appena ripartito)
+      try {
+        const fired = await fireDueTakeaway(req.db, { tenantId: req.user.tenantId, userId: req.user.id });
+        fired.forEach(({ created, row }) => announceKitchenOrder(broadcast, req.user.tenantId, created, row, row.pickup_at));
+      } catch (err) {
+        logger.error({ err }, 'Errore avvio asporti di oggi (la serata è comunque aperta)');
+      }
       res.json(session);
     } catch (err) {
       // uniq_sessions_open_per_tenant: esiste già una sessione aperta
