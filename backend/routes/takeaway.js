@@ -11,7 +11,7 @@ import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { staffOrderSchema, acceptSchema, rejectSchema, pickedUpSchema, ordersQuerySchema, slotsQuerySchema, hoursSchema } from '../schemas/takeawaySchema.js';
 import { localNow, PORTAL_TZ } from '../utils/bookingPortal.js';
-import { slotStates, slotWithinWindow, isSlot } from '../utils/takeaway.js';
+import { slotStates, slotWithinWindow, pickupIsDue, isSlot } from '../utils/takeaway.js';
 import { loadSettings, loadHours, loadByTime, loadOfItems, createKitchenOrder, cancelKitchenOrder } from '../utils/takeawayDb.js';
 import { verifyOrderItems } from '../utils/orderLines.js';
 import { expireTakeaway } from '../utils/caseExpiry.js';
@@ -113,15 +113,21 @@ export default function (broadcast) {
     }
   });
 
-  // Crea l'ordine di cucina e passa l'ordine ad «accettato»; avvisa la cucina. Dentro una transazione già aperta.
+  // Passa l'ordine ad «accettato». Se il ritiro è per oggi crea anche l'ordine di cucina (e avvisa la cucina); se è per un
+  // altro giorno NO: l'ordine resta accettato senza ordine di cucina (`order_id` vuoto) e nasce all'apertura della serata di
+  // quel giorno, così non compare in cucina con un giorno d'anticipo né sporca la serata di oggi (incassi, stock).
+  // `date` è il giorno del ritiro. Dentro una transazione già aperta. Ritorna i dati dell'ordine di cucina, o `null` se non
+  // è ancora nato.
   async function accept(db, req, row, { time, date } = {}) {
     const stamp = time && date
       ? (await db.query(`SELECT (($1::date + $2::time) AT TIME ZONE $3) AS at`, [date, time, PORTAL_TZ])).rows[0].at
       : row.pickup_at;
-    const created = await createKitchenOrder(db, { tenantId: req.user.tenantId, userId: req.user.id, takeaway: row });
+    const created = pickupIsDue(date, localNow())
+      ? await createKitchenOrder(db, { tenantId: req.user.tenantId, userId: req.user.id, takeaway: row })
+      : null;
     await db.query(
       `UPDATE takeaway_orders SET status = 'accepted', order_id = $2, pickup_at = $3, total = $4, decided_by = $5, decided_at = now() WHERE id = $1`,
-      [row.id, created.order.id, stamp, created.total, req.user.id]);
+      [row.id, created?.order.id ?? null, stamp, created?.total ?? row.total, req.user.id]);
     return created;
   }
 
@@ -159,13 +165,13 @@ export default function (broadcast) {
           `INSERT INTO takeaway_orders (status, source, pickup_at, load, customer_name, phone, notes, items, total, public_token, created_by)
            VALUES ('requested', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
           [b.source, at, load, b.customer_name, b.phone, b.notes, JSON.stringify(snapshot), total, crypto.randomBytes(18).toString('base64url'), req.user.id]);
-        const full = { id: row.id, items: snapshot, customer_name: b.customer_name, pickup_at: at };
-        const created = await accept(db, req, full);
+        const full = { id: row.id, items: snapshot, customer_name: b.customer_name, pickup_at: at, total };
+        const created = await accept(db, req, full, { date: b.date });
         await enqueue(db, 'takeaway', row.id, 'accepted');
         return { id: row.id, created, full, at };
       });
-      await logAudit(req.db, req.user.id, 'TAKEAWAY_CREATE', { takeawayId: result.id, source: b.source, total: result.created.total });
-      announce(req, result.created, result.full, result.at);
+      await logAudit(req.db, req.user.id, 'TAKEAWAY_CREATE', { takeawayId: result.id, source: b.source, total: result.full.total });
+      if (result.created) announce(req, result.created, result.full, result.at);     // senza ordine di cucina non c'è nulla da annunciare
       const order = present(await loadOne(req.db, result.id));
       notify(req.user.tenantId, order);
       res.status(201).json(order);
@@ -197,7 +203,7 @@ export default function (broadcast) {
       });
       await logAudit(req.db, req.user.id, 'TAKEAWAY_ACCEPT', { takeawayId: Number(req.params.id) });
       const order = present(await loadOne(req.db, req.params.id));
-      announce(req, result.created, result.row, order.pickup_at);
+      if (result.created) announce(req, result.created, result.row, order.pickup_at);
       notify(req.user.tenantId, order);
       res.json(order);
     } catch (err) {

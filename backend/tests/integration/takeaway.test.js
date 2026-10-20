@@ -7,7 +7,8 @@ import { localNow, addDays } from '../../utils/bookingPortal.js';
 
 describe('asporto', () => {
   let server, t, other, street, admin, cashier, otherApi, client, drink;
-  const tomorrow = addDays(localNow().date, 1);
+  const today = localNow().date;
+  const tomorrow = addDays(today, 1);
   let phoneSeq = 0;
   const phone = () => `339${String(2000000 + ++phoneSeq)}`;
   const order = (items, extra = {}) => ({ date: tomorrow, time: '19:00', items, customer_name: 'Bianchi', phone: phone(), email: '', notes: '', consent: true, website: '', ...extra });
@@ -110,6 +111,8 @@ describe('asporto', () => {
   it('accettazione: serve il servizio aperto; poi la cucina vede l\'ordine con orario e nome', async () => {
     const created = await post([pizza(1)], { time: '20:00', customer_name: 'Luca' });
     const id = (await cashier.get(`/takeaway/orders?date=${tomorrow}`)).body.find(o => o.customer_name === 'Luca').id;
+    // il ritiro di oggi va subito in cucina (quelli per un altro giorno aspettano, vedi il test dedicato): si porta la richiesta a oggi
+    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = pickup_at - interval '1 day' WHERE id = $1`, [id]);
 
     await adminDb.query('UPDATE sessions SET end_time = now() WHERE tenant_id = $1 AND end_time IS NULL', [t.id]);
     const closed = await cashier.post(`/takeaway/orders/${id}/accept`, {});
@@ -141,10 +144,10 @@ describe('asporto', () => {
   });
 
   it('ritiro: pronto in cucina → consegnato e pagato; incassa nelle statistiche', async () => {
-    const o = (await cashier.get(`/takeaway/orders?date=${tomorrow}`)).body.find(x => x.customer_name === 'Luca');
+    const o = (await cashier.get(`/takeaway/orders?date=${today}`)).body.find(x => x.customer_name === 'Luca');
     const lines = (await admin.get('/orders?session=active')).body.find(x => x.id === o.order_id).items;
     await admin.put(`/orders/${o.order_id}/lines`, { status: 'ready' });
-    const ready = (await cashier.get(`/takeaway/orders?date=${tomorrow}`)).body.find(x => x.id === o.id);
+    const ready = (await cashier.get(`/takeaway/orders?date=${today}`)).body.find(x => x.id === o.id);
     assert.equal(ready.ready, true, 'tutte le righe pronte');
     assert.ok(lines.length >= 1);
     const done = await cashier.post(`/takeaway/orders/${o.id}/picked-up`, { method: 'cash' });
@@ -154,6 +157,29 @@ describe('asporto', () => {
     assert.equal(row.status, 'completed');
   });
 
+  it('asporto per un altro giorno: accettato ma senza ordine di cucina né stock scalato; per oggi sì', async () => {
+    await adminDb.query('UPDATE products SET stock_enabled = true, stock = 10 WHERE id = $1', [t.productId]);
+    const later = await cashier.post('/takeaway/orders', { date: tomorrow, time: '21:00', items: [pizza(2)], customer_name: 'Domani', source: 'phone' });
+    assert.equal(later.status, 201, JSON.stringify(later.body));
+    assert.deepEqual([later.body.status, later.body.order_id], ['accepted', null], 'accettato, ma l\'ordine di cucina non esiste ancora');
+    assert.equal((await adminDb.query('SELECT stock FROM products WHERE id = $1', [t.productId])).rows[0].stock, 10, 'lo stock resta intatto');
+    const inKitchen = (await admin.get('/orders?session=active')).body.filter(o => o.pickup_name === 'Domani');
+    assert.equal(inKitchen.length, 0, 'in cucina non compare');
+    // si vede nella pagina dell\'asporto, e si può annullare anche senza ordine di cucina
+    const listed = (await cashier.get(`/takeaway/orders?date=${tomorrow}`)).body.find(o => o.id === later.body.id);
+    assert.deepEqual([listed.status, listed.order_id, listed.ready], ['accepted', null, false]);
+    assert.equal((await cashier.post(`/takeaway/orders/${later.body.id}/cancel`, {})).body.status, 'cancelled');
+
+    // lo stesso ordine per oggi: va in cucina e scala lo stock
+    const now = await cashier.post('/takeaway/orders', { date: today, time: '21:00', items: [pizza(2)], customer_name: 'Oggi', source: 'phone' });
+    assert.equal(now.status, 201, JSON.stringify(now.body));
+    assert.ok(now.body.order_id, 'ordine di cucina creato');
+    assert.equal((await adminDb.query('SELECT stock FROM products WHERE id = $1', [t.productId])).rows[0].stock, 8);
+    assert.equal((await admin.get('/orders?session=active')).body.filter(o => o.pickup_name === 'Oggi').length, 1);
+    await cashier.post(`/takeaway/orders/${now.body.id}/cancel`, {});
+    await adminDb.query('UPDATE products SET stock_enabled = false, stock = NULL WHERE id = $1', [t.productId]);
+  });
+
   it('rifiuto, annullo del locale (lo stock torna) e ordine inserito al banco o al telefono', async () => {
     const rid = (await (async () => { await post([pizza()], { time: '21:30', customer_name: 'Rifiutato' }); return (await cashier.get(`/takeaway/orders?date=${tomorrow}`)).body.find(x => x.customer_name === 'Rifiutato').id; })());
     const rej = await cashier.post(`/takeaway/orders/${rid}/reject`, { reason: 'Forno fermo' });
@@ -161,7 +187,7 @@ describe('asporto', () => {
 
     // ordine al telefono: nasce accettato e va in cucina; con lo stock limitato lo scala
     await adminDb.query('UPDATE products SET stock_enabled = true, stock = 10 WHERE id = $1', [t.productId]);
-    const phoneOrder = await cashier.post('/takeaway/orders', { date: tomorrow, time: '22:00', items: [pizza(3)], customer_name: 'Telefono', phone: '333', source: 'phone' });
+    const phoneOrder = await cashier.post('/takeaway/orders', { date: today, time: '22:00', items: [pizza(3)], customer_name: 'Telefono', phone: '333', source: 'phone' });
     assert.equal(phoneOrder.status, 201, JSON.stringify(phoneOrder.body));
     assert.deepEqual([phoneOrder.body.status, phoneOrder.body.source], ['accepted', 'phone']);
     assert.equal((await adminDb.query('SELECT stock FROM products WHERE id = $1', [t.productId])).rows[0].stock, 7);
