@@ -1,18 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { timelineWindow, blocksForTable, unassigned, STEP, minutesNow, clockOf } from './timeline';
+import { timelineWindow, blocksForTable, unassigned, STEP, minutesNow, clockOf, scrollToShow } from './timeline';
 import { minutesOf } from './rules';
 import { Users } from 'lucide-react';
+import { tone } from '../floor/ui';
+import { seatsLabel } from '../floor/seats';
 
 const LABEL_W = 112;       // colonna dei tavoli
 const ROW_H = 44;
 const MIN_CELL = 20;
 
-const BLOCK = {
-  confirmed: 'bg-[var(--accent)]/20 border-[var(--accent)]/60 text-[var(--text-main)]',
-  requested: 'bg-amber-500/15 border-amber-500/60 border-dashed text-[var(--text-main)]',
-  seated: 'bg-emerald-500/20 border-emerald-500/60 text-[var(--text-main)]',
-  walkin: 'bg-emerald-500/20 border-emerald-500/60 text-[var(--text-main)]',
-};
+const BLOCK = { confirmed: tone.reserved, requested: tone.requested, seated: tone.busy, walkin: tone.busy };
 
 // La giornata per tavolo: una riga per tavolo (raggruppate per sala), le ore in colonna, un blocco per ogni prenotazione
 // o conto aperto. Una riga in cima raccoglie le prenotazioni senza tavolo. La linea rossa è l'ora di adesso (solo oggi).
@@ -37,7 +34,7 @@ const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, sele
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
-  const cell = Math.min(40, Math.max(MIN_CELL, Math.floor((boxW - LABEL_W - 2) / cols) || MIN_CELL));
+  const cell = Math.min(40, Math.max(MIN_CELL, ((boxW - LABEL_W - 2) / cols) || MIN_CELL));
   const x = (minutes) => ((Math.min(Math.max(minutes, start), end) - start) / STEP) * cell;
   const width = cols * cell;
   const hours = [];
@@ -53,19 +50,38 @@ const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, sele
   }, [date, start, end]);
   const activeRooms = rooms.filter(r => r.active && r.tables.some(t => t.active));
 
-  const bar = (b, tone) => (
+  // Quando lo spazio cambia (si apre o si chiude il pannello a destra) l'ora di adesso e la prenotazione aperta devono restare in
+  // vista: si aspetta la fine del movimento del pannello, poi si scorre solo se serve (`scrollToShow`).
+  const selectedStart = (() => { const r = reservations.find(x => x.id === selectedId); return r ? minutesOf(r.start_time) : null; })();
+  const lastBox = useRef(0);
+  useEffect(() => {
+    if (!boxW || Math.abs(boxW - lastBox.current) < 40) { lastBox.current = lastBox.current || boxW; return undefined; }
+    lastBox.current = boxW;
+    const timer = setTimeout(() => {
+      const el = scroller.current;
+      const points = [isToday && now >= start && now <= end ? LABEL_W + x(now) : null, selectedStart != null ? LABEL_W + x(selectedStart) : null].filter(p => p !== null);
+      if (!el || !points.length) return;
+      const target = scrollToShow(el.scrollLeft, el.clientWidth, LABEL_W, points);
+      if (target !== Math.round(el.scrollLeft)) el.scrollTo({ left: target, behavior: 'smooth' });
+    }, 480);
+    return () => clearTimeout(timer);
+    // si riesamina solo al cambio di larghezza
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boxW]);
+
+  const bar = (b, toneClass) => (
     <button key={`${b.kind}-${b.id}`} onClick={() => (b.kind === 'check' ? onOpenCheck(b.id) : onOpenReservation(b.id))}
       title={`${b.time} · ${b.title} · ${b.party}`} aria-label={`${b.time} ${b.title}, ${b.party} persone`}
-      className={`absolute top-1 bottom-1 rounded-md border px-2 flex items-center gap-1.5 text-xs font-medium overflow-hidden whitespace-nowrap cursor-pointer hover:brightness-110 ${tone} ${b.kind === 'reservation' && b.id === selectedId ? 'ring-2 ring-[var(--text-main)]' : ''}`}
+      className={`absolute top-1 bottom-1 rounded-md border px-2 flex items-center gap-1.5 text-xs font-medium text-[var(--text-main)] overflow-hidden whitespace-nowrap cursor-pointer hover:brightness-110 ${toneClass} ${b.kind === 'reservation' && b.id === selectedId ? 'ring-2 ring-[var(--text-main)]' : ''}`}
       style={{ left: x(b.start), width: Math.max(cell * 2, x(b.end) - x(b.start) - 2) }}>
       <span className="truncate">{b.title}</span><span className="tabular-nums opacity-80 ml-auto flex items-center gap-1 shrink-0"><Users size={12} aria-hidden="true" />{b.party}</span>
     </button>
   );
 
-  const row = (key, label, sub, content, tableId) => (
+  const row = (key, label, sub, content, tableId, subTitle) => (
     <div key={key} className="flex border-b border-[var(--border)]" style={{ height: ROW_H }}>
       <div className="sticky left-0 z-10 shrink-0 bg-[var(--bg-card)] border-r border-[var(--border)] px-3 flex items-center justify-between gap-2" style={{ width: LABEL_W }}>
-        <span className="text-sm font-medium text-[var(--text-main)] truncate">{label}</span>{sub != null && <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] tabular-nums shrink-0" title={`${sub} ${sub === 1 ? 'posto' : 'posti'}`}><Users size={12} aria-hidden="true" />{sub}</span>}
+        <span className="text-sm font-medium text-[var(--text-main)] truncate">{label}</span>{sub != null && <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] tabular-nums shrink-0" title={subTitle ?? `${sub} ${sub === 1 ? 'posto' : 'posti'}`}><Users size={12} aria-hidden="true" />{sub}</span>}
       </div>
       <div className="relative shrink-0" style={{ width, backgroundImage: `repeating-linear-gradient(to right, var(--border) 0, var(--border) 1px, transparent 1px, transparent ${cell * 4}px)` }}
         onClick={tableId && isToday ? (e) => {
@@ -93,8 +109,8 @@ const TimelineView = ({ date, isToday, shifts, rooms, reservations, checks, sele
         {activeRooms.map(room => (
           <div key={room.id}>
             <div className="py-1 text-xs font-medium text-[var(--text-muted)] bg-[var(--bg-card-2)] border-b border-[var(--border)]" style={{ width: LABEL_W + width }}><span className="sticky left-3 px-3">{room.name}</span></div>
-            {room.tables.filter(t => t.active).map(t => row(t.id, t.name, t.seats,
-              blocksForTable(t.id, reservations, checks, { isToday, nowMin: now }).map(b => bar(b, BLOCK[b.status])), t.id))}
+            {room.tables.filter(t => t.active).map(t => row(t.id, t.name, seatsLabel(t),
+              blocksForTable(t.id, reservations, checks, { isToday, nowMin: now }).map(b => bar(b, BLOCK[b.status])), t.id, `${seatsLabel(t)} posti`))}
           </div>
         ))}
 

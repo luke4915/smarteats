@@ -1,22 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from '../floor/PanelFrame';
 import CoversStepper from '../floor/CoversStepper';
 import { btnPrimary } from '../floor/ui';
+import { seatsLabel } from '../floor/seats';
 import { walkInTables, minutesNow, clockOf } from './timeline';
 
 // Chi arriva senza prenotazione: si scelgono le persone, si vedono i tavoli liberi adesso (e per i prossimi 75 minuti,
 // senza toccare una prenotazione in arrivo) dal più adatto, e un tocco apre il conto. `preferredTableId` arriva da un
-// tocco su una cella libera della Timeline.
-const WalkInPanel = ({ rooms, reservations, checks, preferredTableId = null, onBack, onSeated }) => {
+// tocco su una cella libera della Timeline. Nella Sala il pannello è «controllato» (`chosen`, `onChoose`, `onPreview`): la
+// mappa evidenzia i tavoli adatti e un tocco sulla mappa sceglie il tavolo, così si vede la sistemazione.
+const WalkInPanel = ({ rooms, reservations, checks, preferredTableId = null, chosen: chosenProp, onChoose, onPreview, onBack, onSeated }) => {
   const { showToast } = useToast();
   const [party, setParty] = useState(2);
-  const [chosen, setChosen] = useState(preferredTableId);
+  const [localChosen, setLocalChosen] = useState(preferredTableId);
+  const chosen = onChoose ? chosenProp : localChosen;
+  const setChosen = onChoose ?? setLocalChosen;
   const [busy, setBusy] = useState(false);
   const nowMin = minutesNow();
   const { fits, rest } = walkInTables(party, rooms, reservations, checks, { nowMin });
   const suggested = chosen && [...fits, ...rest].some(t => t.id === chosen) ? chosen : fits[0]?.id ?? null;
+  // Dice alla Sala quali tavoli evidenziare (adatti, liberi, e quello proposto)
+  const fitIds = fits.map(t => t.id).join(), freeIds = [...fits, ...rest].map(t => t.id).join();
+  useEffect(() => {
+    onPreview?.(fits.map(t => t.id), [...fits, ...rest].map(t => t.id), suggested);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitIds, freeIds, suggested]);
 
   const seat = async (tableId) => {
     setBusy(true);
@@ -30,7 +40,7 @@ const WalkInPanel = ({ rooms, reservations, checks, preferredTableId = null, onB
     <button key={t.id} onClick={() => setChosen(t.id)} aria-pressed={t.id === suggested} disabled={busy}
       className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border text-left cursor-pointer transition ${t.id === suggested ? 'border-[var(--accent)] bg-[var(--accent)]/10' : 'border-[var(--border)] bg-[var(--bg-card-2)] hover:border-[var(--border-hover)]'}`}>
       <span className="text-sm font-medium text-[var(--text-main)]">{t.name} <span className="text-xs font-normal text-[var(--text-muted)]">· {t.roomName}</span></span>
-      <span className={`text-xs tabular-nums ${tone}`}>{t.seats} posti</span>
+      <span className={`text-xs tabular-nums ${tone}`}>{seatsLabel(t)} posti{t.under ? ' · più grande del necessario' : ''}</span>
     </button>
   );
 

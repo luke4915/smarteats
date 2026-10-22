@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { slotsOn, slotWithinWindow, orderLoad, slotStates, isSlot, clock } from '../utils/takeaway.js';
+import { slotsOn, slotWithinWindow, pickupIsDue, orderLoad, slotStates, isSlot, clock } from '../utils/takeaway.js';
 
 const HOURS = [
   { weekday: 5, open_time: '18:30:00', close_time: '20:00:00' },     // venerdì
@@ -25,6 +25,14 @@ test('anticipo: serve il tempo minimo; oltre una settimana no; il passato no', (
   assert.equal(slotWithinWindow('2026-10-22', '19:00', now, 30).code, 'PAST');
   assert.equal(slotWithinWindow('2026-10-30', '19:00', now, 30).ok, true, 'il settimo giorno sì');
   assert.equal(slotWithinWindow('2026-10-31', '19:00', now, 30).code, 'TOO_FAR');
+});
+
+test('ritiro per oggi: l\'ordine va in cucina; per un altro giorno aspetta', () => {
+  const now = { date: '2026-10-23', minutes: 18 * 60 };                // oggi, le 18:00
+  assert.equal(pickupIsDue('2026-10-23', now), true, 'oggi: va in cucina');
+  assert.equal(pickupIsDue('2026-10-24', now), false, 'domani: aspetta la serata di domani');
+  assert.equal(pickupIsDue('2026-10-30', now), false, 'anche fra una settimana');
+  assert.equal(pickupIsDue('2026-10-22', now), true, 'ieri: un ordine in ritardo non deve restare bloccato');
 });
 
 test('carico: quantità per carico del prodotto (le bibite non occupano il forno)', () => {

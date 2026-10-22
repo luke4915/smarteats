@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useToast } from '../context/useToast';
 import { useIsMobile } from '../hooks/useBreakpoint';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { sendOrder } from '../utils/sendOrder';
 import { fetchWithAuth } from '../utils/apiClient';
 import { termsFor } from '../utils/terms';
@@ -40,6 +41,7 @@ const FestivalApp = () => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const views = festivalViews(user.role, user.modules);
+  usePageTitle(views.find(v => pathname === `/${v.id}`)?.label, user.tenantName, data.inbox?.items.length ?? 0);
   const home = defaultView(user.role, user.modules);
   if (!home) return <NoViewAvailable onLogout={logout} />;
 

@@ -11,16 +11,23 @@ export const updateRoomSchema = z.object({
   active: z.boolean().optional(),
 }).refine(v => v.name !== undefined || v.active !== undefined, { message: 'Niente da modificare' });
 
+// `seats` è il massimo di persone; `seats_min` da quante conviene usare il tavolo (facoltativo: se manca, uguale al massimo).
+const rangeOk = (v) => v.seats_min === undefined || v.seats === undefined || v.seats_min <= v.seats;
+const RANGE_MESSAGE = { message: 'Il minimo di posti non può superare il massimo', path: ['seats_min'] };
+
 export const createTableSchema = z.object({
   name,
   seats: seats.default(2),
-});
+  seats_min: seats.optional(),
+}).refine(rangeOk, RANGE_MESSAGE);
 
 export const updateTableSchema = z.object({
   name: name.optional(),
   seats: seats.optional(),
+  seats_min: seats.optional(),
   active: z.boolean().optional(),
-}).refine(v => v.name !== undefined || v.seats !== undefined || v.active !== undefined, { message: 'Niente da modificare' });
+}).refine(v => v.name !== undefined || v.seats !== undefined || v.seats_min !== undefined || v.active !== undefined, { message: 'Niente da modificare' })
+  .refine(rangeOk, RANGE_MESSAGE);
 
 // Più tavoli insieme: "T1" … "T20". Al massimo 100 per volta.
 export const bulkTablesSchema = z.object({
@@ -28,7 +35,9 @@ export const bulkTablesSchema = z.object({
   from: z.number().int().min(1).max(9999),
   to: z.number().int().min(1).max(9999),
   seats: seats.default(2),
-}).refine(v => v.to >= v.from, { message: 'Il numero finale deve essere maggiore o uguale a quello iniziale', path: ['to'] })
+  seats_min: seats.optional(),
+}).refine(rangeOk, RANGE_MESSAGE)
+  .refine(v => v.to >= v.from, { message: 'Il numero finale deve essere maggiore o uguale a quello iniziale', path: ['to'] })
   .refine(v => v.to - v.from < 100, { message: 'Al massimo 100 tavoli per volta', path: ['to'] });
 
 // Pianta della sala: misura della griglia e posizione di ogni tavolo (in celle). x, y, w, h vanno insieme:

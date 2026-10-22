@@ -25,7 +25,7 @@ const CumulativeQueue = ({ orders }) => {
     if (!queue.length) return (
         <div className="flex flex-col items-center justify-center h-48 gap-3 text-white/30">
             <ChefHat size={40} />
-            <p className="text-xs font-black uppercase tracking-widest">Tutto pronto!</p>
+            <p className="text-xs font-semibold">Tutto pronto!</p>
         </div>
     );
 
@@ -34,9 +34,9 @@ const CumulativeQueue = ({ orders }) => {
             {queue.map(item => (
                 <div key={`${item.name}__${item.note}`}
                     className="flex flex-col gap-2 p-4 rounded-2xl bg-white/5 border border-white/10">
-                    <p className="font-black text-base uppercase tracking-tight text-white leading-tight">{item.name}</p>
-                    {item.note && <p className="text-xs font-black uppercase text-yellow-400">⚠ {item.note}</p>}
-                    <span className="text-5xl font-black tabular-nums text-[var(--accent)] leading-none">{item.quantity}</span>
+                    <p className="font-semibold text-base uppercase tracking-tight text-white leading-tight">{item.name}</p>
+                    {item.note && <p className="text-xs font-semibold uppercase text-yellow-400">⚠ {item.note}</p>}
+                    <span className="text-5xl font-semibold tabular-nums text-[var(--accent)] leading-none">{item.quantity}</span>
                 </div>
             ))}
         </div>
@@ -52,16 +52,16 @@ const OrderCard = ({ order }) => {
     return (
         <div className={`rounded-2xl p-4 border transition-all ${urgent ? 'bg-red-500/10 border-red-500/40' : 'bg-white/5 border-white/10'}`}>
             <div className="flex justify-between items-center mb-3">
-                <span className="font-black text-xl text-white">#{orderCode}</span>
+                <span className="font-semibold text-xl text-white">#{orderCode}</span>
                 {order.table_name && (
-                    <span className="px-2 py-0.5 bg-white/10 border border-white/30 text-white rounded-full text-[11px] font-black uppercase">
+                    <span className="px-2 py-0.5 bg-white/10 border border-white/30 text-white rounded-full text-[11px] font-semibold uppercase">
                         {order.table_name}{order.covers > 0 && ` · ${order.covers} cop.`}
                     </span>
                 )}
                 {order.is_takeaway && (
-                    <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-500 rounded-full text-[9px] font-black uppercase">Asporto</span>
+                    <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-500 rounded-full text-[9px] font-semibold uppercase">Asporto</span>
                 )}
-                <span className={`text-xs font-black tabular-nums ${urgent ? 'text-red-400' : 'text-white/40'}`}>
+                <span className={`text-xs font-semibold tabular-nums ${urgent ? 'text-red-400' : 'text-white/40'}`}>
                     {new Date(order.created_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
                     {urgent && ' ⚠'}
                 </span>
@@ -70,11 +70,11 @@ const OrderCard = ({ order }) => {
                 {order.items?.map((item, idx) => (
                     <li key={idx}>
                         <div className="flex items-baseline gap-2">
-                            <span className="text-[var(--accent)] font-black">×{item.quantity}</span>
+                            <span className="text-[var(--accent)] font-semibold">×{item.quantity}</span>
                             <span className="font-bold text-sm text-white uppercase">{item.name}</span>
                         </div>
                         {item.note && (
-                            <div className="ml-5 mt-0.5 px-2 py-0.5 bg-yellow-500/10 border-l-2 border-yellow-400 text-xs text-yellow-400 font-black uppercase">
+                            <div className="ml-5 mt-0.5 px-2 py-0.5 bg-yellow-500/10 border-l-2 border-yellow-400 text-xs text-yellow-400 font-semibold uppercase">
                                 {item.note}
                             </div>
                         )}
@@ -123,7 +123,7 @@ export default function KDS() {
 
     if (disabled) return (
         <div className="min-h-screen bg-[var(--bg-main)] text-white flex items-center justify-center p-6">
-            <p className="text-sm font-black uppercase tracking-widest text-white/50 text-center">Schermo cucina non attivo per questo locale</p>
+            <p className="text-sm font-semibold text-white/50 text-center">Schermo cucina non attivo per questo locale</p>
         </div>
     );
 
@@ -133,23 +133,23 @@ export default function KDS() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center font-black text-white text-lg shadow-lg shadow-[var(--accent-shadow)]">S</div>
+                    <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center font-semibold text-white text-lg shadow-lg shadow-[var(--accent-shadow)]">S</div>
                     <div>
-                        <p className="font-black text-lg tracking-tight leading-none">KDS — Cucina</p>
-                        <p className="text-xs text-white/40 font-bold uppercase tracking-widest mt-0.5">{pending.length} ordini in attesa</p>
+                        <p className="font-semibold text-lg tracking-tight leading-none">KDS — Cucina</p>
+                        <p className="text-xs text-white/40 font-bold mt-0.5">{pending.length} ordini in attesa</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     {wsConnected
-                        ? <><Wifi size={18} className="text-green-400" /><span className="text-xs font-black uppercase text-green-400">Live</span></>
-                        : <><WifiOff size={18} className="text-red-400" /><span className="text-xs font-black uppercase text-red-400">Offline</span></>
+                        ? <><Wifi size={18} className="text-green-400" /><span className="text-xs font-semibold uppercase text-green-400">Live</span></>
+                        : <><WifiOff size={18} className="text-red-400" /><span className="text-xs font-semibold uppercase text-red-400">Offline</span></>
                     }
                 </div>
             </div>
 
             {loading ? (
                 <div className="flex-1 flex items-center justify-center text-white/30">
-                    <p className="text-sm font-black uppercase tracking-widest">Caricamento...</p>
+                    <p className="text-sm font-semibold">Caricamento...</p>
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
@@ -157,7 +157,7 @@ export default function KDS() {
                     {/* Cumulativo */}
                     <div className="lg:w-[420px] xl:w-[480px] flex flex-col border-b lg:border-b-0 lg:border-r border-white/10">
                         <div className="px-5 py-3 border-b border-white/10 shrink-0">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Coda cumulativa</p>
+                            <p className="text-[10px] font-semibold text-white/40">Coda cumulativa</p>
                             <p className="text-xs text-white/30 mt-0.5">Totale da preparare</p>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
@@ -168,14 +168,14 @@ export default function KDS() {
                     {/* Ordini */}
                     <div className="flex-1 flex flex-col overflow-hidden">
                         <div className="px-5 py-3 border-b border-white/10 shrink-0">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Ordini in coda</p>
+                            <p className="text-[10px] font-semibold text-white/40">Ordini in coda</p>
                             <p className="text-xs text-white/30 mt-0.5">Dal più vecchio</p>
                         </div>
                         <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
                             {pending.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-48 gap-3 text-white/30">
                                     <ChefHat size={40} />
-                                    <p className="text-xs font-black uppercase tracking-widest">Nessun ordine in attesa</p>
+                                    <p className="text-xs font-semibold">Nessun ordine in attesa</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">

@@ -140,9 +140,11 @@ describe('avvisi whatsapp', () => {
     const o = await order();
     assert.equal(o.status, 201, JSON.stringify(o.body));
     const id = (await admin.get(`/takeaway/orders?date=${day}`)).body.find(x => x.customer_name === 'Pia Asporto').id;
+    // il ritiro di oggi va subito in cucina (uno per un altro giorno aspetta la sua serata): si porta la richiesta a oggi
+    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = pickup_at - interval '3 days' WHERE id = $1`, [id]);
     assert.equal((await admin.post(`/takeaway/orders/${id}/accept`, {})).status, 200);
     // la cucina conclude l'ordine
-    const kitchenOrder = (await admin.get(`/takeaway/orders?date=${day}`)).body.find(x => x.id === id).order_id;
+    const kitchenOrder = (await admin.get(`/takeaway/orders?date=${today}`)).body.find(x => x.id === id).order_id;
     await admin.put(`/orders/${kitchenOrder}/lines`, { status: 'ready' });
     await run(t, later(5));                                      // «pronto» parte subito, prima della consegna
     await admin.post(`/takeaway/orders/${id}/picked-up`, { method: 'cash' });

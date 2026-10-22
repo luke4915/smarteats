@@ -171,10 +171,11 @@ async function configure(api) {
   // Sale e pianta
   const sala = await api.post('/rooms', { name: 'Sala interna' });
   const dehors = await api.post('/rooms', { name: 'Dehors' });
-  const mk = async (room, name, seats) => (await api.post(`/rooms/${room.id}/tables`, { name, seats })).id;
+  // `min` = da quante persone conviene il tavolo (facoltativo): i tavoli più grandi hanno un intervallo, quelli piccoli sono fissi
+  const mk = async (room, name, seats, min) => (await api.post(`/rooms/${room.id}/tables`, { name, seats, ...(min ? { seats_min: min } : {}) })).id;
   const tables = {};
-  for (const [name, seats] of [['T1', 2], ['T2', 4], ['T3', 2], ['T4', 6], ['T5', 4], ['T6', 4], ['T7', 8], ['T8', 2]]) tables[name] = await mk(sala, name, seats);
-  for (const [name, seats] of [['D1', 4], ['D2', 4], ['D3', 2], ['D4', 6]]) tables[name] = await mk(dehors, name, seats);
+  for (const [name, seats, min] of [['T1', 2], ['T2', 4, 2], ['T3', 2], ['T4', 6, 4], ['T5', 4, 2], ['T6', 4, 3], ['T7', 8, 5], ['T8', 2]]) tables[name] = await mk(sala, name, seats, min);
+  for (const [name, seats, min] of [['D1', 4, 2], ['D2', 4, 2], ['D3', 2], ['D4', 6, 4]]) tables[name] = await mk(dehors, name, seats, min);
   await api.put(`/rooms/${sala.id}/layout`, {
     grid_w: 20, grid_h: 12,
     tables: [

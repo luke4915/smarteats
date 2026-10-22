@@ -81,7 +81,7 @@ Le sezioni sono in `frontend/src/smarteats/settings/sections.js` (nome, chi la v
 
 ### Aggiungere un campo a un prodotto (es. «allergeni»)
 Sono quattro posti, sempre gli stessi:
-1. **Database:** una nuova migrazione `backend/migrations/055_…sql` (il numero è il successivo all'ultimo). Mai modificare una migrazione già esistente. Poi aggiorna `backend/schema.sql` (vedi `CLAUDE.md` §6).
+1. **Database:** una nuova migrazione `backend/migrations/056_…sql` (il numero è il successivo all'ultimo). Mai modificare una migrazione già esistente. Poi aggiorna `backend/schema.sql` (vedi `CLAUDE.md` §6).
 2. **Server:** `backend/schemas/productSchema.js` (il campo è ammesso) e `backend/routes/products.js` (lo salva).
 3. **Modulo:** `frontend/src/components/products/productForm.js` (valore iniziale) e `ProductFormModal.jsx` (il campo che si vede).
 4. **Test:** una riga in `productForm.test.js`.
@@ -94,6 +94,15 @@ Sono quattro posti, sempre gli stessi:
 
 ### Una nuova API (indirizzo del server)
 Copia una route simile (es. `backend/routes/courses.js` è la più semplice) e ricorda i tre passaggi che non si saltano: `authenticate` (chi sei) → `validate` (i dati sono giusti) → `tenantScope` (solo i dati del tuo locale). Le query al database usano **sempre** `req.db.query` con `$1, $2` (mai testo incollato dentro la query).
+
+### L'app «SmartEats» per il Dock (come è fatta)
+Un'app del Mac non è un file: è una **cartella** con estensione `.app` (tasto destro → «Mostra contenuto pacchetto»). Quella di SmartEats la costruisce `scripts/crea-app.sh`:
+- **`Contents/Info.plist`**: la carta d'identità (nome, icona, «resta aperta»).
+- **`Contents/Resources/applet.icns`**: l'icona. Parte dal simbolo `frontend/public/pwa-512.png`, ridimensionato in tutte le misure che il Mac vuole (`sips`) e impacchettato (`iconutil`).
+- **`Contents/Resources/start.sh`**: prepara l'app (costruisce il frontend se è cambiato), avvia il server, aspetta che risponda e apre il browser.
+- **`Contents/Resources/stop.sh`**: ferma il server (si usa con «Esci» dal Dock).
+- Il «guscio» è un **applet AppleScript** (`osacompile -s`): un vero programma Mac che resta aperto, per questo l'icona sta ferma nel Dock invece di saltellare. Chiama `start.sh` all'apertura e `stop.sh` all'uscita.
+Se cambi la cartella del progetto o la versione di Node, rilancia `./scripts/crea-app.sh`.
 
 ## 5. Cose che NON si toccano senza chiedere
 

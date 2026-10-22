@@ -3,8 +3,10 @@ import { verifyOrderItems } from './orderLines.js';
 import { writeOrderItems } from './orderItemsWrite.js';
 import { sumQuantitiesByProduct, lockAndFindShortages, applyStockChange } from './stock.js';
 import { formatDisplayCode } from './displayCode.js';
-import { PORTAL_TZ } from './bookingPortal.js';
-import { DEFAULTS, slotsOn, orderLoad } from './takeaway.js';
+import { PORTAL_TZ, localNow } from './bookingPortal.js';
+import { DEFAULTS, slotsOn, orderLoad, pickupIsDue } from './takeaway.js';
+import { inTransaction } from '../db.js';
+import logger from '../logger.js';
 
 // Accesso ai dati dell'asporto, condiviso da chi gestisce (routes/takeaway.js) e dai clienti (routes/publicTakeaway.js).
 // Va chiamato con la connessione del locale (RLS).
@@ -73,6 +75,45 @@ export async function createKitchenOrder(db, { tenantId, userId, takeaway, role 
   await writeOrderItems(db, tenantId, order.id, items);
   const stockUpdates = await applyStockChange(db, totals, -1);
   return { order, items, total, stockUpdates };
+}
+
+// Avvisa la cucina (e chi guarda lo stock) che è nato l'ordine di cucina di un asporto. `broadcast` è quello delle route.
+export function announceKitchenOrder(broadcast, tenantId, created, row, pickupAt) {
+  created.stockUpdates.forEach(product => broadcast?.(tenantId, { type: 'product_stock_updated', product }));
+  broadcast?.(tenantId, { type: 'order_created', order: {
+    id: created.order.id, check_id: null, table_name: null, covers: null, check_number: null, display_code: created.order.display_code,
+    status: 'pending', created_at: created.order.created_at, items: created.items, total: created.total, is_takeaway: true,
+    pickup_at: pickupAt, pickup_name: row.customer_name,
+  } });
+}
+
+// Fa nascere gli ordini di cucina degli asporti accettati in anticipo il cui ritiro è per oggi (o già passato): si chiama
+// all'apertura della serata, quando c'è finalmente una sessione dove metterli (e lo stock è appena ripartito). Ogni ordine
+// ha la sua transazione: se uno non riesce (stock esaurito, prodotto cambiato) gli altri partono comunque e quello resta
+// accettato, in attesa, con un avviso nel log. Ritorna gli ordini creati, per avvisare la cucina: [{ created, row }].
+export async function fireDueTakeaway(db, { tenantId, userId }) {
+  const { rows: waiting } = await db.query(
+    `SELECT id, to_char(pickup_at AT TIME ZONE $1, 'YYYY-MM-DD') AS date
+     FROM takeaway_orders WHERE status = 'accepted' AND order_id IS NULL ORDER BY pickup_at, id`, [PORTAL_TZ]);
+  const now = localNow();
+  const fired = [];
+  for (const { id, date } of waiting.filter(w => pickupIsDue(w.date, now))) {
+    try {
+      const result = await inTransaction(db, async (tx) => {
+        // si rilegge l'ordine bloccandolo: se nel frattempo è stato annullato o acceso da un altro, non si fa nulla
+        const { rows: [row] } = await tx.query(
+          `SELECT id, customer_name, items, pickup_at, total FROM takeaway_orders WHERE id = $1 AND status = 'accepted' AND order_id IS NULL FOR UPDATE`, [id]);
+        if (!row) return null;
+        const created = await createKitchenOrder(tx, { tenantId, userId, takeaway: row });
+        await tx.query('UPDATE takeaway_orders SET order_id = $2, total = $3 WHERE id = $1', [id, created.order.id, created.total]);
+        return { created, row };
+      });
+      if (result) fired.push(result);
+    } catch (err) {
+      logger.warn({ err, takeawayId: id }, 'Asporto accettato in anticipo: l\'ordine di cucina non è partito, resta in attesa');
+    }
+  }
+  return fired;
 }
 
 // Annulla l'ordine di cucina (rifiuto dopo l'accettazione, annullo del locale): lo stock torna disponibile.

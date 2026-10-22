@@ -16,7 +16,7 @@ export const roomsRouter = express.Router();
 export const tablesRouter = express.Router();
 
 const ROOM_COLUMNS = 'id, name, active, grid_w, grid_h';
-const TABLE_COLUMNS = 'id, room_id, name, seats, active, x, y, w, h, shape';
+const TABLE_COLUMNS = 'id, room_id, name, seats, seats_min, active, x, y, w, h, shape';
 const ELEMENT_COLUMNS = 'id, room_id, kind, x, y, w, h';
 
 const UNIQUE_ROOM = 'Esiste già una sala con questo nome';
@@ -126,8 +126,8 @@ roomsRouter.put('/:id/layout', authenticate, requireModule('tables'), authorizeA
 roomsRouter.post('/:id/tables', authenticate, requireModule('tables'), authorizeAdmin, validate({ params: idParamsSchema, body: createTableSchema }), tenantScope, async (req, res) => {
   try {
     const { rows } = await req.db.query(
-      `INSERT INTO dining_tables (room_id, name, seats) SELECT id, $2, $3 FROM rooms WHERE id = $1 RETURNING ${TABLE_COLUMNS}`,
-      [req.params.id, req.body.name, req.body.seats]);
+      `INSERT INTO dining_tables (room_id, name, seats, seats_min) SELECT id, $2, $3::int, COALESCE($4::int, $3::int) FROM rooms WHERE id = $1 RETURNING ${TABLE_COLUMNS}`,
+      [req.params.id, req.body.name, req.body.seats, req.body.seats_min ?? null]);
     if (!rows.length) return res.status(404).json({ error: 'Sala non trovata' });
     await logAudit(req.db, req.user.id, 'CREATE_TABLE', { tableId: rows[0].id, roomId: rows[0].room_id, name: rows[0].name });
     res.status(201).json(rows[0]);
@@ -141,16 +141,16 @@ roomsRouter.post('/:id/tables', authenticate, requireModule('tables'), authorize
 // POST /api/rooms/:id/tables/bulk — più tavoli (prefisso + numeri); i nomi già presenti si saltano
 roomsRouter.post('/:id/tables/bulk', authenticate, requireModule('tables'), authorizeAdmin, validate({ params: idParamsSchema, body: bulkTablesSchema }), tenantScope, async (req, res) => {
   try {
-    const { prefix, from, to, seats } = req.body;
+    const { prefix, from, to, seats, seats_min: seatsMin } = req.body;
     const created = await inTransaction(req.db, async (db) => {
       const { rows: room } = await db.query('SELECT id FROM rooms WHERE id = $1 FOR UPDATE', [req.params.id]);
       if (!room.length) return null;
       const { rows } = await db.query(
-        `INSERT INTO dining_tables (room_id, name, seats)
-         SELECT $1, $2 || n, $3 FROM generate_series($4::int, $5::int) AS n
+        `INSERT INTO dining_tables (room_id, name, seats, seats_min)
+         SELECT $1, $2 || n, $3::int, COALESCE($6::int, $3::int) FROM generate_series($4::int, $5::int) AS n
          ON CONFLICT (room_id, lower(name)) DO NOTHING
          RETURNING ${TABLE_COLUMNS}`,
-        [req.params.id, prefix, seats, from, to]);
+        [req.params.id, prefix, seats, from, to, seatsMin ?? null]);
       return rows;
     });
     if (!created) return res.status(404).json({ error: 'Sala non trovata' });
@@ -164,16 +164,19 @@ roomsRouter.post('/:id/tables/bulk', authenticate, requireModule('tables'), auth
 
 tablesRouter.put('/:id', authenticate, requireModule('tables'), authorizeAdmin, validate({ params: idParamsSchema, body: updateTableSchema }), tenantScope, async (req, res) => {
   try {
-    const { name, seats, active } = req.body;
+    const { name, seats, seats_min: seatsMin, active } = req.body;
+    // Il minimo cambia solo se indicato (e se supera il massimo il database rifiuta: 400); se il nuovo massimo scende sotto il minimo, il minimo lo segue
     const { rows } = await req.db.query(
-      `UPDATE dining_tables SET name = COALESCE($1, name), seats = COALESCE($2, seats), active = COALESCE($3, active)
+      `UPDATE dining_tables SET name = COALESCE($1, name), seats = COALESCE($2, seats), active = COALESCE($3, active),
+         seats_min = COALESCE($5::int, LEAST(seats_min, COALESCE($2::int, seats)))
        WHERE id = $4 RETURNING ${TABLE_COLUMNS}`,
-      [name ?? null, seats ?? null, active ?? null, req.params.id]);
+      [name ?? null, seats ?? null, active ?? null, req.params.id, seatsMin ?? null]);
     if (!rows.length) return res.status(404).json({ error: 'Tavolo non trovato' });
     await logAudit(req.db, req.user.id, 'UPDATE_TABLE', { tableId: rows[0].id, ...req.body });
     res.json(rows[0]);
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: UNIQUE_TABLE, code: 'TABLE_EXISTS' });
+    if (err.code === '23514') return res.status(400).json({ error: 'Il minimo di posti non può superare il massimo' });
     logger.error({ err }, 'Errore PUT /api/tables/:id');
     res.status(500).json({ error: 'Errore aggiornamento tavolo' });
   }

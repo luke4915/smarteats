@@ -6,6 +6,8 @@ import { buildCopyPreviews } from '../../print/copyPreviews';
 import { createBrowserImages } from '../../print/raster';
 import { DEFAULT_BRANDING } from '../../print/templates';
 import { toBlackWhiteDataUrl } from './blackWhiteImage';
+import Modal from '../shared/Modal';
+import { btn, btnDanger } from '../../smarteats/floor/ui';
 
 // Personalizzazione degli scontrini di un tenant (solo master): testi, logo, immagine laterale
 // e anteprima delle copie con gli stessi template che stampano davvero.
@@ -275,17 +277,10 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
       </div>
 
       {confirmClose && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" onClick={() => setConfirmClose(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <div className="relative w-full max-w-sm bg-[var(--bg-card)] rounded-lg border border-[var(--border)] shadow-2xl p-6" onClick={e => e.stopPropagation()}>
-            <p className="font-semibold text-[var(--text-main)] mb-1 text-center">Uscire senza salvare?</p>
-            <p className="text-xs text-[var(--text-muted)] mb-4 text-center">Le modifiche a testi e immagini andranno perse.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmClose(false)} className="flex-1 h-10 rounded-lg border border-[var(--border)] text-[var(--text-main)] font-semibold text-xs hover:bg-[var(--bg-card-2)]">Continua</button>
-              <button onClick={onClose} className="flex-1 h-10 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold text-xs">Esci</button>
-            </div>
-          </div>
-        </div>
+        <Modal title="Uscire senza salvare?" onClose={() => setConfirmClose(false)}
+          footer={<div className="flex gap-3"><button onClick={() => setConfirmClose(false)} className={`${btn} flex-1`}>Continua</button><button onClick={onClose} className={`${btnDanger} flex-1`}>Esci</button></div>}>
+          <p className="text-sm text-[var(--text-muted)]">Le modifiche a testi e immagini andranno perse.</p>
+        </Modal>
       )}
     </div>
   );

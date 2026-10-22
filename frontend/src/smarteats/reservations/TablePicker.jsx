@@ -7,6 +7,7 @@ import { isPlaced } from '../floorplan/geometry';
 import PanelFrame from '../floor/PanelFrame';
 import { btnPrimary, segment, segmentBox } from '../floor/ui';
 import { tableTakenBy, suggestTables, tablesConnected } from './rules';
+import { seatsLabel, effectiveMin } from '../floor/seats';
 
 // Assegna uno o più tavoli a una prenotazione, sulla pianta della sala. Ogni tavolo mostra i suoi posti. Quelli già presi
 // da un'altra prenotazione con orario sovrapposto sono bloccati e dicono da chi. Se la prenotazione non ha ancora
@@ -24,13 +25,15 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
   const takenBy = (tableId) => tableTakenBy(tableId, reservation, all);
   // Il consigliato: tra i tavoli liberi per quel turno, quello che spreca meno posti (o i pochi da unire)
   const suggestion = useMemo(
-    () => suggestTables(party, everyTable.filter(t => !tableTakenBy(t.id, reservation, all)).map(t => ({ id: t.id, seats: t.seats, roomId: t.roomId, x: t.x, y: t.y, w: t.w, h: t.h })), { preferRoomId: roomId }),
+    () => suggestTables(party, everyTable.filter(t => !tableTakenBy(t.id, reservation, all)).map(t => ({ id: t.id, seats: t.seats, seatsMin: t.seats_min, roomId: t.roomId, x: t.x, y: t.y, w: t.w, h: t.h })), { preferRoomId: roomId }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [everyTable, party, reservation, all]);
   const [selected, setSelected] = useState(() => (reservation.table_ids.length ? reservation.table_ids : suggestion?.ids ?? []));
   const [auto, setAuto] = useState(() => reservation.table_ids.length === 0 && !!suggestion);
   const seats = selected.reduce((s, id) => s + (everyTable.find(t => t.id === id)?.seats ?? 0), 0);
   const enough = seats >= party;
+  const minNeeded = selected.reduce((s, id) => { const t = everyTable.find(x => x.id === id); return s + (t ? effectiveMin(t) : 0); }, 0);   // minimo dei tavoli scelti
+  const belowMin = enough && party < minNeeded;
   const chosen = selected.map(id => everyTable.find(t => t.id === id)).filter(Boolean);
   const together = chosen.length < 2 || chosen.every(t => t.roomId === chosen[0].roomId) && tablesConnected(chosen);
   const useSuggestion = () => { if (suggestion) { setSelected(suggestion.ids); setAuto(true); setRoomId(everyTable.find(t => t.id === suggestion.ids[0])?.roomId ?? roomId); } };
@@ -54,14 +57,14 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
       : on ? 'border-[var(--accent)] bg-[var(--accent)] text-white' : 'border-[var(--border-hover)] bg-[var(--bg-card-2)] text-[var(--text-main)] hover:border-[var(--accent)]';
     return (
       <button key={table.id} style={style ?? undefined} aria-pressed={on}
-        aria-label={`${table.name}, ${table.seats} posti${other ? `: assegnato a ${other.customer_name}` : ''}${suggested ? ', consigliato' : ''}`}
-        onClick={() => toggle(table)} title={other ? `${other.customer_name} · ${other.start_time}` : `${table.name}: ${table.seats} posti`}
+        aria-label={`${table.name}, ${seatsLabel(table)} posti${other ? `: assegnato a ${other.customer_name}` : ''}${suggested ? ', consigliato' : ''}`}
+        onClick={() => toggle(table)} title={other ? `${other.customer_name} · ${other.start_time}` : `${table.name}: ${seatsLabel(table)} posti`}
         className={`relative flex flex-col items-center justify-center border box-border overflow-hidden text-center transition ${table.shape === 'round' ? 'rounded-full' : 'rounded-lg'} ${base} ${suggested ? '!border-[var(--accent)] ring-2 ring-[var(--accent)]/40' : ''} ${style ? '' : 'min-h-14 px-2'}`}>
         <span className="font-semibold leading-none truncate max-w-full px-1" style={{ fontSize: style ? Math.max(14, Math.min(cell * 0.4, 20)) : 16 }}>{table.name}</span>
         {other
           ? <span className="text-xs leading-none mt-1 opacity-80 truncate max-w-full px-1">{other.customer_name}</span>
           : <span className="flex items-center gap-1 mt-1 font-semibold tabular-nums leading-none" style={{ fontSize: style ? Math.max(13, Math.min(cell * 0.34, 17)) : 15 }}>
-            <Users size={style ? Math.max(13, Math.min(cell * 0.32, 17)) : 15} />{table.seats}
+            <Users size={style ? Math.max(13, Math.min(cell * 0.32, 17)) : 15} />{seatsLabel(table)}
           </span>}
         {on && <Check size={12} className="absolute top-0.5 right-0.5" />}
       </button>
@@ -86,7 +89,7 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
       footer={
         <>
           {auto && selected.length > 0 && (
-            <p className="text-xs text-[var(--accent)] flex items-center gap-1.5"><Sparkles size={13} /> Preselezionato il più adatto: sprechi meno posti. Puoi cambiarlo.</p>
+            <p className="text-xs text-[var(--accent)] flex items-center gap-1.5"><Sparkles size={13} /> {suggestion?.under ? 'Nessun tavolo ideale: questo è quello che spreca meno posti. Puoi cambiarlo.' : 'Preselezionato il più adatto: riempie meglio la sala. Puoi cambiarlo.'}</p>
           )}
           {!auto && suggestion && JSON.stringify([...selected].sort()) !== JSON.stringify([...suggestion.ids].sort()) && (
             <button className="text-xs text-[var(--accent)] font-medium cursor-pointer flex items-center gap-1.5" onClick={useSuggestion}>
@@ -97,7 +100,7 @@ const TablePicker = ({ reservation, rooms, all, onBack, onSaved }) => {
           <p className={`text-sm ${selected.length && !enough ? 'text-amber-500' : 'text-[var(--text-muted)]'}`} role="status">
             {selected.length === 0 ? 'Tocca i tavoli da assegnare'
               : !enough ? `${seats} ${seats === 1 ? 'posto' : 'posti'} per ${party} persone: ne servono ancora ${party - seats}`
-                : `${seats} posti per ${party} persone${seats - party > 0 ? ` · ${seats - party} ${seats - party === 1 ? 'vuoto' : 'vuoti'}` : ''}`}
+                : `${seats} posti per ${party} persone${seats - party > 0 ? ` · ${seats - party} ${seats - party === 1 ? 'vuoto' : 'vuoti'}` : ''}${belowMin ? ` · sotto il minimo consigliato (${minNeeded})` : ''}`}
           </p>
           <button className={`${btnPrimary} w-full !h-12`} disabled={busy || (selected.length > 0 && !enough)} onClick={save}>{selected.length ? 'Assegna' : 'Togli i tavoli'}</button>
         </>

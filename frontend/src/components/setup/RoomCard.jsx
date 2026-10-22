@@ -4,6 +4,8 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import TableRow from './TableRow';
 import FloorEditor from '../../smarteats/floorplan/FloorEditor';
+import SeatsRange from './SeatsRange';
+import { rangeBody } from '../../smarteats/floor/seats';
 
 // Una sala con i suoi tavoli: rinomina, attiva/disattiva, elimina (se vuota), aggiunta di un tavolo o di più in serie.
 const inputClass = 'p-2.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] placeholder:text-[var(--text-muted)]';
@@ -15,8 +17,8 @@ const RoomCard = ({ room, onChanged }) => {
   const [renaming, setRenaming] = useState(null);       // nuovo nome
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [adding, setAdding] = useState('none');         // 'none' | 'one' | 'bulk'
-  const [one, setOne] = useState({ name: '', seats: 2 });
-  const [bulk, setBulk] = useState({ prefix: 'T', from: 1, to: 10, seats: 4 });
+  const [one, setOne] = useState({ name: '', min: '', seats: 2 });
+  const [bulk, setBulk] = useState({ prefix: 'T', from: 1, to: 10, min: '', seats: 4 });
   const [busy, setBusy] = useState(false);
   const [designing, setDesigning] = useState(false);
 
@@ -31,10 +33,10 @@ const RoomCard = ({ room, onChanged }) => {
   const toggleActive = () => run(() => fetchWithAuth(`/rooms/${room.id}`, { method: 'PUT', body: { active: !room.active } }));
   const remove = () => run(() => fetchWithAuth(`/rooms/${room.id}`, { method: 'DELETE' }));
   const addOne = () => run(
-    () => fetchWithAuth(`/rooms/${room.id}/tables`, { method: 'POST', body: { name: one.name.trim(), seats: Number(one.seats) } }),
-    () => { setOne({ name: '', seats: one.seats }); });
+    () => fetchWithAuth(`/rooms/${room.id}/tables`, { method: 'POST', body: { name: one.name.trim(), ...rangeBody({ min: one.min, max: one.seats }) } }),
+    () => { setOne({ name: '', min: one.min, seats: one.seats }); });
   const addBulk = () => run(
-    () => fetchWithAuth(`/rooms/${room.id}/tables/bulk`, { method: 'POST', body: { prefix: bulk.prefix.trim(), from: Number(bulk.from), to: Number(bulk.to), seats: Number(bulk.seats) } }),
+    () => fetchWithAuth(`/rooms/${room.id}/tables/bulk`, { method: 'POST', body: { prefix: bulk.prefix.trim(), from: Number(bulk.from), to: Number(bulk.to), ...rangeBody({ min: bulk.min, max: bulk.seats }) } }),
     ({ created, skipped }) => {
       showToast(`${created.length} tavoli creati${skipped ? `, ${skipped} già presenti` : ''}`, 'success');
       setAdding('none');
@@ -80,7 +82,7 @@ const RoomCard = ({ room, onChanged }) => {
       {adding === 'one' && (
         <div className="flex flex-wrap items-end gap-2 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] mb-3">
           <input className={`${inputClass} w-32`} aria-label="Nome del tavolo" placeholder="Nome (es. T1)" maxLength={50} autoFocus value={one.name} onChange={e => setOne(v => ({ ...v, name: e.target.value }))} />
-          <input className={`${inputClass} w-20`} aria-label="Posti" type="number" min={1} max={99} value={one.seats} onChange={e => setOne(v => ({ ...v, seats: e.target.value }))} />
+          <SeatsRange min={one.min} max={one.seats} onChange={({ min, max }) => setOne(v => ({ ...v, min, seats: max }))} />
           <button className={btn} disabled={busy || !one.name.trim()} onClick={addOne}><Plus size={12} /> Aggiungi</button>
           <button className={btn} onClick={() => setAdding('none')}>Chiudi</button>
         </div>
@@ -93,8 +95,8 @@ const RoomCard = ({ room, onChanged }) => {
             <input className={`${inputClass} block w-20 mt-1`} type="number" min={1} value={bulk.from} onChange={e => setBulk(v => ({ ...v, from: e.target.value }))} /></label>
           <label className="text-xs font-semibold text-[var(--text-muted)]">Al
             <input className={`${inputClass} block w-20 mt-1`} type="number" min={1} value={bulk.to} onChange={e => setBulk(v => ({ ...v, to: e.target.value }))} /></label>
-          <label className="text-xs font-semibold text-[var(--text-muted)]">Posti
-            <input className={`${inputClass} block w-20 mt-1`} type="number" min={1} max={99} value={bulk.seats} onChange={e => setBulk(v => ({ ...v, seats: e.target.value }))} /></label>
+          <div className="text-xs font-semibold text-[var(--text-muted)]">Posti (da – a)
+            <div className="mt-1"><SeatsRange min={bulk.min} max={bulk.seats} onChange={({ min, max }) => setBulk(v => ({ ...v, min, seats: max }))} /></div></div>
           <button className={btn} disabled={busy || Number(bulk.to) < Number(bulk.from)} onClick={addBulk}><ListPlus size={12} /> Crea {Math.max(0, Number(bulk.to) - Number(bulk.from) + 1)} tavoli</button>
           <button className={btn} onClick={() => setAdding('none')}>Chiudi</button>
         </div>

@@ -78,7 +78,7 @@ export async function tenantScope(req, res, next) {
 // Per lavori asincroni "fire-and-forget" che sopravvivono alla risposta HTTP
 // (es. stampa in background dopo aver già risposto al client): non si può
 // usare req.db, perché a quel punto è già stato rilasciato al pool. Questa
-// funzione acquisisce/scopa/rilascia una connessione dedicata autonomamente.
+// funzione prende una connessione dedicata, la usa e la rilascia da sola.
 export async function withTenantClient(tenantId, fn, sourcePool = pool) {
   const client = await sourcePool.connect();
   try {

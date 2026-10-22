@@ -18,6 +18,9 @@ test('solo asporto: l\'app mostra solo ciò che serve e si lavora dall\'asporto'
   await page.getByRole('button', { name: 'Nuovo ordine' }).click();
   await page.getByRole('button', { name: /^Margherita/ }).first().click();
   await page.getByRole('button', { name: /^Margherita/ }).first().click();
+  // Il ritiro è domani: così il test non dipende dall'ora (a fine giornata non restano fasce libere per oggi)
+  const tomorrow = new Date(Date.now() + 86400000);
+  await page.locator('input[type=date]').fill(`${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`);
   await page.getByLabel('Nome', { exact: true }).fill('Pizza da asporto');
   await page.getByRole('button', { name: /^Inserisci l'ordine/ }).click();
   await expect(page.getByText('Ordine inserito').first()).toBeVisible();

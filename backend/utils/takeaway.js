@@ -32,6 +32,14 @@ export function slotWithinWindow(date, time, now, minLeadMinutes = DEFAULTS.minL
   return { ok: true };
 }
 
+// Il ritiro è per oggi (o già passato)? Allora l'ordine di cucina nasce subito. Se è per un altro giorno l'ordine resta
+// «accettato» e nasce all'apertura della serata di quel giorno: così non compare in cucina con un giorno d'anticipo e
+// finisce nella serata giusta (incassi, stock). Un ritiro già passato non deve restare bloccato, perciò conta come «oggi».
+// `pickupDate` è `YYYY-MM-DD` nel fuso del locale; `now` è localNow().
+export function pickupIsDue(pickupDate, now) {
+  return daysBetween(now.date, pickupDate) <= 0;
+}
+
 // Carico di un insieme di righe: somma di quantità × `takeaway_load` del prodotto. `loadOf(productId)` → intero.
 export const orderLoad = (items, loadOf) => items.reduce((sum, i) => sum + Number(i.quantity) * (loadOf(i.id) ?? 1), 0);
 
