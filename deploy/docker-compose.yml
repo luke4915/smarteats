@@ -2,7 +2,7 @@
 # Uso: vedi docs/deployment.md (sezione «Messa online gratis»). Da lanciare dalla cartella deploy/ con il file .env accanto.
 services:
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.6
     restart: unless-stopped
     command:
       - --providers.docker=true
