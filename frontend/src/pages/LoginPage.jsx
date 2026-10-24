@@ -66,7 +66,7 @@ const Login = ({ onLogin }) => {
         />
         <input
           type="password"
-          placeholder="Password (vuota se non impostata)"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           onKeyDown={handleKeyDown}
