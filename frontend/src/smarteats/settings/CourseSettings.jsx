@@ -42,8 +42,9 @@ const CourseSettings = () => {
                   : <button className="flex-1 min-w-0 text-left text-base text-[var(--text-main)] py-1.5 truncate" onClick={() => setEditing({ id: c.id, name: c.name })} title="Rinomina">{c.name}</button>}
                 {index > 0 && (
                   <button role="switch" aria-checked={c.with_previous} onClick={() => together(c)} title={`Esce insieme a «${courses[index - 1].name}»`}
-                    className={`shrink-0 h-8 px-3 rounded-full text-sm font-medium border transition ${c.with_previous ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>
-                    {c.with_previous ? 'Insieme alla precedente' : 'Dopo la precedente'}
+                    className={`shrink-0 h-8 coarse:h-10 px-3 rounded-full text-sm font-medium border transition ${c.with_previous ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>
+                    <span className="sm:hidden">{c.with_previous ? 'Insieme' : 'Dopo'}</span>
+                    <span className="hidden sm:inline">{c.with_previous ? 'Insieme alla precedente' : 'Dopo la precedente'}</span>
                   </button>
                 )}
                 <button className={`${iconBtn} hover:!text-red-500`} aria-label={`Elimina ${c.name}`} onClick={() => remove(c)}><Trash2 size={16} /></button>

@@ -6,6 +6,7 @@ import PanelFrame from '../floor/PanelFrame';
 import { btn, btnPrimary, input, label, segment, segmentBox } from '../floor/ui';
 import { formatEuro, normalizeText } from '../floor/checkMath';
 import { addToCart, cartCount, cartTotal, cartLoad } from './rules';
+import ScrollRow from '../../components/shared/ScrollRow';
 
 // L'ordine preso al banco o al telefono: a sinistra la carta (stessa disposizione della cassa), a destra il riepilogo
 // con nome, telefono e fascia di ritiro. Nasce già accettato e va subito in cucina.
@@ -27,12 +28,12 @@ export const ProductPicker = ({ products, cart, onAdd }) => {
             className="w-full h-11 pl-9 pr-3 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-main)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]" />
         </div>
       </div>
-      <div className="flex gap-1.5 pb-3 overflow-x-auto no-scrollbar shrink-0" role="tablist" aria-label="Categoria">
+      <ScrollRow className="flex gap-1.5 pb-3 shrink-0" role="tablist" aria-label="Categoria">
         {categories.map(c => (
           <button key={c} role="tab" aria-selected={category === c} onClick={() => setCategory(c)}
             className={`h-9 px-3.5 rounded-full text-sm font-medium whitespace-nowrap border cursor-pointer ${category === c ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>{c}</button>
         ))}
-      </div>
+      </ScrollRow>
       <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
         {!products && <p className="text-sm text-[var(--text-muted)]">Caricamento carta…</p>}
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5">

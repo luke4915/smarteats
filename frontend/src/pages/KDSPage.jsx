@@ -122,13 +122,13 @@ export default function KDS() {
     }, [orders]);
 
     if (disabled) return (
-        <div className="min-h-screen bg-[var(--bg-main)] text-white flex items-center justify-center p-6">
+        <div className="min-h-dvh bg-[var(--bg-main)] text-white flex items-center justify-center p-6">
             <p className="text-sm font-semibold text-white/50 text-center">Schermo cucina non attivo per questo locale</p>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] text-white flex flex-col">
+        <div className="min-h-dvh bg-[var(--bg-main)] text-white flex flex-col">
 
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">

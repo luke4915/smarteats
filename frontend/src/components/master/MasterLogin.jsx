@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { btnPrimary, input } from '../../smarteats/floor/ui';
+import CenteredScreen from '../layout/CenteredScreen';
 
 // L'accesso alla console del gestore: una sola password.
 const MasterLogin = ({ busy, error, onLogin }) => {
   const [password, setPassword] = useState('');
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--bg-main)] p-6">
+    <CenteredScreen>
       <div className="w-full max-w-xs">
         <div className="flex flex-col items-center mb-6">
           <ShieldCheck size={36} className="text-[var(--accent)] mb-3" />
@@ -20,7 +21,7 @@ const MasterLogin = ({ busy, error, onLogin }) => {
           <button type="submit" disabled={busy} className={`${btnPrimary} w-full`}>{busy ? 'Accesso…' : 'Entra'}</button>
         </form>
       </div>
-    </div>
+    </CenteredScreen>
   );
 };
 

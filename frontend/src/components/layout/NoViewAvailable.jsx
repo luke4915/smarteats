@@ -3,7 +3,7 @@ import { LogOut, PackageX } from 'lucide-react';
 // Mostrata quando il ruolo dell'utente non ha nessuna pagina attiva nel suo locale
 // (per esempio un utente cucina quando il modulo KDS è spento).
 const NoViewAvailable = ({ onLogout }) => (
-  <div className="flex flex-col items-center justify-center min-h-screen gap-4 p-6 bg-[var(--bg-main)] text-center">
+  <div className="flex flex-col items-center justify-center min-h-dvh gap-4 p-6 bg-[var(--bg-main)] text-center">
     <PackageX size={40} className="text-[var(--text-muted)]" />
     <div>
       <h1 className="text-xl font-semibold text-[var(--text-main)]">Nessuna funzione disponibile</h1>

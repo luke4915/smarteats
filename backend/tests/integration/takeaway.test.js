@@ -111,8 +111,9 @@ describe('asporto', () => {
   it('accettazione: serve il servizio aperto; poi la cucina vede l\'ordine con orario e nome', async () => {
     const created = await post([pizza(1)], { time: '20:00', customer_name: 'Luca' });
     const id = (await cashier.get(`/takeaway/orders?date=${tomorrow}`)).body.find(o => o.customer_name === 'Luca').id;
+    // (si sposta l'ora di Roma, non 24 ore: nel giorno del cambio dell'ora legale 24 ore farebbero slittare l'orario)
     // il ritiro di oggi va subito in cucina (quelli per un altro giorno aspettano, vedi il test dedicato): si porta la richiesta a oggi
-    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = pickup_at - interval '1 day' WHERE id = $1`, [id]);
+    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = ((pickup_at AT TIME ZONE 'Europe/Rome') - interval '1 day') AT TIME ZONE 'Europe/Rome' WHERE id = $1`, [id]);
 
     await adminDb.query('UPDATE sessions SET end_time = now() WHERE tenant_id = $1 AND end_time IS NULL', [t.id]);
     const closed = await cashier.post(`/takeaway/orders/${id}/accept`, {});
@@ -188,7 +189,7 @@ describe('asporto', () => {
     assert.deepEqual([ok.body.order_id, doomed.body.order_id], [null, null], 'accettati, senza ordine di cucina');
 
     // «domani» arriva: il ritiro diventa oggi, la serata si chiude e se ne apre una nuova
-    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = pickup_at - interval '1 day' WHERE id = ANY($1)`, [[ok.body.id, doomed.body.id]]);
+    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = ((pickup_at AT TIME ZONE 'Europe/Rome') - interval '1 day') AT TIME ZONE 'Europe/Rome' WHERE id = ANY($1)`, [[ok.body.id, doomed.body.id]]);
     await adminDb.query('UPDATE sessions SET end_time = now() WHERE tenant_id = $1 AND end_time IS NULL', [t.id]);
     await adminDb.query('DELETE FROM products WHERE id = $1', [drink]);      // uno dei due ordini non potrà più partire
     const start = await admin.post('/sessions/start', { name: 'Cena di domani' });

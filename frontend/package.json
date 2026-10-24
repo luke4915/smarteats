@@ -1,7 +1,7 @@
 {
   "name": "stand-manager-frontend",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "Interfaccia web (PWA) di Stand Manager: cassa, cucina, KDS, menu e amministrazione",
   "scripts": {

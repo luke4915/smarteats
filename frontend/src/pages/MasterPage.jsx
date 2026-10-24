@@ -38,7 +38,7 @@ const MasterPage = () => {
   const open = (kind, tenant) => () => setTarget({ kind, tenant });
 
   return (
-    <div className="h-screen overflow-y-auto bg-[var(--bg-main)]">
+    <div className="app-safe h-dvh overflow-y-auto bg-[var(--bg-main)]">
       <div className="max-w-4xl mx-auto p-4 sm:p-8 space-y-6">
         <header className="flex justify-between items-center">
           <div className="flex items-center gap-2.5">

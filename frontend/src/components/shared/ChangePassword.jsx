@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useToast } from '../../context/useToast';
 import { fetchWithAuth } from '../../utils/apiClient';
+import CenteredScreen from '../layout/CenteredScreen';
 
 const ChangePassword = ({ onPasswordChanged }) => {
   const { showToast } = useToast();
@@ -25,8 +26,8 @@ const ChangePassword = ({ onPasswordChanged }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--bg-main)]">
-      <div className="bg-[var(--bg-card)] p-10 rounded-xl shadow-xl border border-[var(--border)] w-full max-w-sm space-y-5">
+    <CenteredScreen>
+      <div className="bg-[var(--bg-card)] p-6 sm:p-10 rounded-xl shadow-xl border border-[var(--border)] w-full max-w-sm space-y-5">
         <div>
           <h2 className="text-2xl font-semibold text-[var(--text-main)]">Imposta password</h2>
           <p className="text-xs text-[var(--text-muted)] mt-1">La password che ti hanno dato è temporanea: scegline una tua</p>
@@ -54,7 +55,7 @@ const ChangePassword = ({ onPasswordChanged }) => {
           {loading ? "Salvataggio..." : "Imposta Password"}
         </button>
       </div>
-    </div>
+    </CenteredScreen>
   );
 };
 

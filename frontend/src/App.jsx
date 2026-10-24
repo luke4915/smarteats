@@ -31,7 +31,7 @@ const App = () => {
   if (path === '/privacy' || path === '/terms') return <Suspense fallback={<PageLoading />}><LegalPage kind={path.slice(1)} /></Suspense>;
   if (/^\/s\//.test(path)) return <Suspense fallback={<PageLoading />}><ShortLink /></Suspense>;
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">Caricamento...</div>;
+  if (loading) return <div className="h-dvh flex items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">Caricamento...</div>;
 
   if (path === '/kds') return <Suspense fallback={<PageLoading />}><KDS /></Suspense>;
 

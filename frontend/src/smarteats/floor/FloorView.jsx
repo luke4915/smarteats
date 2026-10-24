@@ -8,6 +8,7 @@ import { minutesOf } from '../reservations/rules';
 import Segmented from './Segmented';
 import { tone, btn } from './ui';
 import { seatsLabel } from './seats';
+import ScrollRow from '../../components/shared/ScrollRow';
 
 const minutesSince = (iso) => Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
 const nowMinutes = () => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); };
@@ -91,7 +92,7 @@ const Arrivals = ({ reserved, onOpen }) => {
   const list = [...new Map([...reserved.values()].map(r => [r.id, r])).values()].sort((a, b) => minutesOf(a.start_time) - minutesOf(b.start_time)).slice(0, 6);
   if (!list.length) return null;
   return (
-    <div className="shrink-0 flex items-center gap-2 overflow-x-auto no-scrollbar" aria-label="Prossimi arrivi">
+    <ScrollRow className="shrink-0 flex items-center gap-2" aria-label="Prossimi arrivi">
       <span className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)]"><Clock size={14} aria-hidden="true" /> In arrivo</span>
       {list.map(r => (
         <button key={r.id} onClick={() => onOpen(r)} className={`${btn} !h-9 !px-3 shrink-0 text-xs`}>
@@ -99,7 +100,7 @@ const Arrivals = ({ reserved, onOpen }) => {
           <span className="flex items-center gap-1 text-[var(--text-muted)] tabular-nums"><Users size={12} aria-hidden="true" />{r.party_size}</span>
         </button>
       ))}
-    </div>
+    </ScrollRow>
   );
 };
 

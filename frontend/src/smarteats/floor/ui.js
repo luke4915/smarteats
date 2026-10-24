@@ -6,7 +6,7 @@ const base = 'inline-flex items-center justify-center gap-2 h-11 px-4 rounded-lg
 export const btn = `${base} border border-[var(--border)] bg-transparent text-[var(--text-main)] hover:bg-[var(--bg-card-2)]`;
 export const btnPrimary = `${base} bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white`;
 export const btnDanger = `${base} border border-red-500/40 text-red-500 hover:bg-red-500/10`;
-export const iconBtn = 'inline-flex items-center justify-center p-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-2)] transition active:scale-95 cursor-pointer disabled:opacity-40 disabled:pointer-events-none';
+export const iconBtn = 'inline-flex items-center justify-center p-2 coarse:min-h-11 coarse:min-w-11 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--bg-card-2)] transition active:scale-95 cursor-pointer disabled:opacity-40 disabled:pointer-events-none';
 export const input = 'w-full h-11 px-3 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-main)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition';
 export const row = 'px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)]';
 // Interruttore a due o più scelte (un solo pulsante acceso)

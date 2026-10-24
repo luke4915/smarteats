@@ -43,7 +43,7 @@ const CartMobileView = ({
     const iconBtn = 'h-11 w-11 shrink-0 flex items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-muted)] active:scale-95 transition disabled:opacity-40';
 
     return (
-        <div className="flex flex-col h-[100dvh] bg-[var(--bg-card)] text-[var(--text-main)] overflow-hidden safe-bottom">
+        <div className="flex flex-col h-[100dvh] bg-[var(--bg-card)] text-[var(--text-main)] overflow-hidden">
 
             {/* ─── Intestazione ─── */}
             <div className="px-2 py-2 flex items-center gap-1 border-b border-[var(--border)] shrink-0">
@@ -120,7 +120,7 @@ const CartMobileView = ({
             </div>
 
             {/* ─── Pagamento, alla portata del pollice ─── */}
-            <div className="border-t border-[var(--border)] bg-[var(--bg-card-2)] px-3 pt-3 pb-safe-bottom space-y-3 shrink-0">
+            <div className="border-t border-[var(--border)] bg-[var(--bg-card-2)] px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-3 shrink-0">
 
                 {/* Totale */}
                 <div className="flex items-end justify-between px-1">

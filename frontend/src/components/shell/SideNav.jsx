@@ -19,12 +19,12 @@ const NavItem = ({ view, icons, compact, badge }) => {
 };
 
 export const SideNav = ({ views, icons, brand, badges = {} }) => (
-  <aside className={`${views.length > 1 ? 'hidden md:flex' : 'hidden'} flex-col shrink-0 w-20 xl:w-60 bg-[var(--bg-card)] border-r border-[var(--border)] py-5 px-3 gap-6`}>
+  <aside className={`${views.length > 1 ? 'hidden md:flex' : 'hidden'} flex-col shrink-0 w-20 xl:w-60 bg-[var(--bg-card)] border-r border-[var(--border)] py-5 px-3 gap-6 overflow-y-auto no-scrollbar [@media(max-height:520px)]:py-2 [@media(max-height:520px)]:gap-2`}>
     <div className="flex items-center gap-3 px-1">
       <div className="w-9 h-9 shrink-0 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white font-semibold text-lg select-none">S</div>
       <span className="hidden xl:inline font-semibold text-base tracking-tight text-[var(--text-main)]">{brand}</span>
     </div>
-    <nav className="flex-1 space-y-1">{views.map(v => <NavItem key={v.id} view={v} icons={icons} badge={badges[v.id]} />)}</nav>
+    <nav className="flex-1 space-y-1 [@media(max-height:520px)]:space-y-0">{views.map(v => <NavItem key={v.id} view={v} icons={icons} badge={badges[v.id]} />)}</nav>
   </aside>
 );
 

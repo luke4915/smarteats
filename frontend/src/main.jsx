@@ -6,6 +6,8 @@ import './index.css';
 import ErrorBoundary from './components/layout/ErrorBoundary';
 import { AuthProvider } from './context/AuthProvider';
 import { ToastProvider } from './context/ToastProvider';
+import UpdateBanner from './components/shell/UpdateBanner';
+import WhatsNew from './components/shell/WhatsNew';
 
 const root = createRoot(document.getElementById('root'));
 root.render(
@@ -15,6 +17,8 @@ root.render(
                 <ToastProvider>
                     <ErrorBoundary>
                         <AppRouter />
+                        <WhatsNew />
+                        <UpdateBanner />
                     </ErrorBoundary>
                 </ToastProvider>
             </AuthProvider>

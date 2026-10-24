@@ -12,6 +12,7 @@ import NewOrder, { ProductPicker } from './NewOrder';
 import { formatEuro } from '../floor/checkMath';
 import { useProducts } from '../floor/useProducts';
 import { btnPrimary, iconBtn, btn } from '../floor/ui';
+import ScrollRow from '../../components/shared/ScrollRow';
 
 const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
 const TONES = {
@@ -69,13 +70,13 @@ const TakeawayPage = ({ event }) => {
       </header>
 
       {busySlots.length > 0 && (
-        <div className="flex gap-2 pb-3 overflow-x-auto no-scrollbar shrink-0" aria-label="Carico delle fasce">
+        <ScrollRow className="flex gap-2 pb-3 shrink-0" aria-label="Carico delle fasce">
           {busySlots.map(s => {
             const ratio = capacity ? s.load / capacity : 0;
             const tone = ratio >= 1 ? 'border-red-500/50 text-red-500' : ratio >= 0.75 ? 'border-amber-500/50 text-amber-500' : 'border-[var(--border)] text-[var(--text-muted)]';
             return <span key={s.time} className={`shrink-0 px-2.5 py-1 rounded-lg border text-xs tabular-nums ${tone}`}><b className="text-[var(--text-main)]">{s.time}</b> · {s.load}/{capacity}</span>;
           })}
-        </div>
+        </ScrollRow>
       )}
 
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-5 pr-1">

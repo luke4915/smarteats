@@ -88,7 +88,7 @@ const ModifierSettings = ({ groups, onChanged }) => {
 
   return (
     <section className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
-      <header className="flex items-start justify-between gap-3 p-5">
+      <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 p-5">
         <div>
           <h2 className="text-sm font-semibold text-[var(--text-main)]">Opzioni dei piatti</h2>
           <p className="text-xs text-[var(--text-muted)] mt-1">Cottura, aggiunte, senza… Il supplemento si somma al prezzo del piatto. Da ogni piatto scegli quali opzioni chiedere.</p>
