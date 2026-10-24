@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Search, Plus, X, Trash2, Eye, EyeOff } from 'lucide-react';
+import ScrollRow from '../shared/ScrollRow';
 
 const DESTINATION = { bar: 'Bar', kitchen: 'Cucina' };
 
@@ -37,10 +38,10 @@ const CompactCatalog = ({ products, courses, onAdd, onEdit, onDelete, onToggleVi
         <button onClick={onAdd} className="flex items-center gap-1.5 h-10 px-4 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-medium cursor-pointer"><Plus size={16} /> Nuovo piatto</button>
       </div>
 
-      <div className="flex gap-1 overflow-x-auto no-scrollbar -mx-1 px-1" role="tablist" aria-label="Categorie">
+      <ScrollRow className="flex gap-1 -mx-1 px-1" role="tablist" aria-label="Categorie">
         <button role="tab" aria-selected={category === 'all'} onClick={() => setCategory('all')} className={chip(category === 'all')}>Tutte</button>
         {categories.map(c => <button key={c} role="tab" aria-selected={category === c} onClick={() => setCategory(c)} className={chip(category === c)}>{c}</button>)}
-      </div>
+      </ScrollRow>
 
       {groups.length === 0 && <p className="text-sm text-[var(--text-muted)] py-8 text-center">Nessun piatto{term ? ` che contenga «${search.trim()}»` : ''}.</p>}
       {groups.map(g => (

@@ -50,7 +50,7 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end, terms }) 
   return (
     <>
       <button onClick={canManage ? begin : undefined} disabled={!canManage}
-        className={`flex items-center gap-2 h-9 px-3 rounded-lg border text-sm font-medium transition-colors
+        className={`flex items-center gap-2 h-9 coarse:h-11 px-3 rounded-lg border text-sm font-medium transition-colors
           ${service ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-red-500/10 border-red-500/30 text-red-500'}
           ${canManage ? 'cursor-pointer enabled:hover:opacity-80' : 'cursor-default'}`}>
         <Power size={16} className="pointer-events-none" />

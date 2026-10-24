@@ -65,7 +65,7 @@ const SmartEatsApp = () => {
   const canManageService = ['admin', 'manager', 'cashier'].includes(user.role);
 
   return (
-    <div className="se-app flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
+    <div className="se-app app-safe flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
       <SideNav views={views} icons={ICONS} brand="SmartEats" badges={badges} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">

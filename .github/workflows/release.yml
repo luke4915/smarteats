@@ -16,6 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # L'etichetta (v0.3.0) e la versione dentro l'app (frontend/package.json) devono essere lo stesso numero:
+      # è quella che l'app mostra nelle novità.
+      - name: Controlla che l'etichetta coincida con la versione dell'app
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          app=$(node -p "require('./frontend/package.json').version")
+          [ "v$app" = "${GITHUB_REF_NAME}" ] || { echo "L'etichetta ${GITHUB_REF_NAME} non coincide con frontend/package.json (v$app)"; exit 1; }
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3

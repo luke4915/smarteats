@@ -18,7 +18,7 @@ const AppRouter = () => {
   const shared = isShared(window.location.pathname);
   if (!loading && user && !user.needsPassword && usesSmartEats(user) && !shared) {
     return (
-      <Suspense fallback={<div className="h-screen flex items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">Caricamento...</div>}>
+      <Suspense fallback={<div className="h-dvh flex items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">Caricamento...</div>}>
         <SmartEatsApp />
       </Suspense>
     );

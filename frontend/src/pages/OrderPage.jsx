@@ -6,6 +6,7 @@ import { btnPrimary, btn, input } from '../smarteats/floor/ui';
 import { formatEuro } from '../smarteats/floor/checkMath';
 import { PublicShell, StepSection } from '../components/public/PublicShell';
 import { useSystemTheme } from '../hooks/useSystemTheme';
+import ScrollRow from '../components/shared/ScrollRow';
 
 // Pagina pubblica per ordinare da asporto (`/order`): il cliente sceglie i prodotti, il giorno e la fascia di ritiro,
 // lascia nome e telefono e invia una *richiesta*: il locale la approva. Si paga al ritiro. `/order/<codice>` è la
@@ -153,12 +154,12 @@ const OrderPage = () => {
     <PublicShell info={info} kicker="Ordina da asporto" footer={bar}>
       {step === 'menu' && (
         <>
-          <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[var(--bg-main)] flex gap-1.5 overflow-x-auto no-scrollbar" role="tablist" aria-label="Categoria">
+          <ScrollRow className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[var(--bg-main)] flex gap-1.5" role="tablist" aria-label="Categoria">
             {info.categories.map(c => (
               <button key={c} role="tab" aria-selected={category === c} onClick={() => setCategory(c)}
                 className={`h-10 px-4 rounded-full text-sm font-medium whitespace-nowrap border cursor-pointer ${category === c ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)]'}`}>{c}</button>
             ))}
-          </div>
+          </ScrollRow>
           <ul className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden bg-[var(--bg-card)]">
             {products.map(p => {
               const q = cart[p.id] ?? 0;

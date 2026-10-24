@@ -117,10 +117,7 @@ Costo zero per cominciare, adatto a pochi clienti. Tutto sta in `deploy/` (`dock
 5. Apri `https://<nome>.duckdns.org/master`, entra con la password master e crea il primo locale.
 
 ### 4. Rilasciare una nuova versione
-1. Merge su `main` (CI verde), poi `git tag v0.1.1 && git push origin v0.1.1`: il workflow costruisce l'immagine (amd64 + arm64).
-2. Sul server: `cd stand-manager/deploy`. Il backup notturno c'è, ma **prima di una migrazione** lancia `docker compose exec backup bash /backup.sh /backups 14`.
-3. `docker compose pull app && docker compose up -d app`: le migrazioni mancanti girano all'avvio, poi parte il server (secondi di fermo).
-4. Tornare indietro: imposta in `.env` `APP_IMAGE=ghcr.io/luke4915/stand-manager:0.1.0` e rilancia `up -d`. Se la migrazione era distruttiva, ripristina il backup (sotto).
+Il processo completo (numero di versione, changelog, etichetta, aggiornamento del server, ritorno indietro) è in `docs/rilasci.md`.
 
 ### 5. Backup e ripristino
 - Il servizio `backup` fa un dump ogni notte alle 03:00 in `deploy/backups/` (14 giorni). **Sullo stesso disco non basta**: copiali fuori, es. `rclone copy deploy/backups r2:nome-bucket` con un cron (Cloudflare R2 o Backblaze B2 hanno un piano gratuito).

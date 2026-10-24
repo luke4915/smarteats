@@ -127,13 +127,13 @@ export default function MenuPage() {
     };
 
     if (loading) return (
-        <div className="min-h-screen bg-[var(--bg-main)] flex items-center justify-center">
+        <div className="min-h-dvh bg-[var(--bg-main)] flex items-center justify-center">
             <p className="text-[var(--text-muted)] text-sm font-semibold">Caricamento...</p>
         </div>
     );
 
     if (error) return (
-        <div className="min-h-screen bg-[var(--bg-main)] flex flex-col items-center justify-center gap-4 px-6">
+        <div className="min-h-dvh bg-[var(--bg-main)] flex flex-col items-center justify-center gap-4 px-6">
             <ChefHat size={48} className="text-[var(--text-muted)] opacity-30" />
             <p className="text-[var(--text-muted)] font-semibold text-sm text-center">{error}</p>
         </div>

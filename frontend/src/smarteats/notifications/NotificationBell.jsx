@@ -26,7 +26,7 @@ const NotificationBell = ({ items, onOpen }) => {
   return (
     <div ref={root} className="relative">
       <button onClick={() => setOpen(o => !o)} aria-label={items.length ? `Notifiche: ${items.length} da vedere` : 'Notifiche'} aria-expanded={open} aria-haspopup="true"
-        className="relative h-9 w-9 flex items-center justify-center rounded-lg hover:bg-[var(--bg-card-2)] text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer">
+        className="relative h-9 w-9 coarse:h-11 coarse:w-11 flex items-center justify-center rounded-lg hover:bg-[var(--bg-card-2)] text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer">
         <Bell size={18} />
         {items.length > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[11px] font-semibold tabular-nums flex items-center justify-center">{items.length > 9 ? '9+' : items.length}</span>

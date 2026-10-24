@@ -101,9 +101,9 @@ const TakeawaySettings = () => {
                   {windows.length === 0 && <span className="text-sm text-[var(--text-muted)]">Chiuso</span>}
                   {windows.map((w, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <input type="time" aria-label={`${name}: apertura`} className={`${input} !h-9 !w-28`} value={w.open_time} onChange={e => setWindow(d, i, { open_time: e.target.value })} />
+                      <input type="time" aria-label={`${name}: apertura`} className={`${input} !h-9 !w-28 coarse:!w-36`} value={w.open_time} onChange={e => setWindow(d, i, { open_time: e.target.value })} />
                       <span className="text-[var(--text-muted)]">–</span>
-                      <input type="time" aria-label={`${name}: chiusura`} className={`${input} !h-9 !w-28`} value={w.close_time} onChange={e => setWindow(d, i, { close_time: e.target.value })} />
+                      <input type="time" aria-label={`${name}: chiusura`} className={`${input} !h-9 !w-28 coarse:!w-36`} value={w.close_time} onChange={e => setWindow(d, i, { close_time: e.target.value })} />
                       <button className={`${iconBtn} hover:!text-red-500`} aria-label={`Togli la fascia di ${name}`} onClick={() => removeWindow(d, i)}><Trash2 size={15} /></button>
                     </div>
                   ))}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { apiFetch } from '../utils/apiClient';
 import { useToast } from '../context/useToast'; // Hook globale
+import CenteredScreen from '../components/layout/CenteredScreen';
 
 // Rimosso showToast dalle props, ora lo prendiamo dal Context
 const Login = ({ onLogin }) => {
@@ -42,20 +43,20 @@ const Login = ({ onLogin }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-[var(--bg-main)]">
+    <CenteredScreen>
 
       {/* LOGO */}
       <img
         src="/logo_StandManager_ESC_POS.png"
         alt="Logo"
-        className="w-40 mb-6 drop-shadow-md border-2 border-black bg-white p-2"
+        className="w-32 sm:w-40 mb-4 sm:mb-6 drop-shadow-md border-2 border-black bg-white p-2"
       />
 
       <h1 className="text-2xl font-semibold mb-6 text-[var(--text-main)]">
         Login Stand Manager
       </h1>
 
-      <div className="flex flex-col gap-4 w-80">
+      <div className="flex flex-col gap-4 w-full max-w-80">
         <input
           type="text"
           placeholder="Username"
@@ -81,7 +82,7 @@ const Login = ({ onLogin }) => {
           {loading ? "Accesso in corso..." : "Login"}
         </button>
       </div>
-    </div>
+    </CenteredScreen>
   );
 };
 
