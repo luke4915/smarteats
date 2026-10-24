@@ -7,9 +7,10 @@ export const CHANGELOG = [
     date: '2026-10-24',
     items: [
       'Ora l\'app si aggiorna da sola: quando esce una versione nuova la prende al primo momento sicuro, senza perdere ordini.',
-      'I tavoli hanno un minimo e un massimo di posti: i gruppi piccoli non occupano più i tavoli grandi, ma possono sempre sedersi.',
+      'I tavoli hanno un minimo e un massimo di posti: i gruppi piccoli non occupano più i tavoli grandi.',
       'Gli ordini da asporto per i giorni dopo compaiono in cucina solo il giorno del ritiro.',
       'Sala, Prenotazioni e Impostazioni ridisegnate, con movimenti più fluidi e migliori su iPhone e iPad.',
+      'Bug fix generali su funzionalità e UI/UX.'
     ],
   },
 ];
