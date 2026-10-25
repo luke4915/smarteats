@@ -27,7 +27,7 @@ services:
       - letsencrypt:/letsencrypt
 
   app:
-    image: ${APP_IMAGE:-ghcr.io/luke4915/stand-manager:latest}
+    image: ${APP_IMAGE:-ghcr.io/luke4915/smarteats:latest}
     restart: unless-stopped
     depends_on:
       db:
@@ -38,10 +38,10 @@ services:
       PORT: "3000"
       TLS_TERMINATED_BY_PROXY: "true"
       PG_HOST: db
-      PG_DATABASE: standmanager
-      PG_USER: standmanager_app
-      PG_MASTER_USER: standmanager_master
-      MIGRATION_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/standmanager
+      PG_DATABASE: smarteats
+      PG_USER: smarteats_app
+      PG_MASTER_USER: smarteats_master
+      MIGRATION_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/smarteats
     # Prima volta: crea ruoli e schema; poi applica le migrazioni mancanti; infine parte il server
     command: ["sh", "-c", "node scripts/init-db.js && node migrations/run.js && node server.js"]
     healthcheck:
@@ -65,11 +65,11 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: standmanager
+      POSTGRES_DB: smarteats
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d standmanager"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d smarteats"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -82,7 +82,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      BACKUP_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/standmanager
+      BACKUP_DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@db:5432/smarteats
     volumes:
       - ../backend/scripts/backup.sh:/backup.sh:ro
       - ./backups:/backups

@@ -1,6 +1,6 @@
-# Stand Manager
+# SmartEats
 
-Gestionale SaaS per sagre, eventi e ristorazione: cassa, ordini, comande su stampanti termiche, schermo cucina (KDS), magazzino, statistiche e menu pubblico con QR. Ogni cliente (tenant) ha il suo sottodominio e i suoi dati, isolati nel database con la Row-Level Security di PostgreSQL.
+Gestionale SaaS per sagre, eventi e ristorazione, in due prodotti sulla stessa piattaforma: **SmartEats Stand** (sagre, paninari, food truck) e **SmartEats Restaurant** (ristoranti, pizzerie, solo asporto): cassa, ordini, comande su stampanti termiche, schermo cucina (KDS), magazzino, statistiche e menu pubblico con QR. Ogni cliente (tenant) ha il suo sottodominio e i suoi dati, isolati nel database con la Row-Level Security di PostgreSQL.
 
 - `backend/`: Node.js, Express 5, PostgreSQL, WebSocket
 - `frontend/`: React 19, Vite, Tailwind v4, PWA con funzionamento offline
@@ -18,10 +18,10 @@ Regole, convenzioni e struttura nel dettaglio: [`CLAUDE.md`](CLAUDE.md). **Se no
 **1. Database**
 
 ```bash
-createdb standmanager
-psql -d standmanager -c "CREATE ROLE standmanager_app LOGIN PASSWORD 'una-password'"
-psql -d standmanager -c "CREATE ROLE standmanager_master LOGIN PASSWORD 'un-altra-password'"   # pannello master, vedi sotto
-psql -d standmanager -f backend/schema.sql   # gli avvisi sul ruolo proprietario si possono ignorare
+createdb smarteats
+psql -d smarteats -c "CREATE ROLE smarteats_app LOGIN PASSWORD 'una-password'"
+psql -d smarteats -c "CREATE ROLE smarteats_master LOGIN PASSWORD 'un-altra-password'"   # pannello master, vedi sotto
+psql -d smarteats -f backend/schema.sql   # gli avvisi sul ruolo proprietario si possono ignorare
 ```
 
 **2. Backend**

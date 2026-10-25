@@ -2802,21 +2802,21 @@ ALTER TABLE public.dining_tables ENABLE ROW LEVEL SECURITY;
 -- Name: app_feedback master_read; Type: POLICY; Schema: public; Owner: colettas
 --
 
-CREATE POLICY master_read ON public.app_feedback FOR SELECT TO standmanager_master USING (true);
+CREATE POLICY master_read ON public.app_feedback FOR SELECT TO smarteats_master USING (true);
 
 
 --
 -- Name: users master_read; Type: POLICY; Schema: public; Owner: colettas
 --
 
-CREATE POLICY master_read ON public.users FOR SELECT TO standmanager_master USING (true);
+CREATE POLICY master_read ON public.users FOR SELECT TO smarteats_master USING (true);
 
 
 --
 -- Name: whatsapp_messages master_read; Type: POLICY; Schema: public; Owner: colettas
 --
 
-CREATE POLICY master_read ON public.whatsapp_messages FOR SELECT TO standmanager_master USING (true);
+CREATE POLICY master_read ON public.whatsapp_messages FOR SELECT TO smarteats_master USING (true);
 
 
 --
@@ -3133,496 +3133,496 @@ ALTER TABLE public.whatsapp_messages ENABLE ROW LEVEL SECURITY;
 -- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
 --
 
-GRANT USAGE ON SCHEMA public TO standmanager_app;
-GRANT USAGE ON SCHEMA public TO standmanager_master;
+GRANT USAGE ON SCHEMA public TO smarteats_app;
+GRANT USAGE ON SCHEMA public TO smarteats_master;
 
 
 --
 -- Name: TABLE _migrations; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public._migrations TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public._migrations TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public._migrations TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public._migrations TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE _migrations_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public._migrations_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public._migrations_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public._migrations_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public._migrations_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE app_feedback; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.app_feedback TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.app_feedback TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.app_feedback TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.app_feedback TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE app_feedback_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.app_feedback_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.app_feedback_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.app_feedback_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.app_feedback_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE audit_logs; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT ON TABLE public.audit_logs TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.audit_logs TO standmanager_master;
+GRANT SELECT,INSERT ON TABLE public.audit_logs TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.audit_logs TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE audit_logs_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.audit_logs_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.audit_logs_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.audit_logs_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.audit_logs_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE booking_closures; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_closures TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_closures TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_closures TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_closures TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE booking_closures_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.booking_closures_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.booking_closures_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.booking_closures_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.booking_closures_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE booking_shifts; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_shifts TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_shifts TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_shifts TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.booking_shifts TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE booking_shifts_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.booking_shifts_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.booking_shifts_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.booking_shifts_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.booking_shifts_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE checks; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.checks TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.checks TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.checks TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.checks TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE checks_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.checks_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.checks_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.checks_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.checks_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE copy_types; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.copy_types TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.copy_types TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.copy_types TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.copy_types TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE copy_types_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.copy_types_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.copy_types_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.copy_types_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.copy_types_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE courses; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.courses TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.courses TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.courses TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.courses TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE courses_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.courses_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.courses_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.courses_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.courses_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE devices; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.devices TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.devices TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.devices TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.devices TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE devices_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.devices_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.devices_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.devices_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.devices_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE dining_tables; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.dining_tables TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.dining_tables TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.dining_tables TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.dining_tables TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE dining_tables_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.dining_tables_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.dining_tables_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.dining_tables_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.dining_tables_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE modifier_groups; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifier_groups TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifier_groups TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifier_groups TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifier_groups TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE modifier_groups_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.modifier_groups_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.modifier_groups_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.modifier_groups_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.modifier_groups_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE modifiers; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifiers TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifiers TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifiers TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifiers TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE modifiers_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.modifiers_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.modifiers_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.modifiers_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.modifiers_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE order_items; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.order_items TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.order_items TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.order_items TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.order_items TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE order_items_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.order_items_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.order_items_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.order_items_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.order_items_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE orders; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.orders TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.orders TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.orders TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.orders TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE orders_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.orders_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.orders_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.orders_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.orders_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE payment_items; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.payment_items TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.payment_items TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.payment_items TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.payment_items TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE payment_items_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.payment_items_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.payment_items_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.payment_items_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.payment_items_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE payments; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.payments TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.payments TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.payments TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.payments TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE payments_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.payments_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.payments_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.payments_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.payments_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE print_settings; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.print_settings TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.print_settings TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.print_settings TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.print_settings TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE print_settings_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.print_settings_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.print_settings_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.print_settings_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.print_settings_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE product_modifier_groups; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_modifier_groups TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_modifier_groups TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_modifier_groups TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_modifier_groups TO smarteats_master;
 
 
 --
 -- Name: TABLE products; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE products_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.products_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.products_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.products_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.products_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE reservation_tables; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservation_tables TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservation_tables TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservation_tables TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservation_tables TO smarteats_master;
 
 
 --
 -- Name: TABLE reservations; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservations TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservations TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservations TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.reservations TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE reservations_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.reservations_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.reservations_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.reservations_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.reservations_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE room_elements; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.room_elements TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.room_elements TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.room_elements TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.room_elements TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE room_elements_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.room_elements_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.room_elements_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.room_elements_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.room_elements_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE rooms; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.rooms TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.rooms TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.rooms TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.rooms TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE rooms_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.rooms_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.rooms_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.rooms_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.rooms_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE sessions; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.sessions TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.sessions TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.sessions TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.sessions TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE sessions_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.sessions_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.sessions_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.sessions_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.sessions_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE settings; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.settings TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.settings TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.settings TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.settings TO smarteats_master;
 
 
 --
 -- Name: TABLE takeaway_hours; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_hours TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_hours TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_hours TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_hours TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE takeaway_hours_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.takeaway_hours_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.takeaway_hours_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.takeaway_hours_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.takeaway_hours_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE takeaway_orders; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_orders TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_orders TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_orders TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.takeaway_orders TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE takeaway_orders_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.takeaway_orders_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.takeaway_orders_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.takeaway_orders_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.takeaway_orders_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE tenants; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT ON TABLE public.tenants TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.tenants TO standmanager_master;
+GRANT SELECT ON TABLE public.tenants TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.tenants TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE tenants_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.tenants_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.tenants_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.tenants_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.tenants_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE users; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.users TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.users TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.users TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.users TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE users_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.users_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.users_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.users_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.users_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE whatsapp_message_tenants; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_message_tenants TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_message_tenants TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_message_tenants TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_message_tenants TO smarteats_master;
 
 
 --
 -- Name: TABLE whatsapp_messages; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_messages TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_messages TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_messages TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_messages TO smarteats_master;
 
 
 --
 -- Name: SEQUENCE whatsapp_messages_id_seq; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT ALL ON SEQUENCE public.whatsapp_messages_id_seq TO standmanager_app;
-GRANT SELECT,USAGE ON SEQUENCE public.whatsapp_messages_id_seq TO standmanager_master;
+GRANT ALL ON SEQUENCE public.whatsapp_messages_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.whatsapp_messages_id_seq TO smarteats_master;
 
 
 --
 -- Name: TABLE whatsapp_optouts; Type: ACL; Schema: public; Owner: colettas
 --
 
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_optouts TO standmanager_app;
-GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_optouts TO standmanager_master;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_optouts TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.whatsapp_optouts TO smarteats_master;
 
 
 --
 -- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: colettas
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT ALL ON SEQUENCES TO standmanager_app;
-ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,USAGE ON SEQUENCES TO standmanager_master;
+ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT ALL ON SEQUENCES TO smarteats_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,USAGE ON SEQUENCES TO smarteats_master;
 
 
 --
 -- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: colettas
 --
 
-ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,DELETE,UPDATE ON TABLES TO standmanager_app;
-ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,DELETE,UPDATE ON TABLES TO standmanager_master;
+ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,DELETE,UPDATE ON TABLES TO smarteats_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,DELETE,UPDATE ON TABLES TO smarteats_master;
 
 
 --

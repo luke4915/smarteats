@@ -18,9 +18,9 @@ export const MODULES = {
 
 // Il tipo di attività propone i moduli di partenza; poi il master può accendere o spegnere quelli che esistono per il tipo.
 export const BUSINESS_TYPES = {
-  street_food: { label: 'Sagra, paninaro o food truck', modules: ['kds', 'stats', 'qr_menu'] },
-  restaurant: { label: 'Ristorante o pizzeria', modules: ['kds', 'stats', 'tables'] },
-  takeaway_shop: { label: 'Solo asporto (pizzeria da taglio, forno, rosticceria)', modules: ['kds', 'stats', 'takeaway'] },
+  street_food: { label: 'SmartEats Stand · sagra, paninaro o food truck', modules: ['kds', 'stats', 'qr_menu'] },
+  restaurant: { label: 'SmartEats Restaurant · ristorante o pizzeria', modules: ['kds', 'stats', 'tables'] },
+  takeaway_shop: { label: 'SmartEats Restaurant · solo asporto (pizzeria da taglio, forno, rosticceria)', modules: ['kds', 'stats', 'takeaway'] },
 };
 
 export const MODULE_IDS = Object.keys(MODULES);

@@ -13,7 +13,7 @@ Questa guida serve a ritrovarti nel progetto e a fare modifiche piccole **senza 
 ## 2. Dove sta cosa
 
 ```
-stand-manager/
+smarteats/
 ├── scripts/check.sh        ← i controlli: lancialo prima di salvare (vedi sezione 3)
 ├── docs/                   ← documenti: questa guida, deploy, prenotazioni, asporto, WhatsApp…
 ├── backend/
