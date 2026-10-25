@@ -9,6 +9,7 @@ import { requireModule } from '../utils/tenantModules.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { modifierGroupSchema, productModifierGroupsSchema } from '../schemas/modifierSchema.js';
+import { saveGroupOptions } from '../utils/modifierOptions.js';
 
 // Gruppi di modificatori dei piatti (modulo `tables`): cottura, aggiunte, senza… Si leggono col personale di sala (per
 // ordinare), si modificano solo da admin, con audit. Le opzioni di un gruppo si salvano tutte insieme al gruppo.
@@ -32,12 +33,6 @@ async function listGroups(db) {
   }));
 }
 
-const writeOptions = async (db, groupId, options) => {
-  await db.query('DELETE FROM modifiers WHERE group_id = $1', [groupId]);
-  for (const [position, o] of options.entries())
-    await db.query('INSERT INTO modifiers (group_id, name, price_delta, position) VALUES ($1, $2, $3, $4)', [groupId, o.name, o.price_delta, position]);
-};
-
 modifierGroupsRouter.get('/', ...guard, authorizeWaiter, tenantScope, async (req, res) => {
   try { res.json(await listGroups(req.db)); }
   catch (err) {
@@ -53,7 +48,7 @@ modifierGroupsRouter.post('/', ...guard, authorizeAdmin, validate({ body: modifi
       const { rows: [g] } = await db.query(
         `INSERT INTO modifier_groups (name, min_select, max_select, position)
          VALUES ($1, $2, $3, COALESCE((SELECT MAX(position) + 1 FROM modifier_groups), 0)) RETURNING id`, [name, min, max]);
-      await writeOptions(db, g.id, options);
+      await saveGroupOptions(db, g.id, options);
       return g.id;
     });
     await logAudit(req.db, req.user.id, 'CREATE_MODIFIER_GROUP', { groupId: id, name });
@@ -71,7 +66,7 @@ modifierGroupsRouter.put('/:id', ...guard, authorizeAdmin, validate({ params: id
     await inTransaction(req.db, async (db) => {
       const { rowCount } = await db.query('UPDATE modifier_groups SET name = $1, min_select = $2, max_select = $3 WHERE id = $4', [name, min, max, req.params.id]);
       if (!rowCount) throw new HttpError(404, 'Gruppo non trovato');
-      await writeOptions(db, req.params.id, options);
+      await saveGroupOptions(db, req.params.id, options);
     });
     await logAudit(req.db, req.user.id, 'UPDATE_MODIFIER_GROUP', { groupId: Number(req.params.id), name });
     res.json((await listGroups(req.db)).find(g => g.id === Number(req.params.id)));

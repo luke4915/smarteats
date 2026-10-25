@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict q6zdAwXbbrP30lntmIehXkdmAj8Cfvyno7NSpEW4aSQ5KRNKVnBopdjaV2b81av
+\restrict iSBraL9bX4XEFkG5fbV3SMncaOVWneTRks7Kfj5veaAFVHfziR09ioucsadz5HI
 
 -- Dumped from database version 17.10 (Homebrew)
 -- Dumped by pg_dump version 17.10 (Homebrew)
@@ -456,6 +456,196 @@ ALTER SEQUENCE public.dining_tables_id_seq OWNED BY public.dining_tables.id;
 
 
 --
+-- Name: goods_receipt_lines; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.goods_receipt_lines (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    goods_receipt_id integer NOT NULL,
+    ingredient_id integer NOT NULL,
+    purchase_unit_name text NOT NULL,
+    quantity numeric(14,3) NOT NULL,
+    base_quantity numeric(14,3) NOT NULL,
+    unit_cost_cents integer NOT NULL,
+    vat_rate numeric(5,2),
+    line_cost_cents integer NOT NULL,
+    CONSTRAINT goods_receipt_lines_base_quantity_check CHECK ((base_quantity > (0)::numeric)),
+    CONSTRAINT goods_receipt_lines_line_cost_cents_check CHECK ((line_cost_cents >= 0)),
+    CONSTRAINT goods_receipt_lines_quantity_check CHECK ((quantity > (0)::numeric)),
+    CONSTRAINT goods_receipt_lines_unit_cost_cents_check CHECK ((unit_cost_cents >= 0)),
+    CONSTRAINT goods_receipt_lines_vat_rate_check CHECK (((vat_rate IS NULL) OR ((vat_rate >= (0)::numeric) AND (vat_rate <= (100)::numeric))))
+);
+
+ALTER TABLE ONLY public.goods_receipt_lines FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.goods_receipt_lines OWNER TO colettas;
+
+--
+-- Name: goods_receipt_lines_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.goods_receipt_lines_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.goods_receipt_lines_id_seq OWNER TO colettas;
+
+--
+-- Name: goods_receipt_lines_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.goods_receipt_lines_id_seq OWNED BY public.goods_receipt_lines.id;
+
+
+--
+-- Name: goods_receipts; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.goods_receipts (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    supplier_id integer NOT NULL,
+    received_on date NOT NULL,
+    document_number text,
+    notes text,
+    total_cost_cents integer DEFAULT 0 NOT NULL,
+    created_by integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT goods_receipts_total_cost_cents_check CHECK ((total_cost_cents >= 0))
+);
+
+ALTER TABLE ONLY public.goods_receipts FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.goods_receipts OWNER TO colettas;
+
+--
+-- Name: goods_receipts_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.goods_receipts_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.goods_receipts_id_seq OWNER TO colettas;
+
+--
+-- Name: goods_receipts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.goods_receipts_id_seq OWNED BY public.goods_receipts.id;
+
+
+--
+-- Name: ingredient_movements; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.ingredient_movements (
+    id bigint NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    ingredient_id integer NOT NULL,
+    kind text NOT NULL,
+    quantity_change numeric(14,3) NOT NULL,
+    unit_cost numeric(14,4),
+    reason text,
+    order_id integer,
+    goods_receipt_id integer,
+    stock_level_id integer,
+    session_id integer,
+    created_by integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ingredient_movements_kind_check CHECK ((kind = ANY (ARRAY['receipt'::text, 'sale'::text, 'sale_reversal'::text, 'usage'::text, 'waste'::text, 'adjustment'::text, 'stock_level'::text])))
+);
+
+ALTER TABLE ONLY public.ingredient_movements FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.ingredient_movements OWNER TO colettas;
+
+--
+-- Name: ingredient_movements_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.ingredient_movements_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.ingredient_movements_id_seq OWNER TO colettas;
+
+--
+-- Name: ingredient_movements_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.ingredient_movements_id_seq OWNED BY public.ingredient_movements.id;
+
+
+--
+-- Name: ingredients; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.ingredients (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    name text NOT NULL,
+    base_unit text NOT NULL,
+    yield_percent numeric(5,2) DEFAULT 100 NOT NULL,
+    reorder_level numeric(14,3),
+    quantity_on_hand numeric(14,3) DEFAULT 0 NOT NULL,
+    weighted_average_cost numeric(14,4) DEFAULT 0 NOT NULL,
+    marked_out boolean DEFAULT false NOT NULL,
+    active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT ingredients_base_unit_check CHECK ((base_unit = ANY (ARRAY['g'::text, 'ml'::text, 'pc'::text]))),
+    CONSTRAINT ingredients_name_check CHECK (((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 60))),
+    CONSTRAINT ingredients_reorder_level_check CHECK (((reorder_level IS NULL) OR (reorder_level >= (0)::numeric))),
+    CONSTRAINT ingredients_weighted_average_cost_check CHECK ((weighted_average_cost >= (0)::numeric)),
+    CONSTRAINT ingredients_yield_percent_check CHECK (((yield_percent > (0)::numeric) AND (yield_percent <= (100)::numeric)))
+);
+
+ALTER TABLE ONLY public.ingredients FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.ingredients OWNER TO colettas;
+
+--
+-- Name: ingredients_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.ingredients_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.ingredients_id_seq OWNER TO colettas;
+
+--
+-- Name: ingredients_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.ingredients_id_seq OWNED BY public.ingredients.id;
+
+
+--
 -- Name: modifier_groups; Type: TABLE; Schema: public; Owner: colettas
 --
 
@@ -500,6 +690,46 @@ ALTER SEQUENCE public.modifier_groups_id_seq OWNED BY public.modifier_groups.id;
 
 
 --
+-- Name: modifier_recipe_lines; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.modifier_recipe_lines (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    modifier_id integer NOT NULL,
+    ingredient_id integer NOT NULL,
+    quantity_change numeric(14,3) NOT NULL,
+    CONSTRAINT modifier_recipe_lines_quantity_change_check CHECK ((quantity_change <> (0)::numeric))
+);
+
+ALTER TABLE ONLY public.modifier_recipe_lines FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.modifier_recipe_lines OWNER TO colettas;
+
+--
+-- Name: modifier_recipe_lines_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.modifier_recipe_lines_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.modifier_recipe_lines_id_seq OWNER TO colettas;
+
+--
+-- Name: modifier_recipe_lines_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.modifier_recipe_lines_id_seq OWNED BY public.modifier_recipe_lines.id;
+
+
+--
 -- Name: modifiers; Type: TABLE; Schema: public; Owner: colettas
 --
 
@@ -510,6 +740,7 @@ CREATE TABLE public.modifiers (
     name text NOT NULL,
     price_delta numeric(12,2) DEFAULT 0 NOT NULL,
     "position" integer DEFAULT 0 NOT NULL,
+    affects_stock boolean DEFAULT true NOT NULL,
     CONSTRAINT modifiers_name_check CHECK ((length(btrim(name)) > 0)),
     CONSTRAINT modifiers_price_delta_check CHECK (((price_delta >= ('-1000'::integer)::numeric) AND (price_delta <= (1000)::numeric)))
 );
@@ -566,6 +797,8 @@ CREATE TABLE public.order_items (
     ready_at timestamp with time zone,
     served_at timestamp with time zone,
     modifiers jsonb DEFAULT '[]'::jsonb NOT NULL,
+    cost_cents integer,
+    CONSTRAINT order_items_cost_cents_check CHECK (((cost_cents IS NULL) OR (cost_cents >= 0))),
     CONSTRAINT order_items_line_type_check CHECK ((line_type = ANY (ARRAY['sale'::text, 'gift'::text, 'discount'::text]))),
     CONSTRAINT order_items_position_check CHECK (("position" >= 0)),
     CONSTRAINT order_items_prep_status_check CHECK ((prep_status = ANY (ARRAY['new'::text, 'preparing'::text, 'ready'::text, 'served'::text]))),
@@ -744,6 +977,50 @@ ALTER SEQUENCE public.payments_id_seq OWNED BY public.payments.id;
 
 
 --
+-- Name: preparations; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.preparations (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    name text NOT NULL,
+    base_unit text NOT NULL,
+    output_quantity numeric(14,3) NOT NULL,
+    active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT preparations_base_unit_check CHECK ((base_unit = ANY (ARRAY['g'::text, 'ml'::text, 'pc'::text]))),
+    CONSTRAINT preparations_name_check CHECK (((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 60))),
+    CONSTRAINT preparations_output_quantity_check CHECK ((output_quantity > (0)::numeric))
+);
+
+ALTER TABLE ONLY public.preparations FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.preparations OWNER TO colettas;
+
+--
+-- Name: preparations_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.preparations_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.preparations_id_seq OWNER TO colettas;
+
+--
+-- Name: preparations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.preparations_id_seq OWNED BY public.preparations.id;
+
+
+--
 -- Name: print_settings; Type: TABLE; Schema: public; Owner: colettas
 --
 
@@ -818,8 +1095,15 @@ CREATE TABLE public.products (
     tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
     course_id integer,
     takeaway_load integer DEFAULT 1 NOT NULL,
+    portions_reset_rule text DEFAULT 'unlimited'::text NOT NULL,
+    portions_start integer,
+    vat_rate numeric(5,2),
+    CONSTRAINT products_portions_reset_rule_check CHECK ((portions_reset_rule = ANY (ARRAY['restart_each_service'::text, 'carry_over'::text, 'unlimited'::text]))),
+    CONSTRAINT products_portions_start_check CHECK (((portions_start IS NULL) OR (portions_start > 0))),
     CONSTRAINT products_print_destination_check CHECK (((print_destination)::text = ANY ((ARRAY['bar'::character varying, 'kitchen'::character varying, 'both'::character varying])::text[]))),
-    CONSTRAINT products_takeaway_load_check CHECK (((takeaway_load >= 0) AND (takeaway_load <= 20)))
+    CONSTRAINT products_restart_needs_start CHECK (((portions_reset_rule <> 'restart_each_service'::text) OR (portions_start IS NOT NULL))),
+    CONSTRAINT products_takeaway_load_check CHECK (((takeaway_load >= 0) AND (takeaway_load <= 20))),
+    CONSTRAINT products_vat_rate_check CHECK (((vat_rate IS NULL) OR ((vat_rate >= (0)::numeric) AND (vat_rate <= (100)::numeric))))
 );
 
 ALTER TABLE ONLY public.products FORCE ROW LEVEL SECURITY;
@@ -847,6 +1131,50 @@ ALTER SEQUENCE public.products_id_seq OWNER TO colettas;
 --
 
 ALTER SEQUENCE public.products_id_seq OWNED BY public.products.id;
+
+
+--
+-- Name: recipe_lines; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.recipe_lines (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    product_id bigint,
+    preparation_id integer,
+    ingredient_id integer,
+    component_preparation_id integer,
+    quantity numeric(14,3) NOT NULL,
+    CONSTRAINT recipe_lines_check CHECK (((((product_id IS NOT NULL))::integer + ((preparation_id IS NOT NULL))::integer) = 1)),
+    CONSTRAINT recipe_lines_check1 CHECK (((((ingredient_id IS NOT NULL))::integer + ((component_preparation_id IS NOT NULL))::integer) = 1)),
+    CONSTRAINT recipe_lines_quantity_check CHECK ((quantity > (0)::numeric))
+);
+
+ALTER TABLE ONLY public.recipe_lines FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.recipe_lines OWNER TO colettas;
+
+--
+-- Name: recipe_lines_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.recipe_lines_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.recipe_lines_id_seq OWNER TO colettas;
+
+--
+-- Name: recipe_lines_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.recipe_lines_id_seq OWNED BY public.recipe_lines.id;
 
 
 --
@@ -1072,6 +1400,229 @@ ALTER TABLE ONLY public.settings FORCE ROW LEVEL SECURITY;
 ALTER TABLE public.settings OWNER TO colettas;
 
 --
+-- Name: stock_level_lines; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.stock_level_lines (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    stock_level_id integer NOT NULL,
+    ingredient_id integer NOT NULL,
+    expected_quantity numeric(14,3) NOT NULL,
+    counted_quantity numeric(14,3) NOT NULL,
+    difference numeric(14,3) GENERATED ALWAYS AS ((counted_quantity - expected_quantity)) STORED,
+    CONSTRAINT stock_level_lines_counted_quantity_check CHECK ((counted_quantity >= (0)::numeric))
+);
+
+ALTER TABLE ONLY public.stock_level_lines FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.stock_level_lines OWNER TO colettas;
+
+--
+-- Name: stock_level_lines_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.stock_level_lines_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.stock_level_lines_id_seq OWNER TO colettas;
+
+--
+-- Name: stock_level_lines_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.stock_level_lines_id_seq OWNED BY public.stock_level_lines.id;
+
+
+--
+-- Name: stock_levels; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.stock_levels (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    session_id integer,
+    kind text DEFAULT 'periodic'::text NOT NULL,
+    status text DEFAULT 'draft'::text NOT NULL,
+    notes text,
+    created_by integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    confirmed_at timestamp with time zone,
+    CONSTRAINT stock_levels_kind_check CHECK ((kind = ANY (ARRAY['closing'::text, 'periodic'::text]))),
+    CONSTRAINT stock_levels_status_check CHECK ((status = ANY (ARRAY['draft'::text, 'confirmed'::text])))
+);
+
+ALTER TABLE ONLY public.stock_levels FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.stock_levels OWNER TO colettas;
+
+--
+-- Name: stock_levels_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.stock_levels_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.stock_levels_id_seq OWNER TO colettas;
+
+--
+-- Name: stock_levels_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.stock_levels_id_seq OWNED BY public.stock_levels.id;
+
+
+--
+-- Name: stored_documents; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.stored_documents (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    goods_receipt_id integer NOT NULL,
+    kind text DEFAULT 'delivery_note'::text NOT NULL,
+    file_name text NOT NULL,
+    content_type text NOT NULL,
+    size_bytes integer NOT NULL,
+    data bytea NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT stored_documents_content_type_check CHECK ((content_type = ANY (ARRAY['image/jpeg'::text, 'image/png'::text, 'image/webp'::text, 'application/pdf'::text]))),
+    CONSTRAINT stored_documents_kind_check CHECK ((kind = 'delivery_note'::text)),
+    CONSTRAINT stored_documents_size_bytes_check CHECK (((size_bytes >= 1) AND (size_bytes <= 8388608)))
+);
+
+ALTER TABLE ONLY public.stored_documents FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.stored_documents OWNER TO colettas;
+
+--
+-- Name: stored_documents_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.stored_documents_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.stored_documents_id_seq OWNER TO colettas;
+
+--
+-- Name: stored_documents_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.stored_documents_id_seq OWNED BY public.stored_documents.id;
+
+
+--
+-- Name: supplier_ingredients; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.supplier_ingredients (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    supplier_id integer NOT NULL,
+    ingredient_id integer NOT NULL,
+    purchase_unit_name text NOT NULL,
+    base_units_per_purchase_unit numeric(14,3) NOT NULL,
+    unit_cost_cents integer NOT NULL,
+    vat_rate numeric(5,2),
+    CONSTRAINT supplier_ingredients_base_units_per_purchase_unit_check CHECK ((base_units_per_purchase_unit > (0)::numeric)),
+    CONSTRAINT supplier_ingredients_purchase_unit_name_check CHECK (((length(btrim(purchase_unit_name)) >= 1) AND (length(btrim(purchase_unit_name)) <= 40))),
+    CONSTRAINT supplier_ingredients_unit_cost_cents_check CHECK ((unit_cost_cents >= 0)),
+    CONSTRAINT supplier_ingredients_vat_rate_check CHECK (((vat_rate IS NULL) OR ((vat_rate >= (0)::numeric) AND (vat_rate <= (100)::numeric))))
+);
+
+ALTER TABLE ONLY public.supplier_ingredients FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.supplier_ingredients OWNER TO colettas;
+
+--
+-- Name: supplier_ingredients_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.supplier_ingredients_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.supplier_ingredients_id_seq OWNER TO colettas;
+
+--
+-- Name: supplier_ingredients_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.supplier_ingredients_id_seq OWNED BY public.supplier_ingredients.id;
+
+
+--
+-- Name: suppliers; Type: TABLE; Schema: public; Owner: colettas
+--
+
+CREATE TABLE public.suppliers (
+    id integer NOT NULL,
+    tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    name text NOT NULL,
+    phone text,
+    email text,
+    vat_number text,
+    notes text,
+    active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT suppliers_name_check CHECK (((length(btrim(name)) >= 1) AND (length(btrim(name)) <= 80)))
+);
+
+ALTER TABLE ONLY public.suppliers FORCE ROW LEVEL SECURITY;
+
+
+ALTER TABLE public.suppliers OWNER TO colettas;
+
+--
+-- Name: suppliers_id_seq; Type: SEQUENCE; Schema: public; Owner: colettas
+--
+
+CREATE SEQUENCE public.suppliers_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.suppliers_id_seq OWNER TO colettas;
+
+--
+-- Name: suppliers_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: colettas
+--
+
+ALTER SEQUENCE public.suppliers_id_seq OWNED BY public.suppliers.id;
+
+
+--
 -- Name: takeaway_hours; Type: TABLE; Schema: public; Owner: colettas
 --
 
@@ -1191,7 +1742,11 @@ CREATE TABLE public.tenants (
     active boolean DEFAULT true NOT NULL,
     business_type text DEFAULT 'street_food'::text NOT NULL,
     modules text[] DEFAULT ARRAY['kds'::text, 'stats'::text, 'qr_menu'::text] NOT NULL,
-    CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['street_food'::text, 'restaurant'::text, 'takeaway_shop'::text])))
+    inventory_mode text,
+    inventory_depletion text DEFAULT 'recipes'::text NOT NULL,
+    CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['street_food'::text, 'restaurant'::text, 'takeaway_shop'::text]))),
+    CONSTRAINT tenants_inventory_depletion_check CHECK ((inventory_depletion = ANY (ARRAY['recipes'::text, 'simple'::text]))),
+    CONSTRAINT tenants_inventory_mode_check CHECK ((inventory_mode = ANY (ARRAY['portions'::text, 'warehouse'::text])))
 );
 
 
@@ -1410,10 +1965,45 @@ ALTER TABLE ONLY public.dining_tables ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: goods_receipt_lines id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipt_lines ALTER COLUMN id SET DEFAULT nextval('public.goods_receipt_lines_id_seq'::regclass);
+
+
+--
+-- Name: goods_receipts id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipts ALTER COLUMN id SET DEFAULT nextval('public.goods_receipts_id_seq'::regclass);
+
+
+--
+-- Name: ingredient_movements id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.ingredient_movements ALTER COLUMN id SET DEFAULT nextval('public.ingredient_movements_id_seq'::regclass);
+
+
+--
+-- Name: ingredients id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.ingredients ALTER COLUMN id SET DEFAULT nextval('public.ingredients_id_seq'::regclass);
+
+
+--
 -- Name: modifier_groups id; Type: DEFAULT; Schema: public; Owner: colettas
 --
 
 ALTER TABLE ONLY public.modifier_groups ALTER COLUMN id SET DEFAULT nextval('public.modifier_groups_id_seq'::regclass);
+
+
+--
+-- Name: modifier_recipe_lines id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.modifier_recipe_lines ALTER COLUMN id SET DEFAULT nextval('public.modifier_recipe_lines_id_seq'::regclass);
 
 
 --
@@ -1452,6 +2042,13 @@ ALTER TABLE ONLY public.payments ALTER COLUMN id SET DEFAULT nextval('public.pay
 
 
 --
+-- Name: preparations id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.preparations ALTER COLUMN id SET DEFAULT nextval('public.preparations_id_seq'::regclass);
+
+
+--
 -- Name: print_settings id; Type: DEFAULT; Schema: public; Owner: colettas
 --
 
@@ -1463,6 +2060,13 @@ ALTER TABLE ONLY public.print_settings ALTER COLUMN id SET DEFAULT nextval('publ
 --
 
 ALTER TABLE ONLY public.products ALTER COLUMN id SET DEFAULT nextval('public.products_id_seq'::regclass);
+
+
+--
+-- Name: recipe_lines id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.recipe_lines ALTER COLUMN id SET DEFAULT nextval('public.recipe_lines_id_seq'::regclass);
 
 
 --
@@ -1491,6 +2095,41 @@ ALTER TABLE ONLY public.rooms ALTER COLUMN id SET DEFAULT nextval('public.rooms_
 --
 
 ALTER TABLE ONLY public.sessions ALTER COLUMN id SET DEFAULT nextval('public.sessions_id_seq'::regclass);
+
+
+--
+-- Name: stock_level_lines id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_level_lines ALTER COLUMN id SET DEFAULT nextval('public.stock_level_lines_id_seq'::regclass);
+
+
+--
+-- Name: stock_levels id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_levels ALTER COLUMN id SET DEFAULT nextval('public.stock_levels_id_seq'::regclass);
+
+
+--
+-- Name: stored_documents id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stored_documents ALTER COLUMN id SET DEFAULT nextval('public.stored_documents_id_seq'::regclass);
+
+
+--
+-- Name: supplier_ingredients id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.supplier_ingredients ALTER COLUMN id SET DEFAULT nextval('public.supplier_ingredients_id_seq'::regclass);
+
+
+--
+-- Name: suppliers id; Type: DEFAULT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.suppliers ALTER COLUMN id SET DEFAULT nextval('public.suppliers_id_seq'::regclass);
 
 
 --
@@ -1625,11 +2264,51 @@ ALTER TABLE ONLY public.dining_tables
 
 
 --
+-- Name: goods_receipt_lines goods_receipt_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipt_lines
+    ADD CONSTRAINT goods_receipt_lines_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: goods_receipts goods_receipts_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipts
+    ADD CONSTRAINT goods_receipts_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ingredient_movements ingredient_movements_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.ingredient_movements
+    ADD CONSTRAINT ingredient_movements_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ingredients ingredients_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.ingredients
+    ADD CONSTRAINT ingredients_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: modifier_groups modifier_groups_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
 --
 
 ALTER TABLE ONLY public.modifier_groups
     ADD CONSTRAINT modifier_groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: modifier_recipe_lines modifier_recipe_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.modifier_recipe_lines
+    ADD CONSTRAINT modifier_recipe_lines_pkey PRIMARY KEY (id);
 
 
 --
@@ -1673,6 +2352,14 @@ ALTER TABLE ONLY public.payments
 
 
 --
+-- Name: preparations preparations_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.preparations
+    ADD CONSTRAINT preparations_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: print_settings print_settings_copy_type_id_key; Type: CONSTRAINT; Schema: public; Owner: colettas
 --
 
@@ -1702,6 +2389,14 @@ ALTER TABLE ONLY public.product_modifier_groups
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: recipe_lines recipe_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.recipe_lines
+    ADD CONSTRAINT recipe_lines_pkey PRIMARY KEY (id);
 
 
 --
@@ -1750,6 +2445,62 @@ ALTER TABLE ONLY public.sessions
 
 ALTER TABLE ONLY public.settings
     ADD CONSTRAINT settings_pkey PRIMARY KEY (tenant_id, key);
+
+
+--
+-- Name: stock_level_lines stock_level_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_level_lines
+    ADD CONSTRAINT stock_level_lines_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: stock_level_lines stock_level_lines_stock_level_id_ingredient_id_key; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_level_lines
+    ADD CONSTRAINT stock_level_lines_stock_level_id_ingredient_id_key UNIQUE (stock_level_id, ingredient_id);
+
+
+--
+-- Name: stock_levels stock_levels_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_levels
+    ADD CONSTRAINT stock_levels_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: stored_documents stored_documents_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stored_documents
+    ADD CONSTRAINT stored_documents_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: supplier_ingredients supplier_ingredients_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.supplier_ingredients
+    ADD CONSTRAINT supplier_ingredients_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: supplier_ingredients supplier_ingredients_supplier_id_ingredient_id_key; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.supplier_ingredients
+    ADD CONSTRAINT supplier_ingredients_supplier_id_ingredient_id_key UNIQUE (supplier_id, ingredient_id);
+
+
+--
+-- Name: suppliers suppliers_pkey; Type: CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.suppliers
+    ADD CONSTRAINT suppliers_pkey PRIMARY KEY (id);
 
 
 --
@@ -1894,10 +2645,59 @@ CREATE INDEX idx_dining_tables_tenant ON public.dining_tables USING btree (tenan
 
 
 --
+-- Name: idx_goods_receipt_lines_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_goods_receipt_lines_tenant ON public.goods_receipt_lines USING btree (tenant_id);
+
+
+--
+-- Name: idx_goods_receipts_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_goods_receipts_tenant ON public.goods_receipts USING btree (tenant_id);
+
+
+--
+-- Name: idx_ingredient_movements_ingredient; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_ingredient_movements_ingredient ON public.ingredient_movements USING btree (ingredient_id, created_at DESC);
+
+
+--
+-- Name: idx_ingredient_movements_order; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_ingredient_movements_order ON public.ingredient_movements USING btree (order_id) WHERE (order_id IS NOT NULL);
+
+
+--
+-- Name: idx_ingredient_movements_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_ingredient_movements_tenant ON public.ingredient_movements USING btree (tenant_id);
+
+
+--
+-- Name: idx_ingredients_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_ingredients_tenant ON public.ingredients USING btree (tenant_id);
+
+
+--
 -- Name: idx_modifier_groups_tenant; Type: INDEX; Schema: public; Owner: colettas
 --
 
 CREATE INDEX idx_modifier_groups_tenant ON public.modifier_groups USING btree (tenant_id);
+
+
+--
+-- Name: idx_modifier_recipe_lines_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_modifier_recipe_lines_tenant ON public.modifier_recipe_lines USING btree (tenant_id);
 
 
 --
@@ -1999,6 +2799,13 @@ CREATE INDEX idx_pmg_tenant ON public.product_modifier_groups USING btree (tenan
 
 
 --
+-- Name: idx_preparations_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_preparations_tenant ON public.preparations USING btree (tenant_id);
+
+
+--
 -- Name: idx_print_settings_tenant; Type: INDEX; Schema: public; Owner: colettas
 --
 
@@ -2010,6 +2817,13 @@ CREATE INDEX idx_print_settings_tenant ON public.print_settings USING btree (ten
 --
 
 CREATE INDEX idx_products_tenant ON public.products USING btree (tenant_id);
+
+
+--
+-- Name: idx_recipe_lines_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_recipe_lines_tenant ON public.recipe_lines USING btree (tenant_id);
 
 
 --
@@ -2073,6 +2887,41 @@ CREATE INDEX idx_room_elements_tenant ON public.room_elements USING btree (tenan
 --
 
 CREATE INDEX idx_sessions_tenant ON public.sessions USING btree (tenant_id);
+
+
+--
+-- Name: idx_stock_level_lines_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_stock_level_lines_tenant ON public.stock_level_lines USING btree (tenant_id);
+
+
+--
+-- Name: idx_stock_levels_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_stock_levels_tenant ON public.stock_levels USING btree (tenant_id);
+
+
+--
+-- Name: idx_stored_documents_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_stored_documents_tenant ON public.stored_documents USING btree (tenant_id);
+
+
+--
+-- Name: idx_supplier_ingredients_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_supplier_ingredients_tenant ON public.supplier_ingredients USING btree (tenant_id);
+
+
+--
+-- Name: idx_suppliers_tenant; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_suppliers_tenant ON public.suppliers USING btree (tenant_id);
 
 
 --
@@ -2174,6 +3023,13 @@ CREATE UNIQUE INDEX uniq_dining_tables_room_name ON public.dining_tables USING b
 
 
 --
+-- Name: uniq_ingredients_name; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_ingredients_name ON public.ingredients USING btree (tenant_id, lower(name));
+
+
+--
 -- Name: uniq_modifier_groups_tenant_name; Type: INDEX; Schema: public; Owner: colettas
 --
 
@@ -2209,6 +3065,13 @@ CREATE UNIQUE INDEX uniq_payment_items_payment_item ON public.payment_items USIN
 
 
 --
+-- Name: uniq_preparations_name; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_preparations_name ON public.preparations USING btree (tenant_id, lower(name));
+
+
+--
 -- Name: uniq_reservations_external; Type: INDEX; Schema: public; Owner: colettas
 --
 
@@ -2234,6 +3097,13 @@ CREATE UNIQUE INDEX uniq_rooms_tenant_name ON public.rooms USING btree (tenant_i
 --
 
 CREATE UNIQUE INDEX uniq_sessions_open_per_tenant ON public.sessions USING btree (tenant_id) WHERE (end_time IS NULL);
+
+
+--
+-- Name: uniq_suppliers_name; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_suppliers_name ON public.suppliers USING btree (tenant_id, lower(name));
 
 
 --
@@ -2401,11 +3271,115 @@ ALTER TABLE ONLY public.dining_tables
 
 
 --
+-- Name: goods_receipt_lines goods_receipt_lines_goods_receipt_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipt_lines
+    ADD CONSTRAINT goods_receipt_lines_goods_receipt_id_fkey FOREIGN KEY (goods_receipt_id) REFERENCES public.goods_receipts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: goods_receipt_lines goods_receipt_lines_ingredient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipt_lines
+    ADD CONSTRAINT goods_receipt_lines_ingredient_id_fkey FOREIGN KEY (ingredient_id) REFERENCES public.ingredients(id);
+
+
+--
+-- Name: goods_receipt_lines goods_receipt_lines_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipt_lines
+    ADD CONSTRAINT goods_receipt_lines_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: goods_receipts goods_receipts_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipts
+    ADD CONSTRAINT goods_receipts_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: goods_receipts goods_receipts_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipts
+    ADD CONSTRAINT goods_receipts_supplier_id_fkey FOREIGN KEY (supplier_id) REFERENCES public.suppliers(id);
+
+
+--
+-- Name: goods_receipts goods_receipts_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.goods_receipts
+    ADD CONSTRAINT goods_receipts_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: ingredient_movements ingredient_movements_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.ingredient_movements
+    ADD CONSTRAINT ingredient_movements_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: ingredient_movements ingredient_movements_ingredient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.ingredient_movements
+    ADD CONSTRAINT ingredient_movements_ingredient_id_fkey FOREIGN KEY (ingredient_id) REFERENCES public.ingredients(id);
+
+
+--
+-- Name: ingredient_movements ingredient_movements_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.ingredient_movements
+    ADD CONSTRAINT ingredient_movements_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: ingredients ingredients_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.ingredients
+    ADD CONSTRAINT ingredients_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: modifier_groups modifier_groups_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
 --
 
 ALTER TABLE ONLY public.modifier_groups
     ADD CONSTRAINT modifier_groups_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: modifier_recipe_lines modifier_recipe_lines_ingredient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.modifier_recipe_lines
+    ADD CONSTRAINT modifier_recipe_lines_ingredient_id_fkey FOREIGN KEY (ingredient_id) REFERENCES public.ingredients(id);
+
+
+--
+-- Name: modifier_recipe_lines modifier_recipe_lines_modifier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.modifier_recipe_lines
+    ADD CONSTRAINT modifier_recipe_lines_modifier_id_fkey FOREIGN KEY (modifier_id) REFERENCES public.modifiers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: modifier_recipe_lines modifier_recipe_lines_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.modifier_recipe_lines
+    ADD CONSTRAINT modifier_recipe_lines_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -2521,6 +3495,14 @@ ALTER TABLE ONLY public.payments
 
 
 --
+-- Name: preparations preparations_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.preparations
+    ADD CONSTRAINT preparations_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
 -- Name: print_settings print_settings_copy_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
 --
 
@@ -2574,6 +3556,46 @@ ALTER TABLE ONLY public.products
 
 ALTER TABLE ONLY public.products
     ADD CONSTRAINT products_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: recipe_lines recipe_lines_component_preparation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.recipe_lines
+    ADD CONSTRAINT recipe_lines_component_preparation_id_fkey FOREIGN KEY (component_preparation_id) REFERENCES public.preparations(id);
+
+
+--
+-- Name: recipe_lines recipe_lines_ingredient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.recipe_lines
+    ADD CONSTRAINT recipe_lines_ingredient_id_fkey FOREIGN KEY (ingredient_id) REFERENCES public.ingredients(id);
+
+
+--
+-- Name: recipe_lines recipe_lines_preparation_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.recipe_lines
+    ADD CONSTRAINT recipe_lines_preparation_id_fkey FOREIGN KEY (preparation_id) REFERENCES public.preparations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: recipe_lines recipe_lines_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.recipe_lines
+    ADD CONSTRAINT recipe_lines_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+
+
+--
+-- Name: recipe_lines recipe_lines_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.recipe_lines
+    ADD CONSTRAINT recipe_lines_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -2678,6 +3700,102 @@ ALTER TABLE ONLY public.sessions
 
 ALTER TABLE ONLY public.settings
     ADD CONSTRAINT settings_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: stock_level_lines stock_level_lines_ingredient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_level_lines
+    ADD CONSTRAINT stock_level_lines_ingredient_id_fkey FOREIGN KEY (ingredient_id) REFERENCES public.ingredients(id);
+
+
+--
+-- Name: stock_level_lines stock_level_lines_stock_level_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_level_lines
+    ADD CONSTRAINT stock_level_lines_stock_level_id_fkey FOREIGN KEY (stock_level_id) REFERENCES public.stock_levels(id) ON DELETE CASCADE;
+
+
+--
+-- Name: stock_level_lines stock_level_lines_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_level_lines
+    ADD CONSTRAINT stock_level_lines_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: stock_levels stock_levels_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_levels
+    ADD CONSTRAINT stock_levels_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: stock_levels stock_levels_session_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_levels
+    ADD CONSTRAINT stock_levels_session_id_fkey FOREIGN KEY (session_id) REFERENCES public.sessions(id);
+
+
+--
+-- Name: stock_levels stock_levels_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stock_levels
+    ADD CONSTRAINT stock_levels_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: stored_documents stored_documents_goods_receipt_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stored_documents
+    ADD CONSTRAINT stored_documents_goods_receipt_id_fkey FOREIGN KEY (goods_receipt_id) REFERENCES public.goods_receipts(id) ON DELETE CASCADE;
+
+
+--
+-- Name: stored_documents stored_documents_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.stored_documents
+    ADD CONSTRAINT stored_documents_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: supplier_ingredients supplier_ingredients_ingredient_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.supplier_ingredients
+    ADD CONSTRAINT supplier_ingredients_ingredient_id_fkey FOREIGN KEY (ingredient_id) REFERENCES public.ingredients(id) ON DELETE CASCADE;
+
+
+--
+-- Name: supplier_ingredients supplier_ingredients_supplier_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.supplier_ingredients
+    ADD CONSTRAINT supplier_ingredients_supplier_id_fkey FOREIGN KEY (supplier_id) REFERENCES public.suppliers(id) ON DELETE CASCADE;
+
+
+--
+-- Name: supplier_ingredients supplier_ingredients_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.supplier_ingredients
+    ADD CONSTRAINT supplier_ingredients_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
+
+
+--
+-- Name: suppliers suppliers_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: colettas
+--
+
+ALTER TABLE ONLY public.suppliers
+    ADD CONSTRAINT suppliers_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.tenants(id);
 
 
 --
@@ -2799,6 +3917,30 @@ ALTER TABLE public.devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.dining_tables ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: goods_receipt_lines; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.goods_receipt_lines ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: goods_receipts; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.goods_receipts ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: ingredient_movements; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.ingredient_movements ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: ingredients; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.ingredients ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: app_feedback master_read; Type: POLICY; Schema: public; Owner: colettas
 --
 
@@ -2824,6 +3966,12 @@ CREATE POLICY master_read ON public.whatsapp_messages FOR SELECT TO smarteats_ma
 --
 
 ALTER TABLE public.modifier_groups ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: modifier_recipe_lines; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.modifier_recipe_lines ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: modifiers; Type: ROW SECURITY; Schema: public; Owner: colettas
@@ -2856,6 +4004,12 @@ ALTER TABLE public.payment_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: preparations; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.preparations ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: print_settings; Type: ROW SECURITY; Schema: public; Owner: colettas
 --
 
@@ -2872,6 +4026,12 @@ ALTER TABLE public.product_modifier_groups ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: recipe_lines; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.recipe_lines ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: reservation_tables; Type: ROW SECURITY; Schema: public; Owner: colettas
@@ -2908,6 +4068,36 @@ ALTER TABLE public.sessions ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: stock_level_lines; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.stock_level_lines ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: stock_levels; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.stock_levels ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: stored_documents; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.stored_documents ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: supplier_ingredients; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.supplier_ingredients ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: suppliers; Type: ROW SECURITY; Schema: public; Owner: colettas
+--
+
+ALTER TABLE public.suppliers ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: takeaway_hours; Type: ROW SECURITY; Schema: public; Owner: colettas
@@ -2985,10 +4175,45 @@ CREATE POLICY tenant_isolation ON public.dining_tables USING ((tenant_id = (NULL
 
 
 --
+-- Name: goods_receipt_lines tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.goods_receipt_lines USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: goods_receipts tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.goods_receipts USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: ingredient_movements tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.ingredient_movements USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: ingredients tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.ingredients USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
 -- Name: modifier_groups tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
 --
 
 CREATE POLICY tenant_isolation ON public.modifier_groups USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: modifier_recipe_lines tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.modifier_recipe_lines USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
 
 
 --
@@ -3027,6 +4252,13 @@ CREATE POLICY tenant_isolation ON public.payments USING ((tenant_id = (NULLIF(cu
 
 
 --
+-- Name: preparations tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.preparations USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
 -- Name: print_settings tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
 --
 
@@ -3045,6 +4277,13 @@ CREATE POLICY tenant_isolation ON public.product_modifier_groups USING ((tenant_
 --
 
 CREATE POLICY tenant_isolation ON public.products USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: recipe_lines tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.recipe_lines USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
 
 
 --
@@ -3087,6 +4326,41 @@ CREATE POLICY tenant_isolation ON public.sessions USING ((tenant_id = (NULLIF(cu
 --
 
 CREATE POLICY tenant_isolation ON public.settings USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: stock_level_lines tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.stock_level_lines USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: stock_levels tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.stock_levels USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: stored_documents tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.stored_documents USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: supplier_ingredients tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.supplier_ingredients USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
+
+
+--
+-- Name: suppliers tenant_isolation; Type: POLICY; Schema: public; Owner: colettas
+--
+
+CREATE POLICY tenant_isolation ON public.suppliers USING ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer)) WITH CHECK ((tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer));
 
 
 --
@@ -3298,6 +4572,70 @@ GRANT SELECT,USAGE ON SEQUENCE public.dining_tables_id_seq TO smarteats_master;
 
 
 --
+-- Name: TABLE goods_receipt_lines; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.goods_receipt_lines TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.goods_receipt_lines TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE goods_receipt_lines_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.goods_receipt_lines_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.goods_receipt_lines_id_seq TO smarteats_master;
+
+
+--
+-- Name: TABLE goods_receipts; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.goods_receipts TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.goods_receipts TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE goods_receipts_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.goods_receipts_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.goods_receipts_id_seq TO smarteats_master;
+
+
+--
+-- Name: TABLE ingredient_movements; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT ON TABLE public.ingredient_movements TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.ingredient_movements TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE ingredient_movements_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.ingredient_movements_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.ingredient_movements_id_seq TO smarteats_master;
+
+
+--
+-- Name: TABLE ingredients; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.ingredients TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.ingredients TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE ingredients_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.ingredients_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.ingredients_id_seq TO smarteats_master;
+
+
+--
 -- Name: TABLE modifier_groups; Type: ACL; Schema: public; Owner: colettas
 --
 
@@ -3311,6 +4649,22 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifier_groups TO smarteats_m
 
 GRANT ALL ON SEQUENCE public.modifier_groups_id_seq TO smarteats_app;
 GRANT SELECT,USAGE ON SEQUENCE public.modifier_groups_id_seq TO smarteats_master;
+
+
+--
+-- Name: TABLE modifier_recipe_lines; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifier_recipe_lines TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.modifier_recipe_lines TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE modifier_recipe_lines_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.modifier_recipe_lines_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.modifier_recipe_lines_id_seq TO smarteats_master;
 
 
 --
@@ -3394,6 +4748,22 @@ GRANT SELECT,USAGE ON SEQUENCE public.payments_id_seq TO smarteats_master;
 
 
 --
+-- Name: TABLE preparations; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.preparations TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.preparations TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE preparations_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.preparations_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.preparations_id_seq TO smarteats_master;
+
+
+--
 -- Name: TABLE print_settings; Type: ACL; Schema: public; Owner: colettas
 --
 
@@ -3431,6 +4801,22 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO smarteats_master;
 
 GRANT ALL ON SEQUENCE public.products_id_seq TO smarteats_app;
 GRANT SELECT,USAGE ON SEQUENCE public.products_id_seq TO smarteats_master;
+
+
+--
+-- Name: TABLE recipe_lines; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.recipe_lines TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.recipe_lines TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE recipe_lines_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.recipe_lines_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.recipe_lines_id_seq TO smarteats_master;
 
 
 --
@@ -3511,6 +4897,86 @@ GRANT SELECT,USAGE ON SEQUENCE public.sessions_id_seq TO smarteats_master;
 
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.settings TO smarteats_app;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.settings TO smarteats_master;
+
+
+--
+-- Name: TABLE stock_level_lines; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.stock_level_lines TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.stock_level_lines TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE stock_level_lines_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.stock_level_lines_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.stock_level_lines_id_seq TO smarteats_master;
+
+
+--
+-- Name: TABLE stock_levels; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.stock_levels TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.stock_levels TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE stock_levels_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.stock_levels_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.stock_levels_id_seq TO smarteats_master;
+
+
+--
+-- Name: TABLE stored_documents; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.stored_documents TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.stored_documents TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE stored_documents_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.stored_documents_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.stored_documents_id_seq TO smarteats_master;
+
+
+--
+-- Name: TABLE supplier_ingredients; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.supplier_ingredients TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.supplier_ingredients TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE supplier_ingredients_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.supplier_ingredients_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.supplier_ingredients_id_seq TO smarteats_master;
+
+
+--
+-- Name: TABLE suppliers; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.suppliers TO smarteats_app;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.suppliers TO smarteats_master;
+
+
+--
+-- Name: SEQUENCE suppliers_id_seq; Type: ACL; Schema: public; Owner: colettas
+--
+
+GRANT ALL ON SEQUENCE public.suppliers_id_seq TO smarteats_app;
+GRANT SELECT,USAGE ON SEQUENCE public.suppliers_id_seq TO smarteats_master;
 
 
 --
@@ -3629,5 +5095,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,
 -- PostgreSQL database dump complete
 --
 
-\unrestrict q6zdAwXbbrP30lntmIehXkdmAj8Cfvyno7NSpEW4aSQ5KRNKVnBopdjaV2b81av
+\unrestrict iSBraL9bX4XEFkG5fbV3SMncaOVWneTRks7Kfj5veaAFVHfziR09ioucsadz5HI
 

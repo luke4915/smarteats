@@ -1,6 +1,6 @@
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import { buildPayload, stockProblem } from './productForm';
+import { buildPayload, stockProblem, stockUpdateOf } from './productForm';
 
 // Le azioni sui prodotti che parlano col server (salva, mostra/nascondi, elimina). Ognuna aggiorna l'elenco `products`
 // in memoria e avvisa con un messaggio; ritorna `true` se è andata a buon fine.
@@ -15,9 +15,10 @@ export function useProductActions({ setProducts, hasModifierGroups, onModifiersS
     try {
       const saved = await fetchWithAuth(editing ? `/products/${editing.id}` : '/products', { method: editing ? 'PUT' : 'POST', body: buildPayload(form) });
 
-      if (form.stock_enabled !== undefined) {
+      const stockUpdate = stockUpdateOf(form);
+      if (stockUpdate) {
         try {
-          const stock = await fetchWithAuth(`/products/${saved.id}/stock`, { method: 'PATCH', body: { stock: form.stock_enabled ? parseInt(form.stock, 10) : null, stock_enabled: !!form.stock_enabled } });
+          const stock = await fetchWithAuth(`/products/${saved.id}/stock`, { method: 'PATCH', body: stockUpdate });
           Object.assign(saved, { stock: stock.stock, stock_enabled: stock.stock_enabled });
         } catch (err) { showToast(`Prodotto salvato, ma errore nell'aggiornamento dello stock: ${err.message}`, 'error'); }
       }

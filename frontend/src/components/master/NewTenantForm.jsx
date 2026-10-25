@@ -37,7 +37,7 @@ const NewTenantForm = ({ catalog, error, onCreate, onClose }) => {
       <div>
         <p className="text-sm font-medium text-[var(--text-main)] mb-1.5">1. Tipo di attività e moduli</p>
         {catalog
-          ? <ModulePicker catalog={catalog} value={{ businessType: form.businessType, modules: form.modules }} onChange={v => setForm(f => ({ ...f, ...v }))} />
+          ? <ModulePicker catalog={catalog} value={{ businessType: form.businessType, modules: form.modules, inventory: form.inventory }} onChange={v => setForm(f => ({ ...f, ...v }))} />
           : <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
       </div>
 

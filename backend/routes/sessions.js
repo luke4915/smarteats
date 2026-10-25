@@ -9,6 +9,8 @@ import { validate } from '../middleware/validate.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { computeExpectedCash, countOpenOrders, countOpenChecks } from '../utils/session.js';
 import { fireDueTakeaway, announceKitchenOrder } from '../utils/takeawayDb.js';
+import { applyServiceStartPortions } from '../utils/inventory/portionsDb.js';
+import { getTenantModules } from '../utils/tenantModules.js';
 
 const router = express.Router();
 
@@ -58,14 +60,10 @@ export default function (broadcast) {
           'INSERT INTO sessions (name, start_time) VALUES ($1, NOW()) RETURNING *',
           [req.body.name]
         );
-        // I prodotti nascosti perché esauriti (stock 0) tornano visibili;
-        // quelli nascosti a mano dall'admin restano nascosti.
-        await db.query(
-          `UPDATE products
-           SET stock = NULL, stock_enabled = false,
-               visible = CASE WHEN stock = 0 THEN true ELSE visible END
-           WHERE stock_enabled`
-        );
+        // Le porzioni dei piatti ripartono secondo la loro regola (utils/inventory/portions.js): di norma tornano illimitate.
+        // I piatti nascosti perché esauriti tornano visibili; quelli nascosti a mano dall'admin restano nascosti.
+        const tenant = await getTenantModules(req.user.tenantId);
+        await applyServiceStartPortions(db, { rulesEnabled: !!tenant?.inventory });
         return rows[0];
       });
 
