@@ -1,6 +1,6 @@
 # Magazzino: scorte, ingredienti, fornitori e margini — disegno
 
-Stato: **da approvare** (25 ottobre 2026). Decisioni prese con Luca il 25 ottobre 2026. Niente codice finché questo documento non è approvato.
+Stato: **approvato**, in realizzazione a fasi (25 ottobre 2026). Decisioni prese con Luca il 25 ottobre 2026.
 
 ## 1. Cosa risolve
 
@@ -11,10 +11,10 @@ piatto, quanto si guadagna davvero. Il magazzino lo fa in tre gradini, uno dentr
 |---|---|---|
 | **Spento** | come oggi | tutto illimitato |
 | **Porzioni** (semplice) | «oggi ne ho 40» | un conteggio per piatto, con azzeramento a ogni servizio |
-| **Magazzino** (avanzato) | sapere cosa c'è, cosa costa, cosa si guadagna | ingredienti, ricette, fornitori, carichi di merce, costi, margini |
+| **Magazzino** (avanzato) | sapere cosa c'è, cosa costa, cosa si guadagna | ingredienti, fornitori, carichi di merce, costi, margini; gli ingredienti si scalano dalle **ricette** oppure con lo **scarico semplificato** |
 
 È un **modulo** (`inventory`) per **tutti** i tipi di locale (sagre, ristoranti, solo asporto). È una funzione **a pagamento**: lo accende e sceglie la
-modalità **solo il master** (da «Gestisci» → Moduli); l'admin del locale non la cambia. Spento = il modulo non c'è.
+modalità **solo il master** (da «Gestisci» → Moduli), insieme al modo di scalare gli ingredienti (ricette o scarico semplificato); l'admin del locale non li cambia. Spento = il modulo non c'è.
 
 ## 2. Come funziona
 
@@ -43,6 +43,13 @@ Una modifica a mano del numero del giorno resta sempre possibile (è arrivata al
   il **giorno del ritiro** (come già fatto per l'asporto).
 - **Scorta minima** per ingrediente: sotto soglia compare un avviso nella campanella e l'ingrediente entra in «Da riordinare».
 
+### Scarico semplificato (per chi non vuole le ricette: tipico di una sagra)
+Il master sceglie per il locale **come si scalano gli ingredienti**:
+- **Dalle ricette** (automatico): ogni vendita scala gli ingredienti del piatto. Dà i margini per piatto e il confronto teorico/reale.
+- **Scarico semplificato** (manuale): niente ricette. A fine servizio (o quando serve) una schermata «Scarico» elenca gli ingredienti con la quantità in dispensa; per ognuno si scrive
+  **quanto è stato usato** oppure **quanto è rimasto** (l'altro si calcola). Scrive un movimento di tipo `usage` nel registro. Il costo del servizio è il consumo × costo medio;
+  il margine per piatto non si calcola (non c'è la ricetta), ma food cost e valore del magazzino sì. Si può passare dall'uno all'altro modo senza perdere i dati.
+
 ### Fornitori e carichi di merce
 - **Fornitore:** nome, telefono, email, partita IVA, note. Un ingrediente può avere **più fornitori**, ognuno con la sua confezione e il suo prezzo
   («Rossi: cassa da 12 bottiglie, 18,00 €»).
@@ -60,14 +67,13 @@ Ogni prodotto ha un'**aliquota IVA di vendita** (predefinita del locale, imposta
 la sua. I prezzi in carta restano **con IVA**; i report calcolano ricavi, costi e margini **al netto**. Il resto della fiscalità (registratore, fatture) resta fuori.
 
 ### Metriche (il valore del magazzino)
-Per servizio, per periodo e per piatto:
-- **Food cost** (costo del venduto in % del ricavo netto) e **margine** per piatto e per servizio;
-- **Teorico contro reale**: quanto doveva scalare (vendite × ricette) contro quanto risulta da un **conteggio di chiusura**; la differenza in unità e in euro dice dove si perde;
-- **Scarti**: valore e quantità per motivo (rotto, scaduto, staff, omaggio, ordine stornato);
+Per servizio, per periodo e per piatto (**prodotto** in SmartEats Stand: le parole le dà `utils/terms.js`):
+- **Food cost** (costo del venduto in % del ricavo netto) e **margine** per piatto o prodotto e per servizio;
 - **Valore del magazzino** (euro in dispensa) e **giorni di scorta** rimasti per ingrediente;
 - **Spesa per fornitore** e **andamento dei prezzi** (chi ha alzato il prezzo);
-- **Ora di esaurimento** dei piatti (a che ora finisce cosa), per capire le porzioni giuste.
-Fra le idee rimandate: la «matrice» popolarità/margine dei piatti (menu engineering).
+- **Teorico contro reale**: quanto doveva scalare (vendite × ricette) contro quanto risulta da un **controllo di magazzino** (`stock_level`); la differenza in unità e in euro dice dove si perde;
+- **Scarti**: valore e quantità per motivo (rotto, scaduto, staff, omaggio, ordine stornato).
+Rimandate: la «matrice» popolarità/margine dei piatti (menu engineering) e l'ora di esaurimento.
 
 ## 3. Chi può cosa
 | | admin | responsabile | cassa, cameriere | cucina |
@@ -93,14 +99,14 @@ Tutte le tabelle sono del locale: `tenant_id`, RLS con `NULLIF(...)`, e in `TENA
 | `preparations` | preparazioni riusabili (sugo base): `name`, `base_unit`, `output_quantity` |
 | `recipe_lines` | ricetta di un piatto **o** di una preparazione: l'ingrediente **o** la preparazione usata, e la quantità; un vincolo impone «un solo proprietario, un solo componente» |
 | `modifier_recipe_lines` | cosa cambia un'opzione: ingrediente e variazione in più o in meno |
-| `ingredient_movements` | **il registro** (non si cancella): `ingredient_id`, `kind` (`receipt`, `sale`, `sale_reversal`, `waste`, `adjustment`, `count`), `quantity_change`, `unit_cost`, `reason`, riferimento (ordine, carico, conteggio), `session_id`, `created_by` |
-| `stock_counts`, `stock_count_lines` | un conteggio: quanto atteso, quanto contato, la differenza; confermandolo si scrivono le correzioni nel registro |
+| `ingredient_movements` | **il registro** (non si cancella): `ingredient_id`, `kind` (`receipt`, `sale`, `sale_reversal`, `usage`, `waste`, `adjustment`, `stock_level`), `quantity_change`, `unit_cost`, `reason`, riferimento (ordine, carico, conteggio), `session_id`, `created_by` |
+| `stock_levels`, `stock_level_lines` | un **controllo di magazzino**: quanto atteso, quanto contato, la differenza; confermandolo si scrivono le correzioni nel registro |
 
 Colonne nuove su tabelle esistenti:
 - `products`: `portions_reset_rule` (`restart_each_service`, `carry_over`, `unlimited`), `portions_start`, `vat_rate`; la `stock`/`stock_enabled` di oggi diventano le porzioni rimaste;
 - `modifiers`: `affects_stock` (acceso di default);
 - `order_items`: `cost_cents` (costo teorico della riga **al momento della vendita**, per i margini senza ricalcoli);
-- impostazioni: `inventory_mode` (`portions`/`warehouse`, scritta solo dal master), `default_vat_rate`.
+- impostazioni: `inventory_mode` (`portions`/`warehouse`) e `inventory_depletion` (`recipes`/`simple`), scritte solo dal master, e `default_vat_rate`.
 
 **Come si tiene giusta la quantità:** `quantity_on_hand` si aggiorna nella stessa transazione del movimento, con l'ingrediente bloccato (`FOR UPDATE`, in ordine di id, come `utils/stock.js` per i prodotti). Un test verifica che la somma del registro e la quantità coincidano.
 
@@ -114,8 +120,8 @@ Una sola migrazione (056) e il codice in fasi, ognuna una PR con i suoi test mir
 | 1 | Migrazione, modulo `inventory` e modalità (master), porzioni con azzeramento a ogni servizio, opzioni con `id` stabili |
 | 2 | Ingredienti, preparazioni e ricette; scarico alle vendite e storni; piatti esauriti; «esaurito» dalla cucina |
 | 3 | Fornitori, carichi di merce con foto o scansione della bolla, costo medio, IVA |
-| 4 | Conteggi di chiusura, scarti e rettifiche; report: food cost, margini, teorico contro reale, valore del magazzino |
-| 5 | Scorta minima e «Da riordinare», spesa per fornitore, andamento dei prezzi, ora di esaurimento |
+| 4 | Controlli di magazzino, scarti e rettifiche, scarico semplificato; report: food cost, margini, teorico contro reale, valore del magazzino |
+| 5 | Scorta minima e «Da riordinare», giorni di scorta, spesa per fornitore, andamento dei prezzi |
 
 **Struttura del codice** (leggibile e mantenibile): logica pura in file piccoli con test (`utils/inventory/`: `portions.js`, `recipeCost.js`, `availability.js`,
 `unitConversion.js`, `weightedAverageCost.js`), accesso ai dati separato (`utils/inventory/*Db.js`), una route per tema (`ingredients`, `suppliers`,
@@ -136,7 +142,7 @@ SmartEats Stand e Restaurant), una cartella per tema, nessun file oltre le 300 r
 | movimento | `stock_movement` |
 | scarto | `waste` |
 | rettifica | `adjustment` |
-| conteggio | `stock_count` |
+| controllo di magazzino (conteggio fisico) | `stock_level` |
 | scorta minima | `reorder_level` |
 | resa | `yield_percent` |
 | unità di base / confezione | `base_unit` / `purchase_unit` |
@@ -145,15 +151,25 @@ SmartEats Stand e Restaurant), una cartella per tema, nessun file oltre le 300 r
 | teorico / reale | `theoretical` / `actual` |
 | IVA | `vat` |
 
-## 7. Da fare in futuro (predisposto, non realizzato)
+## 7. Dati riservati (trasversale, una PR a parte, prima delle fasi 3 e 4)
+Un livello in più di privacy per i numeri delicati: **costi, margini, food cost, prezzi dei fornitori, valore del magazzino e le statistiche di incasso**. Finché sono
+«riservati» non si vedono: al posto dei numeri compaiono cifre e codici a caso (sfocati). Si sbloccano con la **password di un amministratore**, per pochi minuti.
+- **Vale sul server, non solo sulla grafica:** da bloccati, gli endpoint di quei dati **non mandano i valori** (campi vuoti e `locked: true`); la grafica disegna cifre finte. Altrimenti basterebbe aprire gli strumenti del browser. Anche l'esportazione (CSV, PDF) si blocca.
+- **Sblocco:** `POST /auth/unlock-reserved-data` con la password di **un** amministratore del locale (la verifica e non la salva; limitatore di tentativi); sblocca **la sessione di chi la chiede** per 10 minuti e si registra nell'audit (chi ha sbloccato, quale amministratore ha autorizzato). L'amministratore può digitarla sul dispositivo del responsabile senza dargliela.
+- **Chi lo accende:** l'admin del locale, da Impostazioni (impostazione `reserved_data_lock`). Spento di partenza.
+- Riguarda anche le statistiche che esistono già (cassa e ristorante), non solo il magazzino.
+
+## 8. Da fare in futuro (predisposto, non realizzato)
 - **Lotti e scadenze** (tracciabilità HACCP): i movimenti hanno già un riferimento a cui agganciare un lotto.
 - Lettura **automatica** della bolla dalla foto (OCR) e importazione della **fattura elettronica**.
 - Matrice popolarità/margine dei piatti (menu engineering) e suggerimento di riordino dai consumi.
 - Più sedi con magazzino condiviso.
 
-## 8. Da confermare
+## 9. Da confermare
 1. **Storno:** la scelta «rimetti in dispensa / scarto» solo se la cucina è già partita, automatico altrimenti (sezione 2).
 2. **Documenti nel database** (bytea, 8 MB) invece che su disco: un solo backup; si cambia se i documenti diventano molti.
 3. **Costo medio ponderato** come metodo di costo.
 4. **Costi e margini** visibili ad admin e responsabile (non alla cassa).
 5. **Aliquote IVA** predefinite 4 / 5 / 10 / 22 e prodotto con IVA di vendita 10 % come impostazione del locale.
+6. **Scarico semplificato:** lo sceglie il master (non l'admin del locale), insieme alla modalità.
+7. **Dati riservati:** sblocco con la password di un amministratore (non un codice a parte), 10 minuti, solo per la sessione di chi lo chiede.
