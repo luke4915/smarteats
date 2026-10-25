@@ -1,32 +1,36 @@
 import { useState } from 'react';
 import { Save } from 'lucide-react';
-import Modal from '../shared/Modal';
 import { btnPrimary } from '../../smarteats/floor/ui';
 import { apiFetch } from '../../utils/apiClient';
 import ModulePicker from './ModulePicker';
 
-// Tipo di attività e moduli di un tenant esistente. Vale subito: gli utenti lo vedono al prossimo accesso o rinnovo.
-const TenantModules = ({ tenant, catalog, onClose, onSaved }) => {
+// Scheda «Moduli» della finestra di un locale: tipo di attività (fisso) e moduli accesi. Vale subito: gli utenti lo vedono
+// al prossimo accesso o rinnovo.
+const TenantModules = ({ tenant, catalog, onSaved }) => {
   const [value, setValue] = useState({ businessType: tenant.business_type, modules: tenant.modules });
   const [saving, setSaving] = useState(false);
+  const [note, setNote] = useState('');
   const [error, setError] = useState('');
 
   const save = async () => {
-    setSaving(true); setError('');
+    setSaving(true); setError(''); setNote('');
     try {
       await apiFetch(`/master/tenants/${tenant.id}/modules`, { method: 'PUT', body: { modules: value.modules } });
-      onSaved();
-      onClose();
+      await onSaved();
+      setNote('Salvato');
     } catch (err) { setError(err.message); }
     finally { setSaving(false); }
   };
 
   return (
-    <Modal title={`Moduli · ${tenant.name}`} size="max-w-lg" onClose={onClose}
-      footer={<button onClick={save} disabled={saving} className={btnPrimary}><Save size={16} /> {saving ? 'Salvataggio…' : 'Salva'}</button>}>
+    <div className="space-y-4">
       <ModulePicker catalog={catalog} value={value} onChange={setValue} typeLocked />
-      {error && <p className="text-red-500 text-xs font-medium mt-3">{error}</p>}
-    </Modal>
+      <div className="flex items-center gap-3">
+        <button onClick={save} disabled={saving} className={btnPrimary}><Save size={16} /> {saving ? 'Salvataggio…' : 'Salva'}</button>
+        {note && <span className="text-sm text-emerald-500">{note}</span>}
+        {error && <span className="text-sm text-red-500">{error}</span>}
+      </div>
+    </div>
   );
 };
 

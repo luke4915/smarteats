@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Save, Send } from 'lucide-react';
-import Modal from '../shared/Modal';
 import { btn, btnPrimary, input } from '../../smarteats/floor/ui';
 import { apiFetch } from '../../utils/apiClient';
 
-// Avvisi WhatsApp di un locale: quali eventi mandano un messaggio, tetto mensile di pratiche, registro degli ultimi
+// Scheda «WhatsApp» della finestra di un locale: quali eventi mandano un messaggio, tetto mensile di pratiche, registro degli ultimi
 // invii e un messaggio di prova. Il modulo si accende da «Moduli». Il locale non configura nulla: solo qui.
 const REF = { reservation: 'Prenotazioni', takeaway: 'Asporto' };
 const STATUS = {
@@ -16,7 +15,7 @@ const REASON = {
   EVENTO_SPENTO: 'evento spento', DISISCRITTO: 'ha scritto STOP', SENZA_CONSENSO: 'senza consenso', TURNO_PASSATO: 'turno passato', TROPPI_AVVISI: 'troppi avvisi', PRATICA_NON_TROVATA: 'pratica non trovata',
 };
 
-const TenantWhatsApp = ({ tenant, onClose }) => {
+const TenantWhatsApp = ({ tenant }) => {
   const [data, setData] = useState(null);
   const [events, setEvents] = useState({});
   const [quota, setQuota] = useState('');
@@ -50,7 +49,7 @@ const TenantWhatsApp = ({ tenant, onClose }) => {
   };
 
   return (
-    <Modal title={`Avvisi WhatsApp · ${tenant.name}`} size="max-w-3xl" onClose={onClose}>
+    <div>
         {!data && !error && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
         {data && (
           <div className="space-y-6">
@@ -113,7 +112,7 @@ const TenantWhatsApp = ({ tenant, onClose }) => {
         )}
         {note && <p className="text-sm text-emerald-500 mt-4">{note}</p>}
         {error && <p className="text-sm text-red-500 mt-4">{error}</p>}
-    </Modal>
+    </div>
   );
 };
 
