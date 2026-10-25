@@ -2,10 +2,15 @@ import { z } from 'zod';
 import { passwordSchema } from './authSchema.js';
 import { idSchema } from './common.js';
 import { RECEIPT_SETTINGS_KEYS } from './settingsSchema.js';
-import { MODULE_IDS, BUSINESS_TYPE_IDS, firstModuleNotAllowed } from '../utils/modules.js';
+import { MODULE_IDS, BUSINESS_TYPE_IDS, INVENTORY_MODES, INVENTORY_DEPLETIONS, firstModuleNotAllowed } from '../utils/modules.js';
 
 const businessType = z.enum(BUSINESS_TYPE_IDS);
 const modules = z.array(z.enum(MODULE_IDS)).max(MODULE_IDS.length);
+// Magazzino: modalità e modo di scalare gli ingredienti. Assente = si tiene ciò che c'è (o il predefinito).
+const inventory = z.object({
+  mode: z.enum(Object.keys(INVENTORY_MODES)),
+  depletion: z.enum(Object.keys(INVENTORY_DEPLETIONS)),
+}).partial();
 
 export const masterLoginSchema = z.object({
   password: z.string().min(1),
@@ -18,6 +23,7 @@ export const createTenantSchema = z.object({
   // senza `modules` valgono quelli proposti dal tipo di attività
   businessType: businessType.default('street_food'),
   modules: modules.optional(),
+  inventory: inventory.optional(),
   expiresInDays: z.coerce.number().int().positive().max(3650).nullish(),
   adminUsername: z.string().trim().min(1).max(50),
   // temporanea: l'admin la cambia al primo accesso
@@ -31,6 +37,7 @@ export const createTenantSchema = z.object({
 // (sagra e ristorante sono due prodotti diversi); la route controlla che i moduli esistano per il suo tipo.
 export const tenantModulesSchema = z.object({
   modules,
+  inventory: inventory.optional(),
 });
 
 export const extendLicenseSchema = z.object({

@@ -1,5 +1,6 @@
 import Modal from '../shared/Modal';
 import Combobox from './Combobox';
+import PortionsField from './PortionsField';
 import { categoryColors, namesForCategory } from './productForm';
 
 const box = 'p-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)]';
@@ -14,8 +15,8 @@ const OVEN_LOAD = [[0, 'Niente (bibite, dolci già pronti…)'], [1, 'Una porzio
 
 // La finestra per aggiungere o modificare un prodotto. Non salva nulla da sola: mostra `form` e avvisa chi la usa
 // (`onField`, `onChange`, `onSubmit`). Sta sempre nello schermo: il corpo scorre, il pulsante resta fisso in basso.
-// `courses`, `modifierGroups` e `takeawayEnabled` accendono i campi che esistono solo in certi locali.
-const ProductFormModal = ({ form, setForm, products, editing, courses, modifierGroups, takeawayEnabled, submitDisabled, onField, onChange, onSubmit, onClose }) => {
+// `courses`, `modifierGroups`, `takeawayEnabled` e `portionsEnabled` (modulo magazzino) accendono i campi che esistono solo in certi locali.
+const ProductFormModal = ({ form, setForm, products, editing, courses, modifierGroups, takeawayEnabled, portionsEnabled, submitDisabled, onField, onChange, onSubmit, onClose }) => {
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
   const patch = (changes) => setForm(prev => ({ ...prev, ...changes }));
   const toggleModifierGroup = (id) => setForm(prev => {
@@ -118,6 +119,9 @@ const ProductFormModal = ({ form, setForm, products, editing, courses, modifierG
         </div>
       )}
 
+      {portionsEnabled ? (
+        <div className={`col-span-2 ${box}`}><PortionsField form={form} onChange={patch} /></div>
+      ) : (
       <div className={`${box} space-y-2`}>
         <div className="flex items-center gap-3">
           <input type="checkbox" id="stock_enabled" name="stock_enabled" checked={form.stock_enabled || false} onChange={onChange} className="w-4 h-4 rounded cursor-pointer" />
@@ -128,6 +132,7 @@ const ProductFormModal = ({ form, setForm, products, editing, courses, modifierG
             className="w-full p-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]" />
         )}
       </div>
+      )}
     </div>
     </Modal>
   );

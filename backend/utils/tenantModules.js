@@ -1,5 +1,6 @@
 import { pool } from '../db.js';
 import logger from '../logger.js';
+import { inventoryOf } from './modules.js';
 
 // Moduli accesi per un tenant, con una breve cache in memoria (come userStatus): il master li cambia di rado,
 // ma una modifica deve valere subito sul processo che la riceve (invalidateTenantModules) e in pochi secondi altrove.
@@ -10,8 +11,8 @@ export async function getTenantModules(tenantId) {
   const hit = cache.get(tenantId);
   if (hit && hit.expires > Date.now()) return hit.value;
 
-  const { rows } = await pool.query('SELECT business_type, modules FROM tenants WHERE id = $1', [tenantId]);
-  const value = rows[0] ? { businessType: rows[0].business_type, modules: rows[0].modules } : null;
+  const { rows } = await pool.query('SELECT business_type, modules, inventory_mode, inventory_depletion FROM tenants WHERE id = $1', [tenantId]);
+  const value = rows[0] ? { businessType: rows[0].business_type, modules: rows[0].modules, inventory: inventoryOf(rows[0]) } : null;
   if (cache.size > 1000) cache.clear();
   cache.set(tenantId, { expires: Date.now() + TTL_MS, value });
   return value;

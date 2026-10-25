@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { blankForm, formFromProduct, cleanPriceInput, colorOfCategory, namesForCategory, findNameConflict, stockProblem, buildPayload, categoryColors } from './productForm.js';
+import { blankForm, formFromProduct, cleanPriceInput, colorOfCategory, namesForCategory, findNameConflict, stockProblem, stockUpdateOf, buildPayload, categoryColors } from './productForm.js';
 
 const products = [
   { id: 1, name: 'Margherita', category: 'Pizze', color: '#ef4444', price: 7, visible: true, print_destination: 'kitchen', course_id: 3, stock_enabled: true, stock: 5 },
@@ -64,4 +64,34 @@ test('il prezzo del payload è un numero', () => {
 
 test('ogni categoria compare una volta con il suo colore', () => {
   assert.deepEqual(categoryColors(products).map(c => c.category), ['Pizze', 'Bevande']);
+});
+
+test('col magazzino il modulo ha la regola delle porzioni; senza non c\'è', () => {
+  assert.equal(blankForm().portions_reset_rule, undefined);
+  assert.deepEqual([blankForm({ portions: true }).portions_reset_rule, blankForm({ portions: true }).portions_start], ['unlimited', '']);
+  const form = formFromProduct({ ...products[0], portions_reset_rule: 'restart_each_service', portions_start: 40 }, { portions: true });
+  assert.deepEqual([form.portions_reset_rule, form.portions_start], ['restart_each_service', '40']);
+});
+
+test('«da N a ogni servizio» chiede il numero di partenza, «continua» le porzioni di adesso, «illimitate» nulla', () => {
+  assert.ok(stockProblem({ portions_reset_rule: 'restart_each_service', portions_start: '' }));
+  assert.ok(stockProblem({ portions_reset_rule: 'restart_each_service', portions_start: '0' }));
+  assert.equal(stockProblem({ portions_reset_rule: 'restart_each_service', portions_start: '40' }), null);
+  assert.ok(stockProblem({ portions_reset_rule: 'carry_over', stock: '' }));
+  assert.equal(stockProblem({ portions_reset_rule: 'carry_over', stock: '0' }), null);
+  assert.equal(stockProblem({ portions_reset_rule: 'unlimited', stock: '', stock_enabled: true }), null);
+});
+
+test('il conto di adesso si manda a parte solo per «continua dal servizio prima»; senza magazzino come sempre', () => {
+  assert.deepEqual(stockUpdateOf({ portions_reset_rule: 'carry_over', stock: '7' }), { stock: 7, stock_enabled: true });
+  assert.equal(stockUpdateOf({ portions_reset_rule: 'restart_each_service', portions_start: '40', stock: '' }), null);
+  assert.equal(stockUpdateOf({ portions_reset_rule: 'unlimited', stock: '' }), null);
+  assert.deepEqual(stockUpdateOf({ stock_enabled: true, stock: '12' }), { stock: 12, stock_enabled: true });
+  assert.deepEqual(stockUpdateOf({ stock_enabled: false, stock: '' }), { stock: null, stock_enabled: false });
+});
+
+test('il numero di partenza va al server solo con «da N a ogni servizio»', () => {
+  assert.equal(buildPayload({ price: '5', portions_reset_rule: 'restart_each_service', portions_start: '40' }).portions_start, 40);
+  assert.equal(buildPayload({ price: '5', portions_reset_rule: 'carry_over', portions_start: '40' }).portions_start, null);
+  assert.equal('portions_start' in buildPayload({ price: '5' }), false);
 });

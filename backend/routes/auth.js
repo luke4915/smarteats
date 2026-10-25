@@ -16,6 +16,7 @@ import { hashPassword, DUMMY_HASH } from '../utils/password.js';
 import { sendHttpError } from '../utils/httpError.js';
 import { invalidateUserStatus } from '../utils/userStatus.js';
 import { getTenantModules } from '../utils/tenantModules.js';
+import { inventoryOf } from '../utils/modules.js';
 import { createUser, listUsers, updateUser, deleteUser, resetUserPassword } from '../utils/tenantUsers.js';
 
 const INVALID_CREDENTIALS = 'Credenziali non valide';
@@ -40,7 +41,7 @@ router.post('/login', validate({ body: loginSchema }), resolveTenantFromHost, as
       return res.status(401).json({ error: INVALID_CREDENTIALS });
 
     // Stato del tenant solo dopo la password: chi non ha le credenziali non lo scopre.
-    const { rows: tenantRows } = await pool.query('SELECT expires_at, active, name, business_type, modules FROM tenants WHERE id = $1', [user.tenant_id]);
+    const { rows: tenantRows } = await pool.query('SELECT expires_at, active, name, business_type, modules, inventory_mode, inventory_depletion FROM tenants WHERE id = $1', [user.tenant_id]);
     const tenant = tenantRows[0];
 
     if (!tenant?.active) {
@@ -53,7 +54,7 @@ router.post('/login', validate({ body: loginSchema }), resolveTenantFromHost, as
     user.tenant_name = tenant.name;
     setCookie(res, signToken(user));
 
-    res.json({ id: user.id, username: user.username, role: user.role, needsPassword: user.must_change_password, tenantName: user.tenant_name, businessType: tenant.business_type, modules: tenant.modules });
+    res.json({ id: user.id, username: user.username, role: user.role, needsPassword: user.must_change_password, tenantName: user.tenant_name, businessType: tenant.business_type, modules: tenant.modules, inventory: inventoryOf(tenant) });
     } catch (err) {
     logger.error({ err }, 'Errore server')
     res.status(500).json({ error: 'Errore server' });
@@ -225,6 +226,7 @@ router.get('/me', authenticateAllowingPasswordChange, async (req, res) => {
       tenantName: req.user.tenantName,
       businessType: tenant?.businessType,
       modules: tenant?.modules ?? [],
+      inventory: tenant?.inventory ?? null,
       needsPassword: req.user.mustChangePassword,
     });
   } catch (err) {

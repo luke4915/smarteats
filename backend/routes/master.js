@@ -17,7 +17,7 @@ import { loadConfig, monthUsage } from '../utils/whatsapp/outbox.js';
 import { getDriver } from '../utils/whatsapp/driver.js';
 import { masterLoginSchema, createTenantSchema, extendLicenseSchema, tenantActiveSchema, deleteTenantSchema, receiptCustomizationSchema, tenantUserParamsSchema, tenantModulesSchema } from '../schemas/masterSchema.js';
 import { createUserSchema, resetPasswordSchema, updateUserSchema } from '../schemas/authSchema.js';
-import { catalog, normalizeModules, firstModuleNotAllowed, BUSINESS_TYPES } from '../utils/modules.js';
+import { catalog, normalizeModules, firstModuleNotAllowed, inventoryColumnsFor, BUSINESS_TYPES } from '../utils/modules.js';
 import { invalidateTenantModules } from '../utils/tenantModules.js';
 import { logAudit } from '../utils/auditLogger.js';
 import { sendHttpError } from '../utils/httpError.js';
@@ -76,6 +76,7 @@ router.get('/tenants', authenticateMaster, async (req, res) => {
 router.post('/tenants', authenticateMaster, validate({ body: createTenantSchema }), async (req, res) => {
   const { slug, name, plan, expiresInDays, adminUsername, adminPassword, businessType } = req.body;
   const modules = normalizeModules(req.body.modules ?? BUSINESS_TYPES[businessType].modules);
+  const inventory = inventoryColumnsFor(modules, req.body.inventory, null);
 
   const client = await masterPool.connect();
   try {
@@ -86,8 +87,8 @@ router.post('/tenants', authenticateMaster, validate({ body: createTenantSchema 
       : null;
 
     const { rows: tenantRows } = await client.query(
-      `INSERT INTO tenants (slug, name, plan, expires_at, business_type, modules) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [slug, name, plan, expiresAt, businessType, modules]
+      `INSERT INTO tenants (slug, name, plan, expires_at, business_type, modules, inventory_mode, inventory_depletion) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [slug, name, plan, expiresAt, businessType, modules, inventory.inventory_mode, inventory.inventory_depletion]
     );
     const tenant = tenantRows[0];
 
@@ -133,14 +134,16 @@ router.patch('/tenants/:id/extend', authenticateMaster, validate({ params: idPar
 // Il tipo di attività è fisso: i moduli devono esistere per quel tipo (una sagra non ha i tavoli, un ristorante non ha il menu QR).
 router.put('/tenants/:id/modules', authenticateMaster, validate({ params: idParamsSchema, body: tenantModulesSchema }), async (req, res) => {
   try {
-    const { rows: current } = await masterPool.query('SELECT business_type FROM tenants WHERE id = $1', [req.params.id]);
+    const { rows: current } = await masterPool.query('SELECT business_type, inventory_mode, inventory_depletion FROM tenants WHERE id = $1', [req.params.id]);
     if (!current.length) return res.status(404).json({ error: 'Tenant non trovato' });
     const notAllowed = firstModuleNotAllowed(current[0].business_type, req.body.modules);
     if (notAllowed) return res.status(400).json({ error: `modules: il modulo "${notAllowed}" non esiste per questo tipo di attività` });
 
+    const modules = normalizeModules(req.body.modules);
+    const inventory = inventoryColumnsFor(modules, req.body.inventory, current[0]);
     const { rows } = await masterPool.query(
-      'UPDATE tenants SET modules = $1 WHERE id = $2 RETURNING *',
-      [normalizeModules(req.body.modules), req.params.id]
+      'UPDATE tenants SET modules = $1, inventory_mode = $3, inventory_depletion = $4 WHERE id = $2 RETURNING *',
+      [modules, req.params.id, inventory.inventory_mode, inventory.inventory_depletion]
     );
     invalidateTenantModules(req.params.id);
     logger.info({ tenantId: req.params.id, businessType: rows[0].business_type, modules: rows[0].modules }, 'Moduli del tenant aggiornati dal master');
@@ -389,7 +392,7 @@ router.post('/tenants/:id/users/:userId/reset-password', authenticateMaster, val
 // Richiede conferma esplicita (slug ripetuto) lato client prima di chiamarla.
 // Tutto in un'unica transazione sulla connessione scoped al tenant: o sparisce
 // tutto o non sparisce niente. L'ordine rispetta le foreign key (audit_logs → users).
-const TENANT_SCOPED_TABLES = ['whatsapp_messages', 'app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
+const TENANT_SCOPED_TABLES = ['stock_level_lines', 'stock_levels', 'ingredient_movements', 'modifier_recipe_lines', 'recipe_lines', 'preparations', 'stored_documents', 'goods_receipt_lines', 'goods_receipts', 'supplier_ingredients', 'suppliers', 'ingredients', 'whatsapp_messages', 'app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
 router.delete('/tenants/:id', authenticateMaster, validate({ params: idParamsSchema, body: deleteTenantSchema }), async (req, res) => {
   const { id } = req.params;
   try {

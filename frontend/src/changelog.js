@@ -9,6 +9,7 @@ export const CHANGELOG = [
       'Nuovo nome: l\'app è SmartEats, con due versioni: SmartEats Stand per sagre e food truck, SmartEats Restaurant per ristoranti, pizzerie e solo asporto.',
       'Marchio aggiornato sulla schermata di accesso, sugli scontrini e nei report PDF.',
       'Impostazioni riorganizzate: sezioni in alto, Account (profilo e utenti) e Suggerimenti in schede separate, riservati ad amministratore e responsabile.',
+      'Porzioni dei piatti (con la funzione Magazzino, attivabile su richiesta): ogni piatto riparte da un numero a ogni servizio, continua dal servizio prima oppure resta illimitato.',
       'Password dimenticata: cassa, cameriere e cucina non la cambiano da soli, la reimposta l\'amministratore con una password temporanea.',
     ],
   },

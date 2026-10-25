@@ -7,7 +7,7 @@ import { groupHint } from '../floor/modifierRules';
 import { formatEuro } from '../floor/checkMath';
 
 const EMPTY = { name: '', min_select: 0, max_select: null, options: [{ name: '', price: '' }] };
-const toDraft = (g) => ({ id: g.id, name: g.name, min_select: g.min_select, max_select: g.max_select, options: g.options.map(o => ({ name: o.name, price: o.price_delta ? String(o.price_delta).replace('.', ',') : '' })) });
+const toDraft = (g) => ({ id: g.id, name: g.name, min_select: g.min_select, max_select: g.max_select, options: g.options.map(o => ({ id: o.id, name: o.name, price: o.price_delta ? String(o.price_delta).replace('.', ',') : '' })) });
 const toNumber = (v) => Number(String(v).trim().replace(',', '.')) || 0;
 
 // Un gruppo di opzioni in modifica: nome, quante se ne scelgono e le opzioni con il loro supplemento.
@@ -72,7 +72,7 @@ const ModifierSettings = ({ groups, onChanged }) => {
   const save = async () => {
     setSaving(true);
     const body = { name: draft.name.trim(), min_select: draft.min_select, max_select: draft.max_select,
-      options: draft.options.map(o => ({ name: o.name.trim(), price_delta: toNumber(o.price) })) };
+      options: draft.options.map(o => ({ ...(o.id && { id: o.id }), name: o.name.trim(), price_delta: toNumber(o.price) })) };   // l'id fa restare l'opzione la stessa
     try {
       await fetchWithAuth(draft.id ? `/modifier-groups/${draft.id}` : '/modifier-groups', { method: draft.id ? 'PUT' : 'POST', body });
       showToast('Gruppo salvato', 'success');

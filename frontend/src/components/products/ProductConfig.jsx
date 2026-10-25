@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PageHeader } from '../shared/PageHeader';
+import { useAuth } from '../../context/useAuth';
 import CompactCatalog from './CompactCatalog';
 import ProductGroups from './ProductGroups';
 import ProductFormModal from './ProductFormModal';
@@ -15,7 +16,9 @@ import { blankForm, formFromProduct, cleanPriceInput, colorOfCategory, findNameC
 // `compact`: elenco del ristorante. `courses` (portate) e `modifierGroups` (opzioni) esistono solo nei ristoranti;
 // `takeawayEnabled` aggiunge il carico sul forno. `onModifiersSaved` rilegge le opzioni dopo un salvataggio.
 const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved, hideHeader = false, takeawayEnabled = false, compact = false }) => {
-  const options = { courses, takeawayEnabled, modifierGroups };
+  const { user } = useAuth();
+  const portionsEnabled = !!user?.inventory;            // col modulo magazzino le porzioni hanno una regola di azzeramento
+  const options = { courses, takeawayEnabled, modifierGroups, portions: portionsEnabled };
   const actions = useProductActions({ setProducts, hasModifierGroups: !!modifierGroups, onModifiersSaved });
   const [editing, setEditing] = useState(null);          // il prodotto in modifica (null = nuovo)
   const [form, setForm] = useState(null);                // il modulo aperto (null = chiuso)
@@ -54,7 +57,7 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
         : <ProductGroups products={products} onAdd={openNew} onEdit={openEdit} onDelete={setToDelete} onToggleVisible={actions.toggleVisibility} onSetManyVisible={actions.setManyVisible} />}
 
       {form && (
-        <ProductFormModal form={form} setForm={setForm} products={products} editing={editing} courses={courses} modifierGroups={modifierGroups} takeawayEnabled={takeawayEnabled}
+        <ProductFormModal form={form} setForm={setForm} products={products} editing={editing} courses={courses} modifierGroups={modifierGroups} takeawayEnabled={takeawayEnabled} portionsEnabled={portionsEnabled}
           submitDisabled={!!stockProblem(form)} onField={setField} onChange={handleChange} onSubmit={submit} onClose={close} />
       )}
       {conflict && <DuplicateDialog conflict={conflict} onClose={() => setConflict(null)} onUseCategory={() => { setField('category', conflict.product.category); setConflict(null); }} />}

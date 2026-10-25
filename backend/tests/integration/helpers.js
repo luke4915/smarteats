@@ -66,7 +66,7 @@ export async function createTenant({ openSession = true, active = true, business
   return { id: tenant.id, slug, host: `${slug}.smarteats.local`, username: `admin-${slug}`, userId: user.id, productId: product.id, sessionId };
 }
 
-const TENANT_TABLES = ['whatsapp_messages', 'app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
+const TENANT_TABLES = ['stock_level_lines', 'stock_levels', 'ingredient_movements', 'modifier_recipe_lines', 'recipe_lines', 'preparations', 'stored_documents', 'goods_receipt_lines', 'goods_receipts', 'supplier_ingredients', 'suppliers', 'ingredients', 'whatsapp_messages', 'app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
 
 export async function deleteTenants(...tenants) {
   for (const { id } of tenants) {
