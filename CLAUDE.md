@@ -42,6 +42,10 @@ Il prodotto è pensato per un mercato internazionale: i nomi *tecnici* sono in i
 | incasso | `revenue` (`sales` per i totali di cassa) | |
 | menu / carta | `menu` per il pubblico, `catalog` per la gestione dei prodotti | |
 | sagra | `festival` | evento temporaneo con cassa e cucina |
+| magazzino, scorte | `inventory` | disegno in `docs/design-magazzino.md` (stesso glossario) |
+| ingrediente / ricetta / preparazione | `ingredient` / `recipe` / `preparation` | |
+| fornitore, carico di merce | `supplier`, `goods_receipt` | la bolla è il file (`delivery_note`) |
+| porzioni, scarto, conteggio | `portions`, `waste`, `stock_count` | |
 
 **Valori salvati:** ruoli `admin`, `manager`, `cashier`, `waiter`, `kitchen`; tipi di locale `street_food` (sagre, paninari, food truck: un solo tipo) e `restaurant` (migrazione 048). Dati e percorsi nuovi seguono lo stesso criterio.
 
