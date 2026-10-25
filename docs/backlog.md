@@ -23,5 +23,6 @@ Elenco verificato sul codice. Quando ne risolvi una, toglila da qui nello stesso
 
 **Magazzino (rimandato, vedi `docs/design-magazzino.md`, sezione 7)**
 - Lotti e scadenze degli ingredienti (tracciabilità HACCP).
+- Produzione di una preparazione con scorta propria («ho fatto 40 panetti oggi»): oggi le preparazioni si espandono nelle ricette al momento della vendita; un semilavorato comprato da un fornitore si gestisce già come ingrediente.
 - Lettura automatica della bolla dalla foto (OCR) e importazione della fattura elettronica.
 - Matrice popolarità/margine dei piatti e suggerimento di riordino dai consumi; più sedi con magazzino condiviso.

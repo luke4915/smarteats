@@ -18,7 +18,8 @@ import { blankForm, formFromProduct, cleanPriceInput, colorOfCategory, findNameC
 const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved, hideHeader = false, takeawayEnabled = false, compact = false }) => {
   const { user } = useAuth();
   const portionsEnabled = !!user?.inventory;            // col modulo magazzino le porzioni hanno una regola di azzeramento
-  const options = { courses, takeawayEnabled, modifierGroups, portions: portionsEnabled };
+  const vatEnabled = user?.inventory?.mode === 'warehouse';   // l'IVA serve ai margini del magazzino
+  const options = { courses, takeawayEnabled, modifierGroups, portions: portionsEnabled, vat: vatEnabled };
   const actions = useProductActions({ setProducts, hasModifierGroups: !!modifierGroups, onModifiersSaved });
   const [editing, setEditing] = useState(null);          // il prodotto in modifica (null = nuovo)
   const [form, setForm] = useState(null);                // il modulo aperto (null = chiuso)
@@ -57,7 +58,7 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
         : <ProductGroups products={products} onAdd={openNew} onEdit={openEdit} onDelete={setToDelete} onToggleVisible={actions.toggleVisibility} onSetManyVisible={actions.setManyVisible} />}
 
       {form && (
-        <ProductFormModal form={form} setForm={setForm} products={products} editing={editing} courses={courses} modifierGroups={modifierGroups} takeawayEnabled={takeawayEnabled} portionsEnabled={portionsEnabled}
+        <ProductFormModal form={form} setForm={setForm} products={products} editing={editing} courses={courses} modifierGroups={modifierGroups} takeawayEnabled={takeawayEnabled} portionsEnabled={portionsEnabled} vatEnabled={vatEnabled}
           submitDisabled={!!stockProblem(form)} onField={setField} onChange={handleChange} onSubmit={submit} onClose={close} />
       )}
       {conflict && <DuplicateDialog conflict={conflict} onClose={() => setConflict(null)} onUseCategory={() => { setField('category', conflict.product.category); setConflict(null); }} />}

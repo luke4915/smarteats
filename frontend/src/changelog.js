@@ -12,6 +12,8 @@ export const CHANGELOG = [
       'Porzioni dei piatti (con la funzione Magazzino, attivabile su richiesta): ogni piatto riparte da un numero a ogni servizio, continua dal servizio prima oppure resta illimitato.',
       'Magazzino (su richiesta): ingredienti, preparazioni e ricette dei piatti; ogni vendita scala la dispensa e la cucina può segnare esaurito un piatto o un ingrediente.',
       'Fornitori e carichi di merce: registri la bolla (anche con foto o scansione), la dispensa sale e il costo medio di ogni ingrediente si aggiorna da solo.',
+      'Controlli di magazzino: conti ciò che hai davvero in dispensa e la differenza resta scritta; scarti e rettifiche con il motivo; nei locali senza ricette, lo scarico di fine servizio.',
+      'Report del magazzino: costo degli ingredienti, margine e food cost per piatto (con IVA per prodotto), scarti e valore della dispensa.',
       'Password dimenticata: cassa, cameriere e cucina non la cambiano da soli, la reimposta l\'amministratore con una password temporanea.',
     ],
   },

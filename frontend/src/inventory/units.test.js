@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { unitsFor, parseDecimal, toBaseQuantity, toDisplayQuantity, formatQuantity, formatCostPerUnit, formatCents } from './units.js';
+import { unitsFor, parseDecimal, toBaseQuantity, toDisplayQuantity, formatQuantity, formatCostPerUnit, formatCents, formatPercent } from './units.js';
 
 test('le unità tra cui scegliere dipendono dall\'unità di base', () => {
   assert.deepEqual(unitsFor('g').map(u => u.id), ['g', 'kg']);
@@ -37,4 +37,10 @@ test('il testo mostrato a chi legge', () => {
 test('costi in euro: il costo per grammo diventa €/kg', () => {
   assert.equal(formatCostPerUnit(0.2, 'g').replace(/\s/g, ' '), '2,00 €/kg');
   assert.equal(formatCents(129).replace(/\s/g, ' '), '1,29 €');
+});
+
+test('la percentuale a parole', () => {
+  assert.equal(formatPercent(26.4), '26,4%');
+  assert.equal(formatPercent(30), '30%');
+  assert.equal(formatPercent(null), '—');
 });

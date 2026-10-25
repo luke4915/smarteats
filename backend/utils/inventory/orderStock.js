@@ -66,7 +66,7 @@ export async function returnIngredientsOfOrder(db, { tenantId, orderId, disposit
     const quantity = -Number(net);
     return [
       { ingredientId, kind: 'sale_reversal', quantityChange: quantity, orderId },
-      ...(disposition === 'waste' ? [{ ingredientId, kind: 'waste', quantityChange: -quantity, orderId, reason: 'Ordine stornato, già preparato' }] : []),
+      ...(disposition === 'waste' ? [{ ingredientId, kind: 'waste', quantityChange: -quantity, orderId, reason: 'order_canceled' }] : []),
     ];
   });
   await recordMovements(db, movements, { sessionId: order?.session_id ?? null, userId });

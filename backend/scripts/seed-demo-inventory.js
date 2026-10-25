@@ -151,8 +151,34 @@ export async function seedInventory({ api, admin, tenantId, products, dayString 
   return { ingredientId };
 }
 
-// Alla fine della demo: qualche ingrediente sotto scorta minima e uno esaurito, per mostrare gli avvisi
+// Ieri sera: un controllo di fine servizio con due differenze e qualche scarto, per vedere il registro e il report con dei dati.
+// Ogni movimento aggiorna anche la dispensa, come farebbero le API.
+async function seedControls({ admin, tenantId, ingredientId }) {
+  const when = "now() - interval '1 day'";
+  const move = async (name, change, kind, reason, stockLevelId = null) => {
+    const { rows: [i] } = await admin.query('SELECT quantity_on_hand, weighted_average_cost FROM ingredients WHERE id = $1', [ingredientId[name]]);
+    if (change === 0) return Number(i.quantity_on_hand);          // tutto torna: nel registro non c'è nulla da scrivere
+    await admin.query(
+      `INSERT INTO ingredient_movements (tenant_id, ingredient_id, kind, quantity_change, unit_cost, reason, stock_level_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, ${when})`,
+      [tenantId, ingredientId[name], kind, change, i.weighted_average_cost, reason, stockLevelId]);
+    await admin.query('UPDATE ingredients SET quantity_on_hand = quantity_on_hand + $2 WHERE id = $1', [ingredientId[name], change]);
+    return Number(i.quantity_on_hand);
+  };
+  await move('Mozzarella di bufala', -300, 'waste', 'expired: scaduta in frigo');
+  await move('Funghi champignon', -150, 'waste', 'broken: caduti dal banco');
+  await move('Prosciutto cotto', -100, 'waste', 'staff');
+
+  const { rows: [level] } = await admin.query(
+    `INSERT INTO stock_levels (tenant_id, kind, status, notes, confirmed_at, created_at) VALUES ($1, 'closing', 'confirmed', 'Conteggio di chiusura', ${when}, ${when}) RETURNING id`, [tenantId]);
+  for (const [name, change] of [['Mozzarella fior di latte', -400], ['Olio extravergine', -250], ['Pomodoro pelato', 0]]) {
+    const expected = await move(name, change, 'stock_level', 'closing', level.id);
+    await admin.query('INSERT INTO stock_level_lines (tenant_id, stock_level_id, ingredient_id, expected_quantity, counted_quantity) VALUES ($1, $2, $3, $4, $5)', [tenantId, level.id, ingredientId[name], expected, expected + change]);
+  }
+}
+
+// Alla fine della demo: scarti e un controllo di ieri, qualche ingrediente sotto scorta minima e uno esaurito, per mostrare gli avvisi
 export async function finishInventoryDemo({ admin, tenantId, ingredientId }) {
+  await seedControls({ admin, tenantId, ingredientId });
   const setOnHand = async (name, quantity) => {
     const { rows: [i] } = await admin.query('SELECT quantity_on_hand FROM ingredients WHERE id = $1', [ingredientId[name]]);
     await admin.query(`INSERT INTO ingredient_movements (tenant_id, ingredient_id, kind, quantity_change, reason) VALUES ($1, $2, 'adjustment', $3, 'Conteggio di prova')`, [tenantId, ingredientId[name], quantity - Number(i.quantity_on_hand)]);

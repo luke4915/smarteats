@@ -74,6 +74,31 @@ test('magazzino: ingredienti e ricetta di un piatto; la cucina può segnare esau
   await admin.getByRole('button', { name: 'Salva', exact: true }).click();
   await expect(admin.getByRole('button', { name: /Bruschetta.*1 ingrediente/ })).toBeVisible();
 
+  // controllo di magazzino: si conta meno di quanto previsto, e la differenza resta scritta
+  await admin.getByRole('tab', { name: 'Controlli' }).click();
+  await admin.getByRole('button', { name: 'Nuovo controllo' }).click();
+  await admin.getByLabel('Farina 00', { exact: true }).fill('99,5');
+  await expect(admin.getByText('Manca 500 g')).toBeVisible();
+  await shot(admin, 'inventory-06-controllo');
+  await admin.getByRole('button', { name: 'Registra il controllo' }).click();
+  await expect(admin.getByRole('button', { name: /Fine servizio.*1 differenza/ })).toBeVisible();
+
+  // uno scarto nel registro, con il motivo
+  await admin.getByRole('tab', { name: 'Registro' }).click();
+  await admin.getByRole('button', { name: 'Scarto', exact: true }).click();
+  await admin.getByLabel('Ingrediente', { exact: true }).selectOption({ label: 'Farina 00' });
+  await admin.getByLabel('Unità di Quantità').selectOption('g');
+  await admin.getByLabel('Quantità', { exact: true }).fill('500');
+  await admin.getByRole('button', { name: 'Registra', exact: true }).click();
+  await expect(admin.getByText(/Scarto · Scaduto/)).toBeVisible();
+  await shot(admin, 'inventory-07-registro');
+
+  // il report si apre anche senza vendite
+  await admin.getByRole('tab', { name: 'Report' }).click();
+  await expect(admin.getByText('Food cost', { exact: true })).toBeVisible();
+  await expect(admin.getByText('Nessuno scarto registrato')).toHaveCount(0);
+  await shot(admin, 'inventory-08-report');
+
   // la cucina vede «Esaurito»
   const chef = await (await browser.newContext({ ignoreHTTPSErrors: true })).newPage();
   await login(chef, s.restaurant.host, s.restaurant.kitchen);

@@ -48,3 +48,44 @@ export const modifierRecipeSchema = z.object({
 
 // «Esaurito» / «di nuovo disponibile», anche dalla cucina
 export const availabilitySchema = z.object({ available: z.boolean() });
+
+// ── Scarti, rettifiche, controlli di magazzino, scarico semplificato, report ──
+export const WASTE_REASONS = ['broken', 'expired', 'staff', 'gift', 'other'];
+const note = z.string().trim().max(200).nullable().default(null).transform(v => (v === '' ? null : v));
+
+// Uno scarto (roba buttata: quantità positiva, motivo) o una rettifica (correzione con segno, nota obbligatoria: si deve capire perché).
+export const movementSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('waste'), ingredient_id: idSchema, quantity, reason: z.enum(WASTE_REASONS), note }),
+  z.object({
+    type: z.literal('adjustment'), ingredient_id: idSchema, note: z.string().trim().min(3, 'Scrivi il motivo della rettifica').max(200),
+    quantity_change: z.number().min(-10_000_000).max(10_000_000).refine(v => v !== 0, { message: 'La variazione non può essere zero' }),
+  }),
+]);
+
+// Un controllo di magazzino: per ogni ingrediente contato, quanto se ne è trovato (nell'unità di base). Gli altri non si toccano.
+export const stockLevelSchema = z.object({
+  kind: z.enum(['closing', 'periodic']).default('periodic'),
+  notes: note,
+  lines: z.array(z.object({ ingredient_id: idSchema, counted_quantity: z.number().min(0).max(10_000_000) })).min(1, 'Conta almeno un ingrediente').max(500)
+    .refine(lines => new Set(lines.map(l => l.ingredient_id)).size === lines.length, { message: 'Ingrediente ripetuto' }),
+});
+
+// Lo scarico semplificato: per ogni ingrediente quanto è stato usato OPPURE quanto ne resta (uno solo dei due).
+export const usageSchema = z.object({
+  lines: z.array(z.object({ ingredient_id: idSchema, used: z.number().positive().max(10_000_000).optional(), remaining: z.number().min(0).max(10_000_000).optional() })
+    .refine(l => (l.used === undefined) !== (l.remaining === undefined), { message: 'Per ogni ingrediente scrivi quanto è stato usato o quanto resta' }))
+    .min(1, 'Scrivi almeno un ingrediente').max(500)
+    .refine(lines => new Set(lines.map(l => l.ingredient_id)).size === lines.length, { message: 'Ingrediente ripetuto' }),
+});
+
+export const movementsQuerySchema = z.object({
+  ingredient_id: idSchema.optional(),
+  kind: z.enum(['receipt', 'sale', 'sale_reversal', 'usage', 'waste', 'adjustment', 'stock_level']).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(100),
+});
+
+export const reportQuerySchema = z.object({
+  from: z.iso.date(),
+  to: z.iso.date(),
+  tz: z.string().max(60).default('Europe/Rome'),
+}).refine(q => q.from <= q.to, { message: 'La data di inizio è dopo quella di fine', path: ['from'] });

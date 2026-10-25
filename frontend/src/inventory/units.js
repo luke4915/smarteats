@@ -50,3 +50,6 @@ export function formatCostPerUnit(costPerBaseUnit, baseUnit) {
 }
 
 export const formatCents = (cents) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+
+// «26,4%», o un trattino se non c'è nulla da confrontare.
+export const formatPercent = (value) => (value === null || value === undefined ? '—' : `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(value)}%`);

@@ -19,6 +19,9 @@ export const productSchema = z.object({
   // Porzioni (modulo magazzino): regola di azzeramento e porzioni di partenza. Assenti = non si cambiano.
   portions_reset_rule: z.enum(PORTIONS_RULES).optional(),
   portions_start: z.number().int().min(1).max(100000).nullable().optional(),
+  // IVA di vendita del piatto, in percentuale (magazzino: margini al netto dell'IVA). Assente = non si cambia; null = quella predefinita del locale.
+  // (PostgreSQL restituisce i numeri decimali come testo, e il frontend può rimandarli così com'erano: «10.00» vale 10)
+  vat_rate: z.preprocess(v => (typeof v === 'string' && v.trim() !== '' ? Number(v) : v), z.number().min(0).max(99).nullable().optional()),
 }).refine(p => p.portions_reset_rule !== 'restart_each_service' || p.portions_start != null,
   { message: 'Con «riparti da N» serve il numero di porzioni di partenza', path: ['portions_start'] });
 
