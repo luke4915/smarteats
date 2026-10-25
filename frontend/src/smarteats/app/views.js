@@ -1,5 +1,7 @@
 // Pagine dell'app SmartEats (ristoranti e pizzerie): chi le vede dipende dal ruolo e dai moduli del locale.
 // Come in components/layout/viewRoles.js, vale per il menu e per le route; le autorizzazioni vere sono sul server.
+import { settingsSections } from '../settings/sections.js';
+
 const VIEWS = [
   { id: 'floor', label: 'Sala', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'tables' },
   { id: 'reservations', label: 'Prenotazioni', roles: ['admin', 'manager', 'cashier', 'waiter'], module: 'bookings' },
@@ -7,12 +9,15 @@ const VIEWS = [
   { id: 'kitchen', label: 'Cucina', roles: ['admin', 'kitchen'], module: 'kds' },
   { id: 'catalog', label: 'Carta', roles: ['admin'] },
   { id: 'stats', label: 'Statistiche', roles: ['admin', 'manager'], module: 'stats' },
-  { id: 'settings', label: 'Impostazioni', roles: ['admin', 'manager', 'cashier', 'waiter', 'kitchen'] },
+  { id: 'settings', label: 'Impostazioni', roles: ['admin', 'manager', 'cashier', 'waiter', 'kitchen'], needsSections: true },
 ];
 
 // `modules` mancante = utente salvato in cache offline: non si nasconde nulla finché il server non risponde.
+// Le Impostazioni si vedono solo se per quel ruolo c'è almeno una sezione (la cucina, per esempio, non ne ha).
 export const visibleViews = (role, modules) =>
-  VIEWS.filter(v => v.roles.includes(role) && (!v.module || !modules || modules.includes(v.module)));
+  VIEWS.filter(v => v.roles.includes(role)
+    && (!v.module || !modules || modules.includes(v.module))
+    && (!v.needsSections || !modules || settingsSections({ role, modules }).length > 0));
 
 export const canViewSmartEats = (role, viewId, modules) => visibleViews(role, modules).some(v => v.id === viewId);
 

@@ -7,7 +7,7 @@ const VIEW_ROLES = {
   takeaway: ['admin', 'manager', 'cashier'],
   statistics: ['admin', 'manager'],
   config: ['admin'],
-  setup: ['admin', 'manager', 'cashier', 'kitchen'],
+  setup: ['admin', 'manager', 'cashier'],
 };
 
 // Pagine che dipendono da un modulo; le altre fanno parte del nucleo e ci sono sempre.

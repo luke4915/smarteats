@@ -8,17 +8,17 @@ test('ogni ruolo vede le sue pagine', () => {
   const all = ['kds', 'stats', 'tables'];
   assert.deepEqual(ids('admin', all), ['floor', 'kitchen', 'catalog', 'stats', 'settings']);
   assert.deepEqual(ids('admin', [...all, 'bookings']), ['floor', 'reservations', 'kitchen', 'catalog', 'stats', 'settings']);
-  assert.deepEqual(ids('waiter', [...all, 'bookings']), ['floor', 'reservations', 'settings']);
+  assert.deepEqual(ids('waiter', [...all, 'bookings']), ['floor', 'reservations', 'settings'], 'ha le notifiche del dispositivo');
   assert.deepEqual(ids('manager', all), ['floor', 'stats', 'settings']);
-  assert.deepEqual(ids('cashier', all), ['floor', 'settings']);
-  assert.deepEqual(ids('waiter', all), ['floor', 'settings']);
-  assert.deepEqual(ids('kitchen', all), ['kitchen', 'settings']);
+  assert.deepEqual(ids('cashier', all), ['floor'], 'senza prenotazioni né asporto non ha impostazioni');
+  assert.deepEqual(ids('waiter', all), ['floor']);
+  assert.deepEqual(ids('kitchen', all), ['kitchen'], 'la cucina non ha impostazioni');
 });
 
 test('i moduli spenti nascondono le pagine', () => {
   assert.deepEqual(ids('admin', ['tables']), ['floor', 'catalog', 'settings']);
   assert.equal(canViewSmartEats('kitchen', 'kitchen', ['stats']), false);
-  assert.equal(smartEatsHome('kitchen', ['stats']), 'settings', 'senza KDS la cucina ha solo il suo account');
+  assert.equal(smartEatsHome('kitchen', ['stats']), null, 'senza KDS la cucina non ha nessuna pagina');
 });
 
 test('senza elenco dei moduli (cache offline) non si nasconde nulla', () => {
