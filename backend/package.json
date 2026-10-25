@@ -1,9 +1,9 @@
 {
-  "name": "stand-manager-backend",
+  "name": "smarteats-backend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "API, WebSocket e stampa di Stand Manager",
+  "description": "API e WebSocket di SmartEats",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

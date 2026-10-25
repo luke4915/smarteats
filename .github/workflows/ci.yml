@@ -34,7 +34,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: standmanager_test
+          POSTGRES_DB: smarteats_test
         ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U postgres"
@@ -59,24 +59,24 @@ jobs:
       - name: Prepara il database di prova
         run: |
           psql -h localhost -U postgres -c "CREATE ROLE colettas SUPERUSER LOGIN"
-          psql -h localhost -U postgres -c "CREATE ROLE standmanager_app LOGIN PASSWORD 'ci-password'"
-          psql -h localhost -U postgres -c "CREATE ROLE standmanager_master LOGIN PASSWORD 'ci-master-password'"
-          psql -h localhost -U postgres -d standmanager_test -q -f schema.sql
+          psql -h localhost -U postgres -c "CREATE ROLE smarteats_app LOGIN PASSWORD 'ci-password'"
+          psql -h localhost -U postgres -c "CREATE ROLE smarteats_master LOGIN PASSWORD 'ci-master-password'"
+          psql -h localhost -U postgres -d smarteats_test -q -f schema.sql
           cat > .env.test <<'EOF'
-          PG_USER=standmanager_app
+          PG_USER=smarteats_app
           PG_PASSWORD=ci-password
           PG_HOST=localhost
           PG_PORT=5432
-          PG_DATABASE=standmanager_test
-          PG_MASTER_USER=standmanager_master
+          PG_DATABASE=smarteats_test
+          PG_MASTER_USER=smarteats_master
           PG_MASTER_PASSWORD=ci-master-password
-          TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/standmanager_test
-          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/standmanager_test
+          TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/smarteats_test
+          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/smarteats_test
           JWT_SECRET=una-stringa-di-prova-lunga-almeno-32-caratteri
           LOG_LEVEL=silent
           EOF
-          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/standmanager_test \
-          PG_USER=standmanager_app PG_PASSWORD=ci-password PG_HOST=localhost PG_DATABASE=standmanager_test \
+          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/smarteats_test \
+          PG_USER=smarteats_app PG_PASSWORD=ci-password PG_HOST=localhost PG_DATABASE=smarteats_test \
             npm run db:baseline
 
       - run: npm run test:integration
@@ -91,7 +91,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: standmanager_test
+          POSTGRES_DB: smarteats_test
         ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U postgres"
@@ -113,24 +113,24 @@ jobs:
         working-directory: backend
         run: |
           psql -h localhost -U postgres -c "CREATE ROLE colettas SUPERUSER LOGIN"
-          psql -h localhost -U postgres -c "CREATE ROLE standmanager_app LOGIN PASSWORD 'ci-password'"
-          psql -h localhost -U postgres -c "CREATE ROLE standmanager_master LOGIN PASSWORD 'ci-master-password'"
-          psql -h localhost -U postgres -d standmanager_test -q -f schema.sql
+          psql -h localhost -U postgres -c "CREATE ROLE smarteats_app LOGIN PASSWORD 'ci-password'"
+          psql -h localhost -U postgres -c "CREATE ROLE smarteats_master LOGIN PASSWORD 'ci-master-password'"
+          psql -h localhost -U postgres -d smarteats_test -q -f schema.sql
           cat > .env.test <<'EOT'
-          PG_USER=standmanager_app
+          PG_USER=smarteats_app
           PG_PASSWORD=ci-password
           PG_HOST=localhost
           PG_PORT=5432
-          PG_DATABASE=standmanager_test
-          PG_MASTER_USER=standmanager_master
+          PG_DATABASE=smarteats_test
+          PG_MASTER_USER=smarteats_master
           PG_MASTER_PASSWORD=ci-master-password
-          TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/standmanager_test
-          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/standmanager_test
+          TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/smarteats_test
+          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/smarteats_test
           JWT_SECRET=una-stringa-di-prova-lunga-almeno-32-caratteri
           LOG_LEVEL=silent
           EOT
-          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/standmanager_test \
-          PG_USER=standmanager_app PG_PASSWORD=ci-password PG_HOST=localhost PG_DATABASE=standmanager_test \
+          MIGRATION_DATABASE_URL=postgres://postgres:postgres@localhost:5432/smarteats_test \
+          PG_USER=smarteats_app PG_PASSWORD=ci-password PG_HOST=localhost PG_DATABASE=smarteats_test \
             npm run db:baseline
       - name: Browser
         working-directory: frontend

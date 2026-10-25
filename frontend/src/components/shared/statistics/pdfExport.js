@@ -9,7 +9,7 @@ export function exportStatsPdf(stats, sessions, selectedSessionIds, terms) {
     : (terms?.all ?? 'Tutte le sessioni');
 
   doc.setFontSize(16);
-  doc.text('Report Statistiche — Stand Manager', 14, 16);
+  doc.text('Report Statistiche — SmartEats', 14, 16);
   doc.setFontSize(10);
   doc.text(`Ambito: ${scopeLabel}`, 14, 23);
   doc.text(`Generato il: ${new Date().toLocaleString('it-IT')}`, 14, 28);

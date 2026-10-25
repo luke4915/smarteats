@@ -63,7 +63,7 @@ const FestivalApp = () => {
 
   return (
     <div className="se-app app-safe flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
-      <SideNav views={views} icons={ICONS} brand="Stand Manager" badges={{ takeaway: data.inbox?.items.length ?? 0 }} />
+      <SideNav views={views} icons={ICONS} brand="SmartEats Stand" badges={{ takeaway: data.inbox?.items.length ?? 0 }} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <AppHeader user={user} serviceControl={serviceControl} status={<SyncStatus connected={data.connected} />}

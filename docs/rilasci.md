@@ -56,13 +56,13 @@ ramo ──PR──▶ main ──versione + changelog──▶ tag vX.Y.Z ─�
 
 ```
 ssh -i ~/oracle_smarteats.key ubuntu@<ip riservato>
-cd stand-manager/deploy
+cd smarteats/deploy
 docker compose pull app && docker compose up -d app
 docker compose logs -f app        # deve finire con «in ascolto»; Ctrl+C per uscire
 ```
 
 Le migrazioni mancanti girano da sole all'avvio. Per fissare una versione precisa invece di `latest`, in `.env`:
-`APP_IMAGE=ghcr.io/luke4915/stand-manager:0.3.0`.
+`APP_IMAGE=ghcr.io/luke4915/smarteats:0.3.0`.
 
 **Dopo**
 
@@ -100,7 +100,7 @@ rilascio in cui nasce, così il codice vecchio gira ancora sul database nuovo e 
 
 | Cosa è andato storto | Cosa si fa |
 |---|---|
-| L'app nuova ha un difetto grave | In `.env` `APP_IMAGE=ghcr.io/luke4915/stand-manager:<versione precedente>`, poi `docker compose up -d app` (un minuto). I dispositivi tornano alla versione vecchia come per un aggiornamento. |
+| L'app nuova ha un difetto grave | In `.env` `APP_IMAGE=ghcr.io/luke4915/smarteats:<versione precedente>`, poi `docker compose up -d app` (un minuto). I dispositivi tornano alla versione vecchia come per un aggiornamento. |
 | Il difetto va corretto | Ramo `fix/…`, PR, verde, nuova versione `CORREZIONE` col flusso normale. |
 | Una migrazione ha rovinato i dati | Ripristino del backup scattato prima (`docs/deployment.md`, «Backup e ripristino»). È l'ultima risorsa: per questo il backup precede sempre una migrazione. |
 
@@ -109,3 +109,40 @@ rilascio in cui nasce, così il codice vecchio gira ancora sul database nuovo e 
 - [ ] Backup copiati fuori dal server e prova di ripristino (rimandati finché ci sono solo prove).
 - [ ] Monitor gratuito sull'indirizzo `/api/health/ready` (idem).
 - [ ] Mostrare la versione nell'app e in `/api/health`, per sapere cosa gira dove.
+
+## 9. Una volta sola: il passaggio ai nuovi nomi (database e ruoli)
+
+Dal rilascio in cui il prodotto diventa «SmartEats» cambiano anche i nomi tecnici: database `smarteats`, ruoli `smarteats_app` e
+`smarteats_master`, immagine `ghcr.io/luke4915/smarteats`. Un database già esistente si **rinomina sul posto**: i dati restano, i
+permessi seguono i ruoli (PostgreSQL li lega all'identità, non al nome). Va fatto prima di avviare il codice nuovo.
+
+**Sul server** (qualche minuto di fermo):
+
+```
+# 1. Su GitHub: Settings → General → Repository name → «smarteats» (i vecchi indirizzi git continuano a funzionare)
+# 2. Sul server
+cd ~/stand-manager/deploy
+docker compose stop app backup
+docker compose exec db psql -U postgres -d postgres -c "ALTER DATABASE standmanager RENAME TO smarteats"
+docker compose exec db psql -U postgres -d smarteats -c "ALTER ROLE standmanager_app RENAME TO smarteats_app" -c "ALTER ROLE standmanager_master RENAME TO smarteats_master"
+git pull                                   # porta il nuovo docker-compose.yml
+nano .env                                  # APP_IMAGE=ghcr.io/luke4915/smarteats:<versione>
+cd ~ && mv stand-manager smarteats && cd smarteats/deploy
+docker compose pull && docker compose up -d
+```
+
+Le password restano quelle del `.env`. Si controlla come dopo ogni aggiornamento (sezione 4). Se la versione col nuovo nome non è
+ancora stata pubblicata, prima si crea il tag: l'immagine nuova nasce solo dopo la rinomina del repository.
+
+**Sul tuo computer** (fermi frontend e backend, poi):
+
+```
+psql -d postgres -c "ALTER DATABASE stand_manager RENAME TO smarteats"
+psql -d postgres -c "ALTER DATABASE standmanager_test RENAME TO smarteats_test"
+psql -d postgres -c "ALTER ROLE standmanager_app RENAME TO smarteats_app"
+psql -d postgres -c "ALTER ROLE standmanager_master RENAME TO smarteats_master"
+```
+
+e nei file `backend/.env` e `backend/.env.test` si aggiornano `PG_USER`, `PG_MASTER_USER`, `PG_DATABASE`, `TEST_DATABASE_URL` e
+`MIGRATION_DATABASE_URL` con i nomi nuovi. Le chiavi che il browser tiene sui dispositivi (`smarteats:…`) ripartono vuote: ogni
+cassa si riabbina una volta.

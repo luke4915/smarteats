@@ -1,9 +1,9 @@
 {
-  "name": "stand-manager-frontend",
+  "name": "smarteats-frontend",
   "private": true,
   "version": "0.2.0",
   "type": "module",
-  "description": "Interfaccia web (PWA) di Stand Manager: cassa, cucina, KDS, menu e amministrazione",
+  "description": "Interfaccia web (PWA) di SmartEats: cassa, cucina, KDS, menu e amministrazione",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

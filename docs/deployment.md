@@ -1,6 +1,6 @@
 # Messa online e operatività
 
-Guida per portare Stand Manager in produzione e tenerlo in vita. Le regole di sviluppo stanno in `CLAUDE.md`.
+Guida per portare SmartEats in produzione e tenerlo in vita. Le regole di sviluppo stanno in `CLAUDE.md`.
 
 ## Prima di aprire ai clienti
 
@@ -32,23 +32,23 @@ Le migrazioni non si modificano una volta applicate: per correggerne una se ne s
 ## Backup e ripristino
 
 ```bash
-BACKUP_DATABASE_URL=postgres://utente_privilegiato:password@host/standmanager \
-  backend/scripts/backup.sh /var/backups/standmanager 14
+BACKUP_DATABASE_URL=postgres://utente_privilegiato:password@host/smarteats \
+  backend/scripts/backup.sh /var/backups/smarteats 14
 ```
 
 Crea un dump compresso, ne verifica la leggibilità e cancella quelli più vecchi di 14 giorni. Esempio di pianificazione (`crontab -e`):
 
 ```
-30 3 * * *  BACKUP_DATABASE_URL=... /opt/standmanager/backend/scripts/backup.sh /var/backups/standmanager 14
+30 3 * * *  BACKUP_DATABASE_URL=... /opt/smarteats/backend/scripts/backup.sh /var/backups/smarteats 14
 ```
 
 - Il dump contiene i dati di **tutti** i clienti: cartella con permessi stretti e copia fuori dal server (altro disco, storage remoto). Un backup solo sulla stessa macchina non protegge da un guasto della macchina.
 - **Prova il ripristino** (almeno ogni tanto, e subito la prima volta):
 
 ```bash
-createdb standmanager_ripristino
-pg_restore --no-owner -d standmanager_ripristino /var/backups/standmanager/standmanager-AAAAMMGG-HHMMSS.dump
-psql -d standmanager_ripristino -c "SELECT count(*) FROM orders"
+createdb smarteats_ripristino
+pg_restore --no-owner -d smarteats_ripristino /var/backups/smarteats/smarteats-AAAAMMGG-HHMMSS.dump
+psql -d smarteats_ripristino -c "SELECT count(*) FROM orders"
 ```
 
 Dopo un ripristino su un database nuovo vanno ricreati i ruoli e i permessi dell'utente applicativo (vedi `README.md` e `backend/migrations/022_restrict_app_privileges.sql`).
@@ -57,22 +57,22 @@ Dopo un ripristino su un database nuovo vanno ricreati i ruoli e i permessi dell
 
 - In produzione l'app scrive JSON su stdout (pino). Una riga per richiesta API: metodo, percorso, stato, durata in ms, utente e tenant. Mai cookie, intestazioni o corpo delle richieste.
 - Livelli: 5xx = `error`, 4xx e richieste oltre 1 s = `warn`, il resto `info`. `LOG_LEVEL` regola la verbosità.
-- Con systemd i log sono in `journalctl -u standmanager`; con PM2 in `pm2 logs`. Per tenerli oltre qualche giorno e cercarci dentro serve un raccoglitore (Loki, Papertrail, CloudWatch…): da decidere con l'hosting scelto.
+- Con systemd i log sono in `journalctl -u smarteats`; con PM2 in `pm2 logs`. Per tenerli oltre qualche giorno e cercarci dentro serve un raccoglitore (Loki, Papertrail, CloudWatch…): da decidere con l'hosting scelto.
 - Conservazione di `audit_logs` nel database: non c'è ancora una scadenza (vedi `docs/backlog.md`).
 
 ## Esempio systemd
 
 ```ini
 [Unit]
-Description=Stand Manager
+Description=SmartEats
 After=network.target postgresql.service
 
 [Service]
-WorkingDirectory=/opt/standmanager/backend
+WorkingDirectory=/opt/smarteats/backend
 ExecStart=/usr/bin/node server.js
 Environment=NODE_ENV=production
-EnvironmentFile=/opt/standmanager/backend/.env
-User=standmanager
+EnvironmentFile=/opt/smarteats/backend/.env
+User=smarteats
 Restart=on-failure
 RestartSec=3
 # Il server esce con errore su eccezioni non gestite: systemd lo riavvia
@@ -107,12 +107,12 @@ Costo zero per cominciare, adatto a pochi clienti. Tutto sta in `deploy/` (`dock
    ```
 5. Installa Docker: `curl -fsSL https://get.docker.com | sudo sh && sudo usermod -aG docker $USER` (riconnettiti).
 6. Su DuckDNS metti l'IP riservato nel campo «current ip» del tuo nome.
-7. Nota: Oracle può **recuperare le istanze Always Free rimaste inattive** per giorni. Un monitor che interroga l'app (punto 6) basta a tenerla viva.
+7. Nota: Oracle può **recuperare le istanze Always Free rimaste inattive** per giorni. Un monitor che la interroga (punto 6) **non** basta a tenerla viva: conta l'uso reale di CPU e rete.
 
 ### 3. Prima installazione
-1. Pubblica l'immagine: su GitHub crea il tag `git tag v0.1.0 && git push origin v0.1.0` (o lancia a mano il workflow **Rilascio**). Poi in GitHub → Packages rendi pubblico il pacchetto `stand-manager` (oppure sul server fai `docker login ghcr.io`).
-2. Sul server: `git clone https://github.com/luke4915/stand-manager.git && cd stand-manager/deploy`.
-3. `cp .env.example .env && chmod 600 .env`, poi compila: dominio, token DuckDNS, password diverse e segreti casuali (`openssl rand -hex 48`). L'hash della password master (si calcola con l'immagine dell'app stessa, che ha già `bcrypt`): `read -s -p "Password master: " PW; echo; docker run --rm -e PW="$PW" --entrypoint node ghcr.io/luke4915/stand-manager:latest -e "require('bcrypt').hash(process.env.PW,12).then(h=>console.log(h))" | sed 's/\$/$$/g'` (il `sed` raddoppia ogni `$`, come vuole il `.env` di compose: copia nel `.env` l'intera riga stampata, che comincia con `$$2b$$12$$`).
+1. Pubblica l'immagine: su GitHub crea il tag `git tag v0.1.0 && git push origin v0.1.0` (o lancia a mano il workflow **Rilascio**). Poi in GitHub → Packages rendi pubblico il pacchetto `smarteats` (oppure sul server fai `docker login ghcr.io`).
+2. Sul server: `git clone https://github.com/luke4915/smarteats.git && cd smarteats/deploy`.
+3. `cp .env.example .env && chmod 600 .env`, poi compila: dominio, token DuckDNS, password diverse e segreti casuali (`openssl rand -hex 48`). L'hash della password master (si calcola con l'immagine dell'app stessa, che ha già `bcrypt`): `read -s -p "Password master: " PW; echo; docker run --rm -e PW="$PW" --entrypoint node ghcr.io/luke4915/smarteats:latest -e "require('bcrypt').hash(process.env.PW,12).then(h=>console.log(h))" | sed 's/\$/$$/g'` (il `sed` raddoppia ogni `$`, come vuole il `.env` di compose: copia nel `.env` l'intera riga stampata, che comincia con `$$2b$$12$$`).
 4. `docker compose up -d`. Al primo avvio l'app crea ruoli e schema (`scripts/init-db.js`), applica le migrazioni e parte; Traefik ottiene il certificato wildcard (1-2 minuti: `docker compose logs -f traefik`).
 5. Apri `https://<nome>.duckdns.org/master`, entra con la password master e crea il primo locale.
 
@@ -121,7 +121,7 @@ Il processo completo (numero di versione, changelog, etichetta, aggiornamento de
 
 ### 5. Backup e ripristino
 - Il servizio `backup` fa un dump ogni notte alle 03:00 in `deploy/backups/` (14 giorni). **Sullo stesso disco non basta**: copiali fuori, es. `rclone copy deploy/backups r2:nome-bucket` con un cron (Cloudflare R2 o Backblaze B2 hanno un piano gratuito).
-- Ripristino provato: `docker compose exec -T db pg_restore -U postgres -d standmanager --clean --if-exists < backups/standmanager-AAAAMMGG-HHMMSS.dump`. Fallo una volta su un database di prova prima di averne bisogno.
+- Ripristino provato: `docker compose exec -T db pg_restore -U postgres -d smarteats --clean --if-exists < backups/smarteats-AAAAMMGG-HHMMSS.dump`. Fallo una volta su un database di prova prima di averne bisogno.
 
 ### 6. Monitoraggio
-Crea un monitor gratuito su https://uptimerobot.com che interroga `https://<nome>.duckdns.org/api/health/ready` ogni 5 minuti: ti avvisa se l'app o il database sono giù e tiene attiva la macchina.
+Crea un monitor gratuito su https://uptimerobot.com che interroga `https://<nome>.duckdns.org/api/health/ready` ogni 5 minuti: ti avvisa se l'app o il database sono giù. Non impedisce a Oracle di ritirare una macchina inattiva (conta l'uso reale di CPU e rete). Promemoria dei comandi: `docs/promemoria-operativo.md`.

@@ -35,6 +35,6 @@ test('schema.sql preparato per un server nuovo: niente proprietario locale né c
   assert.doesNotMatch(sql, /OWNER TO/);
   assert.doesNotMatch(sql, /FOR ROLE/);
   assert.doesNotMatch(sql, /transaction_timeout/);
-  assert.match(sql, /ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT,INSERT,DELETE,UPDATE ON TABLES TO standmanager_app;/);
+  assert.match(sql, /ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT,INSERT,DELETE,UPDATE ON TABLES TO smarteats_app;/);
   assert.match(sql, /CREATE TABLE public\.tenants/);
 });

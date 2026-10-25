@@ -45,16 +45,8 @@ const Login = ({ onLogin }) => {
   return (
     <CenteredScreen>
 
-      {/* LOGO */}
-      <img
-        src="/logo_StandManager_ESC_POS.png"
-        alt="Logo"
-        className="w-32 sm:w-40 mb-4 sm:mb-6 drop-shadow-md border-2 border-black bg-white p-2"
-      />
-
-      <h1 className="text-2xl font-semibold mb-6 text-[var(--text-main)]">
-        Login Stand Manager
-      </h1>
+      <div className="w-14 h-14 mb-4 bg-[var(--accent)] rounded-xl flex items-center justify-center text-white font-semibold text-3xl select-none" aria-hidden="true">S</div>
+      <h1 className="text-2xl font-semibold mb-6 text-[var(--text-main)]">SmartEats</h1>
 
       <div className="flex flex-col gap-4 w-full max-w-80">
         <input

@@ -3,8 +3,8 @@ import { getDriver } from './print.js';
 
 // Coda di stampa locale: ogni lavoro è l'XML di una stampante per un ordine. Resta in coda finché
 // la stampante non lo accetta (spenta, carta finita, rete assente): niente va perso in silenzio.
-const CHANGED_EVENT = 'standmanager:print-queue-changed';
-const ADDED_EVENT = 'standmanager:print-jobs-added';
+const CHANGED_EVENT = 'smarteats:print-queue-changed';
+const ADDED_EVENT = 'smarteats:print-jobs-added';
 const notify = (name = CHANGED_EVENT) => window.dispatchEvent(new Event(name));
 
 const subscribe = (name) => (handler) => {

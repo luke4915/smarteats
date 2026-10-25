@@ -24,7 +24,7 @@ step "Frontend: test della logica"
 ok "Frontend: logica a posto"
 
 step "Frontend: costruzione dell'app"
-(cd frontend && npm run build --silent > /tmp/stand-manager-build.log 2>&1) || { cat /tmp/stand-manager-build.log; exit 1; }
+(cd frontend && npm run build --silent > /tmp/smarteats-build.log 2>&1) || { cat /tmp/smarteats-build.log; exit 1; }
 ok "Build a posto"
 
 if [[ "${1:-}" == "--all" ]]; then
