@@ -99,7 +99,7 @@ Comandi:
 | backend | `npm run db:prepare` | database vuoto: crea ruoli e schema (`scripts/init-db.js`, no-op se già pronto), poi migra; lo usa il container |
 | radice | `./scripts/avvia.command` | avvia l'app come un programma (doppio clic dal Finder): costruisce il frontend se serve, parte in modalità produzione e apre il browser sul locale `demo` (o quello indicato: `./scripts/avvia.command altrolocale`). Serve PostgreSQL acceso |
 | radice | `./scripts/crea-app.sh` | crea l'app Mac «SmartEats» in `~/Applications` (icona da trascinare nel Dock): avvia il server in silenzio, apre il browser e con «Esci» dal Dock ferma tutto; log in `~/Library/Logs/SmartEats.log`. Si rilancia se si sposta il progetto o cambia Node |
-| radice | `./scripts/check.sh` (`--all`) | tutti i controlli in un comando: logica, lint, build; con `--all` anche test col database e nel browser. Da lanciare prima di ogni commit |
+| radice | `./scripts/check.sh` | controlli **mirati**: sempre logica, lint e build; i test col database e nel browser solo se toccano ciò che hai cambiato (`scripts/select-tests.mjs`). `--quick`: solo logica, lint e build. **`--all`: il ciclo completo**, da lanciare alla fine del lavoro. `CHECK_BASE=HEAD` limita la scelta a ciò che è cambiato dall'ultimo salvataggio |
 | radice | `node scripts/find-dead-code.mjs` | elenca file e export che nessuno usa |
 | frontend | `npm run lint` | ESLint — deve passare prima di ogni commit |
 | frontend | `npm test` | test (`node --test`) del motore di stampa in `src/print/`, anche contro la stampante simulata |
@@ -243,10 +243,10 @@ La stampa è **del client**: la cassa che batte l'ordine stampa direttamente sul
 1. **Prima di scrivere codice**, per feature non banali: leggi i file coinvolti e proponi un piano breve (migrazioni, endpoint, componenti, eventi WS). Aspetta conferma se tocca DB, auth o RLS.
 2. Modifiche piccole e focalizzate. Niente refactoring non richiesti mescolati alla feature: segnalali a parte.
 3. Riusa i pattern esistenti (vedi `routes/products.js` e il POST in `routes/orders.js` come riferimento).
-4. Dopo ogni modifica: `npm run lint` nel frontend e verifica che il backend parta. Se tocchi una migrazione, eseguila su un DB locale.
+4. Dopo ogni modifica: `./scripts/check.sh` (mirato: solo i test che attraversano ciò che hai toccato; chi aggiunge una cartella del frontend o un test nel browser aggiorna `E2E_RULES` in `scripts/select-tests.mjs`) e verifica che il backend parta. Se tocchi una migrazione, eseguila su un DB locale. **Il ciclo completo (`--all`) si fa una volta sola, alla fine del lavoro**, prima di chiedere l'unione: non a ogni piccola modifica.
 5. Test nel browser: `frontend/e2e/*.spec.js`, uno per giro completo (non una scheda per schermata). Dopo una modifica all'interfaccia lancia `npm run e2e` e **guarda gli screenshot**: i test sulla logica non vedono layout, contrasti o testi sbagliati. In CI è il job `e2e` (non obbligatorio per l'unione).
 5. Test: unitari in `backend/tests/` (`npm test`), di integrazione in `backend/tests/integration/` (`npm run test:integration`). Quelli di integrazione avviano l'app in memoria su un database locale vero (con RLS), creano tenant di prova con nomi casuali e li cancellano alla fine. Quando aggiungi logica critica (prezzi, stock, RLS) aggiungi test mirati: la logica pura va in funzioni separate con test unitari, i flussi tra API e database nei test di integrazione. Il frontend ha test solo per la logica pura (`frontend/src/**/*.test.js`, moduli senza dipendenze dal browser).
-6. Commit in italiano, all'imperativo, con un ambito: `feat(orders): …`, `fix(rls): …`, `chore: …`.
+6. Commit in italiano, all'imperativo, con un ambito: `feat(orders): …`, `fix(rls): …`, `chore: …`. Ogni modifica visibile a chi usa il locale porta la sua riga in `changelog.js` (vedi §2). **Unire una PR richiede sempre il via libera esplicito dell'utente:** si chiede (con il link della PR) e l'unione la fa lui con il commento `/merge` (`.github/workflows/merge-comando.yml`: unisce solo se i controlli sono verdi e il commento è del proprietario). Mai unire, né aggirare i controlli, di propria iniziativa.
 7. Se una richiesta contraddice queste regole (soprattutto §3 e §4), fermati e chiedi.
 8. A fine feature, aggiorna questo file se è nata una convenzione nuova.
 

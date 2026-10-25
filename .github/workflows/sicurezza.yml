@@ -1,0 +1,23 @@
+name: Sicurezza delle dipendenze
+
+# `npm audit` controlla gli avvisi di sicurezza sulle librerie. Gli avvisi nuovi escono per conto loro, anche senza che il codice
+# cambi: per questo non blocca ogni PR. Gira quando cambiano le librerie, una volta a settimana e a richiesta.
+on:
+  pull_request:
+    paths: ['frontend/package-lock.json', 'backend/package-lock.json']
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm audit --audit-level=high
+        working-directory: frontend
+      - run: npm audit --audit-level=high --omit=dev
+        working-directory: backend

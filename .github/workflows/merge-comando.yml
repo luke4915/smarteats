@@ -1,0 +1,50 @@
+name: Unione con un commento
+
+# Scrivendo «/merge» come commento in una PR, la PR si unisce a `main` se i controlli sono tutti verdi. Il commento è il
+# tuo via libera: lo conta solo se lo scrive il proprietario del repository. Altrimenti la PR resta com'è e il motivo
+# compare in un commento. L'unione è un «Merge pull request», come quando si preme il pulsante, e il ramo si cancella.
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  unisci:
+    if: >-
+      github.event.issue.pull_request
+      && startsWith(github.event.comment.body, '/merge')
+      && github.event.comment.user.login == github.repository_owner
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.issue.number }}
+    steps:
+      - name: Controlla e unisci
+        run: |
+          set -euo pipefail
+          say() { gh pr comment "$PR" -R "$REPO" --body "$1"; }
+
+          info=$(gh pr view "$PR" -R "$REPO" --json state,isDraft,headRefOid,mergeable,baseRefName)
+          state=$(jq -r .state <<<"$info"); draft=$(jq -r .isDraft <<<"$info"); sha=$(jq -r .headRefOid <<<"$info")
+          mergeable=$(jq -r .mergeable <<<"$info"); base=$(jq -r .baseRefName <<<"$info")
+
+          [ "$state" = "OPEN" ] || { say "Non unisco: la PR non è aperta."; exit 0; }
+          [ "$draft" = "false" ] || { say "Non unisco: la PR è una bozza."; exit 0; }
+          [ "$base" = "main" ] || { say "Non unisco: la PR non punta a main (punta a \`$base\`)."; exit 0; }
+          [ "$mergeable" = "MERGEABLE" ] || { say "Non unisco: ci sono conflitti con main (stato: $mergeable). Vanno risolti prima."; exit 0; }
+
+          runs=$(gh api "repos/$REPO/commits/$sha/check-runs?per_page=100" --jq '[.check_runs[] | {name, status, conclusion}]')
+          total=$(jq length <<<"$runs")
+          waiting=$(jq '[.[] | select(.status != "completed")] | length' <<<"$runs")
+          failed=$(jq -r '[.[] | select(.status == "completed" and (.conclusion | IN("success","skipped","neutral") | not)) | .name] | join(", ")' <<<"$runs")
+          [ "$total" -gt 0 ] || { say "Non unisco: non risulta nessun controllo su questo commit."; exit 0; }
+          [ "$waiting" -eq 0 ] || { say "Non unisco: $waiting controlli sono ancora in corso. Riscrivi \`/merge\` quando finiscono."; exit 0; }
+          [ -z "$failed" ] || { say "Non unisco: controlli falliti: $failed."; exit 0; }
+
+          gh pr merge "$PR" -R "$REPO" --merge --delete-branch
+          say "Unita a main (controlli verdi: $total)."

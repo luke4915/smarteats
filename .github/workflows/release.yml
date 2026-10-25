@@ -12,7 +12,12 @@ permissions:
   packages: write
 
 jobs:
+  # Il ciclo completo dei test: un rilascio parte solo se tutto è verde (la PR ha provato solo ciò che aveva toccato).
+  controlli:
+    uses: ./.github/workflows/ci.yml
+
   image:
+    needs: controlli
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
