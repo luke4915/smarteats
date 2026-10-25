@@ -117,9 +117,9 @@ Una sola migrazione (056) e il codice in fasi, ognuna una PR con i suoi test mir
 
 | Fase | Contenuto |
 |---|---|
-| 1 | Migrazione, modulo `inventory` e modalità (master), porzioni con azzeramento a ogni servizio, opzioni con `id` stabili |
-| 2 | Ingredienti, preparazioni e ricette; scarico alle vendite e storni; piatti esauriti; «esaurito» dalla cucina |
-| 3 | Fornitori, carichi di merce con foto o scansione della bolla, costo medio, IVA |
+| 1 | **Realizzata.** Migrazione, modulo `inventory` e modalità (master), porzioni con azzeramento a ogni servizio, opzioni con `id` stabili |
+| 2 | **Realizzata.** Ingredienti, preparazioni e ricette; scarico alle vendite e storni; piatti esauriti; «esaurito» dalla cucina |
+| 3 | **Realizzata.** Fornitori, carichi di merce con foto o scansione della bolla, costo medio, IVA |
 | 4 | Controlli di magazzino, scarti e rettifiche, scarico semplificato; report: food cost, margini, teorico contro reale, valore del magazzino |
 | 5 | Scorta minima e «Da riordinare», giorni di scorta, spesa per fornitore, andamento dei prezzi |
 

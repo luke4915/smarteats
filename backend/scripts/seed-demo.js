@@ -32,6 +32,7 @@ const { createApp } = await import('../app.js');
 const { createWebSocketHub } = await import('../ws.js');
 const { pool, masterPool } = await import('../db.js');
 const { BUSINESS_TYPES } = await import('../utils/modules.js');
+const { seedInventory, finishInventoryDemo } = await import('./seed-demo-inventory.js');
 
 const SLUG = 'demo';
 const NAME = 'Trattoria SmartEats';
@@ -42,7 +43,7 @@ const RESET = process.argv.includes('--reset');
 
 const admin = new pg.Pool({ connectionString: process.env.MIGRATION_DATABASE_URL, max: 2 });
 
-const TENANT_TABLES = ['whatsapp_messages', 'app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
+const TENANT_TABLES = ['stock_level_lines', 'stock_levels', 'ingredient_movements', 'modifier_recipe_lines', 'recipe_lines', 'preparations', 'stored_documents', 'goods_receipt_lines', 'goods_receipts', 'supplier_ingredients', 'suppliers', 'ingredients', 'whatsapp_messages', 'app_feedback', 'takeaway_orders', 'takeaway_hours', 'reservation_tables', 'reservations', 'booking_closures', 'booking_shifts', 'audit_logs', 'payment_items', 'order_items', 'orders', 'payments', 'checks', 'dining_tables', 'room_elements', 'rooms', 'devices', 'product_modifier_groups', 'modifiers', 'modifier_groups', 'products', 'courses', 'sessions', 'print_settings', 'copy_types', 'settings', 'users'];
 
 // ── Generatore pseudo-casuale con seme fisso: il locale demo è sempre uguale ──
 let seed = 20261016;
@@ -104,9 +105,9 @@ async function recreateTenant() {
     await admin.query('DELETE FROM tenants WHERE id = $1', [old.id]);
     console.log('Locale demo precedente eliminato.');
   }
-  const modules = [...BUSINESS_TYPES.restaurant.modules, 'bookings', 'takeaway', 'whatsapp'];
+  const modules = [...BUSINESS_TYPES.restaurant.modules, 'bookings', 'takeaway', 'whatsapp', 'inventory'];
   const { rows: [tenant] } = await admin.query(
-    `INSERT INTO tenants (slug, name, plan, business_type, modules) VALUES ($1, $2, 'demo', 'restaurant', $3) RETURNING id`, [SLUG, NAME, modules]);
+    `INSERT INTO tenants (slug, name, plan, business_type, modules, inventory_mode, inventory_depletion) VALUES ($1, $2, 'demo', 'restaurant', $3, 'warehouse', 'recipes') RETURNING id`, [SLUG, NAME, modules]);
   const hash = await bcrypt.hash(PASSWORD, 12);
   for (const [username, role] of [['demo', 'admin'], ['marta', 'manager'], ['luca', 'cashier'], ['giulia', 'waiter'], ['paolo', 'waiter'], ['chef', 'kitchen']])
     await admin.query('INSERT INTO users (username, password_hash, role, tenant_id, must_change_password) VALUES ($1, $2, $3, $4, false)', [username, hash, role, tenant.id]);
@@ -320,6 +321,7 @@ async function backdate(sessionId, checkIds, dayOffset, startHourUtc = 16) {
       const ready = new Date(fired.getTime() + between(7, 19) * 60000);
       await admin.query(`UPDATE orders SET created_at = $1, fired_at = $1, completed_at = $2, status = 'completed' WHERE id = $3`, [fired, ready, o.id]);
       await admin.query(`UPDATE order_items SET prep_status = 'ready', ready_at = $1 WHERE order_id = $2`, [ready, o.id]);
+      await admin.query('UPDATE ingredient_movements SET created_at = $1 WHERE order_id = $2', [fired, o.id]);
     }
     i += 1;
   }
@@ -476,6 +478,7 @@ async function backdateToday(ids) {
       const ready = new Date(fired.getTime() + between(8, 17) * 60000);
       await admin.query(`UPDATE orders SET created_at = $1, fired_at = $1, completed_at = $2, status = 'completed' WHERE id = $3`, [fired, ready, o.id]);
       await admin.query(`UPDATE order_items SET prep_status = 'ready', ready_at = $1 WHERE order_id = $2`, [ready, o.id]);
+      await admin.query('UPDATE ingredient_movements SET created_at = $1 WHERE order_id = $2', [fired, o.id]);
     }
     i += 1;
   }
@@ -549,6 +552,9 @@ async function main() {
     ctx.cooking = Object.fromEntries(groups.find(g => g.name === 'Cottura').options.map(o => [o.name, o.id]));
     ctx.extras = Object.fromEntries(groups.find(g => g.name === 'Aggiunte').options.map(o => [o.name, o.id]));
 
+    console.log('Magazzino: ingredienti, fornitori, carichi e ricette...');
+    const { ingredientId } = await seedInventory({ api, admin, tenantId, products: ctx.products, dayString });
+
     console.log('Locale configurato. Creo le serate passate...');
     await pastService(api, ctx, -9, `Servizio ${dayString(-9).split('-').reverse().join('/')}`, 13);
     await pastService(api, ctx, -2, `Servizio ${dayString(-2).split('-').reverse().join('/')}`, 16);
@@ -557,9 +563,12 @@ async function main() {
     await liveService(api, kitchen, ctx);
     await takeaway(api, kitchen, ctx);
 
-    // Disponibilità limitata su due dolci, per mostrare lo stock
-    for (const name of ['Tiramisù', 'Panna cotta ai frutti di bosco'])
-      await api.patch(`/products/${ctx.products[name]}/stock`, { stock_enabled: true, stock: 12 });
+    // Porzioni: due dolci e la tagliata ripartono da un numero a ogni servizio (si vede nella Carta e in cucina)
+    for (const [name, start] of [['Tiramisù', 12], ['Panna cotta ai frutti di bosco', 8], ['Tagliata di manzo', 20]])
+      await admin.query(
+        `UPDATE products SET portions_reset_rule = 'restart_each_service', portions_start = $2, stock = $2, stock_enabled = true WHERE id = $1`, [ctx.products[name], start]);
+
+    await finishInventoryDemo({ admin, tenantId, ingredientId });
   } finally {
     hub.close();
     server.close();

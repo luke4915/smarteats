@@ -7,8 +7,10 @@ import IngredientsPanel from './IngredientsPanel';
 import PreparationsPanel from './PreparationsPanel';
 import RecipesPanel from './RecipesPanel';
 import OptionRecipesPanel from './OptionRecipesPanel';
+import SuppliersPanel from './SuppliersPanel';
+import ReceiptsPanel from './ReceiptsPanel';
 
-// Il magazzino (modalità «magazzino» scelta dal master): la dispensa, le preparazioni e le ricette dei piatti. Lo usano
+// Il magazzino (modalità «magazzino» scelta dal master): la dispensa, i carichi di merce, i fornitori, le preparazioni e le ricette. Lo usano
 // SmartEats Restaurant e SmartEats Stand. Ogni scheda ha il suo file: qui si compone la pagina e si tengono i dati.
 const InventoryPage = () => {
   const { user } = useAuth();
@@ -18,18 +20,22 @@ const InventoryPage = () => {
   const hasOptions = !!user.modules?.includes('tables');
   const tabs = [
     { id: 'ingredients', label: 'Ingredienti' },
-    { id: 'preparations', label: 'Preparazioni' },
+    { id: 'receipts', label: 'Carichi' },
+    { id: 'suppliers', label: 'Fornitori' },
     { id: 'recipes', label: 'Ricette' },
+    { id: 'preparations', label: 'Preparazioni' },
     ...(hasOptions ? [{ id: 'options', label: 'Opzioni' }] : []),
   ];
 
   return (
     <PageBody>
-      <PageHeader title="Magazzino" subtitle="Ingredienti, preparazioni e ricette: la dispensa si scala a ogni vendita." />
+      <PageHeader title="Magazzino" subtitle="Dispensa, carichi di merce, fornitori e ricette: la dispensa si scala a ogni vendita." />
       <Segmented scroll label="Sezioni del magazzino" className="w-fit max-w-full" value={tab} onChange={setTab} options={tabs} />
       {!data ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
         <>
           {tab === 'ingredients' && <IngredientsPanel ingredients={data.ingredients} showCosts onChanged={reload} />}
+          {tab === 'receipts' && <ReceiptsPanel suppliers={data.suppliers} ingredients={data.ingredients} onChanged={reload} />}
+          {tab === 'suppliers' && <SuppliersPanel suppliers={data.suppliers} ingredients={data.ingredients} onChanged={reload} />}
           {tab === 'preparations' && <PreparationsPanel preparations={data.preparations} ingredients={data.ingredients} onChanged={reload} />}
           {tab === 'recipes' && <RecipesPanel products={data.products} recipes={data.recipes} ingredients={data.ingredients} preparations={data.preparations} dish={dish} showCosts onChanged={reload} />}
           {tab === 'options' && <OptionRecipesPanel ingredients={data.ingredients} />}

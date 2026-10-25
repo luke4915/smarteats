@@ -16,6 +16,8 @@ import { roomsRouter, tablesRouter } from './routes/rooms.js';
 import coursesRouter from './routes/courses.js';
 import ingredientsRouter from './routes/ingredients.js';
 import preparationsRouter from './routes/preparations.js';
+import suppliersRouter from './routes/suppliers.js';
+import goodsReceiptsRouter from './routes/goodsReceipts.js';
 import { productRecipeRouter, modifierRecipeRouter } from './routes/recipes.js';
 import { inventoryRouter, productAvailabilityRouter } from './routes/inventoryAvailability.js';
 import bookingRoutes from './routes/bookings.js';
@@ -97,6 +99,8 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/modifiers', modifierRecipeRouter);        // GET/PUT /:id/recipe (magazzino)
   app.use('/api/ingredients', ingredientsRouter);
   app.use('/api/preparations', preparationsRouter);
+  app.use('/api/suppliers', suppliersRouter);
+  app.use('/api/goods-receipts', goodsReceiptsRouter);
   app.use('/api/inventory', inventoryRouter);
   app.use('/api/print-settings', printSettingsRoutes);
   app.use('/api/orders', orderRoutes(broadcast));

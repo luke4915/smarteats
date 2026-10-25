@@ -34,6 +34,35 @@ test('magazzino: ingredienti e ricetta di un piatto; la cucina può segnare esau
   }
   await shot(admin, 'inventory-03-ingredienti');
 
+  // fornitore e carico di merce, con la foto della bolla
+  await admin.getByRole('tab', { name: 'Fornitori' }).click();
+  await admin.getByRole('button', { name: 'Nuovo fornitore' }).click();
+  await admin.getByPlaceholder('Es. Rossi Alimentari').fill('Rossi Alimentari');
+  await admin.getByRole('button', { name: 'Salva', exact: true }).click();
+  await expect(admin.getByRole('button', { name: /^Rossi Alimentari/ })).toBeVisible();
+
+  await admin.getByRole('tab', { name: 'Carichi' }).click();
+  await admin.getByRole('button', { name: 'Nuovo carico' }).click();
+  await admin.getByLabel('Fornitore', { exact: true }).selectOption({ label: 'Rossi Alimentari' });
+  await admin.getByLabel('Ingrediente', { exact: true }).selectOption({ label: 'Farina 00' });
+  await admin.getByLabel('Confezione', { exact: true }).fill('Sacco da 25 kg');
+  await admin.getByLabel('Confezioni arrivate').fill('4');
+  await admin.getByLabel('Contenuto', { exact: true }).fill('25');
+  await admin.getByLabel('Unità di Contenuto').selectOption('kg');
+  await admin.getByLabel('Prezzo a confezione').fill('25,00');
+  await admin.getByLabel('IVA', { exact: true }).selectOption('4');
+  await admin.getByLabel('Allega la bolla').setInputFiles({ name: 'bolla.png', mimeType: 'image/png',
+    buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64') });
+  await shot(admin, 'inventory-04a-carico');
+  await admin.getByRole('button', { name: 'Registra il carico' }).click();
+  await expect(admin.getByRole('button', { name: /Rossi Alimentari.*100,00/ })).toBeVisible();
+  await admin.getByRole('button', { name: /Rossi Alimentari.*100,00/ }).click();
+  await expect(admin.getByRole('link', { name: 'bolla.jpg' })).toBeVisible();
+  await shot(admin, 'inventory-04b-carico-dettaglio');
+  await admin.getByRole('button', { name: 'Chiudi', exact: true }).last().click();
+  await admin.getByRole('tab', { name: 'Ingredienti' }).click();
+  await expect(admin.getByRole('button', { name: /^Farina 00.*100 kg/ })).toBeVisible();
+
   // ricetta di un piatto
   await admin.getByRole('tab', { name: 'Ricette' }).click();
   await admin.getByRole('button', { name: /^Bruschetta/ }).click();
