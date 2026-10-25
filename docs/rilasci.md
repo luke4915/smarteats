@@ -34,10 +34,10 @@ ramo ──PR──▶ main ──versione + changelog──▶ tag vX.Y.Z ─�
 1. **Si lavora su un ramo** e si apre una PR verso `main`. La CI (`frontend`, `backend`) deve essere verde.
 2. **Si unisce in `main`.** Non succede nulla sul server.
 3. **Si prepara il rilascio**, quando si decide di pubblicare:
-   - si alza `version` in `frontend/package.json` (e nel suo `package-lock.json`);
-   - si aggiunge in cima a `frontend/src/changelog.js` la voce con 2-4 righe per chi usa l'app (è ciò che admin e
-     responsabili vedranno nella finestra «Novità»; correzioni minuscole possono non averla, ma la voce di
-     testa deve sempre coincidere con la versione);
+   - il changelog non si scrive qui: **cresce insieme al lavoro**. Ogni PR aggiunge la sua riga alla voce della prossima versione
+     in `frontend/src/changelog.js` (è ciò che admin e responsabili vedranno nella finestra «Novità»); la prima PR dopo un
+     rilascio alza `version` in `frontend/package.json` (e nel suo `package-lock.json`) e apre la voce nuova. Al rilascio si
+     rilegge il testo e basta;
    - `./scripts/check.sh --all` verde, commit `chore(release): v0.3.0`, merge in `main`.
 4. **Si mette l'etichetta:** `git tag v0.3.0 && git push origin v0.3.0`. Il workflow costruisce l'immagine
    (amd64 + arm64) e la pubblica; si segue su GitHub → Actions (qualche minuto).
