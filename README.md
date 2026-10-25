@@ -18,10 +18,10 @@ Regole, convenzioni e struttura nel dettaglio: [`CLAUDE.md`](CLAUDE.md). **Se no
 **1. Database**
 
 ```bash
-createdb standmanager
-psql -d standmanager -c "CREATE ROLE standmanager_app LOGIN PASSWORD 'una-password'"
-psql -d standmanager -c "CREATE ROLE standmanager_master LOGIN PASSWORD 'un-altra-password'"   # pannello master, vedi sotto
-psql -d standmanager -f backend/schema.sql   # gli avvisi sul ruolo proprietario si possono ignorare
+createdb smarteats
+psql -d smarteats -c "CREATE ROLE smarteats_app LOGIN PASSWORD 'una-password'"
+psql -d smarteats -c "CREATE ROLE smarteats_master LOGIN PASSWORD 'un-altra-password'"   # pannello master, vedi sotto
+psql -d smarteats -f backend/schema.sql   # gli avvisi sul ruolo proprietario si possono ignorare
 ```
 
 **2. Backend**

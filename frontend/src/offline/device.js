@@ -23,7 +23,7 @@ export async function ensureDevice() {
     await db.meta.put(device);
     return device;
   };
-  return navigator.locks ? navigator.locks.request('standmanager-device-pairing', pair) : pair();
+  return navigator.locks ? navigator.locks.request('smarteats-device-pairing', pair) : pair();
 }
 
 // Prossimo numero ordine della sessione, in transazione: due schede non danno lo stesso numero.

@@ -56,13 +56,13 @@ ramo ──PR──▶ main ──versione + changelog──▶ tag vX.Y.Z ─�
 
 ```
 ssh -i ~/oracle_smarteats.key ubuntu@<ip riservato>
-cd stand-manager/deploy
+cd smarteats/deploy
 docker compose pull app && docker compose up -d app
 docker compose logs -f app        # deve finire con «in ascolto»; Ctrl+C per uscire
 ```
 
 Le migrazioni mancanti girano da sole all'avvio. Per fissare una versione precisa invece di `latest`, in `.env`:
-`APP_IMAGE=ghcr.io/luke4915/stand-manager:0.3.0`.
+`APP_IMAGE=ghcr.io/luke4915/smarteats:0.3.0`.
 
 **Dopo**
 
@@ -100,7 +100,7 @@ rilascio in cui nasce, così il codice vecchio gira ancora sul database nuovo e 
 
 | Cosa è andato storto | Cosa si fa |
 |---|---|
-| L'app nuova ha un difetto grave | In `.env` `APP_IMAGE=ghcr.io/luke4915/stand-manager:<versione precedente>`, poi `docker compose up -d app` (un minuto). I dispositivi tornano alla versione vecchia come per un aggiornamento. |
+| L'app nuova ha un difetto grave | In `.env` `APP_IMAGE=ghcr.io/luke4915/smarteats:<versione precedente>`, poi `docker compose up -d app` (un minuto). I dispositivi tornano alla versione vecchia come per un aggiornamento. |
 | Il difetto va corretto | Ramo `fix/…`, PR, verde, nuova versione `CORREZIONE` col flusso normale. |
 | Una migrazione ha rovinato i dati | Ripristino del backup scattato prima (`docs/deployment.md`, «Backup e ripristino»). È l'ultima risorsa: per questo il backup precede sempre una migrazione. |
 

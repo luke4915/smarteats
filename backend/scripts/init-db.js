@@ -5,7 +5,7 @@
 //
 // Usa MIGRATION_DATABASE_URL (utente privilegiato, con permesso di creare ruoli). I ruoli prendono
 // nome e password da PG_USER/PG_PASSWORD e PG_MASTER_USER/PG_MASTER_PASSWORD; i nomi devono essere
-// quelli di schema.sql (standmanager_app e standmanager_master).
+// quelli di schema.sql (smarteats_app e smarteats_master).
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -17,8 +17,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const ROLES = [
-  { name: 'standmanager_app', userVar: 'PG_USER', passwordVar: 'PG_PASSWORD' },
-  { name: 'standmanager_master', userVar: 'PG_MASTER_USER', passwordVar: 'PG_MASTER_PASSWORD' },
+  { name: 'smarteats_app', userVar: 'PG_USER', passwordVar: 'PG_PASSWORD' },
+  { name: 'smarteats_master', userVar: 'PG_MASTER_USER', passwordVar: 'PG_MASTER_PASSWORD' },
 ];
 
 function fail(message) {

@@ -30,7 +30,7 @@ Priorità: **P0** fondamenta (senza non si procede) · **P1** MVP ristorante · 
 | 0a-5 | Pannello master: tipo di attività e moduli alla creazione del tenant e in modifica. | `[x]` |
 | 0a-6 | Test: modulo spento blocca la route sul server e nasconde la voce; i tenant esistenti restano identici. | `[x]` |
 | 0c | Tipi di attività esclusivi: moduli validati per tipo (migrazione 033 ripulisce i dati), tipo fisso dopo la creazione, app SmartEats separata con shell e dashboard Sala proprie (sala in sola lettura, servizio, carta, cucina, statistiche, impostazioni). | `[x]` |
-| 0b | Trasloco in monorepo (`apps/standmanager`, `apps/smarteats`, `packages/core`), CI e documentazione. | `[ ]` rimandato alla prima schermata SmartEats |
+| 0b | Trasloco in monorepo (`apps/smarteats-stand`, `apps/smarteats`, `packages/core`), CI e documentazione. | `[ ]` rimandato alla prima schermata SmartEats |
 
 ## Fase 1: ordini a righe (P0, tocca il nucleo)
 
