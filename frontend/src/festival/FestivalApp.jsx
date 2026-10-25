@@ -42,6 +42,8 @@ const FestivalApp = () => {
 
   const views = festivalViews(user.role, user.modules, user.inventory);
   usePageTitle(views.find(v => pathname === `/${v.id}`)?.label, user.tenantName, data.inbox?.items.length ?? 0);
+  const lowStock = data.inbox?.items.filter(i => i.kind === 'low_stock').length ?? 0;
+  const badges = { takeaway: (data.inbox?.items.length ?? 0) - lowStock, inventory: lowStock };
   const home = defaultView(user.role, user.modules, user.inventory);
   if (!home) return <NoViewAvailable onLogout={logout} />;
 
@@ -63,11 +65,11 @@ const FestivalApp = () => {
 
   return (
     <div className="se-app app-safe flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
-      <SideNav views={views} icons={ICONS} brand="SmartEats Stand" badges={{ takeaway: data.inbox?.items.length ?? 0 }} />
+      <SideNav views={views} icons={ICONS} brand="SmartEats Stand" badges={badges} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <AppHeader user={user} serviceControl={serviceControl} status={<SyncStatus connected={data.connected} />}
-          inbox={data.inbox} onOpenNotification={(i) => navigate('/takeaway', { state: { orderId: i.id, date: i.date } })}
+          inbox={data.inbox} onOpenNotification={(i) => (i.kind === 'low_stock' ? navigate('/inventory') : navigate('/takeaway', { state: { orderId: i.id, date: i.date } }))}
           theme={data.theme} onToggleTheme={() => data.setTheme(t => (t === 'dark' ? 'light' : 'dark'))} onLogout={() => setShowLogoutConfirm(true)} />
 
         <div className="flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
@@ -80,7 +82,7 @@ const FestivalApp = () => {
           )}
         </div>
 
-        <BottomNav views={views} icons={ICONS} badges={{ takeaway: data.inbox?.items.length ?? 0 }} />
+        <BottomNav views={views} icons={ICONS} badges={badges} />
       </main>
 
       {isMobile && onCashPage && (

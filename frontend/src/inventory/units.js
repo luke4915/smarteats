@@ -53,3 +53,11 @@ export const formatCents = (cents) => new Intl.NumberFormat('it-IT', { style: 'c
 
 // «26,4%», o un trattino se non c'è nulla da confrontare.
 export const formatPercent = (value) => (value === null || value === undefined ? '—' : `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(value)}%`);
+
+// Quanto dura una scorta, a parole: «meno di un giorno», «1 giorno», «12 giorni»; vuoto se non si consuma nulla.
+export function formatDays(days) {
+  if (days === null || days === undefined) return '';
+  if (days < 1) return 'meno di un giorno';
+  const rounded = Math.round(days);
+  return rounded === 1 ? '1 giorno' : `${rounded} giorni`;
+}

@@ -40,7 +40,7 @@ const InventoryPage = () => {
       <Segmented scroll label="Sezioni del magazzino" className="w-fit max-w-full" value={tab} onChange={setTab} options={tabs} />
       {!data ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
         <>
-          {tab === 'ingredients' && <IngredientsPanel ingredients={data.ingredients} showCosts onChanged={reload} />}
+          {tab === 'ingredients' && <IngredientsPanel ingredients={data.ingredients} restock={data.restock} showCosts onChanged={reload} />}
           {tab === 'receipts' && <ReceiptsPanel suppliers={data.suppliers} ingredients={data.ingredients} onChanged={reload} />}
           {tab === 'suppliers' && <SuppliersPanel suppliers={data.suppliers} ingredients={data.ingredients} onChanged={reload} />}
           {tab === 'preparations' && <PreparationsPanel preparations={data.preparations} ingredients={data.ingredients} onChanged={reload} />}

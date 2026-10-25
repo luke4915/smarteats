@@ -99,6 +99,21 @@ test('magazzino: ingredienti e ricetta di un piatto; la cucina può segnare esau
   await expect(admin.getByText('Nessuno scarto registrato')).toHaveCount(0);
   await shot(admin, 'inventory-08-report');
 
+  // scorta minima: l'ingrediente va in «Da riordinare» e la campanella lo segnala (dopo una ricarica: la campanella si aggiorna ogni minuto)
+  await admin.getByRole('tab', { name: 'Ingredienti' }).click();
+  await admin.getByRole('button', { name: /^Farina 00/ }).click();
+  await admin.getByLabel('Unità di Scorta minima').selectOption('kg');
+  await admin.getByLabel('Scorta minima', { exact: true }).fill('200');
+  await admin.getByRole('button', { name: 'Salva', exact: true }).click();
+  await expect(admin.getByRole('button', { name: /^Farina 00.*Da riordinare/ })).toBeVisible();
+  await admin.getByRole('tab', { name: 'Da riordinare (1)' }).click();
+  await shot(admin, 'inventory-09-da-riordinare');
+  await admin.reload();
+  await admin.getByRole('button', { name: /^Notifiche/ }).click();
+  await expect(admin.getByRole('menuitem', { name: /Da riordinare · Farina 00/ })).toBeVisible();
+  await shot(admin, 'inventory-10-campanella');
+  await admin.keyboard.press('Escape');
+
   // la cucina vede «Esaurito»
   const chef = await (await browser.newContext({ ignoreHTTPSErrors: true })).newPage();
   await login(chef, s.restaurant.host, s.restaurant.kitchen);

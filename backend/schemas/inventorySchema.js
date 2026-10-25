@@ -89,3 +89,8 @@ export const reportQuerySchema = z.object({
   to: z.iso.date(),
   tz: z.string().max(60).default('Europe/Rome'),
 }).refine(q => q.from <= q.to, { message: 'La data di inizio è dopo quella di fine', path: ['from'] });
+
+export const restockQuerySchema = z.object({
+  only: z.enum(['low']).optional(),
+  days: z.coerce.number().int().min(1).max(90).default(14),
+});

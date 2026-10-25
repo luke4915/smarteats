@@ -21,6 +21,7 @@ import goodsReceiptsRouter from './routes/goodsReceipts.js';
 import stockLevelsRouter from './routes/stockLevels.js';
 import inventoryMovementsRouter from './routes/inventoryMovements.js';
 import inventoryReportsRouter from './routes/inventoryReports.js';
+import inventoryRestockRouter from './routes/inventoryRestock.js';
 import { productRecipeRouter, modifierRecipeRouter } from './routes/recipes.js';
 import { inventoryRouter, productAvailabilityRouter } from './routes/inventoryAvailability.js';
 import bookingRoutes from './routes/bookings.js';
@@ -107,6 +108,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/inventory', inventoryRouter);
   app.use('/api/inventory', inventoryMovementsRouter);       // /movements, /usage
   app.use('/api/inventory/report', inventoryReportsRouter);
+  app.use('/api/inventory/restock', inventoryRestockRouter);
   app.use('/api/stock-levels', stockLevelsRouter);
   app.use('/api/print-settings', printSettingsRoutes);
   app.use('/api/orders', orderRoutes(broadcast));

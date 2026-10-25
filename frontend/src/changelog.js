@@ -14,6 +14,8 @@ export const CHANGELOG = [
       'Fornitori e carichi di merce: registri la bolla (anche con foto o scansione), la dispensa sale e il costo medio di ogni ingrediente si aggiorna da solo.',
       'Controlli di magazzino: conti ciò che hai davvero in dispensa e la differenza resta scritta; scarti e rettifiche con il motivo; nei locali senza ricette, lo scarico di fine servizio.',
       'Report del magazzino: costo degli ingredienti, margine e food cost per piatto (con IVA per prodotto), scarti e valore della dispensa.',
+      'Scorta minima e «Da riordinare»: gli ingredienti sotto soglia compaiono nella campanella e in un filtro dell\'elenco, con i giorni di scorta rimasti.',
+      'Report del magazzino: spesa per fornitore e prezzi d\'acquisto cambiati rispetto al carico precedente.',
       'Password dimenticata: cassa, cameriere e cucina non la cambiano da soli, la reimposta l\'amministratore con una password temporanea.',
     ],
   },

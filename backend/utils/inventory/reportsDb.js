@@ -3,6 +3,7 @@
 // Importi in centesimi interi. Solo per chi gestisce il locale (sono costi e margini).
 import { isRevenue } from '../revenue.js';
 import { dishFigures, overviewFigures, inventoryValueCents } from './reportMath.js';
+import { spendingOf, priceChangesOf } from './spendingDb.js';
 
 const DEFAULT_VAT = 10;
 
@@ -62,8 +63,8 @@ async function varianceOf(db, period) {
 
 export async function buildReport(db, query) {
   const period = await periodOf(db, query);
-  const [dishes, waste, variance, { rows: ingredients }] = await Promise.all([
-    dishesOf(db, period), wasteOf(db, period), varianceOf(db, period),
+  const [dishes, waste, variance, spending, priceChanges, { rows: ingredients }] = await Promise.all([
+    dishesOf(db, period), wasteOf(db, period), varianceOf(db, period), spendingOf(db, query), priceChangesOf(db, query),
     db.query('SELECT quantity_on_hand, weighted_average_cost FROM ingredients WHERE active'),
   ]);
   const totals = overviewFigures(dishes.map(d => ({ netCents: d.net_cents, netWithCostCents: d.netWithCostCents, costCents: d.cost_cents, hasRecipe: d.has_recipe })));
@@ -71,7 +72,7 @@ export async function buildReport(db, query) {
     from: query.from, to: query.to, default_vat_rate: period.defaultVat,
     totals: { net_cents: totals.netCents, cost_cents: totals.costCents, margin_cents: totals.marginCents, food_cost_percent: totals.foodCostPercent, recipe_coverage_percent: totals.recipeCoveragePercent },
     dishes: dishes.map(({ netWithCostCents: _unused, ...d }) => d),
-    waste, variance, inventory_value_cents: inventoryValueCents(ingredients),
+    waste, variance, spending, price_changes: priceChanges, inventory_value_cents: inventoryValueCents(ingredients),
     variance_value_cents: variance.reduce((s, v) => s + v.difference_value_cents, 0),
   };
 }

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { unitsFor, parseDecimal, toBaseQuantity, toDisplayQuantity, formatQuantity, formatCostPerUnit, formatCents, formatPercent } from './units.js';
+import { unitsFor, parseDecimal, toBaseQuantity, toDisplayQuantity, formatQuantity, formatCostPerUnit, formatCents, formatPercent, formatDays } from './units.js';
 
 test('le unità tra cui scegliere dipendono dall\'unità di base', () => {
   assert.deepEqual(unitsFor('g').map(u => u.id), ['g', 'kg']);
@@ -43,4 +43,11 @@ test('la percentuale a parole', () => {
   assert.equal(formatPercent(26.4), '26,4%');
   assert.equal(formatPercent(30), '30%');
   assert.equal(formatPercent(null), '—');
+});
+
+test('i giorni di scorta a parole', () => {
+  assert.equal(formatDays(null), '');
+  assert.equal(formatDays(0.4), 'meno di un giorno');
+  assert.equal(formatDays(1.2), '1 giorno');
+  assert.equal(formatDays(11.7), '12 giorni');
 });
