@@ -1,8 +1,7 @@
 import SectionsPage from '../components/shell/SectionsPage';
 import PrintProfiles from '../components/setup/PrintProfiles';
 import MenuSettings from '../components/setup/MenuSettings';
-import UsersSettings from '../components/setup/UsersSettings';
-import AccountSettings from '../components/shared/AccountSettings';
+import AccountSection from '../components/setup/AccountSection';
 import FeedbackBox from '../components/shared/FeedbackBox';
 import TakeawaySettings from '../smarteats/takeaway/TakeawaySettings';
 import DeviceSettings from './DeviceSettings';
@@ -15,8 +14,8 @@ const SetupPage = ({ user, ...device }) => {
     takeaway: () => <TakeawaySettings />,
     menu: () => <MenuSettings />,
     printing: () => <PrintProfiles />,
-    staff: () => <UsersSettings />,
-    account: () => <><AccountSettings /><FeedbackBox modules={['pos', 'kitchen', 'catalog', 'stats', 'settings']} /></>,
+    feedback: () => <FeedbackBox modules={['pos', 'kitchen', 'catalog', 'stats', 'settings']} />,
+    account: () => <AccountSection user={user} />,
   };
   return <SectionsPage title="Sistema" sections={festivalSections(user)} content={content} />;
 };

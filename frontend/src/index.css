@@ -11,9 +11,6 @@
 @custom-variant dark (&:where(.dark, .dark *));
 /* `coarse:` vale solo su schermi che si usano con le dita (telefono, tablet): bersagli più grandi, come chiede iOS (44 pt). */
 @custom-variant coarse (@media (pointer: coarse));
-/* `roomy:` vale solo se lo schermo è largo e anche alto abbastanza: un telefono in orizzontale è largo ma basso, e un menu
-   laterale lungo non ci starebbe. */
-@custom-variant roomy (@media (min-width: 768px) and (min-height: 560px));
 
 :root {
   --bg-main: #f1f5f9;
@@ -116,7 +113,9 @@ body {
 @keyframes motion-slide-in { from { transform: translateX(12px); } }
 @keyframes motion-pop { from { opacity: 0; transform: translateY(8px) scale(0.97); } }
 .motion-page { animation: motion-rise var(--dur-slow) var(--ease) both; }
-.motion-panel { animation: motion-slide-in var(--dur-base) var(--ease) both; }
+/* `backwards` e non `both`: finita l'entrata l'elemento torna normale. Con `both` resterebbe «animato» e farebbe da contenitore per i
+   figli a tutto schermo (`fixed inset-0`, come l'editor della pianta), che si ridurrebbero alle sue dimensioni. */
+.motion-panel { animation: motion-slide-in var(--dur-base) var(--ease) backwards; }
 /* Finestre: lo sfondo sfuma, la scheda sale appena. Vale per ogni sfondo scuro a tutto schermo e ogni role="dialog". */
 :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) { animation: motion-fade var(--dur-base) var(--ease) both; }
 :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) > :first-child, :where([role="dialog"]) { animation: motion-pop var(--dur-base) var(--ease) both; }

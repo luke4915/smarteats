@@ -43,10 +43,12 @@ test('sagra: Sistema ha un menu di sezioni, una alla volta', async ({ page }) =>
   await page.getByRole('link', { name: 'Sistema' }).click();
   await expect(page.getByRole('switch', { name: 'Tema scuro' })).toBeVisible();
   await shot(page, 'festival-05-sistema');
-  const nav = page.getByRole('navigation', { name: 'Sezioni delle impostazioni' });
-  await nav.getByRole('button', { name: 'Personale' }).click();
+  const nav = page.getByRole('tablist', { name: 'Sezioni delle impostazioni' });
+  await nav.getByRole('tab', { name: 'Account' }).click();
+  await expect(page.getByText('Il mio profilo')).toBeVisible();
+  await shot(page, 'festival-05b-account');
   await expect(page.getByRole('switch', { name: 'Tema scuro' })).toHaveCount(0);
-  await nav.getByRole('button', { name: 'Stampa' }).click();
+  await nav.getByRole('tab', { name: 'Stampa' }).click();
   await expect(page).toHaveURL(/sezione=printing/);
   await shot(page, 'festival-06-stampa');
 });

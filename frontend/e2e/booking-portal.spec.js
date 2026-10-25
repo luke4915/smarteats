@@ -7,7 +7,7 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
   const { restaurant: r } = seed();
   await login(page, r.host, r.admin);
   await page.locator('a[href="/settings"]').first().click();
-  await page.getByRole('button', { name: 'Prenotazioni' }).first().click();
+  await page.getByRole('tab', { name: 'Prenotazioni' }).click();
   await expect(page.getByRole('switch', { name: 'Prenotazioni online' })).toBeVisible();
   await page.getByLabel('Telefono da mostrare ai clienti', { exact: false }).fill('0123 456789');
   await page.getByLabel('Messaggio in cima alla pagina', { exact: false }).fill('Il giovedì siamo chiusi.');
@@ -84,7 +84,7 @@ for (const [name, viewport] of [['verticale', { width: 390, height: 664 }], ['or
     const { restaurant: r } = seed();
     await login(page, r.host, r.admin);
     await page.locator('a[href="/settings"]').first().click();
-    await page.getByRole('button', { name: 'Prenotazioni' }).first().click();
+    await page.getByRole('tab', { name: 'Prenotazioni' }).click();
     const toggle = page.getByRole('switch', { name: 'Prenotazioni online' });
     await expect(toggle).toBeVisible();
     if (await toggle.getAttribute('aria-checked') !== 'true') await toggle.click();

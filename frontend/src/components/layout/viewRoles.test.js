@@ -23,5 +23,5 @@ test('prima pagina disponibile; nessuna se il ruolo non ha nulla di attivo', () 
   assert.equal(defaultView('admin', ALL), 'dashboard');
   assert.equal(defaultView('cashier', ALL), 'dashboard');
   assert.equal(defaultView('kitchen', ALL), 'kitchen');
-  assert.equal(defaultView('kitchen', ['stats']), 'setup', 'cucina senza KDS: resta il suo account');
+  assert.equal(defaultView('kitchen', ['stats']), null, 'cucina senza KDS: nessuna pagina');
 });
