@@ -6,7 +6,8 @@ const ALL = [
   { id: 'takeaway', label: 'Asporto', hint: 'Orari di ritiro, fasce e ordini dal sito.', admin: true, module: 'takeaway' },
   { id: 'menu', label: 'Menu pubblico', hint: 'Il messaggio di benvenuto che i clienti leggono dal QR.', notFor: ['kitchen'] },
   { id: 'printing', label: 'Stampa', hint: 'Stampanti e copie degli scontrini.', notFor: ['kitchen'] },
-  { id: 'account', label: 'Account', hint: 'Il tuo profilo, chi può accedere e i suggerimenti per migliorare l\'app.', roles: ['admin', 'manager'] },
+  { id: 'feedback', label: 'Suggerimenti', hint: 'Un\'idea o un problema: arriva a chi sviluppa SmartEats.', roles: ['admin', 'manager'] },
+  { id: 'account', label: 'Account', hint: 'Il tuo profilo e chi può accedere al locale.', roles: ['admin', 'manager'] },
 ];
 
 export const festivalSections = (user) => ALL.filter(s => {

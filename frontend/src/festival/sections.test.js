@@ -5,12 +5,12 @@ import { festivalSections } from './sections.js';
 const ids = (user) => festivalSections(user).map(s => s.id);
 
 test('l\'admin vede tutto, l\'asporto solo se il modulo è acceso', () => {
-  assert.deepEqual(ids({ role: 'admin', modules: ['kds', 'stats'] }), ['device', 'menu', 'printing', 'account']);
-  assert.deepEqual(ids({ role: 'admin', modules: ['takeaway'] }), ['device', 'takeaway', 'menu', 'printing', 'account']);
+  assert.deepEqual(ids({ role: 'admin', modules: ['kds', 'stats'] }), ['device', 'menu', 'printing', 'feedback', 'account']);
+  assert.deepEqual(ids({ role: 'admin', modules: ['takeaway'] }), ['device', 'takeaway', 'menu', 'printing', 'feedback', 'account']);
 });
 
 test('il responsabile ha anche l\'account, ma non l\'asporto da configurare', () => {
-  assert.deepEqual(ids({ role: 'manager', modules: ['takeaway'] }), ['device', 'menu', 'printing', 'account']);
+  assert.deepEqual(ids({ role: 'manager', modules: ['takeaway'] }), ['device', 'menu', 'printing', 'feedback', 'account']);
 });
 
 test('la cassa lavora con il dispositivo, il menu e la stampa: niente account', () => {

@@ -17,7 +17,7 @@ const UsersSettings = () => {
 
   return (
     <div className="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)]">
-      <h2 className="text-sm font-semibold text-[var(--text-main)] mb-4 flex items-center gap-2">
+      <h2 className="text-base font-semibold text-[var(--text-main)] mb-4 flex items-center gap-2">
         <Users size={15} /> Utenti
       </h2>
       <UsersPanel api={api} currentUserId={user.id} />
