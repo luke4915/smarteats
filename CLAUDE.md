@@ -1,4 +1,4 @@
-# CLAUDE.md — Stand Manager
+# CLAUDE.md — SmartEats
 
 Guida operativa per lavorare su questo repository. Leggila tutta prima di toccare il codice.
 Le regole marcate **MUST** non si negoziano; il resto è la prassi del progetto.
@@ -6,7 +6,7 @@ Le regole marcate **MUST** non si negoziano; il resto è la prassi del progetto.
 ## 1. Cos'è il progetto
 
 SaaS multi-tenant per la gestione di sagre ed eventi: cassa (POS), ordini, stampa comande su stampanti termiche, Kitchen Display System, magazzino, statistiche, menu pubblico con QR.
-Ex "SagraManager V2". Installazione e avvio sono descritti nel `README.md`.
+Il prodotto si chiama **SmartEats** e ha due app sulla stessa API: **SmartEats Stand** (sagre, paninari, food truck: tipo `street_food`) e **SmartEats Restaurant** (ristoranti, pizzerie e solo asporto: tipi `restaurant` e `takeaway_shop`). Nei testi che legge una persona si scrive sempre così; mai «Stand Manager». Installazione e avvio sono descritti nel `README.md`.
 
 Lingua: **UI, messaggi di errore, log e commenti in italiano.** Tutto il resto in inglese, vedi «Nomenclatura» qui sotto.
 
@@ -107,16 +107,16 @@ Comandi:
 | frontend | `npm run build` | build di produzione |
 | frontend | `npm run e2e` | test nel browser (Playwright): costruisce il frontend, avvia `backend/scripts/e2e-server.js` (HTTPS autogenerato, locali di prova nel database di test) e fa il giro del ristorante e della sagra, anche da telefono; screenshot in `frontend/e2e/.run/schermate`. Prima volta: `npx playwright install chromium` |
 
-Produzione: immagine Docker (`Dockerfile`), stack in `deploy/` (Traefik + app + Postgres + backup, `TLS_TERMINATED_BY_PROXY=true`), rilascio con tag `v*` (workflow `release.yml`, che controlla che l'etichetta coincida con `frontend/package.json`); installazione in `docs/deployment.md`, processo di rilascio in `docs/rilasci.md`. **Per ogni rilascio:** alza `version` in `frontend/package.json` (e nel lock) e aggiungi in cima a `frontend/src/changelog.js` la voce per chi usa l'app (`changelog.test.js` verifica che coincidano).
+Produzione: immagine Docker (`Dockerfile`), stack in `deploy/` (Traefik + app + Postgres + backup, `TLS_TERMINATED_BY_PROXY=true`), rilascio con tag `v*` (workflow `release.yml`, che controlla che l'etichetta coincida con `frontend/package.json`); installazione in `docs/deployment.md`, processo di rilascio in `docs/rilasci.md`. **Changelog, un'abitudine per ogni modifica:** ogni PR che cambia qualcosa per chi usa il locale aggiunge **una riga sintetica e professionale** (italiano, senza dettagli tecnici, che dica cosa cambia per l'utente) alla voce della prossima versione in `frontend/src/changelog.js`. La prima PR dopo un rilascio alza `version` in `frontend/package.json` (e nel lock) e apre la voce nuova; `changelog.test.js` verifica che coincidano. Le novità riservate al master (console `/master`) e le modifiche interne non vanno nel changelog: stanno nel titolo e nella descrizione della PR.
 
-Il dominio di sviluppo è `smarteats.local` (prima `standmanager.local`). Lo sviluppo locale usa certificati mkcert per `*.smarteats.local` e un sottodominio per tenant (es. `default.smarteats.local`). Gli script in `backend/scripts/*.ps1` configurano host e wildcard su Windows.
+Il dominio di sviluppo è `smarteats.local` . Lo sviluppo locale usa certificati mkcert per `*.smarteats.local` e un sottodominio per tenant (es. `default.smarteats.local`). Gli script in `backend/scripts/*.ps1` configurano host e wildcard su Windows.
 
 ## 3. Multi-tenancy e RLS — regole **MUST**
 
 L'isolamento tra tenant si basa sulla Row-Level Security di PostgreSQL con la variabile di sessione `app.tenant_id`. Un errore qui significa dati di un cliente visibili a un altro.
 
 1. **Route autenticate:** la catena è sempre `authenticate → (authorizeAdmin | authorizeDiscount)? → tenantScope`, e le query usano **solo `req.db.query(...)`**.
-2. **Mai `pool.query` su tabelle tenant-scoped.** `pool.query` è ammesso solo su tabelle globali (`tenants`, `_migrations`) e nei punti già previsti (login, master panel). Il master panel usa **`masterPool`** (ruolo `standmanager_master`, migrazione 025): è l'unico che scrive su `tenants` o li elimina; l'utente applicativo di `pool` ha solo SELECT su `tenants` e non cancella da `audit_logs`. Non usare `masterPool` fuori da `routes/master.js`.
+2. **Mai `pool.query` su tabelle tenant-scoped.** `pool.query` è ammesso solo su tabelle globali (`tenants`, `_migrations`) e nei punti già previsti (login, master panel). Il master panel usa **`masterPool`** (ruolo `smarteats_master`, migrazione 025): è l'unico che scrive su `tenants` o li elimina; l'utente applicativo di `pool` ha solo SELECT su `tenants` e non cancella da `audit_logs`. Non usare `masterPool` fuori da `routes/master.js`.
 3. **Lavoro asincrono dopo la risposta** (job in background): usa `withTenantClient(tenantId, fn)`. `req.db` a quel punto è già stato rilasciato.
 4. **Endpoint pubblici** (`/menu`, `/kds`): `resolveTenantFromHost` + `withTenantClient(req.tenantId, …)`. Non esporre mai colonne interne: seleziona le colonne una per una, niente `SELECT *`.
 5. **Nuova tabella tenant-scoped:** nella stessa migrazione aggiungi `tenant_id INTEGER NOT NULL REFERENCES tenants(id)`, l'indice, `ENABLE` + `FORCE ROW LEVEL SECURITY` e la policy `tenant_isolation`. La policy deve usare `NULLIF(current_setting('app.tenant_id', true), '')::int` (vedi migrazione 009: senza `NULLIF` una connessione riciclata con `''` manda in errore il cast).
@@ -215,7 +215,7 @@ L'isolamento tra tenant si basa sulla Row-Level Security di PostgreSQL con la va
 - **Aggiornamenti dell'app** (`registerType: 'prompt'`, `hooks/useAppUpdate.js`, regole pure in `utils/updatePolicy.js`): il service worker scarica la versione nuova in disparte; l'app la mette in uso da sola solo in momenti sicuri (ritorno in primo piano dopo 5 minuti, oppure 6 ore di attesa e 5 minuti di schermo fermo), **mai con ordini in coda o stampe da partire**; intanto `UpdateBanner` offre «Aggiorna». Dopo l'aggiornamento admin e responsabile vedono una sola volta la finestra «Novità» (`WhatsNew`, voci di `changelog.js`, ultima versione vista in `localStorage`): non c'è un archivio da consultare.
 - **iPhone e iPad (come un'app nativa):** il guscio ha la classe `app-safe` (margini di tacca e Dynamic Island), le altezze usano `dvh` (mai `h-screen`/`min-h-screen`), le schermate centrate usano `layout/CenteredScreen` (scorrono se non ci stanno). Le varianti Tailwind `coarse:` (schermo a dito: bersagli da 44 px) e `roomy:` (largo **e** alto: un telefono in orizzontale è largo ma basso, quindi il menu laterale delle sezioni resta a righe) sono in `index.css`, dove stanno anche le regole per dito (niente selezione del testo né rimbalzo, campi a 16 px). Le righe che scorrono in orizzontale usano `shared/ScrollRow` (sfuma dal lato in cui c'è altro). I messaggi (`Toast`) stanno in alto sul telefono. Si prova con i viewport iPhone/iPad (390×844, 844×390, 820×1180, 1180×820) e si guardano gli screenshot.
 - `App.jsx` e i gusci (`festival/FestivalApp.jsx`, `smarteats/app/SmartEatsApp.jsx`) collegano i pezzi: le nuove funzionalità vanno in componenti, hook o pagine dedicate, non qui.
-- Icone PWA in `frontend/public/` (`pwa-192.png`, `pwa-512.png`, `apple-touch-icon.png`), ricavate dal simbolo di `logo_StandManager_ESC_POS.png` con il simbolo al 56% del lato, così la 512 vale anche come maskable. Se cambi le icone, aggiorna il manifest in `vite.config.js`.
+- Icone PWA in `frontend/public/` (`pwa-192.png`, `pwa-512.png`, `apple-touch-icon.png`), ricavate dal simbolo del logo (ombrellone con spunta) con il simbolo al 56% del lato, così la 512 vale anche come maskable. Se cambi le icone, aggiorna il manifest in `vite.config.js`.
 
 ## 8. Offline-first (fase 2, in corso)
 

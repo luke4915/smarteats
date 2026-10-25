@@ -14,7 +14,7 @@ export async function testPrint(address) {
   const builder = driver.createBuilder()
     .align('CT').size(2, 2).style('B').text('PROVA DI STAMPA').size(1, 1).style('NORMAL')
     .text(new Date().toLocaleString('it-IT'))
-    .text('Stand Manager')
+    .text('SmartEats')
     .feed(2)
     .cut();
   try {

@@ -21,8 +21,8 @@ export default defineConfig({
       // come icona "maskable" (resta dentro la zona sicura quando il sistema la ritaglia).
       includeAssets: ['apple-touch-icon.png'],
       manifest: {
-        name: 'Stand Manager',
-        short_name: 'StandManager',
+        name: 'SmartEats',
+        short_name: 'SmartEats',
         description: 'Gestionale per sagre, eventi e ristorazione',
         lang: 'it',
         theme_color: '#2563eb',

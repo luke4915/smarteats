@@ -210,7 +210,7 @@ function renderFooter(printer, ctx, { total, pickupId, showTotal = false }) {
   if (pickupId) printer.align('CT').text(`ID RITIRO: ${pickupId}`);
 
   printer.align('CT').text(DIVIDER);
-  printer.align('CT').text('Powered by StandManager');
+  printer.align('CT').text('Powered by SmartEats');
   printer.feed(2);
   printer.cut();
 }
@@ -304,7 +304,7 @@ export async function renderCheckReceipt(printer, receipt, ctx) {
   }
   printer.align('CT').text(DIVIDER_THIN);
   printer.align('CT').text('DOCUMENTO NON FISCALE');
-  printer.align('CT').text('Powered by StandManager');
+  printer.align('CT').text('Powered by SmartEats');
   printer.feed(2);
   printer.cut();
 }

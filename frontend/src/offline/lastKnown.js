@@ -1,7 +1,7 @@
 // Ultimi valori noti su questo dispositivo (utente, sessione aperta), usati solo
 // quando il server non è raggiungibile. localStorage è separato per origine,
 // quindi per sottodominio: ogni tenant ha i suoi valori.
-const PREFIX = 'standmanager:';
+const PREFIX = 'smarteats:';
 
 // Versione del formato dei valori salvati. Va alzata quando cambia il significato di ciò che si conserva (per esempio
 // i nomi dei ruoli o dei tipi di locale): i valori di una versione precedente vengono scartati, non interpretati.

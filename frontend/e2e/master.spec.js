@@ -23,10 +23,15 @@ test('master: creo un locale, lo trovo, allungo la licenza e lo elimino', async 
   await page.getByPlaceholder('Cerca un locale').fill(slug);
   const card = page.getByRole('article').filter({ hasText: `Locale ${slug}` });
   await expect(card).toHaveCount(1);
-  await card.getByRole('button', { name: '+30 giorni' }).click();
+  await card.getByRole('button', { name: 'Gestisci' }).click();
+  await expect(page.getByRole('dialog', { name: `Locale ${slug}` })).toBeVisible();
   await shot(page, 'master-03-locale');
-
-  await card.getByRole('button', { name: 'Elimina' }).click();
+  await page.getByRole('button', { name: '+30 giorni' }).click();
+  await page.getByRole('tab', { name: 'Moduli' }).click();
+  await expect(page.getByRole('button', { name: 'Salva' })).toBeVisible();
+  await shot(page, 'master-03b-moduli');
+  await page.getByRole('tab', { name: 'Generale' }).click();
+  await page.getByRole('button', { name: 'Elimina il locale' }).click();
   await page.getByPlaceholder(`locale-${slug}`).fill(`locale-${slug}`);
   await page.getByRole('button', { name: 'Elimina', exact: true }).last().click();
   await expect(page.getByRole('heading', { name: `Locale ${slug}` })).toHaveCount(0);
@@ -40,7 +45,8 @@ test('master: avvisi WhatsApp di un locale — eventi, tetto, messaggio di prova
   await page.getByRole('button', { name: 'Entra' }).click();
   await page.getByPlaceholder('Cerca un locale').fill(s.restaurant.host.split('.')[0]);
   const card = page.getByRole('article').first();
-  await card.getByRole('button', { name: 'WhatsApp' }).click();
+  await card.getByRole('button', { name: 'Gestisci' }).click();
+  await page.getByRole('tab', { name: 'WhatsApp' }).click();
 
   await expect(page.getByText('Pratiche incluse al mese')).toBeVisible();
   await expect(page.getByText('Prenotazione confermata', { exact: true })).toBeVisible();

@@ -8,9 +8,7 @@ import NewTenantForm from '../components/master/NewTenantForm';
 import TenantCard from '../components/master/TenantCard';
 import DeleteTenantModal from '../components/master/DeleteTenantModal';
 import TenantReceiptEditor from '../components/master/TenantReceiptEditor';
-import TenantUsers from '../components/master/TenantUsers';
-import TenantModules from '../components/master/TenantModules';
-import TenantWhatsApp from '../components/master/TenantWhatsApp';
+import TenantManage from '../components/master/TenantManage';
 import Segmented from '../smarteats/floor/Segmented';
 import { btn, btnPrimary, input } from '../smarteats/floor/ui';
 
@@ -28,14 +26,16 @@ const MasterPage = () => {
   const [creating, setCreating] = useState(false);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
-  const [target, setTarget] = useState(null);                    // { kind: 'modules'|'users'|'whatsapp'|'receipt'|'delete', tenant }
+  // Il locale aperto e cosa si sta facendo: { id, view: 'manage' | 'receipt' | 'delete' }. Si salva solo l'id: il locale si
+  // rilegge dall'elenco, così la finestra mostra sempre i dati aggiornati (per esempio la nuova scadenza).
+  const [open, setOpen] = useState(null);
 
   if (!m.authed) return <MasterLogin busy={m.busy} error={m.error} onLogin={m.login} />;
 
   const counts = countByKind(m.tenants);
   const visible = filterTenants(m.tenants, filter, query);
-  const close = () => setTarget(null);
-  const open = (kind, tenant) => () => setTarget({ kind, tenant });
+  const target = m.tenants.find(t => t.id === open?.id);
+  const view = (name) => () => setOpen(o => ({ ...o, view: name }));
 
   return (
     <div className="app-safe h-dvh overflow-y-auto bg-[var(--bg-main)]">
@@ -80,20 +80,16 @@ const MasterPage = () => {
 
         <section className="space-y-2 pb-8">
           {visible.length === 0 && <p className="text-sm text-[var(--text-muted)] py-8 text-center">{m.tenants.length === 0 ? 'Nessun locale: creane uno con «Nuovo locale».' : 'Nessun locale corrisponde alla ricerca.'}</p>}
-          {visible.map(t => (
-            <TenantCard key={t.id} tenant={t} catalog={m.catalog} on={{
-              modules: () => m.catalog && setTarget({ kind: 'modules', tenant: t }), users: open('users', t), whatsapp: open('whatsapp', t), receipt: open('receipt', t),
-              extend: (days) => m.extend(t.id, days), toggle: () => m.setActive(t.id, !t.active), remove: open('delete', t),
-            }} />
-          ))}
+          {visible.map(t => <TenantCard key={t.id} tenant={t} catalog={m.catalog} onOpen={() => setOpen({ id: t.id, view: 'manage' })} />)}
         </section>
       </div>
 
-      {target?.kind === 'modules' && m.catalog && <TenantModules tenant={target.tenant} catalog={m.catalog} onClose={close} onSaved={m.loadTenants} />}
-      {target?.kind === 'whatsapp' && <TenantWhatsApp tenant={target.tenant} onClose={close} />}
-      {target?.kind === 'users' && <TenantUsers tenant={target.tenant} onClose={close} onChanged={m.loadTenants} />}
-      {target?.kind === 'receipt' && <TenantReceiptEditor tenant={target.tenant} onClose={close} />}
-      {target?.kind === 'delete' && <DeleteTenantModal tenant={target.tenant} onClose={close} onConfirm={async () => { if (await m.deleteTenant(target.tenant)) close(); }} />}
+      {target && m.catalog && open.view !== 'receipt' && (
+        <TenantManage tenant={target} catalog={m.catalog} onSaved={m.loadTenants} onClose={() => open.view === 'manage' && setOpen(null)}
+          on={{ extend: (days) => m.extend(target.id, days), toggle: () => m.setActive(target.id, !target.active), receipt: view('receipt'), remove: view('delete') }} />
+      )}
+      {target && open.view === 'receipt' && <TenantReceiptEditor tenant={target} onClose={view('manage')} />}
+      {target && open.view === 'delete' && <DeleteTenantModal tenant={target} onClose={view('manage')} onConfirm={async () => { if (await m.deleteTenant(target)) setOpen(null); }} />}
     </div>
   );
 };

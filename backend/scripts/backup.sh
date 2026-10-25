@@ -17,7 +17,7 @@ KEEP_DAYS="${2:-14}"
 
 mkdir -p "$DIR"
 chmod 700 "$DIR"
-FILE="$DIR/standmanager-$(date +%Y%m%d-%H%M%S).dump"
+FILE="$DIR/smarteats-$(date +%Y%m%d-%H%M%S).dump"
 
 pg_dump --format=custom --no-owner --file="$FILE.partial" "$BACKUP_DATABASE_URL"
 mv "$FILE.partial" "$FILE"      # un dump interrotto non resta mai col nome definitivo
@@ -26,5 +26,5 @@ chmod 600 "$FILE"
 # Il dump deve poter essere letto: se l'elenco del contenuto fallisce, il backup non vale
 pg_restore --list "$FILE" > /dev/null
 
-find "$DIR" -name 'standmanager-*.dump' -mtime +"$KEEP_DAYS" -delete
+find "$DIR" -name 'smarteats-*.dump' -mtime +"$KEEP_DAYS" -delete
 echo "Backup creato: $FILE ($(du -h "$FILE" | cut -f1))"
