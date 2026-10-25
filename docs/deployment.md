@@ -107,7 +107,7 @@ Costo zero per cominciare, adatto a pochi clienti. Tutto sta in `deploy/` (`dock
    ```
 5. Installa Docker: `curl -fsSL https://get.docker.com | sudo sh && sudo usermod -aG docker $USER` (riconnettiti).
 6. Su DuckDNS metti l'IP riservato nel campo «current ip» del tuo nome.
-7. Nota: Oracle può **recuperare le istanze Always Free rimaste inattive** per giorni. Un monitor che interroga l'app (punto 6) basta a tenerla viva.
+7. Nota: Oracle può **recuperare le istanze Always Free rimaste inattive** per giorni. Un monitor che la interroga (punto 6) **non** basta a tenerla viva: conta l'uso reale di CPU e rete.
 
 ### 3. Prima installazione
 1. Pubblica l'immagine: su GitHub crea il tag `git tag v0.1.0 && git push origin v0.1.0` (o lancia a mano il workflow **Rilascio**). Poi in GitHub → Packages rendi pubblico il pacchetto `stand-manager` (oppure sul server fai `docker login ghcr.io`).
@@ -124,4 +124,4 @@ Il processo completo (numero di versione, changelog, etichetta, aggiornamento de
 - Ripristino provato: `docker compose exec -T db pg_restore -U postgres -d standmanager --clean --if-exists < backups/standmanager-AAAAMMGG-HHMMSS.dump`. Fallo una volta su un database di prova prima di averne bisogno.
 
 ### 6. Monitoraggio
-Crea un monitor gratuito su https://uptimerobot.com che interroga `https://<nome>.duckdns.org/api/health/ready` ogni 5 minuti: ti avvisa se l'app o il database sono giù e tiene attiva la macchina.
+Crea un monitor gratuito su https://uptimerobot.com che interroga `https://<nome>.duckdns.org/api/health/ready` ogni 5 minuti: ti avvisa se l'app o il database sono giù. Non impedisce a Oracle di ritirare una macchina inattiva (conta l'uso reale di CPU e rete). Promemoria dei comandi: `docs/promemoria-operativo.md`.
