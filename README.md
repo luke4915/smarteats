@@ -1,6 +1,6 @@
-# Stand Manager
+# SmartEats
 
-Gestionale SaaS per sagre, eventi e ristorazione: cassa, ordini, comande su stampanti termiche, schermo cucina (KDS), magazzino, statistiche e menu pubblico con QR. Ogni cliente (tenant) ha il suo sottodominio e i suoi dati, isolati nel database con la Row-Level Security di PostgreSQL.
+Gestionale SaaS per sagre, eventi e ristorazione, in due prodotti sulla stessa piattaforma: **SmartEats Stand** (sagre, paninari, food truck) e **SmartEats Restaurant** (ristoranti, pizzerie, solo asporto): cassa, ordini, comande su stampanti termiche, schermo cucina (KDS), magazzino, statistiche e menu pubblico con QR. Ogni cliente (tenant) ha il suo sottodominio e i suoi dati, isolati nel database con la Row-Level Security di PostgreSQL.
 
 - `backend/`: Node.js, Express 5, PostgreSQL, WebSocket
 - `frontend/`: React 19, Vite, Tailwind v4, PWA con funzionamento offline

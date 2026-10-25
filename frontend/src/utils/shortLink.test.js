@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { shortLinkTarget } from './shortLink.js';
 
 test('il link breve porta al sottodominio del locale', () => {
-  assert.equal(shortLinkTarget('/s/pizzeria-rossi/book/AbC123_-xyZ', 'https:', 'standmanager.it'), 'https://pizzeria-rossi.standmanager.it/book/AbC123_-xyZ');
+  assert.equal(shortLinkTarget('/s/pizzeria-rossi/book/AbC123_-xyZ', 'https:', 'smarteats.it'), 'https://pizzeria-rossi.smarteats.it/book/AbC123_-xyZ');
   assert.equal(shortLinkTarget('/s/forno/order/abcdefghij12/', 'https:', 'app.example.it:5173'), 'https://forno.app.example.it:5173/order/abcdefghij12');
 });
 

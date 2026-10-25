@@ -66,7 +66,7 @@ const SmartEatsApp = () => {
 
   return (
     <div className="se-app app-safe flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
-      <SideNav views={views} icons={ICONS} brand="SmartEats" badges={badges} />
+      <SideNav views={views} icons={ICONS} brand="SmartEats Restaurant" badges={badges} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <AppHeader user={user} serviceControl={<ServiceControl service={service} canManage={canManageService} start={start} closingInfo={closingInfo} end={end} terms={termsFor(user.businessType)} />}

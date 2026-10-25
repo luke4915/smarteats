@@ -1,6 +1,6 @@
 # Messa online e operatività
 
-Guida per portare Stand Manager in produzione e tenerlo in vita. Le regole di sviluppo stanno in `CLAUDE.md`.
+Guida per portare SmartEats in produzione e tenerlo in vita. Le regole di sviluppo stanno in `CLAUDE.md`.
 
 ## Prima di aprire ai clienti
 
@@ -64,7 +64,7 @@ Dopo un ripristino su un database nuovo vanno ricreati i ruoli e i permessi dell
 
 ```ini
 [Unit]
-Description=Stand Manager
+Description=SmartEats
 After=network.target postgresql.service
 
 [Service]

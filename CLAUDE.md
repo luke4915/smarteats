@@ -1,4 +1,4 @@
-# CLAUDE.md — Stand Manager
+# CLAUDE.md — SmartEats
 
 Guida operativa per lavorare su questo repository. Leggila tutta prima di toccare il codice.
 Le regole marcate **MUST** non si negoziano; il resto è la prassi del progetto.
@@ -6,7 +6,7 @@ Le regole marcate **MUST** non si negoziano; il resto è la prassi del progetto.
 ## 1. Cos'è il progetto
 
 SaaS multi-tenant per la gestione di sagre ed eventi: cassa (POS), ordini, stampa comande su stampanti termiche, Kitchen Display System, magazzino, statistiche, menu pubblico con QR.
-Ex "SagraManager V2". Installazione e avvio sono descritti nel `README.md`.
+Il prodotto si chiama **SmartEats** e ha due app sulla stessa API: **SmartEats Stand** (sagre, paninari, food truck: tipo `street_food`) e **SmartEats Restaurant** (ristoranti, pizzerie e solo asporto: tipi `restaurant` e `takeaway_shop`). Nei testi che legge una persona si scrive sempre così; mai «Stand Manager». Installazione e avvio sono descritti nel `README.md`.
 
 Lingua: **UI, messaggi di errore, log e commenti in italiano.** Tutto il resto in inglese, vedi «Nomenclatura» qui sotto.
 
@@ -109,7 +109,7 @@ Comandi:
 
 Produzione: immagine Docker (`Dockerfile`), stack in `deploy/` (Traefik + app + Postgres + backup, `TLS_TERMINATED_BY_PROXY=true`), rilascio con tag `v*` (workflow `release.yml`, che controlla che l'etichetta coincida con `frontend/package.json`); installazione in `docs/deployment.md`, processo di rilascio in `docs/rilasci.md`. **Per ogni rilascio:** alza `version` in `frontend/package.json` (e nel lock) e aggiungi in cima a `frontend/src/changelog.js` la voce per chi usa l'app (`changelog.test.js` verifica che coincidano).
 
-Il dominio di sviluppo è `smarteats.local` (prima `standmanager.local`). Lo sviluppo locale usa certificati mkcert per `*.smarteats.local` e un sottodominio per tenant (es. `default.smarteats.local`). Gli script in `backend/scripts/*.ps1` configurano host e wildcard su Windows.
+Il dominio di sviluppo è `smarteats.local` . Lo sviluppo locale usa certificati mkcert per `*.smarteats.local` e un sottodominio per tenant (es. `default.smarteats.local`). Gli script in `backend/scripts/*.ps1` configurano host e wildcard su Windows.
 
 ## 3. Multi-tenancy e RLS — regole **MUST**
 
@@ -215,7 +215,7 @@ L'isolamento tra tenant si basa sulla Row-Level Security di PostgreSQL con la va
 - **Aggiornamenti dell'app** (`registerType: 'prompt'`, `hooks/useAppUpdate.js`, regole pure in `utils/updatePolicy.js`): il service worker scarica la versione nuova in disparte; l'app la mette in uso da sola solo in momenti sicuri (ritorno in primo piano dopo 5 minuti, oppure 6 ore di attesa e 5 minuti di schermo fermo), **mai con ordini in coda o stampe da partire**; intanto `UpdateBanner` offre «Aggiorna». Dopo l'aggiornamento admin e responsabile vedono una sola volta la finestra «Novità» (`WhatsNew`, voci di `changelog.js`, ultima versione vista in `localStorage`): non c'è un archivio da consultare.
 - **iPhone e iPad (come un'app nativa):** il guscio ha la classe `app-safe` (margini di tacca e Dynamic Island), le altezze usano `dvh` (mai `h-screen`/`min-h-screen`), le schermate centrate usano `layout/CenteredScreen` (scorrono se non ci stanno). Le varianti Tailwind `coarse:` (schermo a dito: bersagli da 44 px) e `roomy:` (largo **e** alto: un telefono in orizzontale è largo ma basso, quindi il menu laterale delle sezioni resta a righe) sono in `index.css`, dove stanno anche le regole per dito (niente selezione del testo né rimbalzo, campi a 16 px). Le righe che scorrono in orizzontale usano `shared/ScrollRow` (sfuma dal lato in cui c'è altro). I messaggi (`Toast`) stanno in alto sul telefono. Si prova con i viewport iPhone/iPad (390×844, 844×390, 820×1180, 1180×820) e si guardano gli screenshot.
 - `App.jsx` e i gusci (`festival/FestivalApp.jsx`, `smarteats/app/SmartEatsApp.jsx`) collegano i pezzi: le nuove funzionalità vanno in componenti, hook o pagine dedicate, non qui.
-- Icone PWA in `frontend/public/` (`pwa-192.png`, `pwa-512.png`, `apple-touch-icon.png`), ricavate dal simbolo di `logo_StandManager_ESC_POS.png` con il simbolo al 56% del lato, così la 512 vale anche come maskable. Se cambi le icone, aggiorna il manifest in `vite.config.js`.
+- Icone PWA in `frontend/public/` (`pwa-192.png`, `pwa-512.png`, `apple-touch-icon.png`), ricavate dal simbolo del logo (ombrellone con spunta) con il simbolo al 56% del lato, così la 512 vale anche come maskable. Se cambi le icone, aggiorna il manifest in `vite.config.js`.
 
 ## 8. Offline-first (fase 2, in corso)
 
