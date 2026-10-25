@@ -3,6 +3,14 @@
 // La prima voce deve avere lo stesso numero di `version` in frontend/package.json (lo controlla changelog.test.js).
 export const CHANGELOG = [
   {
+    version: '0.3.0',
+    date: '2026-10-25',
+    items: [
+      'Nuovo nome: l\'app è SmartEats, con due versioni: SmartEats Stand per sagre e food truck, SmartEats Restaurant per ristoranti, pizzerie e solo asporto.',
+      'Marchio aggiornato sulla schermata di accesso, sugli scontrini e nei report PDF.',
+    ],
+  },
+  {
     version: '0.2.0',
     date: '2026-10-24',
     items: [
