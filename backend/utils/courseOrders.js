@@ -6,6 +6,7 @@ import { sumQuantitiesByProduct, lockAndFindShortages, applyStockChange } from '
 import { formatDisplayCode } from './displayCode.js';
 import { loadItems } from './orderItemsRead.js';
 import { withCheckInfo } from './orderCheck.js';
+import { assertIngredientsAvailable, sellIngredients } from './inventory/orderStock.js';
 
 // Portate di un conto (passo 3-1/3-2). Il cameriere prende tutto il giro: il server crea una comanda per portata.
 // Le prime escono subito (`pending`), le altre restano `scheduled` («da mandare») sul conto finché qualcuno le manda.
@@ -23,7 +24,7 @@ export async function loadOrdersForNotify(db, orderIds) {
 // `groups`: [{ course_id, seq, items }] già validate nella forma. Il numero d'ordine di uscita (`seq`) è relativo: il
 // server lo accoda a quello delle portate già sul conto, così un secondo giro non si mescola col primo.
 // Con `fireFirst` il primo gruppo esce subito; altrimenti il conto riceve tutto «da mandare».
-export async function createCourseOrders(db, { tenantId, userId, role, checkId, groups, fireFirst }) {
+export async function createCourseOrders(db, { tenantId, userId, role, forceStock, checkId, groups, fireFirst }) {
   const check = await lockCheck(db, checkId);
   const { rows: sessions } = await db.query('SELECT id FROM sessions WHERE id = $1 AND end_time IS NULL FOR SHARE', [check.session_id]);
   if (!sessions.length) throw new HttpError(409, 'Il conto non è della sessione in corso', 'CHECK_CLOSED');
@@ -41,6 +42,7 @@ export async function createCourseOrders(db, { tenantId, userId, role, checkId, 
   const shortages = await lockAndFindShortages(db, totals);
   if (shortages.length)
     throw new HttpError(409, `Prodotto esaurito o insufficiente: ${shortages.map(p => p.name).join(', ')}`, 'OUT_OF_STOCK');
+  await assertIngredientsAvailable(db, { tenantId, items: verified.flatMap(g => g.items), role, force: forceStock });
 
   const { rows: [{ base }] } = await db.query('SELECT COALESCE(MAX(course_seq), 0)::int AS base FROM orders WHERE check_id = $1', [checkId]);
   const firstSeq = Math.min(...verified.map(g => g.seq));
@@ -57,6 +59,7 @@ export async function createCourseOrders(db, { tenantId, userId, role, checkId, 
       [g.total, fired ? 'pending' : 'scheduled', userId, g.orderType, formatDisplayCode(counter), check.session_id, checkId,
         base + g.seq, courseName.get(g.course_id) ?? null, g.client_order_id ?? null]);
     await writeOrderItems(db, tenantId, order.id, g.items);
+    await sellIngredients(db, { tenantId, orderId: order.id, items: g.items, sessionId: check.session_id, userId });
     created.push({ id: order.id, fired });
   }
   const stockUpdates = await applyStockChange(db, totals, -1);

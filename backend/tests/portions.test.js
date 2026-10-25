@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { portionsAtServiceStart, portionsAfterRuleSaved } from '../utils/inventory/portions.js';
+import { portionsAtServiceStart, portionsAfterRuleSaved, portionsWhenBackInStock, portionsWhenSoldOut } from '../utils/inventory/portions.js';
 
 // Un piatto di prova: le porzioni di adesso più la regola. Si cambia solo ciò che serve al singolo caso.
 const dish = (changes = {}) => ({ visible: true, stock: 12, stock_enabled: true, portions_reset_rule: 'unlimited', portions_start: null, ...changes });
@@ -42,4 +42,11 @@ test('salvando «illimitato» il piatto torna illimitato e, se era finito, ricom
 
 test('salvando «continua dal servizio prima» non cambia nulla', () => {
   assert.deepEqual(portionsAfterRuleSaved(dish({ stock: 4 }), 'carry_over', null), { stock: 4, stock_enabled: true, visible: true });
+});
+
+test('un piatto esaurito: zero porzioni e nascosto; di nuovo disponibile riparte da N oppure illimitato', () => {
+  assert.deepEqual(portionsWhenSoldOut(), { stock: 0, stock_enabled: true, visible: false });
+  assert.deepEqual(portionsWhenBackInStock(dish({ portions_reset_rule: 'restart_each_service', portions_start: 30 })), { stock: 30, stock_enabled: true, visible: true });
+  assert.deepEqual(portionsWhenBackInStock(dish({ portions_reset_rule: 'carry_over', stock: 0 })), { stock: null, stock_enabled: false, visible: true });
+  assert.deepEqual(portionsWhenBackInStock(dish()), { stock: null, stock_enabled: false, visible: true });
 });

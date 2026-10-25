@@ -29,6 +29,8 @@ export const courseOrdersSchema = z.object({
   })).min(1).max(20).refine(gs => { const ids = gs.map(g => g.client_order_id).filter(Boolean); return new Set(ids).size === ids.length; }, { message: 'Chiave ripetuta' }),
   // Se il primo gruppo esce subito (di solito sì) o tutto resta da mandare.
   fire_first: z.boolean().default(true),
+  // Vendere comunque i piatti i cui ingredienti non bastano (solo admin e responsabile, magazzino con ricette).
+  force_stock: z.boolean().optional(),
 });
 
 // `seq` assente = la prossima portata da mandare.

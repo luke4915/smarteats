@@ -77,6 +77,9 @@ export const ROLES = ['admin', 'manager', 'cashier', 'waiter', 'kitchen'];
 // Ruoli abilitati ad applicare sconti/omaggi su ordini e singoli prodotti.
 // Esportato anche come array riutilizzabile per validazioni inline (non solo middleware di route).
 export const DISCOUNT_ROLES = ['admin', 'manager'];
+// Chi gestisce il magazzino (ingredienti, ricette, fornitori): stessi ruoli degli sconti, che coincidono con «amministratore e responsabile».
+export const MANAGER_ROLES = ['admin', 'manager'];
+export const authorizeManager = authorizeRoles(MANAGER_ROLES, 'Non hai i permessi per gestire il magazzino');
 
 export function authorizeDiscount(req, res, next) {
   if (!DISCOUNT_ROLES.includes(req.user?.role))

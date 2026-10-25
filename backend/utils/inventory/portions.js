@@ -29,3 +29,14 @@ export function portionsAfterRuleSaved(product, rule, start) {
   if (rule === 'unlimited') return { stock: null, stock_enabled: false, visible: visibleAgain(product) };
   return keep;
 }
+
+// Un piatto segnato esaurito (dalla cucina o dall'admin) torna disponibile: con «da N a ogni servizio» riparte da N, altrimenti
+// torna illimitato. (Con «continua dal servizio prima» tornare a zero non avrebbe senso: lo si riporta illimitato.)
+export function portionsWhenBackInStock(product) {
+  if (product.portions_reset_rule === 'restart_each_service' && product.portions_start != null)
+    return { stock: product.portions_start, stock_enabled: true, visible: true };
+  return { stock: null, stock_enabled: false, visible: true };
+}
+
+// Un piatto segnato esaurito: zero porzioni e nascosto, come quando le porzioni finiscono da sole.
+export const portionsWhenSoldOut = () => ({ stock: 0, stock_enabled: true, visible: false });

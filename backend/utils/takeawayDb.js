@@ -7,6 +7,7 @@ import { PORTAL_TZ, localNow } from './bookingPortal.js';
 import { DEFAULTS, slotsOn, orderLoad, pickupIsDue } from './takeaway.js';
 import { inTransaction } from '../db.js';
 import logger from '../logger.js';
+import { assertIngredientsAvailable, sellIngredients, returnIngredientsOfOrder, defaultDisposition } from './inventory/orderStock.js';
 
 // Accesso ai dati dell'asporto, condiviso da chi gestisce (routes/takeaway.js) e dai clienti (routes/publicTakeaway.js).
 // Va chiamato con la connessione del locale (RLS).
@@ -66,6 +67,7 @@ export async function createKitchenOrder(db, { tenantId, userId, takeaway, role 
   const totals = sumQuantitiesByProduct(items);
   const shortages = await lockAndFindShortages(db, totals);
   if (shortages.length) throw new HttpError(409, `Prodotto esaurito o insufficiente: ${shortages.map(p => p.name).join(', ')}`, 'OUT_OF_STOCK');
+  await assertIngredientsAvailable(db, { tenantId, items, role });
 
   const displayCode = formatDisplayCode(session.order_counter);
   const { rows: [order] } = await db.query(
@@ -73,6 +75,7 @@ export async function createKitchenOrder(db, { tenantId, userId, takeaway, role 
      VALUES ($1, 'pending', $2, 'sale', true, $3, $4) RETURNING id, created_at, display_code`,
     [total, userId, displayCode, session.id]);
   await writeOrderItems(db, tenantId, order.id, items);
+  await sellIngredients(db, { tenantId, orderId: order.id, items, sessionId: session.id, userId });
   const stockUpdates = await applyStockChange(db, totals, -1);
   return { order, items, total, stockUpdates };
 }
@@ -117,9 +120,12 @@ export async function fireDueTakeaway(db, { tenantId, userId }) {
 }
 
 // Annulla l'ordine di cucina (rifiuto dopo l'accettazione, annullo del locale): lo stock torna disponibile.
-export async function cancelKitchenOrder(db, orderId) {
+export async function cancelKitchenOrder(db, orderId, { tenantId, userId }) {
+  const { rows: [before] } = await db.query('SELECT status FROM orders WHERE id = $1 FOR UPDATE', [orderId]);
   const { rows } = await db.query(`UPDATE orders SET status = 'canceled' WHERE id = $1 AND status <> 'canceled' RETURNING id`, [orderId]);
   if (!rows.length) return [];
+  const { rows: lines } = await db.query('SELECT prep_status FROM order_items WHERE order_id = $1', [orderId]);
+  await returnIngredientsOfOrder(db, { tenantId, orderId, userId, disposition: defaultDisposition(before, lines) });
   const { rows: items } = await db.query('SELECT product_id AS id, quantity FROM order_items WHERE order_id = $1 AND product_id IS NOT NULL', [orderId]);
   return applyStockChange(db, sumQuantitiesByProduct(items.map(i => ({ id: Number(i.id), quantity: i.quantity }))), +1);
 }

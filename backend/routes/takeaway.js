@@ -259,7 +259,7 @@ export default function (broadcast) {
         if (!['requested', 'accepted'].includes(row.status)) throw new HttpError(409, 'Questo ordine non si può annullare', 'INVALID_TRANSITION');
         await db.query(`UPDATE takeaway_orders SET status = 'cancelled', decided_by = $2, decided_at = now() WHERE id = $1`, [row.id, req.user.id]);
         await enqueue(db, 'takeaway', row.id, 'cancelled');
-        return row.order_id ? cancelKitchenOrder(db, row.order_id) : [];
+        return row.order_id ? cancelKitchenOrder(db, row.order_id, { tenantId: req.user.tenantId, userId: req.user.id }) : [];
       });
       await logAudit(req.db, req.user.id, 'TAKEAWAY_CANCEL', { takeawayId: Number(req.params.id) });
       const order = present(await loadOne(req.db, req.params.id));
