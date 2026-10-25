@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { visibleViews, canViewSmartEats, smartEatsHome, usesSmartEats } from './views.js';
 
-const ids = (role, modules) => visibleViews(role, modules).map(v => v.id);
+const ids = (role, modules, inventory) => visibleViews(role, modules, inventory).map(v => v.id);
 
 test('ogni ruolo vede le sue pagine', () => {
   const all = ['kds', 'stats', 'tables'];
@@ -38,4 +38,15 @@ test('ristoranti e solo asporto usano SmartEats; lo street food ha la sua cassa'
   assert.equal(usesSmartEats({ businessType: 'takeaway_shop' }), true, 'anche il solo asporto');
   assert.equal(usesSmartEats({ businessType: 'street_food' }), false);
   assert.equal(usesSmartEats(null), false);
+});
+
+test('il magazzino con ingredienti e ricette: solo con la modalità «magazzino», per admin e responsabile', () => {
+  const warehouse = { mode: 'warehouse', depletion: 'recipes' };
+  const modules = ['kds', 'tables', 'inventory'];
+  assert.equal(ids('admin', modules, warehouse).includes('inventory'), true);
+  assert.equal(ids('manager', modules, warehouse).includes('inventory'), true);
+  assert.equal(ids('admin', modules, { mode: 'portions', depletion: 'recipes' }).includes('inventory'), false, 'con le sole porzioni non c\'è');
+  assert.equal(ids('admin', modules, null).includes('inventory'), false);
+  assert.equal(ids('waiter', modules, warehouse).includes('inventory'), false);
+  assert.equal(ids('admin', ['kds', 'tables'], warehouse).includes('inventory'), false, 'modulo spento');
 });

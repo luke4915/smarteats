@@ -3,6 +3,7 @@ import { ChefHat, Clock, Check, Volume2, VolumeX } from 'lucide-react';
 import { useKitchenOrders } from './useKitchenOrders';
 import Segmented from '../floor/Segmented';
 import { playChime } from '../../utils/chime';
+import SoldOutButton from '../../inventory/SoldOutButton';
 import { boardOrders, upcomingByTable, orderUrgency, ticketAction, toggleLineStatus, isDone, hasBarWork, newVisibleOrderIds, STATIONS } from './board';
 
 // Il monitor della cucina: fatto per essere letto da lontano e premuto con le mani sporche. Testi grandi, l'attesa
@@ -97,6 +98,7 @@ const KitchenPage = ({ event, actions }) => {
             <Segmented label="Postazione" size="lg" value={station} onChange={setStation} options={STATIONS} />
           )}
           {actions}
+          <SoldOutButton />
           <button onClick={toggleSound} aria-pressed={sound} aria-label={sound ? 'Spegni il suono' : 'Accendi il suono'}
             className="h-12 w-12 rounded-lg border border-[var(--border)] flex items-center justify-center text-[var(--text-main)]">{sound ? <Volume2 size={22} /> : <VolumeX size={22} />}</button>
         </div>

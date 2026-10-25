@@ -40,9 +40,9 @@ const FestivalApp = () => {
   const [showReversePopup, setShowReversePopup] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const views = festivalViews(user.role, user.modules);
+  const views = festivalViews(user.role, user.modules, user.inventory);
   usePageTitle(views.find(v => pathname === `/${v.id}`)?.label, user.tenantName, data.inbox?.items.length ?? 0);
-  const home = defaultView(user.role, user.modules);
+  const home = defaultView(user.role, user.modules, user.inventory);
   if (!home) return <NoViewAvailable onLogout={logout} />;
 
   const onCashPage = pathname === '/dashboard';

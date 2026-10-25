@@ -10,6 +10,7 @@ export const CHANGELOG = [
       'Marchio aggiornato sulla schermata di accesso, sugli scontrini e nei report PDF.',
       'Impostazioni riorganizzate: sezioni in alto, Account (profilo e utenti) e Suggerimenti in schede separate, riservati ad amministratore e responsabile.',
       'Porzioni dei piatti (con la funzione Magazzino, attivabile su richiesta): ogni piatto riparte da un numero a ogni servizio, continua dal servizio prima oppure resta illimitato.',
+      'Magazzino (su richiesta): ingredienti, preparazioni e ricette dei piatti; ogni vendita scala la dispensa e la cucina può segnare esaurito un piatto o un ingrediente.',
       'Password dimenticata: cassa, cameriere e cucina non la cambiano da soli, la reimposta l\'amministratore con una password temporanea.',
     ],
   },

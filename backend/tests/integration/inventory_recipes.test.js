@@ -89,6 +89,8 @@ describe('magazzino: ingredienti e ricette', () => {
     assert.equal(recipe.cost_cents_per_portion, 129);
     assert.equal(recipe.portions_from_ingredients, 20, 'la mozzarella: 2000 g / 100 g');
     assert.equal((await cashier.get(`/products/${ids.pizza}/recipe`)).status, 403);
+    const summary = (await api.get('/products/recipes-summary')).body;
+    assert.deepEqual(summary, [{ product_id: ids.pizza, lines: 3, cost_cents_per_portion: 129, portions_from_ingredients: 20 }]);
     assert.equal((await api.put(`/products/${ids.pizza}/recipe`, { lines: [{ ingredient_id: ids.flour, quantity: 5 }, { ingredient_id: ids.flour, quantity: 6 }] })).status, 400, 'ingrediente ripetuto');
     await api.put(`/products/${ids.pizza}/recipe`, { lines: saved.body.lines });
   });

@@ -22,6 +22,23 @@ const guard = [authenticate, requireModule('inventory'), requireWarehouseMode, a
 
 const present = (row) => ({ ingredient_id: row.ingredient_id, component_preparation_id: row.component_preparation_id, quantity: Number(row.quantity) });
 
+// GET /api/products/recipes-summary — per ogni piatto con ricetta: quante righe, costo di una porzione e porzioni possibili.
+// Serve all'elenco «Ricette» del magazzino, senza una richiesta per piatto.
+productRecipeRouter.get('/recipes-summary', ...guard, tenantScope, async (req, res) => {
+  try {
+    const book = await loadRecipeBook(req.db);
+    res.json([...book.productLines].map(([productId, lines]) => ({
+      product_id: productId,
+      lines: lines.length,
+      cost_cents_per_portion: costCentsOf(needsOfPortion(productId, [], book), book),
+      portions_from_ingredients: portionsFromIngredients(productId, book),
+    })));
+  } catch (err) {
+    logger.error({ err }, 'Errore GET /api/products/recipes-summary');
+    res.status(500).json({ error: 'Errore caricamento ricette' });
+  }
+});
+
 // La ricetta di un piatto, con il costo di una porzione (al costo medio di adesso) e quante porzioni permette la dispensa.
 productRecipeRouter.get('/:id/recipe', ...guard, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
   try {

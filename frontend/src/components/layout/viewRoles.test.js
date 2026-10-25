@@ -25,3 +25,12 @@ test('prima pagina disponibile; nessuna se il ruolo non ha nulla di attivo', () 
   assert.equal(defaultView('kitchen', ALL), 'kitchen');
   assert.equal(defaultView('kitchen', ['stats']), null, 'cucina senza KDS: nessuna pagina');
 });
+
+test('il magazzino si vede solo con modulo acceso, modalità «magazzino» e ruolo di gestione', () => {
+  const warehouse = { mode: 'warehouse', depletion: 'simple' };
+  assert.equal(canView('admin', 'inventory', ['inventory'], warehouse), true);
+  assert.equal(canView('manager', 'inventory', ['inventory'], warehouse), true);
+  assert.equal(canView('admin', 'inventory', ['inventory'], { mode: 'portions' }), false);
+  assert.equal(canView('admin', 'inventory', ['kds'], warehouse), false);
+  assert.equal(canView('cashier', 'inventory', ['inventory'], warehouse), false);
+});

@@ -11,10 +11,11 @@ import KitchenScanner from './KitchenScanner';
 // comunque in cache, quindi funzionano anche offline).
 const KitchenPage = lazy(() => import('../smarteats/kitchen/KitchenPage'));
 const Statistics = lazy(() => import('../components/shared/Statistics'));
+const InventoryPage = lazy(() => import('../inventory/InventoryPage'));
 
 // Le pagine della cassa. Una pagina che il ruolo non può vedere riporta alla prima disponibile (`home`).
 const FestivalRoutes = ({ user, home, products, setProducts, cart, cartState, event, setup }) => {
-  const guard = (id, element) => (canView(user.role, id, user.modules) ? element : <Navigate to={`/${home}`} replace />);
+  const guard = (id, element) => (canView(user.role, id, user.modules, user.inventory) ? element : <Navigate to={`/${home}`} replace />);
   return (
     <Suspense fallback={<p className="text-[var(--text-muted)]">Caricamento…</p>}>
       <Routes>
@@ -23,6 +24,7 @@ const FestivalRoutes = ({ user, home, products, setProducts, cart, cartState, ev
         <Route path="/kitchen" element={guard('kitchen', <KitchenPage event={event} actions={<KitchenScanner />} />)} />
         <Route path="/statistics" element={guard('statistics', <Statistics />)} />
         <Route path="/config" element={guard('config', <ProductConfig products={products} setProducts={setProducts} />)} />
+        <Route path="/inventory" element={guard('inventory', <InventoryPage />)} />
         <Route path="/setup" element={guard('setup', <SetupPage user={user} {...setup} />)} />
         <Route path="*" element={<Navigate to={`/${home}`} replace />} />
       </Routes>
