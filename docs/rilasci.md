@@ -44,6 +44,19 @@ ramo ──PR──▶ main ──versione + changelog──▶ tag vX.Y.Z ─�
 5. **Si aggiorna il server** (vedi la lista qui sotto).
 6. **Si controlla** che funzioni e si crea la Release su GitHub con le stesse righe del changelog.
 
+## 3 bis. Unire una PR con un commento
+
+Quando la PR è pronta (controlli verdi), si unisce scrivendo `/merge` come commento. Il commento è il via libera: lo conta solo se lo
+scrive il proprietario del repository (`.github/workflows/merge-comando.yml`). Il workflow controlla che la PR sia aperta, non una
+bozza, senza conflitti e con tutti i controlli completati e verdi; poi la unisce come un «Merge pull request» e cancella il ramo. Se
+qualcosa non va, risponde con un commento che dice cosa. Nessuno unisce senza che tu lo scriva: chi lavora al codice, compreso
+Claude, chiede sempre prima il tuo ok e ti dà il link.
+
+I test di una PR sono **mirati**: logica, lint e build sempre; test col database e nel browser solo per ciò che è cambiato
+(`scripts/select-tests.mjs`). Il **ciclo completo** gira a ogni modifica di `main`, a richiesta (Actions → CI → Run workflow) e
+prima di ogni rilascio: il workflow Rilascio non costruisce l'immagine se il ciclo completo non è verde. Gli avvisi di sicurezza sulle
+librerie (`npm audit`) hanno un workflow loro, settimanale e sulle PR che toccano le dipendenze, così un avviso nuovo non blocca il lavoro.
+
 ## 4. Sul server
 
 **Prima** (fuori dal servizio: ci sono pochi secondi di fermo)

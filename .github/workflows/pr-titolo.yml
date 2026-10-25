@@ -1,0 +1,33 @@
+name: Titolo e descrizione della PR
+
+# Quando si apre una PR con il titolo generato da GitHub (il nome del ramo, es. «Feat/master gestisci»), lo sostituisce con
+# l'oggetto del commit principale e scrive la descrizione con l'elenco dei commit. Un titolo scritto a mano non si tocca.
+on:
+  pull_request:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  titolo:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+      TITLE: ${{ github.event.pull_request.title }}
+    steps:
+      - name: Scrive titolo e descrizione
+        run: |
+          set -euo pipefail
+          # Titolo già nel formato «tipo(ambito): testo»: l'ha scritto una persona, si lascia.
+          if [[ "$TITLE" =~ ^[a-z]+(\([a-z0-9-]+\))?:\  ]]; then exit 0; fi
+
+          commits=$(gh api "repos/$REPO/pulls/$PR/commits?per_page=100" --jq '[.[] | select(.parents | length == 1) | .commit.message | split("\n")[0]]')
+          [ "$(jq length <<<"$commits")" -gt 0 ] || exit 0
+          # Il commit «principale»: il primo di tipo feat o fix; altrimenti l'ultimo.
+          title=$(jq -r 'map(select(test("^(feat|fix)(\\(|:)"))) | (.[0] // empty)' <<<"$commits")
+          [ -n "$title" ] || title=$(jq -r '.[-1]' <<<"$commits")
+          body=$(jq -r '"## Cosa cambia\n\n" + (map("- " + .) | join("\n")) + "\n\nI controlli di questa PR sono quelli scelti dai file cambiati (scripts/select-tests.mjs). Per unirla: commento `/merge`.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)"' <<<"$commits")
+          gh api -X PATCH "repos/$REPO/pulls/$PR" -f title="$title" -f body="$body" >/dev/null

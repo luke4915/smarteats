@@ -1,12 +1,48 @@
 name: CI
 
+# Su una PR si lanciano i test MIRATI: sempre logica, lint e build; i test col database e nel browser solo se ciò che è cambiato
+# li riguarda (li sceglie scripts/select-tests.mjs, lo stesso di scripts/check.sh). Il CICLO COMPLETO gira a ogni modifica di
+# `main`, a mano (Actions → CI → Run workflow) e prima di ogni rilascio (release.yml lo richiama).
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
+  scelta:
+    name: scelta dei test
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.s.outputs.code }}
+      integration: ${{ steps.s.outputs.integration }}
+      e2e: ${{ steps.s.outputs.e2e }}
+      full: ${{ steps.s.outputs.full }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: s
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            json=$(node scripts/select-tests.mjs --base "origin/${{ github.base_ref }}")
+          else
+            json=$(node scripts/select-tests.mjs --full)
+          fi
+          echo "$json"
+          pick() { node -e "const v=JSON.parse(process.argv[1])[process.argv[2]]; console.log(Array.isArray(v)?v.join(' '):v)" "$json" "$1"; }
+          echo "code=$(pick code)" >> "$GITHUB_OUTPUT"
+          echo "full=$(pick full)" >> "$GITHUB_OUTPUT"
+          echo "integration=$(pick integration)" >> "$GITHUB_OUTPUT"
+          echo "e2e=$(pick e2e)" >> "$GITHUB_OUTPUT"
+
   frontend:
+    needs: scelta
+    if: needs.scelta.outputs.code == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -22,9 +58,10 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
-      - run: npm audit --audit-level=high
 
   backend:
+    needs: scelta
+    if: needs.scelta.outputs.code == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -51,12 +88,12 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
-      - run: npm audit --audit-level=high --omit=dev
       - run: npm test
 
-      # Database di prova come in locale: schema.sql con l'utente applicativo soggetto a RLS.
-      # Il ruolo "colettas" è il proprietario nominato nel dump di schema.sql.
+      # I test col database servono solo se ne è stato scelto qualcuno: database di prova come in locale (schema.sql con
+      # l'utente applicativo soggetto a RLS). Il ruolo "colettas" è il proprietario nominato nel dump di schema.sql.
       - name: Prepara il database di prova
+        if: needs.scelta.outputs.integration != ''
         run: |
           psql -h localhost -U postgres -c "CREATE ROLE colettas SUPERUSER LOGIN"
           psql -h localhost -U postgres -c "CREATE ROLE smarteats_app LOGIN PASSWORD 'ci-password'"
@@ -79,12 +116,22 @@ jobs:
           PG_USER=smarteats_app PG_PASSWORD=ci-password PG_HOST=localhost PG_DATABASE=smarteats_test \
             npm run db:baseline
 
-      - run: npm run test:integration
+      - name: Test col database
+        if: needs.scelta.outputs.integration != ''
+        run: |
+          if [ "${{ needs.scelta.outputs.integration }}" = "all" ]; then
+            npm run test:integration
+          else
+            files=""; for f in ${{ needs.scelta.outputs.integration }}; do files="$files tests/integration/$f"; done
+            node --test --test-concurrency=1 $files
+          fi
 
-  # Test nel browser: l'app vera (backend + frontend compilato) con locali di prova, un browser automatico che fa il
-  # giro del ristorante e della sagra (anche da telefono). Segnala le regressioni di interfaccia che i test sulla
-  # logica non vedono. Gli screenshot restano come allegato per guardarli a occhio.
+  # Test nel browser: l'app vera (backend + frontend compilato) con locali di prova, un browser automatico che fa il giro del
+  # ristorante e della sagra (anche da telefono). Solo i test che attraversano ciò che è cambiato, salvo il ciclo completo.
+  # Gli screenshot restano come allegato per guardarli a occhio.
   e2e:
+    needs: scelta
+    if: needs.scelta.outputs.e2e != ''
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -137,7 +184,13 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Costruisce il frontend e lancia i test nel browser
         working-directory: frontend
-        run: npm run e2e
+        run: |
+          if [ "${{ needs.scelta.outputs.e2e }}" = "all" ]; then
+            npm run e2e
+          else
+            specs=""; for f in ${{ needs.scelta.outputs.e2e }}; do specs="$specs e2e/$f"; done
+            npm run e2e -- $specs
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
