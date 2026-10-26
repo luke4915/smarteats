@@ -5,11 +5,11 @@ import { settingsSections } from './sections.js';
 const ids = (user) => settingsSections(user).map(s => s.id);
 
 test('l\'admin di un ristorante completo vede tutte le sezioni, l\'account per ultimo', () => {
-  assert.deepEqual(ids({ role: 'admin', modules: ['tables', 'bookings', 'takeaway'] }), ['service', 'rooms', 'bookings', 'takeaway', 'notifications', 'feedback', 'account']);
+  assert.deepEqual(ids({ role: 'admin', modules: ['tables', 'bookings', 'takeaway'] }), ['service', 'rooms', 'bookings', 'takeaway', 'notifications', 'reserved', 'feedback', 'account']);
 });
 
 test('chi gestisce un locale di solo asporto non vede sala né prenotazioni', () => {
-  assert.deepEqual(ids({ role: 'admin', modules: ['takeaway'] }), ['takeaway', 'notifications', 'feedback', 'account']);
+  assert.deepEqual(ids({ role: 'admin', modules: ['takeaway'] }), ['takeaway', 'notifications', 'reserved', 'feedback', 'account']);
 });
 
 test('il responsabile ha le notifiche e l\'account, non la configurazione del locale', () => {
@@ -30,4 +30,9 @@ test('l\'IVA predefinita compare solo all\'admin nella modalità magazzino', () 
   assert.equal(ids({ role: 'admin', modules: ['inventory'], inventory: warehouse }).includes('inventory'), true);
   assert.equal(ids({ role: 'admin', modules: ['inventory'], inventory: { mode: 'portions' } }).includes('inventory'), false);
   assert.equal(ids({ role: 'manager', modules: ['inventory'], inventory: warehouse }).includes('inventory'), false);
+});
+
+test('il blocco dei dati riservati lo gestisce solo l\'amministratore', () => {
+  assert.equal(ids({ role: 'admin', modules: ['takeaway'] }).includes('reserved'), true);
+  assert.equal(ids({ role: 'manager', modules: ['tables'] }).includes('reserved'), false);
 });

@@ -5,7 +5,7 @@ import ReceiptDetailModal from './ReceiptDetailModal';
 import { btnPrimary, row } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
-import { centsToEuroText } from './receipt';
+import { money } from './receipt';
 
 // I carichi di merce, dal più recente: chi, quando, quanto. Un tocco apre il dettaglio con righe e bolla allegata.
 const ReceiptsPanel = ({ suppliers, ingredients, onChanged }) => {
@@ -34,7 +34,7 @@ const ReceiptsPanel = ({ suppliers, ingredients, onChanged }) => {
               <span className="min-w-0 flex-1"><span className="block truncate font-medium text-[var(--text-main)]">{r.supplier_name}</span>
                 <span className="block text-xs text-[var(--text-muted)]">{r.lines} {r.lines === 1 ? 'riga' : 'righe'}{r.document_number ? ` · bolla ${r.document_number}` : ''}</span></span>
               {r.documents > 0 && <Paperclip size={15} className="text-[var(--text-muted)] shrink-0" aria-label="Con bolla allegata" />}
-              <span className="tabular-nums text-[var(--text-main)] w-24 text-right">{centsToEuroText(r.total_cost_cents)} €</span>
+              <span className="tabular-nums text-[var(--text-main)] w-24 text-right">{money(r.total_cost_cents)}</span>
             </button>
           </li>))}
       </ul>

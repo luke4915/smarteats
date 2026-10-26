@@ -19,8 +19,8 @@ async function verifyRequest(req, res, next, { allowPasswordChange }) {
   }
 
   try {
-    const { id, username, role, tenantId, tenantName, loginAt } = jwt.verify(token, process.env.JWT_SECRET, VERIFY_OPTIONS);
-    req.user = { id, username, role, tenantId, tenantName, loginAt, mustChangePassword: false };
+    const { id, username, role, tenantId, tenantName, loginAt, reservedUntil } = jwt.verify(token, process.env.JWT_SECRET, VERIFY_OPTIONS);
+    req.user = { id, username, role, tenantId, tenantName, loginAt, reservedUntil, mustChangePassword: false };
   } catch (err) {
     if (err.name === 'TokenExpiredError')
       return res.status(401).json({ error: 'Token scaduto', code: 'TOKEN_EXPIRED' });

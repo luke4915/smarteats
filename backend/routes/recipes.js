@@ -13,6 +13,7 @@ import { needsOfPortion, costCentsOf, portionsFromIngredients } from '../utils/i
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { productRecipeSchema, modifierRecipeSchema } from '../schemas/inventorySchema.js';
+import { maskReserved } from '../utils/reservedData.js';
 
 // Ricette: quella di un piatto (GET/PUT /products/:id/recipe) e ciò che cambia un'opzione (GET/PUT /modifiers/:id/recipe).
 // Le gestiscono amministratore e responsabile (sono costi). Montate su due indirizzi: `products` e `modifiers`.
@@ -24,7 +25,7 @@ const present = (row) => ({ ingredient_id: row.ingredient_id, component_preparat
 
 // GET /api/products/recipes-summary — per ogni piatto con ricetta: quante righe, costo di una porzione e porzioni possibili.
 // Serve all'elenco «Ricette» del magazzino, senza una richiesta per piatto.
-productRecipeRouter.get('/recipes-summary', ...guard, tenantScope, async (req, res) => {
+productRecipeRouter.get('/recipes-summary', ...guard, tenantScope, maskReserved, async (req, res) => {
   try {
     const book = await loadRecipeBook(req.db);
     res.json([...book.productLines].map(([productId, lines]) => ({
@@ -40,7 +41,7 @@ productRecipeRouter.get('/recipes-summary', ...guard, tenantScope, async (req, r
 });
 
 // La ricetta di un piatto, con il costo di una porzione (al costo medio di adesso) e quante porzioni permette la dispensa.
-productRecipeRouter.get('/:id/recipe', ...guard, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
+productRecipeRouter.get('/:id/recipe', ...guard, validate({ params: idParamsSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     const { rows: product } = await req.db.query('SELECT id FROM products WHERE id = $1', [req.params.id]);
     if (!product.length) throw new HttpError(404, 'Prodotto non trovato');
@@ -55,7 +56,7 @@ productRecipeRouter.get('/:id/recipe', ...guard, validate({ params: idParamsSche
   }
 });
 
-productRecipeRouter.put('/:id/recipe', ...guard, validate({ params: idParamsSchema, body: productRecipeSchema }), tenantScope, async (req, res) => {
+productRecipeRouter.put('/:id/recipe', ...guard, validate({ params: idParamsSchema, body: productRecipeSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     await inTransaction(req.db, async (tx) => {
       if (!(await tx.query('SELECT 1 FROM products WHERE id = $1 FOR UPDATE', [req.params.id])).rowCount) throw new HttpError(404, 'Prodotto non trovato');
@@ -71,7 +72,7 @@ productRecipeRouter.put('/:id/recipe', ...guard, validate({ params: idParamsSche
 });
 
 // Cosa cambia un'opzione: se scala il magazzino e quali ingredienti aggiunge (+) o toglie (−).
-modifierRecipeRouter.get('/:id/recipe', ...guard, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
+modifierRecipeRouter.get('/:id/recipe', ...guard, validate({ params: idParamsSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     const { rows: [modifier] } = await req.db.query('SELECT id, affects_stock FROM modifiers WHERE id = $1', [req.params.id]);
     if (!modifier) throw new HttpError(404, 'Opzione non trovata');
@@ -84,7 +85,7 @@ modifierRecipeRouter.get('/:id/recipe', ...guard, validate({ params: idParamsSch
   }
 });
 
-modifierRecipeRouter.put('/:id/recipe', ...guard, validate({ params: idParamsSchema, body: modifierRecipeSchema }), tenantScope, async (req, res) => {
+modifierRecipeRouter.put('/:id/recipe', ...guard, validate({ params: idParamsSchema, body: modifierRecipeSchema }), tenantScope, maskReserved, async (req, res) => {
   const { affects_stock: affectsStock, lines } = req.body;
   try {
     await inTransaction(req.db, async (tx) => {

@@ -6,7 +6,7 @@ import { btn, btnPrimary, iconBtn, row } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { formatQuantity } from './units';
-import { centsToEuroText, vatOfLines } from './receipt';
+import { money, vatOfLines } from './receipt';
 import { uploadReceiptDocuments, documentUrl } from './receiptDocuments';
 
 // Un carico già registrato: righe, totali e allegati. Il carico non si modifica (lo storico dei movimenti non si corregge);
@@ -20,7 +20,8 @@ const ReceiptDetailModal = ({ receiptId, onClose, onChanged }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, [receiptId]);
 
-  const vat = receipt ? vatOfLines(receipt.lines) : 0;
+  const hidden = receipt?.total_cost_cents === null;            // dati riservati bloccati: i totali non si calcolano
+  const vat = receipt && !hidden ? vatOfLines(receipt.lines) : 0;
   const attach = async () => {
     setBusy(true);
     const failed = await uploadReceiptDocuments(receiptId, files);
@@ -44,12 +45,12 @@ const ReceiptDetailModal = ({ receiptId, onClose, onChanged }) => {
               <li key={i} className={`${row} flex flex-wrap items-center gap-x-3 gap-y-1`}>
                 <span className="font-medium text-[var(--text-main)] flex-1 min-w-40">{l.ingredient_name}</span>
                 <span className="text-sm text-[var(--text-muted)] tabular-nums">{l.quantity} × {l.purchase_unit_name} = {formatQuantity(l.base_quantity, l.base_unit)}</span>
-                <span className="text-sm tabular-nums text-[var(--text-main)] w-24 text-right">{centsToEuroText(l.line_cost_cents)} €</span>
+                <span className="text-sm tabular-nums text-[var(--text-main)] w-24 text-right">{money(l.line_cost_cents)}</span>
                 {l.vat_rate !== null && <span className="text-xs text-[var(--text-muted)]">IVA {l.vat_rate}%</span>}
               </li>))}
           </ul>
           <p className="text-sm text-[var(--text-muted)] tabular-nums text-right">
-            Senza IVA <b className="text-[var(--text-main)]">{centsToEuroText(receipt.total_cost_cents)} €</b> · IVA {centsToEuroText(vat)} € · Totale <b className="text-[var(--text-main)]">{centsToEuroText(receipt.total_cost_cents + vat)} €</b>
+            Senza IVA <b className="text-[var(--text-main)]">{money(receipt.total_cost_cents)}</b> · IVA {money(hidden ? null : vat)} · Totale <b className="text-[var(--text-main)]">{money(hidden ? null : receipt.total_cost_cents + vat)}</b>
           </p>
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-[var(--text-main)]">Bolla allegata</h3>

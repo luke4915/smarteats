@@ -28,11 +28,12 @@ const BOOKING_PORTAL_KEYS = ['booking_portal_enabled', 'booking_portal_phone', '
 const TAKEAWAY_KEYS = ['takeaway_portal_enabled', 'takeaway_slot_minutes', 'takeaway_slot_capacity', 'takeaway_min_lead_minutes', 'takeaway_phone', 'takeaway_welcome'];
 
 // default_vat_rate: IVA di vendita dei piatti senza un'aliquota propria, in percentuale (magazzino: ricavi e margini al netto dell'IVA).
-export const SETTINGS_KEYS = ['welcome_message', 'cover_charge', 'default_vat_rate', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS, ...RECEIPT_SETTINGS_KEYS];
+// reserved_data_lock: '1' = costi, margini e statistiche di incasso restano bloccati finché un amministratore non li sblocca (utils/reservedData.js).
+export const SETTINGS_KEYS = ['welcome_message', 'cover_charge', 'default_vat_rate', 'reserved_data_lock', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS, ...RECEIPT_SETTINGS_KEYS];
 export const PUBLIC_SETTINGS_KEYS = ['welcome_message'];
 
 // Chiavi che l'admin del tenant può modificare: quelle dello scontrino sono solo del master.
-const TENANT_WRITABLE_SETTINGS_KEYS = ['welcome_message', 'cover_charge', 'default_vat_rate', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS];
+const TENANT_WRITABLE_SETTINGS_KEYS = ['welcome_message', 'cover_charge', 'default_vat_rate', 'reserved_data_lock', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS];
 
 export const settingParamsSchema = z.object({ key: z.enum(TENANT_WRITABLE_SETTINGS_KEYS) });
 

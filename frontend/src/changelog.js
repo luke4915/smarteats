@@ -16,6 +16,7 @@ export const CHANGELOG = [
       'Report del magazzino: costo degli ingredienti, margine e food cost per piatto (con IVA per prodotto), scarti e valore della dispensa.',
       'Scorta minima e «Da riordinare»: gli ingredienti sotto soglia compaiono nella campanella e in un filtro dell\'elenco, con i giorni di scorta rimasti.',
       'Report del magazzino: spesa per fornitore e prezzi d\'acquisto cambiati rispetto al carico precedente.',
+      'Dati riservati: costi, margini, prezzi dei fornitori e statistiche di incasso si possono bloccare (Impostazioni → Dati riservati) e si vedono per 10 minuti con la password di un amministratore.',
       'Password dimenticata: cassa, cameriere e cucina non la cambiano da soli, la reimposta l\'amministratore con una password temporanea.',
     ],
   },

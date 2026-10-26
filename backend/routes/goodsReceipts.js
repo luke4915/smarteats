@@ -12,13 +12,14 @@ import { MAX_DOCUMENT_BYTES, DOCUMENT_TYPES, MAX_DOCUMENTS_PER_RECEIPT, sniffDoc
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { goodsReceiptSchema, goodsReceiptsQuerySchema, receiptDocumentParamsSchema } from '../schemas/supplierSchema.js';
+import { maskReserved } from '../utils/reservedData.js';
 
 // Carichi di merce (la «bolla»): cosa è arrivato, da quale fornitore, a che prezzo; con la foto o il file della bolla.
 // Solo amministratore e responsabile (sono costi). Un carico scritto non si modifica: lo storico dei movimenti non si corregge.
 const router = express.Router();
 const guard = [authenticate, requireModule('inventory'), requireWarehouseMode, authorizeManager];
 
-router.get('/', ...guard, validate({ query: goodsReceiptsQuerySchema }), tenantScope, async (req, res) => {
+router.get('/', ...guard, validate({ query: goodsReceiptsQuerySchema }), tenantScope, maskReserved, async (req, res) => {
   const { from, to, supplier_id: supplierId, limit } = req.validQuery;
   try {
     const { rows } = await req.db.query(
@@ -35,7 +36,7 @@ router.get('/', ...guard, validate({ query: goodsReceiptsQuerySchema }), tenantS
   }
 });
 
-router.get('/:id', ...guard, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
+router.get('/:id', ...guard, validate({ params: idParamsSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     const { rows: [receipt] } = await req.db.query(
       `SELECT r.id, r.supplier_id, s.name AS supplier_name, to_char(r.received_on, 'YYYY-MM-DD') AS received_on, r.document_number, r.notes, r.total_cost_cents, r.created_at
@@ -59,7 +60,7 @@ router.get('/:id', ...guard, validate({ params: idParamsSchema }), tenantScope, 
   }
 });
 
-router.post('/', ...guard, validate({ body: goodsReceiptSchema }), tenantScope, async (req, res) => {
+router.post('/', ...guard, validate({ body: goodsReceiptSchema }), tenantScope, maskReserved, async (req, res) => {
   const { supplier_id: supplierId, received_on: receivedOn, document_number: documentNumber, notes, lines } = req.body;
   try {
     const created = await inTransaction(req.db, (db) => createGoodsReceipt(db, { userId: req.user.id, supplierId, receivedOn, documentNumber, notes, lines }));
@@ -77,7 +78,7 @@ router.post('/', ...guard, validate({ body: goodsReceiptSchema }), tenantScope, 
 // controlla sui primi byte, non solo sull'intestazione.
 const rawDocument = express.raw({ type: DOCUMENT_TYPES, limit: MAX_DOCUMENT_BYTES });
 
-router.put('/:id/documents', ...guard, validate({ params: idParamsSchema }), rawDocument, tenantScope, async (req, res) => {
+router.put('/:id/documents', ...guard, validate({ params: idParamsSchema }), rawDocument, tenantScope, maskReserved, async (req, res) => {
   try {
     const body = req.body;
     if (!Buffer.isBuffer(body) || !body.length) throw new HttpError(400, 'Allega una foto (JPG, PNG, WebP) o un PDF', 'INVALID_DOCUMENT');
@@ -100,7 +101,7 @@ router.put('/:id/documents', ...guard, validate({ params: idParamsSchema }), raw
 });
 
 // Apre un allegato: foto o PDF, sempre come file (mai come pagina), con una politica di sicurezza che non lascia eseguire nulla.
-router.get('/:id/documents/:documentId', ...guard, validate({ params: receiptDocumentParamsSchema }), tenantScope, async (req, res) => {
+router.get('/:id/documents/:documentId', ...guard, validate({ params: receiptDocumentParamsSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     const { rows: [doc] } = await req.db.query('SELECT file_name, content_type, data FROM stored_documents WHERE id = $1 AND goods_receipt_id = $2', [req.params.documentId, req.params.id]);
     if (!doc) throw new HttpError(404, 'Allegato non trovato');
@@ -119,7 +120,7 @@ router.get('/:id/documents/:documentId', ...guard, validate({ params: receiptDoc
   }
 });
 
-router.delete('/:id/documents/:documentId', ...guard, validate({ params: receiptDocumentParamsSchema }), tenantScope, async (req, res) => {
+router.delete('/:id/documents/:documentId', ...guard, validate({ params: receiptDocumentParamsSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     const { rowCount } = await req.db.query('DELETE FROM stored_documents WHERE id = $1 AND goods_receipt_id = $2', [req.params.documentId, req.params.id]);
     if (!rowCount) throw new HttpError(404, 'Allegato non trovato');

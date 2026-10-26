@@ -7,6 +7,7 @@ const ALL = [
   { id: 'inventory', label: 'Magazzino', hint: 'L\'IVA predefinita per calcolare i margini.', admin: true, warehouse: true },
   { id: 'menu', label: 'Menu pubblico', hint: 'Il messaggio di benvenuto che i clienti leggono dal QR.', notFor: ['kitchen'] },
   { id: 'printing', label: 'Stampa', hint: 'Stampanti e copie degli scontrini.', notFor: ['kitchen'] },
+  { id: 'reserved', label: 'Dati riservati', hint: 'Nascondi incassi e statistiche: si sbloccano con la password di un amministratore.', admin: true, notFor: ['kitchen'] },
   { id: 'feedback', label: 'Suggerimenti', hint: 'Un\'idea o un problema: arriva a chi sviluppa SmartEats.', roles: ['admin', 'manager'] },
   { id: 'account', label: 'Account', hint: 'Il tuo profilo e chi può accedere al locale.', roles: ['admin', 'manager'] },
 ];

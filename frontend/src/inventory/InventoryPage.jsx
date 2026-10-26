@@ -12,6 +12,7 @@ import ReceiptsPanel from './ReceiptsPanel';
 import StockLevelsPanel from './StockLevelsPanel';
 import MovementsPanel from './MovementsPanel';
 import ReportPanel from './ReportPanel';
+import ReservedGate from '../components/shared/ReservedGate';
 
 // Il magazzino (modalità «magazzino» scelta dal master): la dispensa, i carichi di merce, i fornitori, le preparazioni e le ricette,
 // i controlli (conteggi), il registro dei movimenti con scarti e rettifiche, e il report di costi e margini. Lo usano
@@ -48,7 +49,7 @@ const InventoryPage = () => {
           {tab === 'options' && <OptionRecipesPanel ingredients={data.ingredients} />}
           {tab === 'levels' && <StockLevelsPanel ingredients={data.ingredients} onChanged={reload} />}
           {tab === 'movements' && <MovementsPanel ingredients={data.ingredients} simpleDepletion={user.inventory?.depletion === 'simple'} onChanged={reload} />}
-          {tab === 'report' && <ReportPanel dish={dish} />}
+          {tab === 'report' && <ReservedGate what="Il report"><ReportPanel dish={dish} /></ReservedGate>}
         </>)}
     </PageBody>
   );

@@ -10,6 +10,7 @@ import { requireWarehouseMode } from '../utils/inventory/guards.js';
 import { recordWaste, recordAdjustment, recordUsage } from '../utils/inventory/adjustmentsDb.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { movementSchema, movementsQuerySchema, usageSchema } from '../schemas/inventorySchema.js';
+import { maskReserved } from '../utils/reservedData.js';
 
 // Movimenti scritti a mano (scarti e rettifiche), lo scarico semplificato e il registro dei movimenti.
 // Amministratore e responsabile: sono quantità e costi.
@@ -17,7 +18,7 @@ const router = express.Router();
 const guard = [authenticate, requireModule('inventory'), requireWarehouseMode, authorizeManager];
 
 // Il registro, dal più recente: cosa è entrato e uscito, quando, perché e a che costo.
-router.get('/movements', ...guard, validate({ query: movementsQuerySchema }), tenantScope, async (req, res) => {
+router.get('/movements', ...guard, validate({ query: movementsQuerySchema }), tenantScope, maskReserved, async (req, res) => {
   const { ingredient_id: ingredientId, kind, limit } = req.validQuery;
   try {
     const { rows } = await req.db.query(
@@ -34,7 +35,7 @@ router.get('/movements', ...guard, validate({ query: movementsQuerySchema }), te
 });
 
 // Uno scarto o una rettifica.
-router.post('/movements', ...guard, validate({ body: movementSchema }), tenantScope, async (req, res) => {
+router.post('/movements', ...guard, validate({ body: movementSchema }), tenantScope, maskReserved, async (req, res) => {
   const body = req.body;
   try {
     await inTransaction(req.db, (db) => (body.type === 'waste'
@@ -50,7 +51,7 @@ router.post('/movements', ...guard, validate({ body: movementSchema }), tenantSc
 });
 
 // Lo scarico semplificato (solo se il locale scala gli ingredienti «a mano»): per ogni ingrediente quanto è stato usato, o quanto resta.
-router.post('/usage', ...guard, validate({ body: usageSchema }), tenantScope, async (req, res) => {
+router.post('/usage', ...guard, validate({ body: usageSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     if ((await getTenantModules(req.user.tenantId))?.inventory?.depletion !== 'simple')
       throw new HttpError(409, 'Questo locale scala gli ingredienti dalle ricette: lo scarico a mano non serve', 'NOT_SIMPLE_DEPLETION');

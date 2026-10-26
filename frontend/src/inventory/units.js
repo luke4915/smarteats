@@ -42,14 +42,18 @@ export function formatQuantity(quantity, baseUnit) {
   return `${NUMBER.format(value)} ${UNITS[unit].label}`;
 }
 
+// Al posto di un importo riservato (il server manda `null` finché i dati sono bloccati).
+export const RESERVED_TEXT = '•••';
+
 // Costo di un ingrediente per l'unità più usata: i centesimi per grammo diventano «€/kg».
 export function formatCostPerUnit(costPerBaseUnit, baseUnit) {
+  if (costPerBaseUnit === null || costPerBaseUnit === undefined) return RESERVED_TEXT;
   const per = baseUnit === 'pc' ? 1 : 1000;
   const label = { g: 'kg', ml: 'l', pc: 'pz' }[baseUnit];
   return `${new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format((costPerBaseUnit * per) / 100)}/${label}`;
 }
 
-export const formatCents = (cents) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+export const formatCents = (cents) => (cents === null || cents === undefined ? RESERVED_TEXT : new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(cents / 100));
 
 // «26,4%», o un trattino se non c'è nulla da confrontare.
 export const formatPercent = (value) => (value === null || value === undefined ? '—' : `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(value)}%`);

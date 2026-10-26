@@ -10,6 +10,7 @@ import { isRevenue, isKitchenOrder } from '../utils/revenue.js';
 import { buildStats } from '../utils/stats.js';
 import { buildRestaurantStats } from '../utils/restaurantStats.js';
 import { buildOccupancy, buildBookingStats } from '../utils/occupancy.js';
+import { requireUnlocked } from '../utils/reservedData.js';
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const authorizeStats = authorizeRoles(['admin', 'manager'], 'Le statistiche sono
 
 // GET /api/stats?sessions=1,2&tz=Europe/Rome — statistiche aggregate dal database (nessun ordine viaggia verso il browser).
 // Senza `sessions` valgono tutte le serate. Le ore sono nel fuso `tz` del dispositivo.
-router.get('/', authenticate, requireModule('stats'), authorizeStats, validate({ query: statsQuerySchema }), tenantScope, async (req, res) => {
+router.get('/', authenticate, requireModule('stats'), authorizeStats, validate({ query: statsQuerySchema }), tenantScope, requireUnlocked, async (req, res) => {
   const { sessions, tz } = req.validQuery;
   const sessionFilter = sessions?.length ? sessions : null;
   const inSessions = 'AND ($1::int[] IS NULL OR o.session_id = ANY($1))';
@@ -62,7 +63,7 @@ router.get('/', authenticate, requireModule('stats'), authorizeStats, validate({
 // GET /api/stats/restaurant?sessions=1,2&tz=Europe/Rome — statistiche del ristorante: coperti, scontrino medio per coperto,
 // durata e rotazione dei conti, andamento per ora, portate, piatti, tempi di cucina, sconti, incassi per metodo.
 // Tutto aggregato dal database. Gli importi vengono dalle comande dei conti pagati (`isRevenue`), come le altre statistiche.
-router.get('/restaurant', authenticate, requireModule('stats'), requireModule('tables'), authorizeStats, validate({ query: statsQuerySchema }), tenantScope, async (req, res) => {
+router.get('/restaurant', authenticate, requireModule('stats'), requireModule('tables'), authorizeStats, validate({ query: statsQuerySchema }), tenantScope, requireUnlocked, async (req, res) => {
   const { sessions, tz } = req.validQuery;
   const sf = sessions?.length ? sessions : null;
   const inSessions = 'AND ($1::int[] IS NULL OR o.session_id = ANY($1))';
@@ -129,7 +130,7 @@ router.get('/restaurant', authenticate, requireModule('stats'), requireModule('t
 });
 
 // GET /api/stats/shared-products?a=1&b=2 — prodotti venduti in entrambe le serate (o in tutte, se non se ne scelgono due)
-router.get('/shared-products', authenticate, requireModule('stats'), authorizeStats, validate({ query: sharedProductsQuerySchema }), tenantScope, async (req, res) => {
+router.get('/shared-products', authenticate, requireModule('stats'), authorizeStats, validate({ query: sharedProductsQuerySchema }), tenantScope, requireUnlocked, async (req, res) => {
   const { a, b } = req.validQuery;
   try {
     const { rows } = await req.db.query(
@@ -149,7 +150,7 @@ router.get('/shared-products', authenticate, requireModule('stats'), authorizeSt
 });
 
 // GET /api/stats/head-to-head?a=1&b=2&product=7 — quantità e incasso di un prodotto in due serate
-router.get('/head-to-head', authenticate, requireModule('stats'), authorizeStats, validate({ query: headToHeadQuerySchema }), tenantScope, async (req, res) => {
+router.get('/head-to-head', authenticate, requireModule('stats'), authorizeStats, validate({ query: headToHeadQuerySchema }), tenantScope, requireUnlocked, async (req, res) => {
   const { a, b, product } = req.validQuery;
   try {
     const { rows } = await req.db.query(

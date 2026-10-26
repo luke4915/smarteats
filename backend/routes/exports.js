@@ -6,6 +6,7 @@ import { validate } from '../middleware/validate.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { withItems } from '../utils/orderItemsRead.js';
 import { isRevenue } from '../utils/revenue.js';
+import { requireUnlocked } from '../utils/reservedData.js';
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const esc = (s) => {
   return `"${safe.replace(/"/g, '""')}"`;
 };
 
-router.get('/session/:id/csv', authenticate, authorizeAdmin, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
+router.get('/session/:id/csv', authenticate, authorizeAdmin, validate({ params: idParamsSchema }), tenantScope, requireUnlocked, async (req, res) => {
   const sessionId = req.params.id;
 
   try {

@@ -11,13 +11,14 @@ import { createStockLevel } from '../utils/inventory/stockLevelsDb.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { stockLevelSchema } from '../schemas/inventorySchema.js';
+import { maskReserved } from '../utils/reservedData.js';
 
 // Controlli di magazzino (il conteggio fisico della dispensa): si registrano già confermati, in un colpo solo.
 // Amministratore e responsabile. Un controllo scritto non si modifica: lo storico non si corregge.
 const router = express.Router();
 const guard = [authenticate, requireModule('inventory'), requireWarehouseMode, authorizeManager];
 
-router.get('/', ...guard, tenantScope, async (req, res) => {
+router.get('/', ...guard, tenantScope, maskReserved, async (req, res) => {
   try {
     const { rows } = await req.db.query(
       `SELECT l.id, l.kind, l.notes, l.created_at, u.username AS created_by,
@@ -31,7 +32,7 @@ router.get('/', ...guard, tenantScope, async (req, res) => {
   }
 });
 
-router.get('/:id', ...guard, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
+router.get('/:id', ...guard, validate({ params: idParamsSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     const { rows: [level] } = await req.db.query(
       'SELECT l.id, l.kind, l.notes, l.created_at, u.username AS created_by FROM stock_levels l LEFT JOIN users u ON u.id = l.created_by WHERE l.id = $1', [req.params.id]);
@@ -48,7 +49,7 @@ router.get('/:id', ...guard, validate({ params: idParamsSchema }), tenantScope, 
   }
 });
 
-router.post('/', ...guard, validate({ body: stockLevelSchema }), tenantScope, async (req, res) => {
+router.post('/', ...guard, validate({ body: stockLevelSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     const created = await inTransaction(req.db, (db) => createStockLevel(db, { userId: req.user.id, ...req.body }));
     await logAudit(req.db, req.user.id, 'CREATE_STOCK_LEVEL', { stockLevelId: created.id, lines: req.body.lines.length, differences: created.differences });

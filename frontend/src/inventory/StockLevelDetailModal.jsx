@@ -12,7 +12,8 @@ const StockLevelDetailModal = ({ levelId, onClose }) => {
   const [level, setLevel] = useState(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchWithAuth(`/stock-levels/${levelId}`).then(setLevel).catch(err => { showToast(err.message, 'error'); onClose(); }); }, [levelId]);
-  const total = level?.lines.reduce((sum, l) => sum + l.difference_value_cents, 0) ?? 0;
+  const hidden = level?.lines.some(l => l.difference_value_cents === null);     // dati riservati bloccati
+  const total = hidden ? null : level?.lines.reduce((sum, l) => sum + l.difference_value_cents, 0) ?? 0;
 
   return (
     <Modal title={level ? `Controllo del ${new Date(level.created_at).toLocaleDateString('it-IT')}` : 'Controllo'} size="max-w-3xl" onClose={onClose}

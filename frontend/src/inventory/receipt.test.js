@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseEuroToCents, centsToEuroText, rowForIngredient, rowAmounts, summarize, receiptProblem, receiptPayload, blankReceiptRow, todayText, rowFromPriceItem, priceListProblem, priceListPayload, vatOfLines } from './receipt.js';
+import { parseEuroToCents, centsToEuroText, rowForIngredient, rowAmounts, summarize, receiptProblem, receiptPayload, blankReceiptRow, todayText, rowFromPriceItem, priceListProblem, priceListPayload, vatOfLines, money } from './receipt.js';
 
 const ingredients = [{ id: 1, name: 'Farina', base_unit: 'g' }, { id: 2, name: 'Olio', base_unit: 'ml' }];
 const row = (changes) => ({ ...blankReceiptRow(), ...changes });
@@ -70,4 +70,11 @@ test('il listino: un ingrediente ripetuto o una riga incompleta non si salvano',
   assert.ok(priceListProblem([good, good]));
   assert.ok(priceListProblem([{ ...good, price_text: '' }]));
   assert.ok(priceListProblem([{ ...good, ingredient_id: '' }]));
+});
+
+test('un importo riservato resta vuoto nei campi e diventa puntini a schermo', () => {
+  assert.equal(centsToEuroText(null), '');
+  assert.equal(money(null), '•••');
+  assert.equal(money(1850), '18,50 €');
+  assert.equal(money(0), '0,00 €');
 });

@@ -48,6 +48,15 @@ export const exportsLimiter = limiter({
   message: { error: 'Troppe esportazioni, riprova tra un minuto.' },
 });
 
+// Sblocco dei dati riservati: è una prova di password, quindi pochi errori per utente ogni 15 minuti (gli sblocchi riusciti non contano).
+export const reservedUnlockLimiter = limiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  skipSuccessfulRequests: true,
+  keyGenerator: userOrIpKey,
+  message: { error: 'Troppi tentativi di sblocco. Riprova tra 15 minuti.', code: 'TOO_MANY_ATTEMPTS' },
+});
+
 // API generali: max 300 richieste al minuto per utente (o per IP senza sessione)
 export const apiLimiter = limiter({
   windowMs: 60 * 1000,

@@ -9,6 +9,7 @@ import { requireWarehouseMode } from '../utils/inventory/guards.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { ingredientSchema, availabilitySchema } from '../schemas/inventorySchema.js';
+import { maskReserved } from '../utils/reservedData.js';
 
 // Ingredienti del locale (modulo `inventory`, modalità magazzino): l'elenco con ciò che c'è in dispensa. Li gestiscono
 // amministratore e responsabile; la cucina li vede (e può segnarli esauriti) ma non ne conosce il costo.
@@ -27,7 +28,7 @@ const present = (row, role) => ({
   weighted_average_cost: role === 'kitchen' ? undefined : Number(row.weighted_average_cost),
 });
 
-router.get('/', ...guard, seesKitchen, tenantScope, async (req, res) => {
+router.get('/', ...guard, seesKitchen, tenantScope, maskReserved, async (req, res) => {
   try {
     const { rows } = await req.db.query(`SELECT ${COLUMNS} FROM ingredients ORDER BY lower(name)`);
     res.json(rows.map(r => present(r, req.user.role)));
@@ -37,7 +38,7 @@ router.get('/', ...guard, seesKitchen, tenantScope, async (req, res) => {
   }
 });
 
-router.post('/', ...guard, authorizeManager, validate({ body: ingredientSchema }), tenantScope, async (req, res) => {
+router.post('/', ...guard, authorizeManager, validate({ body: ingredientSchema }), tenantScope, maskReserved, async (req, res) => {
   const { name, base_unit: baseUnit, yield_percent: yieldPercent, reorder_level: reorderLevel, active } = req.body;
   try {
     const { rows } = await req.db.query(
@@ -52,7 +53,7 @@ router.post('/', ...guard, authorizeManager, validate({ body: ingredientSchema }
   }
 });
 
-router.put('/:id', ...guard, authorizeManager, validate({ params: idParamsSchema, body: ingredientSchema }), tenantScope, async (req, res) => {
+router.put('/:id', ...guard, authorizeManager, validate({ params: idParamsSchema, body: ingredientSchema }), tenantScope, maskReserved, async (req, res) => {
   const { name, base_unit: baseUnit, yield_percent: yieldPercent, reorder_level: reorderLevel, active } = req.body;
   try {
     const { rows: [current] } = await req.db.query('SELECT base_unit FROM ingredients WHERE id = $1', [req.params.id]);
@@ -74,7 +75,7 @@ router.put('/:id', ...guard, authorizeManager, validate({ params: idParamsSchema
 });
 
 // Un ingrediente usato in una ricetta o con dei movimenti non si elimina (si perderebbe lo storico): si disattiva.
-router.delete('/:id', ...guard, authorizeManager, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
+router.delete('/:id', ...guard, authorizeManager, validate({ params: idParamsSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     const used = await req.db.query(
       `SELECT 1 FROM recipe_lines WHERE ingredient_id = $1 UNION ALL SELECT 1 FROM modifier_recipe_lines WHERE ingredient_id = $1
@@ -92,7 +93,7 @@ router.delete('/:id', ...guard, authorizeManager, validate({ params: idParamsSch
 });
 
 // «Esaurito» e «di nuovo disponibile»: anche la cucina, con un tocco. Un ingrediente esaurito blocca i piatti che lo usano.
-router.put('/:id/availability', ...guard, seesKitchen, validate({ params: idParamsSchema, body: availabilitySchema }), tenantScope, async (req, res) => {
+router.put('/:id/availability', ...guard, seesKitchen, validate({ params: idParamsSchema, body: availabilitySchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     const { rows } = await req.db.query('UPDATE ingredients SET marked_out = $1 WHERE id = $2 RETURNING id, name, marked_out', [!req.body.available, req.params.id]);
     if (!rows.length) throw new HttpError(404, 'Ingrediente non trovato');
