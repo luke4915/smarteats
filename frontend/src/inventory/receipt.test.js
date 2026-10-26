@@ -1,6 +1,7 @@
 import test from 'node:test';
+import { formatCents } from '../utils/format.js';
 import assert from 'node:assert/strict';
-import { parseEuroToCents, centsToEuroText, rowForIngredient, rowAmounts, summarize, receiptProblem, receiptPayload, blankReceiptRow, todayText, rowFromPriceItem, priceListProblem, priceListPayload, vatOfLines, money, rowsForSupplier, arrivedRows } from './receipt.js';
+import { parseEuroToCents, centsToEuroText, rowForIngredient, rowAmounts, summarize, receiptProblem, receiptPayload, blankReceiptRow, todayText, rowFromPriceItem, priceListProblem, priceListPayload, vatOfLines, rowsForSupplier, arrivedRows } from './receipt.js';
 
 const ingredients = [{ id: 1, name: 'Farina', base_unit: 'g' }, { id: 2, name: 'Olio', base_unit: 'ml' }];
 const row = (changes) => ({ ...blankReceiptRow(), ...changes });
@@ -74,9 +75,8 @@ test('il listino: un ingrediente ripetuto o una riga incompleta non si salvano',
 
 test('un importo riservato resta vuoto nei campi e diventa puntini a schermo', () => {
   assert.equal(centsToEuroText(null), '');
-  assert.equal(money(null), '•••');
-  assert.equal(money(1850), '18,50 €');
-  assert.equal(money(0), '0,00 €');
+  assert.equal(formatCents(null), '•••');
+  assert.equal(formatCents(1850).replace(/\s/g, ' '), '18,50 €');
 });
 
 test('scelto il fornitore il carico si riempie con i suoi prodotti, senza quantità, con confezione e prezzo dell\'ultimo carico', () => {

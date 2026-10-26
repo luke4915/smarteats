@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import RecipeModal from './RecipeModal';
 import { row } from '../smarteats/floor/ui';
-import { formatCents } from './units';
+import { formatCents } from '../utils/format';
 
 // I piatti con la loro ricetta: quanti ingredienti, quanto costa una porzione e quante se ne fanno con la dispensa di adesso.
 const RecipesPanel = ({ products, recipes, ingredients, preparations, dish, showCosts, onChanged }) => {

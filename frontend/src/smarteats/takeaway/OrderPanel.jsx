@@ -4,7 +4,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from '../floor/PanelFrame';
 import { btn, btnPrimary, btnDanger, input } from '../floor/ui';
-import { formatEuro } from '../floor/checkMath';
+import { formatEuro } from '../../utils/format';
 import { STATUS, SOURCE, shownStatus } from './rules';
 import { formatDay } from '../reservations/rules';
 import WhatsAppStatus from '../notifications/WhatsAppStatus';

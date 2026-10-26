@@ -16,7 +16,9 @@
   <!-- Tema del personale scelto prima del primo disegno (niente lampo chiaro→scuro). Le pagine dei clienti seguono il sistema. -->
   <script>
     try {
-      if (!/^\/(book|order|menu|privacy|terms|s)(\/|$)/.test(location.pathname) && localStorage.getItem('theme') !== 'light') document.documentElement.classList.add('dark');
+      var t = localStorage.getItem('theme');
+      var dark = t === 'auto' ? matchMedia('(prefers-color-scheme: dark)').matches : t !== 'light';
+      if (!/^\/(book|order|menu|privacy|terms|s)(\/|$)/.test(location.pathname) && dark) document.documentElement.classList.add('dark');
     } catch (e) { /* senza archivio locale: resta il chiaro */ }
   </script>
 </head>

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { formatEuro, formatMin } from './useStatistics';
+import { formatEuro, formatMin } from '../../../utils/format';
 
 export function exportStatsPdf(stats, sessions, selectedSessionIds, terms) {
   const doc = new jsPDF();

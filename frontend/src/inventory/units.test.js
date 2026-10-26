@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { unitsFor, parseDecimal, toBaseQuantity, toDisplayQuantity, formatQuantity, formatCostPerUnit, formatCents, formatPercent, formatDays, RESERVED_TEXT } from './units.js';
+import { formatCents, RESERVED_TEXT } from '../utils/format.js';
+import { unitsFor, parseDecimal, toBaseQuantity, toDisplayQuantity, formatQuantity, formatCostPerUnit, formatPercent, formatDays } from './units.js';
 
 test('le unità tra cui scegliere dipendono dall\'unità di base', () => {
   assert.deepEqual(unitsFor('g').map(u => u.id), ['g', 'kg']);

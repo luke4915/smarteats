@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from './Modal';
 import ModalActions from './ModalActions';
 import { btnPrimary, label } from '../../smarteats/floor/ui';
+import { formatEuro } from '../../utils/format';
 
 // Conferma della chiusura serata o servizio. Se ci sono ordini ancora aperti (in attesa o in preparazione) chi chiude
 // sceglie: completarli (entrano nei conti) o lasciarli fuori da totale atteso e statistiche.
@@ -27,7 +28,7 @@ const EndSessionModal = ({ title, sessionName, openOrders, openOrdersTotal, onCa
       <p className="text-sm text-[var(--text-muted)]">Stai per chiudere <span className="font-semibold text-[var(--text-main)]">«{sessionName}»</span>.</p>
       {needsChoice && (
         <div className="space-y-2 mt-4">
-          <p className={label}>Ci sono {openOrders} {openOrders === 1 ? 'ordine non completato' : 'ordini non completati'} ({openOrdersTotal.toFixed(2)} €). Cosa ne facciamo?</p>
+          <p className={label}>Ci sono {openOrders} {openOrders === 1 ? 'ordine non completato' : 'ordini non completati'} ({formatEuro(openOrdersTotal)}). Cosa ne facciamo?</p>
           {option('complete', 'Completali', 'Entrano nel totale atteso e nelle statistiche.')}
           {option('leave', 'Lasciali fuori', 'Restano come sono, fuori da totale atteso e statistiche.')}
         </div>

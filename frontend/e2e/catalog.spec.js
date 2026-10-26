@@ -53,11 +53,11 @@ test('listino della sagra: aggiungo un prodotto con disponibilità limitata e lo
   await expect(page.getByText('Panino con salsiccia')).toBeVisible();
   await shot(page, 'catalog-02-listino-sagra');
 
-  await page.getByRole('button', { name: 'Aggiungi' }).click();
+  await page.getByRole('button', { name: 'Nuovo prodotto' }).click();
   await page.locator('input[name="category"]').fill('Panini');
   await page.locator('input[name="name"]').fill('Panino di prova');
   await page.locator('input[name="price"]').fill('6');
-  await page.getByLabel('Disponibilità limitata').check();
+  await page.getByRole('switch', { name: 'Disponibilità limitata' }).click();
   // Senza una quantità il salvataggio resta bloccato
   await expect(page.getByRole('button', { name: 'Aggiungi prodotto' })).toBeDisabled();
   await page.locator('input[name="stock"]').fill('10');

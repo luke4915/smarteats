@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { formatEuro } from './checkMath';
+import { formatEuro } from '../../utils/format';
 import { toggleOption, isComplete, missingGroups, extraOf, toLineModifiers, groupHint, countIn } from './modifierRules';
 import { btnPrimary, iconBtn } from './ui';
 

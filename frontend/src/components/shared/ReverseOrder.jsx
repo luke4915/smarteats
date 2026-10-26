@@ -5,6 +5,7 @@ import { btnDanger } from '../../smarteats/floor/ui';
 import { useToast } from '../../context/useToast';
 
 import { fetchWithAuth } from '../../utils/apiClient';
+import { formatEuro } from '../../utils/format';
 const CANCEL_WINDOW_MS = 5 * 60 * 1000; // deve combaciare con il backend
 
 // Un ordine è stornabile se: è ancora pending/preparing (avanzata, sempre stornabile
@@ -73,7 +74,7 @@ const ReverseOrder = ({ onClose }) => {
                 <div className="min-w-0">
                   <span className="font-medium text-sm text-[var(--text-main)]">Ordine {order.display_code || `#${order.id}`}</span>
                   <div className="text-xs text-[var(--text-muted)] mt-0.5">{order.items?.map(i => `${i.quantity}× ${i.name}`).join(', ')}</div>
-                  <div className="text-xs font-medium tabular-nums text-[var(--accent)] mt-0.5">{Number(order.total || 0).toFixed(2)} €</div>
+                  <div className="text-xs font-medium tabular-nums text-[var(--accent)] mt-0.5">{formatEuro(Number(order.total || 0))}</div>
                   {isTimed && (
                     <div className="flex items-center gap-1 text-xs font-medium tabular-nums text-orange-500 mt-1">
                       <Clock size={12} /> Scade tra {Math.floor(secsLeft / 60)}:{String(secsLeft % 60).padStart(2, '0')}

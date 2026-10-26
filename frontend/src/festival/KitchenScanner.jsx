@@ -49,7 +49,7 @@ const KitchenScanner = () => {
 
   return (
     <>
-      <button onClick={() => { setError(''); setOpen(true); }} className={`${btn} !h-12`}><Camera size={18} /> Scansiona scontrino</button>
+      <button onClick={() => { setError(''); setOpen(true); }} aria-label="Scansiona scontrino" className={`${btn} !h-12`}><Camera size={18} /> <span className="hidden sm:inline">Scansiona scontrino</span></button>
       {open && (
         <Modal title="Scansiona lo scontrino" onClose={() => setOpen(false)}>
           <div className="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-[var(--accent)]">

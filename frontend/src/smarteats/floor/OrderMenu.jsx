@@ -1,5 +1,5 @@
 import { ChevronLeft } from 'lucide-react';
-import ProductPicker from './ProductPicker';
+import ProductPicker from '../../components/shared/ProductPicker';
 
 // La carta per fare una comanda al tavolo: il titolo con il ritorno alla Sala e la carta comune (`ProductPicker`).
 const OrderMenu = ({ products, cart, tableName, onAdd, onBack }) => (

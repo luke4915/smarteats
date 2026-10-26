@@ -3,7 +3,8 @@ import { Banknote, CreditCard, CircleEllipsis, Printer, Check, Minus, Plus } fro
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from './PanelFrame';
-import { payableLines, estimateSelection, splitEqually, formatEuro, toCents } from './checkMath';
+import { payableLines, estimateSelection, splitEqually, toCents } from './checkMath';
+import { formatEuro } from '../../utils/format';
 import { btn, btnPrimary, input, label, row, segment, segmentBox, iconBtn } from './ui';
 
 const METHODS = [['cash', 'Contanti', Banknote], ['card', 'Carta', CreditCard], ['other', 'Altro', CircleEllipsis]];

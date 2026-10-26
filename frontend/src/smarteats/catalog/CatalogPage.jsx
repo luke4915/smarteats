@@ -31,7 +31,7 @@ const CatalogPage = () => {
       {hasTables && (
         <Segmented label="Sezioni della carta" value={tab} onChange={setTab} className="w-60" options={[{ id: 'dishes', label: 'Piatti' }, { id: 'options', label: 'Opzioni' }]} />
       )}
-      {tab === 'dishes' && <ProductConfig hideHeader compact takeawayEnabled={!!user.modules?.includes('takeaway')} products={products} setProducts={setProducts} courses={courses} modifierGroups={hasTables ? modifiers.groups : null} onModifiersSaved={modifiers.reload} />}
+      {tab === 'dishes' && <ProductConfig hideHeader noun="piatto" takeawayEnabled={!!user.modules?.includes('takeaway')} products={products} setProducts={setProducts} courses={courses} modifierGroups={hasTables ? modifiers.groups : null} onModifiersSaved={modifiers.reload} />}
       {hasTables && tab === 'options' && <ModifierSettings groups={modifiers.groups} onChanged={modifiers.reload} />}
     </PageBody>
   );

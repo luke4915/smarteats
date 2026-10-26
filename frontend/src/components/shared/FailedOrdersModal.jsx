@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import Modal from './Modal';
 import { btn } from '../../smarteats/floor/ui';
+import { formatEuro } from '../../utils/format';
 import { useToast } from '../../context/useToast';
 import { listFailedOrders, retryFailedOrder, discardFailedOrder } from '../../offline/failedOrders';
 
@@ -34,7 +35,7 @@ const FailedOrdersModal = ({ onClose, onChanged }) => {
           <div key={o.localId} className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)]">
             <div className="flex items-baseline justify-between gap-2">
               <p className="font-medium text-sm text-[var(--text-main)]">{o.displayCode ? `Ordine ${o.displayCode}` : 'Ordine offline'}</p>
-              <p className="text-xs text-[var(--text-muted)] tabular-nums">{formatTime(o.createdAt)}{o.total != null && ` · € ${Number(o.total).toFixed(2)}`}</p>
+              <p className="text-xs text-[var(--text-muted)] tabular-nums">{formatTime(o.createdAt)}{o.total != null && ` · ${formatEuro(o.total)}`}</p>
             </div>
             <ul className="mt-1.5 text-xs text-[var(--text-main)]">
               {o.items.map((i, n) => (

@@ -6,7 +6,7 @@ import { btnPrimary } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { rowsFromLines, recipeProblem, linesFromRows } from './recipeLines';
-import { formatCents } from './units';
+import { formatCents } from '../utils/format';
 
 // La ricetta di un piatto: cosa si scala dalla dispensa a ogni porzione. Mostra il costo di una porzione al costo medio di adesso.
 const RecipeModal = ({ product, dish, showCosts, ingredients, preparations, onClose, onSaved }) => {

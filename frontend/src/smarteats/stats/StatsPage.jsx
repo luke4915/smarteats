@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import { formatEuro } from '../floor/checkMath';
+import { formatEuro } from '../../utils/format';
 import { input } from '../floor/ui';
 import Segmented from '../floor/Segmented';
 import { HBars, HourBars, HourTable } from './Bars';

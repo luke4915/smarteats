@@ -1,5 +1,6 @@
 import { row } from '../smarteats/floor/ui';
-import { formatCents, formatPercent, formatQuantity } from './units';
+import { formatPercent, formatQuantity } from './units';
+import { formatCents } from '../utils/format';
 import { reasonText, differenceText } from './controls';
 
 // Le parti del report del magazzino. Ogni sezione riceve già i numeri dal server (centesimi interi): qui si impaginano soltanto.

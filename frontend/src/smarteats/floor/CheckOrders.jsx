@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Undo2, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import { formatEuro } from './checkMath';
+import { formatEuro } from '../../utils/format';
 import { iconBtn } from './ui';
 import { canCancelOrders } from './permissions';
 

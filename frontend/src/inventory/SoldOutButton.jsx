@@ -9,7 +9,7 @@ const SoldOutButton = () => {
   if (!user.inventory) return null;
   return (
     <>
-      <button onClick={() => setOpen(true)} aria-label="Segna esaurito" className="h-12 px-4 rounded-lg border border-[var(--border)] flex items-center gap-2 text-[var(--text-main)] text-lg font-medium"><PackageX size={22} /> Esaurito</button>
+      <button onClick={() => setOpen(true)} aria-label="Segna esaurito" className="h-12 px-4 rounded-lg border border-[var(--border)] flex items-center gap-2 text-[var(--text-main)] text-lg font-medium"><PackageX size={22} /> <span className="hidden sm:inline">Esaurito</span></button>
       {open && <SoldOutPanel canSeeIngredients={user.inventory.mode === 'warehouse'} onClose={() => setOpen(false)} />}
     </>
   );

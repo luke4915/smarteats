@@ -34,8 +34,8 @@ const CumulativeQueue = ({ orders }) => {
             {queue.map(item => (
                 <div key={`${item.name}__${item.note}`}
                     className="flex flex-col gap-2 p-4 rounded-2xl bg-white/5 border border-white/10">
-                    <p className="font-semibold text-base uppercase tracking-tight text-white leading-tight">{item.name}</p>
-                    {item.note && <p className="text-xs font-semibold uppercase text-yellow-400">⚠ {item.note}</p>}
+                    <p className="font-semibold text-base tracking-tight text-white leading-tight">{item.name}</p>
+                    {item.note && <p className="text-xs font-semibold text-yellow-400">⚠ {item.note}</p>}
                     <span className="text-5xl font-semibold tabular-nums text-[var(--accent)] leading-none">{item.quantity}</span>
                 </div>
             ))}
@@ -54,12 +54,12 @@ const OrderCard = ({ order }) => {
             <div className="flex justify-between items-center mb-3">
                 <span className="font-semibold text-xl text-white">#{orderCode}</span>
                 {order.table_name && (
-                    <span className="px-2 py-0.5 bg-white/10 border border-white/30 text-white rounded-full text-[11px] font-semibold uppercase">
+                    <span className="px-2 py-0.5 bg-white/10 border border-white/30 text-white rounded-full text-[11px] font-semibold">
                         {order.table_name}{order.covers > 0 && ` · ${order.covers} cop.`}
                     </span>
                 )}
                 {order.is_takeaway && (
-                    <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-500 rounded-full text-[9px] font-semibold uppercase">Asporto</span>
+                    <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-500 rounded-full text-[11px] font-semibold">Asporto</span>
                 )}
                 <span className={`text-xs font-semibold tabular-nums ${urgent ? 'text-red-400' : 'text-white/40'}`}>
                     {new Date(order.created_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
@@ -71,10 +71,10 @@ const OrderCard = ({ order }) => {
                     <li key={idx}>
                         <div className="flex items-baseline gap-2">
                             <span className="text-[var(--accent)] font-semibold">×{item.quantity}</span>
-                            <span className="font-bold text-sm text-white uppercase">{item.name}</span>
+                            <span className="font-semibold text-sm text-white">{item.name}</span>
                         </div>
                         {item.note && (
-                            <div className="ml-5 mt-0.5 px-2 py-0.5 bg-yellow-500/10 border-l-2 border-yellow-400 text-xs text-yellow-400 font-semibold uppercase">
+                            <div className="ml-5 mt-0.5 px-2 py-0.5 bg-yellow-500/10 border-l-2 border-yellow-400 text-xs text-yellow-400 font-semibold">
                                 {item.note}
                             </div>
                         )}
@@ -133,16 +133,16 @@ export default function KDS() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center font-semibold text-white text-lg shadow-lg shadow-[var(--accent-shadow)]">S</div>
+                    <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center font-semibold text-white text-lg">S</div>
                     <div>
                         <p className="font-semibold text-lg tracking-tight leading-none">KDS — Cucina</p>
-                        <p className="text-xs text-white/40 font-bold mt-0.5">{pending.length} ordini in attesa</p>
+                        <p className="text-xs text-white/40 font-semibold mt-0.5">{pending.length} ordini in attesa</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     {wsConnected
-                        ? <><Wifi size={18} className="text-green-400" /><span className="text-xs font-semibold uppercase text-green-400">Live</span></>
-                        : <><WifiOff size={18} className="text-red-400" /><span className="text-xs font-semibold uppercase text-red-400">Offline</span></>
+                        ? <><Wifi size={18} className="text-green-400" /><span className="text-xs font-semibold text-green-400">Live</span></>
+                        : <><WifiOff size={18} className="text-red-400" /><span className="text-xs font-semibold text-red-400">Offline</span></>
                     }
                 </div>
             </div>

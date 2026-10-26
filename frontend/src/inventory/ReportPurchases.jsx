@@ -1,5 +1,6 @@
 import { row } from '../smarteats/floor/ui';
-import { formatCents, formatCostPerUnit, formatPercent } from './units';
+import { formatCostPerUnit, formatPercent } from './units';
+import { formatCents } from '../utils/format';
 
 // Gli acquisti nel report: quanto si è speso con ogni fornitore e quali prezzi sono cambiati rispetto al carico precedente.
 // Importi senza IVA (l'IVA dei carichi si legge a parte). Le parti del report sul venduto stanno in ReportSections.jsx.

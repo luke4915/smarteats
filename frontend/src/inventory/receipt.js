@@ -3,7 +3,7 @@
 // Una riga a schermo: { key, ingredient_id, purchase_unit_name, content_text, content_unit, quantity_text, price_text, vat }:
 //   quantità in confezioni, contenuto di una confezione nell'unità scelta («25 kg»), prezzo di una confezione in euro SENZA IVA,
 //   aliquota IVA in percentuale (testo, vuoto = nessuna). Al server arrivano centesimi e unità di base.
-import { parseDecimal, toBaseQuantity, toDisplayQuantity, RESERVED_TEXT } from './units.js';
+import { parseDecimal, toBaseQuantity, toDisplayQuantity } from './units.js';
 
 export const VAT_RATES = ['4', '5', '10', '22'];
 
@@ -20,7 +20,6 @@ export function parseEuroToCents(text) {
 export const centsToEuroText = (cents) => (cents === null || cents === undefined ? '' : (cents / 100).toFixed(2).replace('.', ','));
 
 // Un importo in euro da mostrare, o i puntini se è riservato.
-export const money = (cents) => (cents === null || cents === undefined ? RESERVED_TEXT : `${centsToEuroText(cents)} €`);
 
 // La riga già compilata con ciò che il listino del fornitore ricorda per quell'ingrediente (confezione, contenuto, prezzo, IVA).
 export function rowForIngredient(row, ingredientId, ingredients, supplierItems = []) {

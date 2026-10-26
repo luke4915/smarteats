@@ -5,7 +5,7 @@ import { useToast } from '../../context/useToast';
 import PanelFrame from './PanelFrame';
 import ActionMenu from '../../components/shared/ActionMenu';
 import CheckOrders from './CheckOrders';
-import { formatEuro } from './checkMath';
+import { formatEuro } from '../../utils/format';
 import { printFired } from './printFired';
 import { NO_COURSE_NAME } from './courses';
 import { canCash, canDiscount as roleCanDiscount } from './permissions';

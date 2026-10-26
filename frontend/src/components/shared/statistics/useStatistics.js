@@ -1,8 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { fetchWithAuth } from '../../../utils/apiClient';
 
-export const formatEuro = (v) => Number(v || 0).toFixed(2) + ' €';
-export const formatMin = (v) => Number(v || 0).toFixed(1) + ' min';
 
 export const activeHours = (data, key) => {
   const firstIndex = data.findIndex(d => d[key] > 0);

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from './PanelFrame';
-import { formatEuro } from './checkMath';
+import { formatEuro } from '../../utils/format';
 import { btnPrimary, input, label, row, segment, segmentBox } from './ui';
 
 const TYPES = [['gift', 'Omaggio'], ['percent', 'Sconto %'], ['amount', 'Sconto €'], ['sale', 'Togli']];

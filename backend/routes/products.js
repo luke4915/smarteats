@@ -16,11 +16,12 @@ const router = express.Router();
 router.get('/menu', resolveTenantFromHost, requireModule('qr_menu'), async (req, res) => {
   try {
     const data = await withTenantClient(req.tenantId, async (db) => {
-      const [{ rows: products }, { rows: sessions }] = await Promise.all([
+      const [{ rows: products }, { rows: sessions }, { rows: [tenant] }] = await Promise.all([
         db.query('SELECT id, name, price, category, color FROM products WHERE visible = true ORDER BY category, name'),
-        db.query('SELECT name FROM sessions WHERE end_time IS NULL ORDER BY start_time DESC LIMIT 1')
+        db.query('SELECT name FROM sessions WHERE end_time IS NULL ORDER BY start_time DESC LIMIT 1'),
+        db.query('SELECT name FROM tenants WHERE id = $1', [req.tenantId]),
       ]);
-      return { sessionName: sessions[0]?.name || null, products };
+      return { tenantName: tenant?.name ?? null, sessionName: sessions[0]?.name || null, products };
     });
     res.json(data);
   } catch (err) {

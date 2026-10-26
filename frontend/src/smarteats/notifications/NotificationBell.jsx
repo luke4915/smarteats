@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell, CalendarPlus, CalendarX2, CheckCheck, PackageMinus, ShoppingBag } from 'lucide-react';
 import { formatDay } from '../reservations/rules';
 import { formatQuantity } from '../../inventory/units';
+import { formatEuro } from '../../utils/format';
 
 // La campanella in testata: il numero di cose da fare e, al tocco, l'elenco. Ogni voce porta direttamente alla
 // prenotazione da approvare. Si chiude toccando fuori o con Esc.
@@ -17,7 +18,7 @@ const ACTION = { cancel_request: 'Tocca per decidere sull\'annullo', low_stock: 
 // La riga sotto il titolo: quando e quanti per una prenotazione, il ritiro per l'asporto, la scorta per un ingrediente.
 const detail = (i) => {
   if (i.kind === 'low_stock') return `In dispensa ${formatQuantity(i.quantity_on_hand, i.base_unit)} · scorta minima ${formatQuantity(i.reorder_level, i.base_unit)}`;
-  if (i.kind === 'takeaway_request') return `Ritiro ${formatDay(i.date, { short: true })} alle ${i.start_time} · ${Number(i.total).toFixed(2).replace('.', ',')} €`;
+  if (i.kind === 'takeaway_request') return `Ritiro ${formatDay(i.date, { short: true })} alle ${i.start_time} · ${formatEuro(i.total)}`;
   return `${formatDay(i.date, { short: true })} · ${i.start_time} · ${i.party_size} ${i.party_size === 1 ? 'persona' : 'persone'}`;
 };
 

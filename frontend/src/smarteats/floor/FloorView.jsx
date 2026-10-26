@@ -3,7 +3,8 @@ import { useIsMobile } from '../../hooks/useBreakpoint';
 import { Users, Receipt, UserPlus, Clock } from 'lucide-react';
 import FloorCanvas from '../floorplan/FloorCanvas';
 import { isPlaced } from '../floorplan/geometry';
-import { tableState, formatEuro } from './checkMath';
+import { tableState } from './checkMath';
+import { formatEuro, formatElapsed } from '../../utils/format';
 import { minutesOf } from '../reservations/rules';
 import Segmented from './Segmented';
 import { tone, btn } from './ui';
@@ -40,7 +41,7 @@ const TableCard = ({ table, check, reservation, selected, onSelect }) => {
       </div>
       <div className="text-xs">
         <p className="font-semibold text-[var(--text-main)]">{table.active ? label : 'Non in uso'}</p>
-        {check && <p className="mt-0.5 flex items-center gap-1.5 text-[var(--text-muted)] tabular-nums"><Receipt size={12} /> {formatEuro(check.total)} · {minutesSince(check.opened_at)} min</p>}
+        {check && <p className="mt-0.5 flex items-center gap-1.5 text-[var(--text-muted)] tabular-nums"><Receipt size={12} /> {formatEuro(check.total)} · {formatElapsed(minutesSince(check.opened_at))}</p>}
         {!check && reservation && <p className="mt-0.5 font-medium text-[var(--accent)] truncate">{reservation.start_time} · {reservation.customer_name} · {reservation.party_size}</p>}
         {check?.ready_items > 0 && <p className="mt-0.5 font-semibold text-[var(--accent)]">{check.ready_items} {check.ready_items === 1 ? 'pronto' : 'pronti'}</p>}
       </div>
@@ -78,7 +79,7 @@ const mapTable = ({ checkOf, reservedOf, selectedId, onSelect, walkIn }) => (tab
         </span>
       )}
       {check && height >= 76 && (
-        <span className="leading-none mt-1.5 text-[var(--text-main)] tabular-nums truncate max-w-full px-1" style={{ fontSize: Math.max(11, Math.min(cell * 0.3, 15)) }}>{formatEuro(check.total)} · {minutesSince(check.opened_at)}′</span>
+        <span className="leading-none mt-1.5 text-[var(--text-main)] tabular-nums truncate max-w-full px-1" style={{ fontSize: Math.max(11, Math.min(cell * 0.3, 15)) }}>{formatEuro(check.total)} · {formatElapsed(minutesSince(check.opened_at))}</span>
       )}
       {!check && reservation && height >= 56 && (
         <span className="leading-none mt-1.5 font-medium text-[var(--accent)] truncate max-w-full px-1" style={{ fontSize: Math.max(11, Math.min(cell * 0.3, 15)) }}>{reservation.start_time}</span>

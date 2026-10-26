@@ -10,6 +10,10 @@ export const iconBtn = 'inline-flex items-center justify-center p-2 coarse:min-h
 // Un'icona accanto a un campo (cestino di una riga, ecc.): alta e larga come il campo (44 px), così sta sulla sua stessa linea.
 export const iconBtnField = `${iconBtn} !h-11 !w-11 shrink-0`;
 export const input = 'w-full h-11 px-3 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-main)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] transition';
+// Il riquadro di una pagina o di una colonna (Sala, Prenotazioni, Asporto): da tablet in su è una scheda, sul telefono niente riquadro.
+export const card = 'min-w-0 md:bg-[var(--bg-card)] md:rounded-xl md:border md:border-[var(--border)] md:p-5';
+// Un menu a comparsa (account, notifiche, «⋯»): scheda tonda con ombra morbida, sopra a tutto.
+export const popover = 'rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.5)]';
 export const row = 'px-3 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)]';
 // Interruttore a due o più scelte (un solo pulsante acceso)
 export const segment = (on) => `flex-1 h-9 coarse:h-11 rounded-md text-sm font-medium transition cursor-pointer ${on ? 'bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-main)]'}`;

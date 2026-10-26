@@ -14,7 +14,9 @@ import NoViewAvailable from '../components/layout/NoViewAvailable';
 import LogoutConfirmModal from '../components/layout/LogoutConfirmModal';
 import AppHeader from '../components/shell/AppHeader';
 import ServiceControl from '../components/shell/ServiceControl';
-import { SideNav, BottomNav } from '../components/shell/SideNav';
+import SideNav from '../components/shell/SideNav';
+import TabBar from '../components/shell/TabBar';
+import PageCard from '../components/shell/PageCard';
 import Cart from '../components/cart/Cart';
 import MobileCartOverlay from '../components/cart/mobile/MobileCartOverlay';
 import ReverseOrder from '../components/shared/ReverseOrder';
@@ -67,25 +69,25 @@ const FestivalApp = () => {
   );
 
   return (
-    <div className="se-app app-safe flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
+    <div className="app-safe flex h-[100dvh] w-full overflow-hidden bg-[var(--bg-main)]">
       <SideNav views={views} icons={ICONS} brand="SmartEats Stand" badges={badges} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <AppHeader user={user} serviceControl={serviceControl} status={<SyncStatus connected={data.connected} />}
+        <AppHeader user={user} title={views.find(v => pathname === `/${v.id}`)?.label} serviceControl={serviceControl} status={<SyncStatus connected={data.connected} />}
           inbox={data.inbox} onOpenNotification={(i) => (i.kind === 'low_stock' ? navigate('/inventory') : navigate('/takeaway', { state: { orderId: i.id, date: i.date } }))}
-          theme={data.theme} onToggleTheme={() => data.setTheme(t => (t === 'dark' ? 'light' : 'dark'))} onLogout={() => setShowLogoutConfirm(true)} />
+          theme={data.theme} onThemeChange={data.setTheme} onLogout={() => setShowLogoutConfirm(true)} />
 
-        <div className="flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
-          <div key={pathname} className="motion-page flex-1 overflow-y-auto no-scrollbar bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-6 min-w-0">
+        <div className="flex-1 min-h-0 flex gap-4 px-4 pt-1 pb-3 md:p-4">
+          <PageCard key={pathname} className="motion-page">
             <FestivalRoutes user={user} home={home} products={products} setProducts={setProducts} cart={cartState.cart} cartState={cartState} event={data.event}
               setup={{ theme: data.theme, setTheme: data.setTheme, isSoundEnabled: data.isSoundEnabled, setIsSoundEnabled: data.setIsSoundEnabled, orderMode: data.orderMode, setOrderMode: data.setOrderMode }} />
-          </div>
+          </PageCard>
           {onCashPage && (
             <div className="w-[340px] xl:w-[420px] hidden md:flex flex-col shrink-0"><Cart {...cartProps} /></div>
           )}
         </div>
 
-        <BottomNav views={views} icons={ICONS} badges={badges} />
+        <TabBar views={views} icons={ICONS} badges={badges} />
       </main>
 
       {isMobile && onCashPage && (

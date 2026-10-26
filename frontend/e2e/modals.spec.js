@@ -7,6 +7,7 @@ import { seed, login, urlOf, shot } from './support.js';
 const inside = (box, view) => box.x >= -0.5 && box.y >= -0.5 && box.x + box.width <= view.width + 0.5 && box.y + box.height <= view.height + 0.5;
 
 const openLogout = async (page) => {
+  await page.getByRole('button', { name: /^Account/ }).click();
   await page.getByRole('button', { name: 'Esci', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: "Uscire dall'account?" });
   await expect(dialog).toBeVisible();

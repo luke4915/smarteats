@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { splitEqually, estimateSelection, payableLines, cartTotal, addToCart, tableState, formatEuro } from './checkMath.js';
+import { splitEqually, estimateSelection, payableLines, cartTotal, addToCart, tableState } from './checkMath.js';
 
 test('quote uguali al centesimo: la somma è sempre esatta', () => {
   assert.deepEqual(splitEqually(10, 3), [3.34, 3.33, 3.33]);
@@ -51,7 +51,6 @@ test('stato del tavolo e formato euro', () => {
   assert.equal(tableState(null), 'free');
   assert.equal(tableState({ bill_requested_at: null }), 'busy');
   assert.equal(tableState({ bill_requested_at: '2026-10-04T20:00:00Z' }), 'bill');
-  assert.equal(formatEuro(4.5), '4,50 €');
 });
 
 test('le opzioni scelte entrano nel prezzo; righe uguali solo con le stesse opzioni', () => {

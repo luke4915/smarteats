@@ -14,14 +14,14 @@ const ReceiptLineRow = ({ row, ingredients, supplierItems = [], showQuantity = t
   const amounts = rowAmounts(row);
   return (
     <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] space-y-3">
-      <div className="flex gap-2 items-end">
-        <Field title="Ingrediente" className="flex-1">
+      <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+        <Field title="Ingrediente" className="col-span-2 sm:col-span-1">
           <select className={input} aria-label="Ingrediente" value={row.ingredient_id} onChange={e => onChange(rowForIngredient(row, e.target.value, ingredients, supplierItems))}>
             <option value="">Scegli…</option>
             {ingredients.filter(i => i.active).map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
         </Field>
-        <Field title="Confezione" className="flex-1">
+        <Field title="Confezione">
           <input className={input} aria-label="Confezione" placeholder="Es. Sacco da 25 kg" maxLength={40} value={row.purchase_unit_name} onChange={e => onChange({ ...row, purchase_unit_name: e.target.value })} />
         </Field>
         <button type="button" className={`${iconBtnField} hover:!text-red-500`} aria-label="Togli la riga" onClick={onRemove}><Trash2 size={16} /></button>

@@ -4,7 +4,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from '../floor/PanelFrame';
 import { btn, btnPrimary, iconBtn, input, label, segment, segmentBox } from '../floor/ui';
-import { formatEuro } from '../floor/checkMath';
+import { formatEuro } from '../../utils/format';
 import { addToCart, cartCount, cartTotal, cartLoad } from './rules';
 
 // L'ordine preso al banco o al telefono: a sinistra la carta comune (`ProductPicker`, la stessa della Sala), a destra il riepilogo

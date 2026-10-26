@@ -4,6 +4,7 @@ import Modal from '../../shared/Modal';
 import ModalActions from '../../shared/ModalActions';
 import { btn, btnPrimary } from '../../../smarteats/floor/ui';
 import jsQR from 'jsqr';
+import { formatEuro } from '../../../utils/format';
 
 // ─── Componente di supporto per iOS (Evita il lock hardware della fotocamera) ───
 const CameraStream = ({ videoRef }) => (
@@ -156,12 +157,12 @@ const QRScanModal = ({ currentCart, onMerge, onReplace, onClose }) => {
                         {scanned.map((item, idx) => (
                             <div key={idx} className="flex justify-between text-sm">
                                 <span className="font-medium text-[var(--text-main)]">×{item.quantity} {item.name}</span>
-                                <span className="text-[var(--text-muted)] tabular-nums">€{(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+                                <span className="text-[var(--text-muted)] tabular-nums">{formatEuro(parseFloat(item.price) * item.quantity)}</span>
                             </div>
                         ))}
                         <div className="flex justify-between font-semibold text-[var(--text-main)] border-t border-[var(--border)] pt-2 mt-2">
                             <span>Totale</span>
-                            <span className="text-[var(--accent)] tabular-nums">€{scanned.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0).toFixed(2)}</span>
+                            <span className="text-[var(--accent)] tabular-nums">{formatEuro(scanned.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0))}</span>
                         </div>
                     </div>
 

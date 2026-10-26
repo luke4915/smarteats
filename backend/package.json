@@ -12,6 +12,8 @@
     "db:baseline": "node migrations/run.js --baseline",
     "demo:seed": "node scripts/seed-demo.js",
     "demo:reset": "node scripts/seed-demo.js --reset",
+    "demo:festival": "node scripts/seed-demo-festival.js",
+    "demo:festival-reset": "node scripts/seed-demo-festival.js --reset",
     "db:init": "node scripts/init-db.js",
     "db:prepare": "node scripts/init-db.js && node migrations/run.js",
     "test": "node --test \"tests/*.test.js\"",

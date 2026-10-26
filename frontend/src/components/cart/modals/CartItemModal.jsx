@@ -2,8 +2,10 @@ import { useState } from 'react';
 import { Trash2, Plus, Minus, Check } from 'lucide-react';
 import { getLineTotal } from '../../../utils/pricing';
 import Modal from '../../shared/Modal';
+import ModalActions from '../../shared/ModalActions';
 import Segmented from '../../../smarteats/floor/Segmented';
 import { btnPrimary, btnDanger, btn, input, label } from '../../../smarteats/floor/ui';
+import { formatEuro } from '../../../utils/format';
 
 const TYPES = [{ id: 'sale', label: 'Normale' }, { id: 'discount', label: 'Sconto' }, { id: 'gift', label: 'Omaggio' }];
 const MODES = [{ id: 'percent', label: '%' }, { id: 'amount', label: '€' }];
@@ -24,15 +26,15 @@ const CartItemModal = ({ item, onClose, onAdd, onRemove, onDelete, onNoteChange,
   return (
     <Modal title={item.name} onClose={close}
       footer={(
-        <div className="flex gap-3">
-          <button onClick={() => { onDelete(item); onClose(); }} className={`${btnDanger} flex-1`}><Trash2 size={16} /> Rimuovi</button>
-          <button onClick={close} className={`${btnPrimary} flex-1`}><Check size={16} /> Conferma</button>
-        </div>
+        <ModalActions fill>
+          <button type="button" onClick={() => { onDelete(item); onClose(); }} className={btnDanger}><Trash2 size={16} /> Rimuovi</button>
+          <button type="button" onClick={close} className={btnPrimary}><Check size={16} /> Conferma</button>
+        </ModalActions>
       )}>
       <div className="space-y-5">
         <p className="flex items-baseline gap-2 tabular-nums -mt-1">
-          {adjusted && <span className="text-sm text-[var(--text-muted)] line-through">{(item.price * item.quantity).toFixed(2)} €</span>}
-          <span className={`text-lg font-semibold ${item.type === 'gift' ? 'text-purple-500' : item.type === 'discount' ? 'text-orange-500' : 'text-[var(--text-main)]'}`}>{total.toFixed(2)} €</span>
+          {adjusted && <span className="text-sm text-[var(--text-muted)] line-through">{formatEuro(item.price * item.quantity)}</span>}
+          <span className={`text-lg font-semibold ${item.type === 'gift' ? 'text-purple-500' : item.type === 'discount' ? 'text-orange-500' : 'text-[var(--text-main)]'}`}>{formatEuro(total)}</span>
         </p>
 
         <div>

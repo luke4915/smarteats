@@ -7,7 +7,8 @@ import { useToast } from '../../context/useToast';
 import { printFired } from './printFired';
 import PanelFrame from './PanelFrame';
 import LineEditor from './LineEditor';
-import { cartTotal, formatEuro } from './checkMath';
+import { cartTotal } from './checkMath';
+import { formatEuro } from '../../utils/format';
 import { buildSchedule, toPayload, sendSummary, moveUscita, mergeWithPrevious } from './courses';
 import { btnPrimary, iconBtn } from './ui';
 

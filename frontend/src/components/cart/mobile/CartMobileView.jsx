@@ -3,6 +3,7 @@ import { ShoppingCart, Check, Printer, MessageSquare, QrCode, Trash2, ShoppingBa
 import { getLineTotal, getAdjustmentLabel } from '../../../utils/pricing';
 import OrderDiscountPanel from '../OrderDiscountPanel';
 import ActionMenu from '../../shared/ActionMenu';
+import { formatEuro } from '../../../utils/format';
 
 // Il carrello da telefono, a tutto schermo. Dall'alto: intestazione con «indietro» e le azioni, le righe (con più e
 // meno direttamente sulla riga; un tocco sul nome apre nota e sconto), poi in basso, alla portata del pollice: totale,
@@ -96,8 +97,8 @@ const CartMobileView = ({
                                     )}
                                     <span className="mt-0.5 block text-xs tabular-nums text-[var(--text-muted)]">
                                         {adjLabel
-                                            ? <><span className="line-through">{(item.price * item.quantity).toFixed(2)} €</span> <span className={item.type === 'gift' ? 'text-purple-500' : 'text-orange-500'}>{effTotal.toFixed(2)} €</span></>
-                                            : `${item.price.toFixed(2)} € l'uno`}
+                                            ? <><span className="line-through">{formatEuro(item.price * item.quantity)}</span> <span className={item.type === 'gift' ? 'text-purple-500' : 'text-orange-500'}>{formatEuro(effTotal)}</span></>
+                                            : `${formatEuro(item.price)} l'uno`}
                                     </span>
                                 </button>
 
@@ -131,11 +132,11 @@ const CartMobileView = ({
                     </div>
                     {hasAnyDiscount ? (
                         <div className="flex items-baseline gap-2">
-                            <span className="text-sm line-through text-[var(--text-muted)] tabular-nums">{fullTotal.toFixed(2)} €</span>
-                            <span className={`text-3xl font-semibold tabular-nums ${isAllGift ? 'text-purple-500' : 'text-orange-500'}`}>{total.toFixed(2)} €</span>
+                            <span className="text-sm line-through text-[var(--text-muted)] tabular-nums">{formatEuro(fullTotal)}</span>
+                            <span className={`text-3xl font-semibold tabular-nums ${isAllGift ? 'text-purple-500' : 'text-orange-500'}`}>{formatEuro(total)}</span>
                         </div>
                     ) : (
-                        <span className="text-3xl font-semibold tabular-nums text-[var(--text-main)]">{total.toFixed(2)} €</span>
+                        <span className="text-3xl font-semibold tabular-nums text-[var(--text-main)]">{formatEuro(total)}</span>
                     )}
                 </div>
 
@@ -143,15 +144,15 @@ const CartMobileView = ({
                 <div className="grid grid-cols-2 gap-2">
                     <label className="bg-[var(--bg-card)] px-3 py-1.5 rounded-lg border border-[var(--border)] flex flex-col">
                         <span className="text-xs text-[var(--text-muted)]">Ricevuti</span>
-                        <input type="text" inputMode="decimal" value={amountReceived} placeholder="0.00"
-                            onChange={e => { const val = e.target.value; if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) setAmountReceived(val); }}
+                        <input type="text" inputMode="decimal" value={amountReceived.replace('.', ',')} placeholder="0,00"
+                            onChange={e => { const val = e.target.value.replace(',', '.'); if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) setAmountReceived(val); }}
                             className="w-full bg-transparent outline-none text-lg font-semibold tabular-nums text-[var(--text-main)]" />
                     </label>
                     <div className="bg-[var(--bg-card)] px-3 py-1.5 rounded-lg border border-[var(--border)] flex flex-col">
                         <span className="text-xs text-[var(--text-muted)]">Resto</span>
                         {amountReceived === ''
                             ? <span className="text-lg font-semibold tabular-nums text-[var(--text-muted)]">—</span>
-                            : <span className={`text-lg font-semibold tabular-nums ${change < 0 ? 'text-red-500' : 'text-green-500'}`}>{change >= 0 ? change.toFixed(2) : `mancano ${Math.abs(change).toFixed(2)}`} €</span>}
+                            : <span className={`text-lg font-semibold tabular-nums ${change < 0 ? 'text-red-500' : 'text-green-500'}`}>{change >= 0 ? formatEuro(change) : `mancano ${formatEuro(Math.abs(change))}`}</span>}
                     </div>
                 </div>
                 <div className="flex gap-2 overflow-x-auto no-scrollbar">

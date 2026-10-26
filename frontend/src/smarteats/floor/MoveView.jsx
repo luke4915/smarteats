@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from './PanelFrame';
-import { formatEuro } from './checkMath';
+import { formatEuro } from '../../utils/format';
 import { label, row } from './ui';
 import Segmented from './Segmented';
 import { seatsLabel } from './seats';

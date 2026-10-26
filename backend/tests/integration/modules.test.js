@@ -32,7 +32,9 @@ describe('moduli per tenant', () => {
     assert.deepEqual(rows[0].modules, ['kds', 'stats', 'qr_menu']);
 
     assert.equal((await api1.get('/stats?tz=Europe/Rome')).status, 200);
-    assert.equal((await anon1.get('/products/menu')).status, 200);
+    const menu = await anon1.get('/products/menu');
+    assert.equal(menu.status, 200);
+    assert.equal(typeof menu.body.tenantName, 'string', 'il menu pubblico porta il nome del locale');
     assert.equal((await anon1.get('/orders/kds')).status, 200);
     const me = (await api1.get('/auth/me')).body;
     assert.deepEqual(me.modules, ['kds', 'stats', 'qr_menu']);

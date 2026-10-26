@@ -3,10 +3,10 @@ import { Minus, Plus, Check, ShoppingBag, ChevronLeft, Phone } from 'lucide-reac
 import { apiFetch } from '../utils/apiClient';
 import { formatDay } from '../smarteats/reservations/rules';
 import { btnPrimary, btn, input } from '../smarteats/floor/ui';
-import { formatEuro } from '../smarteats/floor/checkMath';
+import { formatEuro } from '../utils/format';
 import { PublicShell, StepSection } from '../components/public/PublicShell';
 import { useSystemTheme } from '../hooks/useSystemTheme';
-import ScrollRow from '../components/shared/ScrollRow';
+import { CategoryChips, ProductRows } from '../components/public/MenuList';
 
 // Pagina pubblica per ordinare da asporto (`/order`): il cliente sceglie i prodotti, il giorno e la fascia di ritiro,
 // lascia nome e telefono e invia una *richiesta*: il locale la approva. Si paga al ritiro. `/order/<codice>` è la
@@ -154,32 +154,8 @@ const OrderPage = () => {
     <PublicShell info={info} kicker="Ordina da asporto" footer={bar}>
       {step === 'menu' && (
         <>
-          <ScrollRow className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-[var(--bg-main)] flex gap-1.5" role="tablist" aria-label="Categoria">
-            {info.categories.map(c => (
-              <button key={c} role="tab" aria-selected={category === c} onClick={() => setCategory(c)}
-                className={`h-10 px-4 rounded-full text-sm font-medium whitespace-nowrap border cursor-pointer ${category === c ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--border)] bg-[var(--bg-card)] text-[var(--text-muted)]'}`}>{c}</button>
-            ))}
-          </ScrollRow>
-          <ul className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden bg-[var(--bg-card)]">
-            {products.map(p => {
-              const q = cart[p.id] ?? 0;
-              return (
-                <li key={p.id} className="flex items-center gap-3 px-4 py-3">
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-base font-medium leading-tight">{p.name}</span>
-                    <span className="block text-sm text-[var(--text-muted)] tabular-nums mt-0.5">{formatEuro(p.price)}</span>
-                  </span>
-                  {q > 0 ? (
-                    <span className="flex items-center gap-1.5">
-                      <button className={`${btn} !w-11 !px-0`} aria-label={`Una in meno: ${p.name}`} onClick={() => change(p.id, -1)}><Minus size={18} /></button>
-                      <span className="w-7 text-center text-lg font-semibold tabular-nums">{q}</span>
-                      <button className={`${btnPrimary} !w-11 !px-0`} aria-label={`Una in più: ${p.name}`} onClick={() => change(p.id, 1)}><Plus size={18} /></button>
-                    </span>
-                  ) : <button className={`${btn} !h-11`} aria-label={`Aggiungi ${p.name}`} onClick={() => change(p.id, 1)}><Plus size={18} /> Aggiungi</button>}
-                </li>
-              );
-            })}
-          </ul>
+          <CategoryChips categories={info.categories} value={category} onChange={setCategory} />
+          <ProductRows products={products} quantities={cart} onChange={change} />
           {info.products.length === 0 && <p className="text-sm text-[var(--text-muted)] text-center py-8">Al momento non ci sono prodotti ordinabili.</p>}
         </>
       )}

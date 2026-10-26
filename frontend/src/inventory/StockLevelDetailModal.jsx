@@ -3,7 +3,8 @@ import Modal from '../components/shared/Modal';
 import { row } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
-import { formatQuantity, formatCents } from './units';
+import { formatQuantity } from './units';
+import { formatCents } from '../utils/format';
 import { differenceText } from './controls';
 
 // Un controllo già registrato: per ogni ingrediente cosa prevedeva il registro, cosa è stato contato e quanto vale la differenza.

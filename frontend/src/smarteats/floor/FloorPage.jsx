@@ -16,10 +16,10 @@ import { useModifiers } from './useModifiers';
 import ModifierPicker from './ModifierPicker';
 import { courseOfProduct } from './courses';
 import { nextByTable, todayLocal } from '../reservations/rules';
-import { addToCart, cartTotal, formatEuro } from './checkMath';
-import { btnPrimary } from './ui';
+import { addToCart, cartTotal } from './checkMath';
+import { formatEuro } from '../../utils/format';
+import { btnPrimary, card } from './ui';
 
-const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
 
 // La Sala come la cassa: a sinistra l'area di lavoro (i tavoli, oppure la carta quando si fa una comanda), a destra un
 // solo pannello che cambia contenuto (apri tavolo, conto, incasso, comanda). Sotto i 1280 px il pannello è a tutto schermo.
@@ -136,14 +136,14 @@ const FloorPage = ({ user, service, event }) => {
     <>
       <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{floor}</div>
       {(selection || walkIn) && (
-        <div className="motion-page fixed inset-0 z-[1700] bg-[var(--bg-main)] p-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+        <div className="motion-page fullscreen-sheet fixed inset-0 z-[1700] bg-[var(--bg-main)]">
           {ordering ? (
             <div className="flex flex-col h-full gap-3">
               <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{menu}</div>
               <button className={`${btnPrimary} w-full !py-4 !text-sm shrink-0`} onClick={() => setDraftOpen(true)}>
                 <ShoppingBag size={18} /> Comanda · {cart.reduce((s, l) => s + l.quantity, 0)} · {formatEuro(cartTotal(cart))}
               </button>
-              {draftOpen && <div className="fixed inset-0 z-[1750] bg-[var(--bg-main)] p-3">{side}</div>}
+              {draftOpen && <div className="fullscreen-sheet fixed inset-0 z-[1750] bg-[var(--bg-main)]">{side}</div>}
             </div>
           ) : side}
         </div>
