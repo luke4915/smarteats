@@ -21,6 +21,7 @@ import TakeawayPage from '../takeaway/TakeawayPage';
 import SettingsPage from '../settings/SettingsPage';
 import { useInbox } from '../notifications/useInbox';
 import ReservedGate from '../../components/shared/ReservedGate';
+import StatsTabs from '../../components/shared/StatsTabs';
 
 const KitchenPage = lazy(() => import('../kitchen/KitchenPage'));
 const StatsPage = lazy(() => import('../stats/StatsPage'));
@@ -87,7 +88,7 @@ const SmartEatsApp = () => {
               <Route path="/kitchen" element={guard('kitchen', <Page><KitchenPage event={event} /></Page>)} />
               <Route path="/catalog" element={guard('catalog', <Page><CatalogPage /></Page>)} />
               <Route path="/inventory" element={guard('inventory', <Page><InventoryPage /></Page>)} />
-              <Route path="/stats" element={guard('stats', <Page><ReservedGate what="Le statistiche">{user.modules?.includes('tables') ? <StatsPage /> : <CounterStats />}</ReservedGate></Page>)} />
+              <Route path="/stats" element={guard('stats', <Page><ReservedGate what="Le statistiche"><StatsTabs>{user.modules?.includes('tables') ? <StatsPage /> : <CounterStats />}</StatsTabs></ReservedGate></Page>)} />
               <Route path="/settings" element={guard('settings', <Page><SettingsPage user={user} /></Page>)} />
               <Route path="*" element={<Navigate to={`/${home}`} replace />} />
             </Routes>

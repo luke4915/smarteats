@@ -16,7 +16,6 @@ const KIND_LABELS = {
   receipt: 'Carico', sale: 'Vendita', sale_reversal: 'Storno', usage: 'Scarico', waste: 'Scarto', adjustment: 'Rettifica', stock_level: 'Controllo',
 };
 export const kindLabel = (kind) => KIND_LABELS[kind] ?? kind;
-export const MOVEMENT_FILTERS = [{ id: '', label: 'Tutti' }, { id: 'waste', label: 'Scarti' }, { id: 'adjustment', label: 'Rettifiche' }, { id: 'stock_level', label: 'Controlli' }, { id: 'usage', label: 'Scarichi' }];
 
 // Gli altri motivi che il server scrive da solo nel registro: il tipo di controllo e l'ordine stornato.
 const SYSTEM_REASONS = [{ id: 'closing', label: 'Fine servizio' }, { id: 'periodic', label: 'Periodico' }, { id: 'order_canceled', label: 'Ordine stornato' }];

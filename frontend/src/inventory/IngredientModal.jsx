@@ -3,13 +3,15 @@ import Modal from '../components/shared/Modal';
 import Switch from '../components/shared/Switch';
 import Segmented from '../smarteats/floor/Segmented';
 import QuantityInput from './QuantityInput';
+import IngredientHistory from './IngredientHistory';
 import { btn, btnPrimary, btnDanger, input, label } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { BASE_UNITS, parseDecimal, toBaseQuantity, toDisplayQuantity } from './units';
 
-// Un ingrediente nuovo o da modificare: nome, unità di base, resa (facoltativa) e scorta minima (facoltativa).
-const IngredientModal = ({ ingredient, onClose, onSaved }) => {
+// Un ingrediente nuovo o da modificare: nome, unità di base, resa (facoltativa) e scorta minima (facoltativa). Se esiste già, in fondo
+// ci sono scarto e correzione della quantità (`onMovement`) e gli ultimi movimenti.
+const IngredientModal = ({ ingredient, onClose, onSaved, onMovement }) => {
   const { showToast } = useToast();
   const editing = !!ingredient;
   const shown = ingredient?.reorder_level != null ? toDisplayQuantity(ingredient.reorder_level, ingredient.base_unit) : { value: '', unit: ingredient?.base_unit ?? 'g' };
@@ -61,6 +63,7 @@ const IngredientModal = ({ ingredient, onClose, onSaved }) => {
         {editing && (
           <div className="flex items-center justify-between gap-3"><span className="text-sm text-[var(--text-main)]">Attivo</span>
             <Switch label="Ingrediente attivo" checked={form.active} onChange={active => patch({ active })} /></div>)}
+        {editing && onMovement && <IngredientHistory ingredient={ingredient} onMovement={onMovement} />}
       </div>
     </Modal>
   );

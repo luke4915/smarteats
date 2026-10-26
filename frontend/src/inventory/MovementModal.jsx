@@ -11,9 +11,9 @@ const DIRECTIONS = [{ id: 'remove', label: 'Togli' }, { id: 'add', label: 'Aggiu
 
 // Uno scarto (merce buttata, scaduta, mangiata dal personale…) o una rettifica (correzione a mano, sempre con il motivo).
 // `type` decide quale: lo scarto toglie sempre dalla dispensa, la rettifica può anche aggiungere.
-const MovementModal = ({ type, ingredients, onClose, onSaved }) => {
+const MovementModal = ({ type, ingredientId = '', ingredients, onClose, onSaved }) => {
   const { showToast } = useToast();
-  const [form, setForm] = useState({ type, ingredient_id: '', text: '', unit: 'g', reason: 'expired', note: '', direction: 'remove' });
+  const [form, setForm] = useState({ type, ingredient_id: ingredientId ? String(ingredientId) : '', text: '', unit: blankEntry(ingredients.find(i => i.id === ingredientId) ?? { base_unit: 'g', quantity_on_hand: 0 }).unit, reason: 'expired', note: '', direction: 'remove' });
   const [busy, setBusy] = useState(false);
   const ingredient = ingredients.find(i => i.id === Number(form.ingredient_id));
   const problem = movementProblem(form);

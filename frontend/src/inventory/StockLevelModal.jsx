@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import Modal from '../components/shared/Modal';
 import Segmented from '../smarteats/floor/Segmented';
+import SearchField from '../components/shared/SearchField';
 import IngredientEntryList from './IngredientEntryList';
 import { btn, btnPrimary, input, label } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
@@ -49,8 +50,7 @@ const StockLevelModal = ({ ingredients, onClose, onSaved }) => {
         </div>)}>
       <div className="space-y-4">
         <Segmented label="Tipo di controllo" className="w-72" value={kind} onChange={setKind} options={KINDS} />
-        <label className="block"><span className={`${label} block mb-1`}>Cerca un ingrediente</span>
-          <input className={input} aria-label="Cerca un ingrediente" value={search} onChange={e => setSearch(e.target.value)} /></label>
+        <SearchField value={search} onChange={setSearch} placeholder="Cerca un ingrediente" />
         {active.length === 0 && <p className="text-sm text-[var(--text-muted)]">Nessun ingrediente da contare.</p>}
         <IngredientEntryList ingredients={shown} entries={entries} note={note}
           onChange={(id, value) => setEntries(all => ({ ...all, [id]: { ...(all[id] ?? blankEntry(ingredients.find(i => i.id === id))), ...value } }))} />

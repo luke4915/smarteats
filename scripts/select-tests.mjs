@@ -39,6 +39,7 @@ export const E2E_RULES = [
   ['frontend/src/components/cart/', ['festival', 'festival.phone']],
   ['frontend/src/components/setup/', ['festival', 'tables-range', 'floorplan', 'reserved-data']],
   ['frontend/src/context/', ['reserved-data', 'restaurant']],
+  ['frontend/src/components/shell/', ['tablet', 'restaurant', 'festival']],
 ];
 
 // Cartelle del backend che reggono tutto: se cambiano, si provano tutti i test col database e nel browser.

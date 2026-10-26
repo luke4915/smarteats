@@ -8,7 +8,8 @@ import { useTakeaway } from './useTakeaway';
 import { todayLocal, addDays, formatDay } from '../reservations/rules';
 import { STATUS, SOURCE, groupOrders, itemsSummary, shownStatus, addToCart } from './rules';
 import OrderPanel from './OrderPanel';
-import NewOrder, { ProductPicker } from './NewOrder';
+import NewOrder from './NewOrder';
+import ProductPicker from '../floor/ProductPicker';
 import { formatEuro } from '../floor/checkMath';
 import { useProducts } from '../floor/useProducts';
 import { btnPrimary, iconBtn, btn } from '../floor/ui';
@@ -132,7 +133,7 @@ const TakeawayPage = ({ event }) => {
 
   // Nuovo ordine: la carta occupa la colonna grande, il riepilogo sta a destra
   if (panel?.kind === 'new') {
-    const picker = <div className={`${card} flex-1 min-h-0 overflow-hidden`}><ProductPicker products={products} cart={cart} onAdd={(p, d) => setCart(c => addToCart(c, p, d))} /></div>;
+    const picker = <div className={`${card} flex-1 min-h-0 overflow-hidden`}><ProductPicker products={products} cart={cart} onAdd={(p) => setCart(c => addToCart(c, p, 1))} /></div>;
     if (narrow) return <div className="flex-1 min-h-0 flex flex-col gap-3 w-full"><div className="h-[45%] min-h-0 flex">{picker}</div><div className="flex-1 min-h-0">{side}</div></div>;
     return <>{picker}<div className="w-[400px] xl:w-[440px] shrink-0 h-full">{side}</div></>;
   }

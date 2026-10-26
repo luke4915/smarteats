@@ -54,11 +54,30 @@ export function summarize(rows) {
   return { netCents: net, vatCents: vat, grossCents: net + vat };
 }
 
+// Le righe che contano: quelle con una quantità scritta. Scelto il fornitore, il carico si apre con tutti i suoi prodotti;
+// si scrive la quantità solo di quelli arrivati e gli altri si ignorano.
+export const arrivedRows = (rows) => rows.filter(r => r.quantity_text.trim() !== '');
+
+// Il carico dopo aver scelto un fornitore: restano le righe dove si è già scritto una quantità, poi i prodotti del fornitore
+// (con confezione, contenuto, prezzo e IVA dell'ultimo carico) che non ci sono già. Senza listino, una riga vuota.
+export function rowsForSupplier(currentRows, supplier, ingredients) {
+  const kept = arrivedRows(currentRows);
+  const taken = new Set(kept.map(r => Number(r.ingredient_id)));
+  const nameOf = (id) => ingredients.find(i => i.id === id)?.name ?? '';
+  const fromList = (supplier?.items ?? [])
+    .filter(item => !taken.has(item.ingredient_id) && ingredients.find(i => i.id === item.ingredient_id)?.active)
+    .sort((a, b) => nameOf(a.ingredient_id).localeCompare(nameOf(b.ingredient_id), 'it'))
+    .map(item => rowFromPriceItem(item, ingredients, ''));
+  const rows = [...kept, ...fromList];
+  return rows.length ? rows : [blankReceiptRow()];
+}
+
 // Cosa manca per poter salvare, o null.
-export function receiptProblem(form, rows) {
+export function receiptProblem(form, allRows) {
   if (!form.supplier_id) return 'Scegli il fornitore';
   if (!form.received_on) return 'Scrivi la data di arrivo';
-  if (!rows.length) return 'Aggiungi almeno una riga';
+  const rows = arrivedRows(allRows);
+  if (!rows.length) return 'Scrivi la quantità arrivata di almeno un prodotto';
   for (const row of rows) {
     if (!row.ingredient_id) return 'Scegli l\'ingrediente in ogni riga';
     if (!row.purchase_unit_name.trim()) return 'Scrivi com\'è la confezione (es. «Sacco da 25 kg»)';
@@ -68,7 +87,8 @@ export function receiptProblem(form, rows) {
 }
 
 // Il corpo della richiesta di creazione.
-export function receiptPayload(form, rows, ingredients) {
+export function receiptPayload(form, allRows, ingredients) {
+  const rows = arrivedRows(allRows);
   return {
     supplier_id: Number(form.supplier_id),
     received_on: form.received_on,
@@ -96,12 +116,12 @@ export const vatOfLines = (lines) => lines.reduce((sum, l) => sum + Math.round((
 export const todayText = (now = new Date()) => `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
 // ── Il listino di un fornitore: le stesse righe del carico, senza la quantità ──
-export function rowFromPriceItem(item, ingredients) {
+export function rowFromPriceItem(item, ingredients, quantityText = '1') {
   const ingredient = ingredients.find(i => i.id === item.ingredient_id);
   const content = toDisplayQuantity(item.base_units_per_purchase_unit, ingredient?.base_unit ?? 'g');
   return {
     key: `carico-${(counter += 1)}`, ingredient_id: item.ingredient_id, purchase_unit_name: item.purchase_unit_name,
-    content_text: String(content.value).replace('.', ','), content_unit: content.unit, quantity_text: '1',
+    content_text: String(content.value).replace('.', ','), content_unit: content.unit, quantity_text: quantityText,
     price_text: centsToEuroText(item.unit_cost_cents), vat: item.vat_rate === null ? '' : String(item.vat_rate),
   };
 }

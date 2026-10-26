@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { canView, defaultView } from './viewRoles.js';
+import { canViewInventoryStats, canView, defaultView } from './viewRoles.js';
 
 const ALL = ['kds', 'stats', 'qr_menu'];
 
@@ -33,4 +33,14 @@ test('il magazzino si vede solo con modulo acceso, modalità «magazzino» e ruo
   assert.equal(canView('admin', 'inventory', ['inventory'], { mode: 'portions' }), false);
   assert.equal(canView('admin', 'inventory', ['kds'], warehouse), false);
   assert.equal(canView('cashier', 'inventory', ['inventory'], warehouse), false);
+});
+
+test('le statistiche del magazzino: solo admin e responsabile, con gli ingredienti', () => {
+  const warehouse = { mode: 'warehouse', depletion: 'recipes' };
+  assert.equal(canViewInventoryStats('admin', ['stats', 'inventory'], warehouse), true);
+  assert.equal(canViewInventoryStats('manager', ['inventory'], warehouse), true);
+  assert.equal(canViewInventoryStats('cashier', ['inventory'], warehouse), false);
+  assert.equal(canViewInventoryStats('admin', ['stats'], warehouse), false, 'modulo spento');
+  assert.equal(canViewInventoryStats('admin', ['inventory'], { mode: 'portions' }), false, 'solo porzioni: niente ingredienti');
+  assert.equal(canViewInventoryStats('admin', undefined, warehouse), false);
 });

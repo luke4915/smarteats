@@ -143,4 +143,15 @@ describe('magazzino: fornitori e carichi di merce', () => {
     const spare = (await api.post('/suppliers', { name: 'Da buttare' })).body.id;
     assert.equal((await api.request('DELETE', `/suppliers/${spare}`)).status, 200);
   });
+
+  it('un ingrediente segnato esaurito torna disponibile quando arriva la merce', async () => {
+    const burrata = (await api.post('/ingredients', { name: 'Burrata', base_unit: 'g' })).body.id;
+    assert.equal((await api.put(`/ingredients/${burrata}/availability`, { available: false })).body.marked_out, true);
+    const line = { ingredient_id: burrata, quantity: 1, purchase_unit_name: 'Vaschetta', base_units_per_purchase_unit: 500, unit_cost_cents: 900 };
+    assert.equal((await api.post('/goods-receipts', { supplier_id: ids.supplier, received_on: '2026-10-23', lines: [line] })).status, 201);
+    const after = (await api.get('/ingredients')).body.find(i => i.id === burrata);
+    assert.deepEqual([after.marked_out, after.quantity_on_hand], [false, 500], 'la merce c\'è: non è più esaurito');
+    // un ingrediente che nessuno ha segnato esaurito resta com'è
+    assert.equal((await api.get('/ingredients')).body.find(i => i.id === ids.oil).marked_out, false);
+  });
 });

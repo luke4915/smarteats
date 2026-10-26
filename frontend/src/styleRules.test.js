@@ -43,3 +43,9 @@ test('niente alert(): i messaggi passano da useToast', () => {
   const alerts = sources.filter(f => /\balert\(/.test(text(f))).map(rel);
   assert.deepEqual(alerts, []);
 });
+
+// Ogni ricerca è `components/shared/SearchField.jsx` (pillola con lente e X): stesso aspetto e stessa tastiera ovunque.
+test('nessun campo di ricerca fatto a mano: si usa SearchField', () => {
+  const handmade = sources.filter(f => !/shared\/SearchField\.jsx$/.test(f) && /<input[^>]*(placeholder|aria-label)="Cerc[ah]/.test(text(f))).map(rel);
+  assert.deepEqual(handmade, [], 'Usa <SearchField> di components/shared/SearchField.jsx invece di un input con la lente fatto a mano');
+});

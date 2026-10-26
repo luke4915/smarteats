@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { X, Edit, Trash2, Search, Plus, CheckSquare, Square, Eye, EyeOff } from 'lucide-react';
+import { Edit, Trash2, Plus, CheckSquare, Square, Eye, EyeOff } from 'lucide-react';
+import SearchField from '../shared/SearchField';
 
 const field = 'h-10 rounded-xl bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-main)] text-xs focus:outline-none focus:border-[var(--accent)] transition-colors';
 const toolButton = (on, onClasses) => `flex items-center gap-1.5 h-10 px-3.5 rounded-xl font-semibold text-xs transition-all border cursor-pointer ${on ? onClasses : 'bg-[var(--bg-card-2)] border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`;
@@ -36,11 +37,7 @@ const ProductGroups = ({ products, onAdd, onEdit, onDelete, onToggleVisible, onS
             <option value="all">Tutte le categorie</option>
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-          <div className="relative flex-1">
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca..." className={`${field} w-full pl-9 pr-8 font-bold placeholder-[var(--text-muted)]`} />
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-            {search && <button onClick={() => setSearch('')} aria-label="Svuota la ricerca" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] p-1 rounded-lg"><X size={12} /></button>}
-          </div>
+          <SearchField className="flex-1" value={search} onChange={setSearch} placeholder="Cerca…" />
         </div>
 
         <div className="flex items-center gap-2 shrink-0">

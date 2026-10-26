@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { FileText, Trash2 } from 'lucide-react';
 import Modal from '../components/shared/Modal';
 import DocumentPicker from './DocumentPicker';
-import { btn, btnPrimary, iconBtn, row } from '../smarteats/floor/ui';
+import { btnPrimary, iconBtn, row } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { formatQuantity } from './units';
@@ -35,8 +35,7 @@ const ReceiptDetailModal = ({ receiptId, onClose, onChanged }) => {
   };
 
   return (
-    <Modal title={receipt ? `Carico del ${receipt.received_on.split('-').reverse().join('/')} · ${receipt.supplier_name}` : 'Carico'} size="max-w-3xl" onClose={onClose}
-      footer={<div className="flex justify-end"><button type="button" className={btn} onClick={onClose}>Chiudi</button></div>}>
+    <Modal title={receipt ? `Carico del ${receipt.received_on.split('-').reverse().join('/')} · ${receipt.supplier_name}` : 'Carico'} size="max-w-3xl" onClose={onClose}>
       {!receipt ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
         <div className="space-y-5">
           {(receipt.document_number || receipt.notes) && <p className="text-sm text-[var(--text-muted)]">{[receipt.document_number && `Bolla ${receipt.document_number}`, receipt.notes].filter(Boolean).join(' · ')}</p>}

@@ -83,21 +83,32 @@ test('magazzino: ingredienti e ricetta di un piatto; la cucina può segnare esau
   await admin.getByRole('button', { name: 'Registra il controllo' }).click();
   await expect(admin.getByRole('button', { name: /Fine servizio.*1 differenza/ })).toBeVisible();
 
-  // uno scarto nel registro, con il motivo
-  await admin.getByRole('tab', { name: 'Registro' }).click();
-  await admin.getByRole('button', { name: 'Scarto', exact: true }).click();
-  await admin.getByLabel('Ingrediente', { exact: true }).selectOption({ label: 'Farina 00' });
+  // uno scarto dalla scheda dell'ingrediente (che si trova con la ricerca), con il motivo
+  await admin.getByRole('tab', { name: 'Ingredienti' }).click();
+  await admin.getByRole('textbox', { name: 'Cerca un ingrediente' }).fill('farin');
+  await expect(admin.getByRole('button', { name: /^Mozzarella/ })).toHaveCount(0);
+  await admin.getByRole('button', { name: /^Farina 00/ }).click();
+  await admin.getByRole('button', { name: 'Registra uno scarto' }).click();
   await admin.getByLabel('Unità di Quantità').selectOption('g');
   await admin.getByLabel('Quantità', { exact: true }).fill('500');
   await admin.getByRole('button', { name: 'Registra', exact: true }).click();
-  await expect(admin.getByText(/Scarto · Scaduto/)).toBeVisible();
-  await shot(admin, 'inventory-07-registro');
+  await admin.getByRole('button', { name: /^Farina 00/ }).click();
+  await expect(admin.getByText(/Scarto · Scaduto/)).toBeVisible();                     // negli ultimi movimenti della scheda
+  await shot(admin, 'inventory-07-scheda-ingrediente');
+  await admin.getByRole('button', { name: 'Annulla' }).click();
 
-  // il report si apre anche senza vendite
-  await admin.getByRole('tab', { name: 'Report' }).click();
+  // le statistiche del magazzino stanno in Statistiche, divise in parti
+  await admin.locator('a[href="/stats"]').first().click();
+  await admin.getByRole('tab', { name: 'Magazzino' }).click();
   await expect(admin.getByText('Food cost', { exact: true })).toBeVisible();
-  await expect(admin.getByText('Nessuno scarto registrato')).toHaveCount(0);
   await shot(admin, 'inventory-08-report');
+  await admin.getByRole('tab', { name: 'Scarti e differenze' }).click();
+  await expect(admin.getByText('Nessuno scarto registrato')).toHaveCount(0);
+  await expect(admin.getByText(/Scaduto/)).toBeVisible();
+  await shot(admin, 'inventory-08b-scarti');
+  await admin.getByRole('tab', { name: 'Acquisti' }).click();
+  await expect(admin.getByText('Rossi Alimentari')).toBeVisible();
+  await admin.locator('a[href="/inventory"]').first().click();
 
   // scorta minima: l'ingrediente va in «Da riordinare» e la campanella lo segnala (dopo una ricarica: la campanella si aggiorna ogni minuto)
   await admin.getByRole('tab', { name: 'Ingredienti' }).click();

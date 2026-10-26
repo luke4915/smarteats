@@ -42,8 +42,9 @@ export async function createGoodsReceipt(db, { userId, supplierId, receivedOn, d
          base_units_per_purchase_unit = EXCLUDED.base_units_per_purchase_unit, unit_cost_cents = EXCLUDED.unit_cost_cents, vat_rate = EXCLUDED.vat_rate`,
       [supplierId, l.ingredient_id, l.purchase_unit_name, l.base_units_per_purchase_unit, l.unit_cost_cents, l.vatRate]);
   }
+  // La merce è arrivata: un ingrediente che la cucina aveva segnato «esaurito» torna disponibile
   for (const [ingredientId, { averageCost }] of state)
-    await db.query('UPDATE ingredients SET weighted_average_cost = $2 WHERE id = $1', [ingredientId, averageCost]);
+    await db.query('UPDATE ingredients SET weighted_average_cost = $2, marked_out = false WHERE id = $1', [ingredientId, averageCost]);
 
   await recordMovements(db, movements, { userId });
   return { id: receipt.id, totalCostCents: netCents };

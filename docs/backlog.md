@@ -19,6 +19,7 @@ Elenco verificato sul codice. Quando ne risolvi una, toglila da qui nello stesso
 - Dati: `audit_logs` senza retention. Cassa e cucina scaricano ancora tutti gli ordini della sessione aperta (fino a 2000): se serve, filtrare per stato.
 - Frontend: file ancora troppo grandi: `PrintProfiles.jsx` (stampa, si rifà con il test di stampa), `FloorEditor.jsx`.
 - Operatività: i log vanno su stdout, manca un raccoglitore (dipende dall'hosting); il backup è su disco locale, la copia fuori dal server è da configurare; nessun monitoraggio esterno dell'health check.
+- Asporto al banco o al telefono: il nuovo ordine usa la carta della Sala ma non ha ancora le **opzioni dei piatti** (modificatori) né le **uscite per portata** (più ordini di cucina in sequenza, come i tavoli): servono modifiche anche al server (`takeaway_orders` conserva solo id, nome, quantità, nota e importo).
 - Asporto: accettare un ordine dal sito con un ingrediente finito (409 `INGREDIENT_SHORTAGE`) mostra solo l'errore: manca il «Vendi comunque» per admin e responsabile, che in cassa e in sala c'è già.
 - Test nel browser dell'asporto (`frontend/e2e/takeaway.spec.js`): dipende dall'ora. Sceglie il primo giorno prenotabile e l'ultima fascia; la sera tardi «oggi» non ha più fasce, l'ordine va a domani e la cucina non lo vede, quindi il test fallisce. Va fatto scegliere un giorno e una fascia fissi.
 - Qualità: i test nel browser (`frontend/e2e`) coprono solo il giro principale di ristorante e sagra; il frontend ha test unitari solo sulla logica pura; TypeScript non adottato.

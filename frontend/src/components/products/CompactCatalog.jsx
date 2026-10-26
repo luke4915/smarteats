@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Search, Plus, X, Trash2, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import ScrollRow from '../shared/ScrollRow';
+import SearchField from '../shared/SearchField';
 
 const DESTINATION = { bar: 'Bar', kitchen: 'Cucina' };
 
@@ -29,12 +30,7 @@ const CompactCatalog = ({ products, courses, onAdd, onEdit, onDelete, onToggleVi
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cerca un piatto" aria-label="Cerca un piatto"
-            className="w-full h-10 pl-9 pr-9 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] text-sm text-[var(--text-main)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]" />
-          {search && <button onClick={() => setSearch('')} aria-label="Svuota la ricerca" className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[var(--text-muted)] hover:text-[var(--text-main)] cursor-pointer"><X size={14} /></button>}
-        </div>
+        <SearchField className="flex-1 min-w-[200px]" value={search} onChange={setSearch} placeholder="Cerca un piatto" />
         <button onClick={onAdd} className="flex items-center gap-1.5 h-10 px-4 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-sm font-medium cursor-pointer"><Plus size={16} /> Nuovo piatto</button>
       </div>
 

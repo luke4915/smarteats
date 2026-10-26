@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Modal from '../components/shared/Modal';
-import { btn, row } from '../smarteats/floor/ui';
+import { row } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { formatQuantity, formatCents } from './units';
@@ -17,7 +17,7 @@ const StockLevelDetailModal = ({ levelId, onClose }) => {
 
   return (
     <Modal title={level ? `Controllo del ${new Date(level.created_at).toLocaleDateString('it-IT')}` : 'Controllo'} size="max-w-3xl" onClose={onClose}
-      footer={<div className="flex items-center gap-3"><p className="text-sm text-[var(--text-muted)] tabular-nums mr-auto">{level && `Valore delle differenze ${formatCents(total)}`}</p><button type="button" className={btn} onClick={onClose}>Chiudi</button></div>}>
+      footer={level && <p className="text-sm text-[var(--text-muted)] tabular-nums text-right">Valore delle differenze {formatCents(total)}</p>}>
       {!level ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
         <div className="space-y-3">
           {level.notes && <p className="text-sm text-[var(--text-muted)]">{level.notes}</p>}

@@ -10,12 +10,9 @@ import OptionRecipesPanel from './OptionRecipesPanel';
 import SuppliersPanel from './SuppliersPanel';
 import ReceiptsPanel from './ReceiptsPanel';
 import StockLevelsPanel from './StockLevelsPanel';
-import MovementsPanel from './MovementsPanel';
-import ReportPanel from './ReportPanel';
-import ReservedGate from '../components/shared/ReservedGate';
 
 // Il magazzino (modalità «magazzino» scelta dal master): la dispensa, i carichi di merce, i fornitori, le preparazioni e le ricette,
-// i controlli (conteggi), il registro dei movimenti con scarti e rettifiche, e il report di costi e margini. Lo usano
+// e i controlli (conteggi). Scarti e correzioni si fanno dalla scheda dell'ingrediente; costi, margini e acquisti stanno in Statistiche. Lo usano
 // SmartEats Restaurant e SmartEats Stand. Ogni scheda ha il suo file: qui si compone la pagina e si tengono i dati.
 const InventoryPage = () => {
   const { user } = useAuth();
@@ -31,13 +28,11 @@ const InventoryPage = () => {
     { id: 'preparations', label: 'Preparazioni' },
     ...(hasOptions ? [{ id: 'options', label: 'Opzioni' }] : []),
     { id: 'levels', label: 'Controlli' },
-    { id: 'movements', label: 'Registro' },
-    { id: 'report', label: 'Report' },
   ];
 
   return (
     <PageBody>
-      <PageHeader title="Magazzino" subtitle="Dispensa, carichi, ricette, controlli e report: la dispensa si scala a ogni vendita." />
+      <PageHeader title="Magazzino" subtitle="Dispensa, carichi, ricette e controlli: la dispensa si scala a ogni vendita." />
       <Segmented scroll label="Sezioni del magazzino" className="w-fit max-w-full" value={tab} onChange={setTab} options={tabs} />
       {!data ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
         <>
@@ -47,9 +42,7 @@ const InventoryPage = () => {
           {tab === 'preparations' && <PreparationsPanel preparations={data.preparations} ingredients={data.ingredients} onChanged={reload} />}
           {tab === 'recipes' && <RecipesPanel products={data.products} recipes={data.recipes} ingredients={data.ingredients} preparations={data.preparations} dish={dish} showCosts onChanged={reload} />}
           {tab === 'options' && <OptionRecipesPanel ingredients={data.ingredients} />}
-          {tab === 'levels' && <StockLevelsPanel ingredients={data.ingredients} onChanged={reload} />}
-          {tab === 'movements' && <MovementsPanel ingredients={data.ingredients} simpleDepletion={user.inventory?.depletion === 'simple'} onChanged={reload} />}
-          {tab === 'report' && <ReservedGate what="Il report"><ReportPanel dish={dish} /></ReservedGate>}
+          {tab === 'levels' && <StockLevelsPanel ingredients={data.ingredients} simpleDepletion={user.inventory?.depletion === 'simple'} onChanged={reload} />}
         </>)}
     </PageBody>
   );

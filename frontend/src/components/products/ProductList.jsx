@@ -3,7 +3,7 @@ import QuickEditProductModal from './modals/QuickEditProductModal';
 import { useIsMobile } from '../../hooks/useBreakpoint';
 import { Minus } from 'lucide-react';
 import Segmented from '../../smarteats/floor/Segmented';
-import { input } from '../../smarteats/floor/ui';
+import SearchField from '../shared/SearchField';
 import { useAuth } from '../../context/useAuth';
 import { useToast } from '../../context/useToast';
 import { useAvailability } from '../../hooks/useAvailability';
@@ -107,38 +107,8 @@ const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThresh
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Barra Filtri: Dropdown Categoria + Search Bar */}
-      <div className="flex gap-2 pb-3 shrink-0">
-        {/* Input Ricerca Rapida */}
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Cerca prodotto..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className={`${input} !pl-9 !pr-8`}
-          />
-          {/* Icona Lente d'ingrandimento */}
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none">
-            <svg className="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-          </div>
-
-          {/* Pulsante "X" per svuotare la ricerca */}
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-main)] p-1 rounded-lg"
-            >
-              <svg className="w-4 h-4 stroke-current stroke-2" viewBox="0 0 24 24">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-              </svg>
-            </button>
-          )}
-        </div>
+      <div className="pb-3 shrink-0">
+        <SearchField value={searchTerm} onChange={setSearchTerm} placeholder="Cerca prodotto..." />
       </div>
 
       {categories.length > 2 && (

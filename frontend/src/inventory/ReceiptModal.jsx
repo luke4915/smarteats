@@ -6,7 +6,7 @@ import DocumentPicker from './DocumentPicker';
 import { btn, btnPrimary, input, label } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
-import { blankReceiptRow, summarize, receiptProblem, receiptPayload, todayText, centsToEuroText } from './receipt';
+import { blankReceiptRow, summarize, receiptProblem, receiptPayload, rowsForSupplier, arrivedRows, todayText, centsToEuroText } from './receipt';
 import { uploadReceiptDocuments } from './receiptDocuments';
 
 // Un carico di merce nuovo (la «bolla»): fornitore, data, righe con confezione e prezzo, e la foto o il file della bolla.
@@ -21,6 +21,11 @@ const ReceiptModal = ({ suppliers, ingredients, onClose, onSaved }) => {
   const totals = summarize(rows);
   const problem = receiptProblem(form, rows);
   const patch = (changes) => setForm(f => ({ ...f, ...changes }));
+  // Scelto il fornitore, il carico si riempie con i suoi prodotti: basta scrivere quanti ne sono arrivati
+  const chooseSupplier = (id) => {
+    patch({ supplier_id: id });
+    setRows(current => rowsForSupplier(current, suppliers.find(s => s.id === Number(id)), ingredients));
+  };
 
   const save = async () => {
     setBusy(true);
@@ -39,6 +44,7 @@ const ReceiptModal = ({ suppliers, ingredients, onClose, onSaved }) => {
       footer={(
         <div className="flex flex-wrap items-center gap-3">
           <p className="text-sm text-[var(--text-muted)] tabular-nums mr-auto">
+            {arrivedRows(rows).length} {arrivedRows(rows).length === 1 ? 'prodotto' : 'prodotti'} · 
             Senza IVA <b className="text-[var(--text-main)]">{centsToEuroText(totals.netCents)} €</b> · IVA {centsToEuroText(totals.vatCents)} € · Totale <b className="text-[var(--text-main)]">{centsToEuroText(totals.grossCents)} €</b>
           </p>
           <button type="button" className={btn} onClick={onClose}>Annulla</button>
@@ -47,7 +53,7 @@ const ReceiptModal = ({ suppliers, ingredients, onClose, onSaved }) => {
       <div className="space-y-5">
         <div className="grid sm:grid-cols-3 gap-3">
           <label className="block"><span className={`${label} block mb-1`}>Fornitore</span>
-            <select className={input} aria-label="Fornitore" value={form.supplier_id} onChange={e => patch({ supplier_id: e.target.value })}>
+            <select className={input} aria-label="Fornitore" value={form.supplier_id} onChange={e => chooseSupplier(e.target.value)}>
               <option value="">Scegli…</option>
               {suppliers.filter(s => s.active).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select></label>
@@ -59,6 +65,7 @@ const ReceiptModal = ({ suppliers, ingredients, onClose, onSaved }) => {
 
         <div className="space-y-2">
           <span className={`${label} block`}>Cosa è arrivato</span>
+          {supplier?.items.length > 0 && <p className="text-sm text-[var(--text-muted)]">Scrivi la quantità di ciò che è arrivato: i prodotti senza quantità si ignorano. Confezione e prezzo sono quelli dell'ultimo carico.</p>}
           {rows.map(row => (
             <ReceiptLineRow key={row.key} row={row} ingredients={ingredients} supplierItems={supplier?.items ?? []}
               onChange={next => setRows(list => list.map(r => (r.key === row.key ? next : r)))} onRemove={() => setRows(list => list.filter(r => r.key !== row.key))} />))}

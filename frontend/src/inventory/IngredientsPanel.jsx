@@ -1,18 +1,25 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import IngredientModal from './IngredientModal';
+import MovementModal from './MovementModal';
 import Segmented from '../smarteats/floor/Segmented';
+import SearchField from '../components/shared/SearchField';
 import { btnPrimary, row } from '../smarteats/floor/ui';
 import { formatQuantity, formatCostPerUnit, formatDays } from './units';
+import { normalizeText } from '../smarteats/floor/checkMath';
 
 // L'elenco degli ingredienti con ciò che c'è in dispensa e, se si consuma, quanto dura. Un tocco su una riga la modifica.
 // `restock` sono le scorte calcolate dal server (giorni rimasti, «da riordinare»); il filtro mostra solo quelle da riordinare.
 const IngredientsPanel = ({ ingredients, restock = [], showCosts, onChanged }) => {
   const [editing, setEditing] = useState(undefined);       // undefined = chiusa, null = nuovo, oggetto = in modifica
+  const [moving, setMoving] = useState(null);           // scarto o correzione di un ingrediente: { type, ingredientId }
   const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
   const stockOf = new Map(restock.map(r => [r.id, r]));
   const lowCount = restock.filter(r => r.low).length;
-  const shown = filter === 'low' ? ingredients.filter(i => stockOf.get(i.id)?.low) : ingredients;
+  const words = normalizeText(search).split(/\s+/).filter(Boolean);
+  const shown = (filter === 'low' ? ingredients.filter(i => stockOf.get(i.id)?.low) : ingredients)
+    .filter(i => words.every(w => normalizeText(i.name).includes(w)));
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -20,8 +27,9 @@ const IngredientsPanel = ({ ingredients, restock = [], showCosts, onChanged }) =
           options={[{ id: 'all', label: 'Tutti' }, { id: 'low', label: lowCount ? `Da riordinare (${lowCount})` : 'Da riordinare' }]} />
         <button className={btnPrimary} onClick={() => setEditing(null)}><Plus size={16} /> Nuovo ingrediente</button>
       </div>
+      <SearchField value={search} onChange={setSearch} placeholder="Cerca un ingrediente" />
       {ingredients.length === 0 && <p className="py-10 text-center text-sm text-[var(--text-muted)]">Nessun ingrediente. Aggiungine uno, per esempio «Farina».</p>}
-      {ingredients.length > 0 && shown.length === 0 && <p className="py-10 text-center text-sm text-[var(--text-muted)]">Niente da riordinare. Per averne l'avviso scrivi una scorta minima nella scheda dell'ingrediente.</p>}
+      {ingredients.length > 0 && shown.length === 0 && <p className="py-10 text-center text-sm text-[var(--text-muted)]">{search.trim() ? 'Nessun ingrediente con questo nome.' : 'Niente da riordinare. Per averne l\'avviso scrivi una scorta minima nella scheda dell\'ingrediente.'}</p>}
       <ul className="space-y-1.5">
         {shown.map(i => {
           const stock = stockOf.get(i.id);
@@ -40,7 +48,9 @@ const IngredientsPanel = ({ ingredients, restock = [], showCosts, onChanged }) =
           );
         })}
       </ul>
-      {editing !== undefined && <IngredientModal ingredient={editing} onClose={() => setEditing(undefined)} onSaved={onChanged} />}
+      {editing !== undefined && <IngredientModal ingredient={editing} onClose={() => setEditing(undefined)} onSaved={onChanged}
+        onMovement={editing ? (type) => { setMoving({ type, ingredientId: editing.id }); setEditing(undefined); } : undefined} />}
+      {moving && <MovementModal type={moving.type} ingredientId={moving.ingredientId} ingredients={ingredients} onClose={() => setMoving(null)} onSaved={onChanged} />}
     </section>
   );
 };
