@@ -6,6 +6,7 @@ import { btnPrimary, row } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { formatCents } from '../utils/format';
+import Loading from '../components/shared/Loading';
 
 // I carichi di merce, dal più recente: chi, quando, quanto. Un tocco apre il dettaglio con righe e bolla allegata.
 const ReceiptsPanel = ({ suppliers, ingredients, onChanged }) => {
@@ -24,7 +25,7 @@ const ReceiptsPanel = ({ suppliers, ingredients, onChanged }) => {
         <button className={btnPrimary} onClick={() => setCreating(true)} disabled={suppliers.length === 0} title={suppliers.length === 0 ? 'Aggiungi prima un fornitore' : undefined}><Plus size={16} /> Nuovo carico</button>
       </div>
       {suppliers.length === 0 && <p className="text-sm text-[var(--text-muted)]">Per registrare un carico serve almeno un fornitore: aggiungilo dalla scheda «Fornitori».</p>}
-      {receipts === null && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+      {receipts === null && <Loading />}
       {receipts?.length === 0 && suppliers.length > 0 && <p className="py-10 text-center text-sm text-[var(--text-muted)]">Nessun carico. Registra il primo quando arriva la merce.</p>}
       <ul className="space-y-1.5">
         {(receipts ?? []).map(r => (

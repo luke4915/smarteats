@@ -5,6 +5,7 @@ import Segmented from '../floor/Segmented';
 import { playChime } from '../../utils/chime';
 import SoldOutButton from '../../inventory/SoldOutButton';
 import { boardOrders, upcomingByTable, orderUrgency, ticketAction, toggleLineStatus, isDone, hasBarWork, newVisibleOrderIds, STATIONS } from './board';
+import Loading from '../../components/shared/Loading';
 
 // Il monitor della cucina: fatto per essere letto da lontano e premuto con le mani sporche. Testi grandi, l'attesa
 // colora tutta l'intestazione (verde, ambra, rosso), un solo pulsante enorme per comanda, le più vecchie per prime.
@@ -85,7 +86,7 @@ const KitchenPage = ({ event, actions }) => {
 
   const toggleSound = () => setSound(s => { try { localStorage.setItem('kitchen_sound', s ? 'off' : 'on'); } catch { /* senza archivio locale */ } if (!s) beep(); return !s; });
 
-  if (!orders) return <p className="text-lg text-[var(--text-muted)]">Caricamento…</p>;
+  if (!orders) return <Loading />;
   return (
     <div className="h-full flex flex-col gap-4">
       <header className="shrink-0 flex flex-wrap items-center justify-between gap-3">

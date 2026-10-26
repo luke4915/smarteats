@@ -14,6 +14,7 @@ import { formatEuro } from '../../utils/format';
 import { useProducts } from '../floor/useProducts';
 import { btnPrimary, iconBtn, btn, card } from '../floor/ui';
 import ScrollRow from '../../components/shared/ScrollRow';
+import Loading from '../../components/shared/Loading';
 
 const TONES = {
   amber: 'bg-amber-500/15 text-amber-500', green: 'bg-emerald-500/15 text-emerald-500',
@@ -80,7 +81,7 @@ const TakeawayPage = ({ event }) => {
       )}
 
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-5 pr-1">
-        {loading && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+        {loading && <Loading />}
         {!loading && groups.length === 0 && (
           <div className="py-14 flex flex-col items-center gap-2 text-[var(--text-muted)]"><ShoppingBag size={32} className="opacity-50" /><p className="text-sm">Nessun ordine per questo giorno.</p></div>
         )}

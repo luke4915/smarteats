@@ -8,6 +8,7 @@ import PrinterCheck from './PrinterCheck';
 import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
 import { btnPrimary, btnDanger, input, label as uiLabel } from '../../smarteats/floor/ui';
+import Loading from '../shared/Loading';
 const BACKEND_TEMPLATES = ['Cliente', 'Associazione', 'Cucina', 'Ritiro Bar', 'Ritiro Gastronomia', 'Numeretto'];
 
 const PrintProfiles = () => {
@@ -250,7 +251,7 @@ const PrintProfiles = () => {
       )}
 
       {loading ? (
-        <p className="text-sm text-[var(--text-muted)] mt-6">Caricamento...</p>
+        <Loading />
       ) : settings.length === 0 ? (
         <p className="text-sm text-[var(--text-muted)] mt-6">
           Nessun tipo di copia configurato.{isAdmin ? ' Aggiungine uno.' : ''}

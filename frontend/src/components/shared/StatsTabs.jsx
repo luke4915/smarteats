@@ -3,6 +3,7 @@ import Segmented from '../../smarteats/floor/Segmented';
 import { PageHeader, PageBody } from './PageHeader';
 import { useAuth } from '../../context/useAuth';
 import { canViewInventoryStats } from '../layout/viewRoles';
+import Loading from './Loading';
 
 const ReportPanel = lazy(() => import('../../inventory/ReportPanel'));
 
@@ -23,7 +24,7 @@ const StatsTabs = ({ children }) => {
       {tab === 'sales' ? children : (
         <PageBody>
           <PageHeader title="Magazzino" subtitle="Quanto costa ciò che vendi, cosa si perde e quanto spendi con i fornitori." />
-          <Suspense fallback={<p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}><ReportPanel dish={dish} /></Suspense>
+          <Suspense fallback={<Loading />}><ReportPanel dish={dish} /></Suspense>
         </PageBody>)}
     </div>
   );

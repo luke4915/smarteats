@@ -6,6 +6,7 @@ import { useToast } from '../context/useToast';
 import { formatQuantity } from './units';
 import { formatCents } from '../utils/format';
 import { differenceText } from './controls';
+import Loading from '../components/shared/Loading';
 
 // Un controllo già registrato: per ogni ingrediente cosa prevedeva il registro, cosa è stato contato e quanto vale la differenza.
 const StockLevelDetailModal = ({ levelId, onClose }) => {
@@ -18,7 +19,7 @@ const StockLevelDetailModal = ({ levelId, onClose }) => {
 
   return (
     <Modal title={level ? `Controllo del ${new Date(level.created_at).toLocaleDateString('it-IT')}` : 'Controllo'} size="max-w-3xl" onClose={onClose}>
-      {!level ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+      {!level ? <Loading /> : (
         <div className="space-y-3">
           {level.notes && <p className="text-sm text-[var(--text-muted)]">{level.notes}</p>}
           <ul className="space-y-1.5">

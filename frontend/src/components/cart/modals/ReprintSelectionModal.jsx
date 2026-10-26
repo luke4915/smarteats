@@ -7,6 +7,7 @@ import { reprintOrder, reprintLocal } from '../../../print/printOrder';
 import { recentLocalOrders } from '../../../print/localOrders';
 import { recall } from '../../../offline/lastKnown';
 import { formatEuro } from '../../../utils/format';
+import Loading from '../../shared/Loading';
 
 const MAX_ORDERS = 10;
 
@@ -68,7 +69,7 @@ const ReprintSelectionModal = ({ onClose }) => {
     return (
         <Modal title="Ristampa uno scontrino" onClose={onClose}>
             <div className="space-y-2">
-                {loading && <p className="text-xs text-center py-4 text-[var(--text-muted)]">Caricamento...</p>}
+                {loading && <Loading />}
                 {error && <p className="text-xs text-center py-4 text-red-500">{error}</p>}
                 {offline && !loading && <p className="text-xs text-center text-amber-500">Sei offline: sono disponibili gli ordini battuti da questa cassa.</p>}
                 {!loading && !error && recentOrders.length === 0 && <p className="text-xs text-center py-4 text-[var(--text-muted)]">Nessun ordine trovato.</p>}

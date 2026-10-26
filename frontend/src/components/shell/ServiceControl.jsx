@@ -50,12 +50,12 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end, terms }) 
 
   return (
     <>
-      <button onClick={canManage ? begin : undefined} disabled={!canManage}
-        className={`flex items-center gap-2 h-9 coarse:h-11 px-3 rounded-lg border text-sm font-medium transition-colors
+      <button onClick={canManage ? begin : undefined} disabled={!canManage} aria-label={service ? `${service.name} · Chiudi` : terms.open}
+        className={`flex shrink-0 items-center justify-center gap-2 h-9 coarse:h-11 w-9 coarse:w-11 sm:w-auto sm:px-3.5 rounded-full border whitespace-nowrap text-sm font-medium transition-colors
           ${service ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-red-500/10 border-red-500/30 text-red-500'}
           ${canManage ? 'cursor-pointer enabled:hover:opacity-80' : 'cursor-default'}`}>
         <Power size={16} className="pointer-events-none" />
-        <span className="hidden sm:inline">{service ? `${service.name} · Chiudi` : terms.open}</span>
+        <span className="hidden sm:inline truncate max-w-[16rem]">{service ? `${service.name} · Chiudi` : terms.open}</span>
       </button>
 
       {step === 'start' && (

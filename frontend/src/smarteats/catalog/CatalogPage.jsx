@@ -7,6 +7,7 @@ import ProductConfig from '../../components/products/ProductConfig';
 import { PageHeader, PageBody } from '../../components/shared/PageHeader';
 import { useModifiers } from '../floor/useModifiers';
 import ModifierSettings from './ModifierSettings';
+import Loading from '../../components/shared/Loading';
 
 // La carta (prodotti, prezzi, portate e opzioni): l'editor dei prodotti è lo stesso della cassa, con in più le portate e
 // i gruppi di opzioni del ristorante.
@@ -24,7 +25,7 @@ const CatalogPage = () => {
       .then(([list, courseList]) => { setProducts(list.map(p => ({ ...p, price: parseFloat(p.price) }))); setCourses(hasTables ? courseList.filter(c => c.active) : null); })
       .catch(err => showToast(err.message || 'Errore caricamento carta', 'error'));
   }, [showToast, hasTables]);
-  if (!products || (hasTables && !courses)) return <p className="text-[var(--text-muted)]">Caricamento carta…</p>;
+  if (!products || (hasTables && !courses)) return <Loading />;
   return (
     <PageBody>
       <PageHeader title="Carta" subtitle={hasTables ? 'Piatti, prezzi, portate e opzioni.' : 'Prodotti e prezzi.'} />

@@ -25,6 +25,8 @@ test('asporto: ordine dal sito → approvazione → cucina → ritiro; ordine al
   await phone.getByRole('button', { name: /^Una in più/ }).first().click();           // due pezzi
   await shot(phone, 'takeaway-02-menu');
   await phone.getByRole('button', { name: /Continua/ }).click();
+  // Il primo giorno è oggi: la sera tardi non ha più fasce, l'ordine va a domani e la cucina lo vedrà solo domani (regola provata a parte)
+  const todayOpen = await phone.locator('[role=radiogroup][aria-label=Giorno] [role=radio]').first().isEnabled();
   await phone.locator('[role=radiogroup][aria-label=Giorno] [role=radio]:not([disabled])').first().click();
   await phone.locator('[role=radiogroup][aria-label="Orario di ritiro"] [role=radio]:not([disabled])').last().click();
   await phone.getByLabel('Nome', { exact: true }).fill('Giulia Verdi');
@@ -50,19 +52,21 @@ test('asporto: ordine dal sito → approvazione → cucina → ritiro; ordine al
   // Il cliente vede la conferma senza ricaricare
   await expect(phone.getByRole('heading', { name: 'Ordine confermato' })).toBeVisible({ timeout: 30_000 });
 
-  // La cucina lo vede con il nome di chi ritira
-  const cucina = await (await browser.newContext({ ignoreHTTPSErrors: true })).newPage();
-  await login(cucina, r.host, r.kitchen);
-  await expect(cucina.getByText(/Giulia Verdi/)).toBeVisible();
-  await shot(cucina, 'takeaway-05-cucina');
-  await cucina.locator('article', { hasText: 'Giulia Verdi' }).getByRole('button', { name: 'Pronta', exact: true }).click();
+  if (todayOpen) {
+    // La cucina lo vede con il nome di chi ritira
+    const cucina = await (await browser.newContext({ ignoreHTTPSErrors: true })).newPage();
+    await login(cucina, r.host, r.kitchen);
+    await expect(cucina.getByText(/Giulia Verdi/)).toBeVisible();
+    await shot(cucina, 'takeaway-05-cucina');
+    await cucina.locator('article', { hasText: 'Giulia Verdi' }).getByRole('button', { name: 'Pronta', exact: true }).click();
 
-  // Consegna e incasso
-  await expect(page.getByText('Pronto', { exact: true }).first()).toBeVisible({ timeout: 15_000 });
-  await page.getByRole('button', { name: /^Consegna e incassa/ }).click();
-  await page.getByRole('button', { name: 'Contanti' }).click();
-  await expect(page.getByText('Consegnato e incassato').first()).toBeVisible();
-  await expect(phone.getByRole('heading', { name: 'Ordine ritirato' })).toBeVisible({ timeout: 30_000 });
+    // Consegna e incasso
+    await expect(page.getByText('Pronto', { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+    await page.getByRole('button', { name: /^Consegna e incassa/ }).click();
+    await page.getByRole('button', { name: 'Contanti' }).click();
+    await expect(page.getByText('Consegnato e incassato').first()).toBeVisible();
+    await expect(phone.getByRole('heading', { name: 'Ordine ritirato' })).toBeVisible({ timeout: 30_000 });
+  }
 
   // Un ordine al banco: carta a sinistra, riepilogo a destra
   await page.getByRole('button', { name: 'Nuovo ordine' }).click();

@@ -56,7 +56,7 @@ Se compare un errore rosso, **non salvare**: il messaggio dice quale file e qual
 
 Per cercare codice che non serve più: `node scripts/find-dead-code.mjs` (elenca, non cancella).
 
-Per vedere l'app con dati realistici: `cd backend && npm run demo:seed` (poi apri `https://demo.smarteats.local:5173`).
+Per vedere l'app con dati realistici: `cd backend && npm run demo:seed` (poi apri `https://demo.smarteats.local:5173`). Per la versione sagra (SmartEats Stand): `npm run demo:festival` (poi `https://sagra.smarteats.local:5173`).
 
 ## 4. Ricette: «voglio cambiare…»
 

@@ -6,6 +6,7 @@ import { useToast } from '../../context/useToast';
 
 import { fetchWithAuth } from '../../utils/apiClient';
 import { formatEuro } from '../../utils/format';
+import Loading from './Loading';
 const CANCEL_WINDOW_MS = 5 * 60 * 1000; // deve combaciare con il backend
 
 // Un ordine è stornabile se: è ancora pending/preparing (avanzata, sempre stornabile
@@ -60,7 +61,7 @@ const ReverseOrder = ({ onClose }) => {
     <Modal title="Storno ordini" size="max-w-lg" onClose={onClose}>
       <p className="text-xs text-[var(--text-muted)] mb-4">Ordini in attesa (modalità avanzata) o completati da meno di 5 minuti (modalità semplice).</p>
       {loading ? (
-        <p className="py-10 text-center text-sm text-[var(--text-muted)]">Caricamento...</p>
+        <Loading />
       ) : visibleOrders.length === 0 ? (
         <p className="py-10 text-center text-sm text-[var(--text-muted)]">Nessun ordine da stornare</p>
       ) : (

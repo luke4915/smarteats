@@ -16,6 +16,7 @@ import Modal from './Modal';
 import Segmented from '../../smarteats/floor/Segmented';
 import { btn, iconBtn } from '../../smarteats/floor/ui';
 import ScrollRow from './ScrollRow';
+import Loading from './Loading';
 
 // Le fasce orarie attive (da prima a ultima con valori), riordinate dalle 12:00 come nel resto dell'app.
 const hourItems = (data, key) => activeHours(reorderHours(data), key).map(d => ({ key: d.ora, label: `${d.ora}`, short: String(d.ora).slice(0, 2), value: d[key] ?? 0 }));
@@ -55,7 +56,7 @@ const Statistics = () => {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64 text-[var(--text-muted)]">
-      <p className="text-sm">Caricamento…</p>
+      <Loading />
     </div>
   );
 

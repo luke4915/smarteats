@@ -8,6 +8,7 @@ import { Spending, PriceChanges } from './ReportPurchases';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { reportRange } from './controls';
+import Loading from '../components/shared/Loading';
 
 // Le statistiche del magazzino (scheda «Magazzino» di Statistiche), in tre parti: Margini (quanto costa ciò che si vende e quanto
 // resta), Scarti e differenze (cosa si butta, se la dispensa torna) e Acquisti (quanto si spende e quali prezzi sono cambiati).
@@ -41,7 +42,7 @@ const ReportPanel = ({ dish }) => {
         <Segmented label="Periodo" className="w-48" value={view} onChange={(v) => { if (v === 'month') setMonth(monthOf(date)); setView(v); }} options={[{ id: 'day', label: 'Giorno' }, { id: 'month', label: 'Mese' }]} />
       </div>
       <Segmented scroll label="Parte delle statistiche del magazzino" className="w-fit max-w-full" value={part} onChange={setPart} options={PARTS} />
-      {!report ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+      {!report ? <Loading /> : (
         <div className="space-y-6">
           {part === 'margins' && (
             <>

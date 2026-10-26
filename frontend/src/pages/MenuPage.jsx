@@ -10,6 +10,7 @@ import ModalActions from '../components/shared/ModalActions';
 import { useSystemTheme } from '../hooks/useSystemTheme';
 import { btn, btnPrimary, btnDanger } from '../smarteats/floor/ui';
 import { formatEuro } from '../utils/format';
+import Loading from '../components/shared/Loading';
 
 // Il menu pubblico della sagra (`/menu`, dal QR): il cliente sceglie i prodotti e mostra alla cassa un QR con id e quantità. Non è un
 // ordine: la cassa lo legge e ricalcola prezzi e disponibilità dal proprio catalogo. Stessa grafica dell'ordine da asporto.
@@ -76,7 +77,7 @@ export default function MenuPage() {
       </PublicShell>
     );
   }
-  if (!menu) return <PublicShell><p className="text-sm text-[var(--text-muted)]">Caricamento…</p></PublicShell>;
+  if (!menu) return <PublicShell><Loading /></PublicShell>;
 
   const bar = count > 0 && (
     <div className="sticky bottom-0 -mx-4 px-4 pt-3 bg-[var(--bg-main)] border-t border-[var(--border)]" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>

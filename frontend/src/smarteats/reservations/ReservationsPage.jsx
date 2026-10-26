@@ -18,6 +18,7 @@ import CheckInfoPanel from './CheckInfoPanel';
 import WalkInPanel from './WalkInPanel';
 import { btnPrimary, btn, card } from '../floor/ui';
 import Segmented from '../floor/Segmented';
+import Loading from '../../components/shared/Loading';
 
 
 const Empty = () => (
@@ -91,7 +92,7 @@ const ReservationsPage = ({ event }) => {
           onFreeCell={(tableId) => setPanel({ kind: 'walkin', tableId })} />
       )}
       {view === 'list' && <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pr-1">
-        {loading && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+        {loading && <Loading />}
         {!loading && activeShifts.map(shift => {
           const a = availability.find(x => x.shift_id === shift.id);
           const mine = reservations.filter(r => r.shift_id === shift.id);

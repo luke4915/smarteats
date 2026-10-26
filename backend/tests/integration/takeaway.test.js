@@ -190,7 +190,7 @@ describe('asporto', () => {
     assert.deepEqual([ok.body.order_id, doomed.body.order_id], [null, null], 'accettati, senza ordine di cucina');
 
     // «domani» arriva: il ritiro diventa oggi, la serata si chiude e se ne apre una nuova
-    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = ((pickup_at AT TIME ZONE 'Europe/Rome') - interval '1 day') AT TIME ZONE 'Europe/Rome' WHERE id = ANY($1)`, [[ok.body.id, doomed.body.id]]);
+    await adminDb.query('UPDATE takeaway_orders SET pickup_at = now() WHERE id = ANY($1)', [[ok.body.id, doomed.body.id]]);       // senza orari fissi: il test non dipende dall'ora in cui gira
     await adminDb.query('UPDATE sessions SET end_time = now() WHERE tenant_id = $1 AND end_time IS NULL', [t.id]);
     await adminDb.query('DELETE FROM products WHERE id = $1', [drink]);      // uno dei due ordini non potrà più partire
     const start = await admin.post('/sessions/start', { name: 'Cena di domani' });

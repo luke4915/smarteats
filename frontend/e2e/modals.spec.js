@@ -54,5 +54,13 @@ test.describe('telefono', () => {
     await expect(dialog.getByRole('button', { name: 'Chiudi' })).toHaveCount(0);
     for (const name of ['Annulla', 'Esci']) expect((await dialog.getByRole('button', { name }).boundingBox()).height, `${name}: bersaglio da dito`).toBeGreaterThanOrEqual(44);
     await shot(page, 'modals-02-telefono');
+
+    // si chiude trascinandola verso il basso dalla maniglia; un trascinamento breve la lascia dov'è
+    const handle = { x: box.x + box.width / 2, y: box.y + 8 };
+    await page.mouse.move(handle.x, handle.y); await page.mouse.down(); await page.mouse.move(handle.x, handle.y + 50, { steps: 5 }); await page.mouse.up();
+    await page.waitForTimeout(400);
+    expect((await dialog.boundingBox()).y, 'un trascinamento breve non la chiude').toBeCloseTo(box.y, 0);
+    await page.mouse.move(handle.x, handle.y); await page.mouse.down(); await page.mouse.move(handle.x, handle.y + 220, { steps: 8 }); await page.mouse.up();
+    await expect(dialog).toHaveCount(0);
   });
 });

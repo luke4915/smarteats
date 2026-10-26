@@ -5,6 +5,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { btn, btnPrimary, iconBtn, input, label } from '../floor/ui';
 import Switch from '../../components/shared/Switch';
+import Loading from '../../components/shared/Loading';
 
 const DAYS = [[1, 'Lunedì'], [2, 'Martedì'], [3, 'Mercoledì'], [4, 'Giovedì'], [5, 'Venerdì'], [6, 'Sabato'], [0, 'Domenica']];
 const SLOT_OPTIONS = [10, 15, 20, 30, 60];
@@ -43,7 +44,7 @@ const TakeawaySettings = () => {
     setDirty(true);
   };
 
-  if (!s) return <section className="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)]"><p className="text-sm text-[var(--text-muted)]">Caricamento…</p></section>;
+  if (!s) return <section className="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)]"><Loading /></section>;
 
   return (
     <section className="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)] space-y-6" aria-label="Asporto">

@@ -19,6 +19,7 @@ import { nextByTable, todayLocal } from '../reservations/rules';
 import { addToCart, cartTotal } from './checkMath';
 import { formatEuro } from '../../utils/format';
 import { btnPrimary, card } from './ui';
+import Loading from '../../components/shared/Loading';
 
 
 // La Sala come la cassa: a sinistra l'area di lavoro (i tavoli, oppure la carta quando si fa una comanda), a destra un
@@ -94,7 +95,7 @@ const FloorPage = ({ user, service, event }) => {
   // Un piatto con opzioni passa dalla scelta; gli altri entrano subito
   const add = (product) => (modifiers.forProduct(product).length ? setPicking(product) : addWith(product));
 
-  if (!rooms) return <div className={`${card} flex-1`}><p className="text-[var(--text-muted)]">Caricamento sala…</p></div>;
+  if (!rooms) return <div className={`${card} flex-1`}><Loading /></div>;
 
   const seatedWalkIn = (check) => {
     const table = rooms.flatMap(r => r.tables).find(t => t.id === check.table_id);

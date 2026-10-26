@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '../utils/apiClient';
 import { PublicShell } from '../components/public/PublicShell';
 import { useSystemTheme } from '../hooks/useSystemTheme';
+import Loading from '../components/shared/Loading';
 
 // Informativa privacy e condizioni d'uso (`/privacy`, `/terms`): pagine pubbliche, uguali per tutti i locali. Chi fornisce
 // il servizio (nome, email) arriva dal server (`LEGAL_*`). Il titolare del trattamento è il locale; il fornitore agisce
@@ -86,7 +87,7 @@ const LegalPage = ({ kind }) => {
   useEffect(() => { document.title = kind === 'terms' ? "Condizioni d'uso · SmartEats" : 'Privacy · SmartEats'; }, [kind]);
   return (
     <PublicShell>
-      {legal === null ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (kind === 'terms' ? <Terms legal={legal} /> : <Privacy legal={legal} />)}
+      {legal === null ? <Loading /> : (kind === 'terms' ? <Terms legal={legal} /> : <Privacy legal={legal} />)}
       <div className="h-8" />
     </PublicShell>
   );

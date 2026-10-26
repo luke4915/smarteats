@@ -37,9 +37,9 @@ const CompactCatalog = ({ products, courses, noun = 'prodotto', onAdd, onEdit, o
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <SearchField className="flex-1 min-w-[200px]" value={search} onChange={setSearch} placeholder={`Cerca un ${noun}`} />
-        {onSetManyVisible && <button onClick={toggleSelecting} aria-pressed={selecting} className={`${btn} ${selecting ? '!border-[var(--accent)] !text-[var(--accent)]' : ''}`}><ListChecks size={16} /> {selecting ? 'Fine' : 'Seleziona'}</button>}
-        <button onClick={onAdd} className={btnPrimary}><Plus size={16} /> Nuovo {noun}</button>
+        <SearchField className="w-full sm:w-auto sm:flex-1 sm:min-w-[200px]" value={search} onChange={setSearch} placeholder={`Cerca un ${noun}`} />
+        {onSetManyVisible && <button onClick={toggleSelecting} aria-pressed={selecting} className={`${btn} flex-1 sm:flex-none ${selecting ? '!border-[var(--accent)] !text-[var(--accent)]' : ''}`}><ListChecks size={16} /> {selecting ? 'Fine' : 'Seleziona'}</button>}
+        <button onClick={onAdd} className={`${btnPrimary} flex-1 sm:flex-none`}><Plus size={16} /> Nuovo {noun}</button>
       </div>
 
       {categories.length > 1 && (

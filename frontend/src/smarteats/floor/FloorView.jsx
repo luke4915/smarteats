@@ -65,6 +65,7 @@ const mapTable = ({ checkOf, reservedOf, selectedId, onSelect, walkIn }) => (tab
   const state = stateOf(check, reservation);
   const label = STATE_LABEL[tableState(check)];
   const height = cell * table.h;
+  const roomy = cell * table.w >= (table.shape === 'round' ? 170 : 140);        // c'è posto anche per da quanto tempo è occupato
   return (
     <button key={table.id} style={style} disabled={!table.active} onClick={() => onSelect(table, check)}
       title={`${table.name} · ${label}`} aria-label={`${table.name}: ${label}`}
@@ -79,7 +80,7 @@ const mapTable = ({ checkOf, reservedOf, selectedId, onSelect, walkIn }) => (tab
         </span>
       )}
       {check && height >= 76 && (
-        <span className="leading-none mt-1.5 text-[var(--text-main)] tabular-nums truncate max-w-full px-1" style={{ fontSize: Math.max(11, Math.min(cell * 0.3, 15)) }}>{formatEuro(check.total)} · {formatElapsed(minutesSince(check.opened_at))}</span>
+        <span className="leading-none mt-1.5 text-[var(--text-main)] tabular-nums truncate max-w-full px-1" style={{ fontSize: Math.max(11, Math.min(cell * 0.3, 15)) }}>{formatEuro(check.total)}{roomy && ` · ${formatElapsed(minutesSince(check.opened_at))}`}</span>
       )}
       {!check && reservation && height >= 56 && (
         <span className="leading-none mt-1.5 font-medium text-[var(--accent)] truncate max-w-full px-1" style={{ fontSize: Math.max(11, Math.min(cell * 0.3, 15)) }}>{reservation.start_time}</span>
@@ -123,12 +124,12 @@ const FloorView = ({ rooms, checks, reserved = new Map(), selectedTableId, onSel
   return (
     <div className="h-full flex flex-col gap-3 min-h-0">
       <div style={aside} className="flex items-center justify-between gap-3 shrink-0 transition-[padding] duration-[420ms] ease-[cubic-bezier(0.32,0.72,0,1)]">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           {activeRooms.length > 1 && <Segmented label="Sale" scroll className="shrink-0 max-w-full" value={room.id} onChange={setRoomId}
             options={activeRooms.map(r => ({ id: r.id, label: <>{r.name}{openIn(r) > 0 && <span className="ml-2 text-xs text-[var(--accent)]">{openIn(r)}</span>}</> }))} />}
         </div>
         <div className="flex items-center gap-4 text-sm font-medium text-[var(--text-muted)] min-w-0">
-          <span className="tabular-nums whitespace-nowrap truncate min-w-0">{checks.length} {checks.length === 1 ? 'occupato' : 'occupati'} · {covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
+          <span className="hidden sm:block tabular-nums whitespace-nowrap truncate min-w-0">{checks.length} {checks.length === 1 ? 'occupato' : 'occupati'} · {covers} {covers === 1 ? 'coperto' : 'coperti'}</span>
           {onWalkIn && <button onClick={onWalkIn} className={`${btn} !h-9 shrink-0`}><UserPlus size={15} /> Walk-in</button>}
         </div>
       </div>

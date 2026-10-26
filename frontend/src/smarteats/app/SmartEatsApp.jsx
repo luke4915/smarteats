@@ -24,6 +24,7 @@ import SettingsPage from '../settings/SettingsPage';
 import { useInbox } from '../notifications/useInbox';
 import ReservedGate from '../../components/shared/ReservedGate';
 import StatsTabs from '../../components/shared/StatsTabs';
+import Loading from '../../components/shared/Loading';
 
 const KitchenPage = lazy(() => import('../kitchen/KitchenPage'));
 const StatsPage = lazy(() => import('../stats/StatsPage'));
@@ -78,7 +79,7 @@ const SmartEatsApp = () => {
           theme={theme} onThemeChange={setTheme} onLogout={doLogout} />
 
         <div key={pathname} className="motion-page flex-1 min-h-0 flex gap-4 px-4 pt-1 pb-3 md:p-4">
-          <Suspense fallback={<PageCard><p className="text-[var(--text-muted)]">Caricamento…</p></PageCard>}>
+          <Suspense fallback={<PageCard><Loading /></PageCard>}>
             <Routes>
               <Route path="/floor" element={guard('floor', <FloorPage user={user} service={service} event={event} />)} />
               <Route path="/reservations" element={guard('reservations', <ReservationsPage event={event} />)} />

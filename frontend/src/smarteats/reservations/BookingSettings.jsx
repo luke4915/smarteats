@@ -6,6 +6,7 @@ import { useToast } from '../../context/useToast';
 import { btn, btnPrimary, iconBtn, input, label } from '../floor/ui';
 import { formatDay } from './rules';
 import Switch from '../../components/shared/Switch';
+import Loading from '../../components/shared/Loading';
 
 const DAYS = [[1, 'Lun'], [2, 'Mar'], [3, 'Mer'], [4, 'Gio'], [5, 'Ven'], [6, 'Sab'], [0, 'Dom']];
 const EMPTY = { name: '', start_time: '19:30', duration_minutes: 90, weekdays: [0, 1, 2, 3, 4, 5, 6], capacity: 30, active: true };
@@ -63,7 +64,7 @@ const BookingSettings = () => {
       <section>
         <h2 className="text-sm font-semibold text-[var(--text-main)] mb-1">Prenotazioni online</h2>
         <p className="text-xs text-[var(--text-muted)] mb-4">I clienti chiedono un tavolo da una pagina pubblica; tu confermi dall'agenda. Fino a 10 persone, da un'ora a 30 giorni prima; oltre devono telefonare.</p>
-        {portal === null ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+        {portal === null ? <Loading /> : (
           <div className="grid lg:grid-cols-[1fr_auto] gap-6 max-w-3xl">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -97,7 +98,7 @@ const BookingSettings = () => {
       <section>
         <h2 className="text-sm font-semibold text-[var(--text-main)] mb-1">Turni delle prenotazioni</h2>
         <p className="text-xs text-[var(--text-muted)] mb-4">Orari fissi in cui si accettano prenotazioni, con i coperti che si possono prenotare e quanto resta impegnato il tavolo.</p>
-        {shifts === null ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+        {shifts === null ? <Loading /> : (
           <ul className="divide-y divide-[var(--border)] border border-[var(--border)] rounded-lg max-w-2xl mb-3">
             {shifts.length === 0 && <li className="px-3 py-3 text-sm text-[var(--text-muted)]">Nessun turno. Aggiungine uno, per esempio «Cena 19:30».</li>}
             {shifts.map(s => (

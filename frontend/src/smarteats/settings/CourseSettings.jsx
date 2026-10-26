@@ -4,6 +4,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import SortableList from '../../components/shared/SortableList';
 import { btn, iconBtn, input } from '../floor/ui';
+import Loading from '../../components/shared/Loading';
 
 // Le portate del locale nell'ordine in cui di solito escono. Si riordinano trascinando. Una portata può uscire
 // «insieme alla precedente» (secondi e contorni): in comanda ha già lo stesso numero d'uscita, e il cameriere può
@@ -28,7 +29,7 @@ const CourseSettings = () => {
     <div className="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)]">
       <h2 className="text-base font-semibold text-[var(--text-main)] mb-1">Portate</h2>
       <p className="text-sm text-[var(--text-muted)] mb-4">Trascina per metterle nell&apos;ordine in cui escono. Segna «insieme alla precedente» quelle che escono insieme, come secondi e contorni.</p>
-      {courses === null ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+      {courses === null ? <Loading /> : (
         <div className="max-w-xl mb-3">
           {courses.length === 0 && <p className="px-3 py-3 text-sm text-[var(--text-muted)] border border-[var(--border)] rounded-lg">Nessuna portata. Aggiungine una, per esempio «Antipasti».</p>}
           <SortableList items={courses} getId={c => c.id} onReorder={reorder} className="list-none"

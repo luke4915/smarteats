@@ -9,6 +9,7 @@ import { formatQuantity } from './units';
 import { vatOfLines } from './receipt';
 import { formatCents } from '../utils/format';
 import { uploadReceiptDocuments, documentUrl } from './receiptDocuments';
+import Loading from '../components/shared/Loading';
 
 // Un carico già registrato: righe, totali e allegati. Il carico non si modifica (lo storico dei movimenti non si corregge);
 // si possono aggiungere o togliere le foto della bolla.
@@ -37,7 +38,7 @@ const ReceiptDetailModal = ({ receiptId, onClose, onChanged }) => {
 
   return (
     <Modal title={receipt ? `Carico del ${receipt.received_on.split('-').reverse().join('/')} · ${receipt.supplier_name}` : 'Carico'} size="max-w-3xl" onClose={onClose}>
-      {!receipt ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+      {!receipt ? <Loading /> : (
         <div className="space-y-5">
           {(receipt.document_number || receipt.notes) && <p className="text-sm text-[var(--text-muted)]">{[receipt.document_number && `Bolla ${receipt.document_number}`, receipt.notes].filter(Boolean).join(' · ')}</p>}
           <ul className="space-y-1.5">

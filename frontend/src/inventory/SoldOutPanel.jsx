@@ -5,6 +5,7 @@ import Segmented from '../smarteats/floor/Segmented';
 import { useToast } from '../context/useToast';
 import { fetchWithAuth } from '../utils/apiClient';
 import { row } from '../smarteats/floor/ui';
+import Loading from '../components/shared/Loading';
 
 const soldOut = (product) => product.stock_enabled && product.stock === 0;
 
@@ -32,7 +33,7 @@ const SoldOutPanel = ({ canSeeIngredients, onClose }) => {
     <Modal title="Esaurito" size="max-w-lg" onClose={onClose}>
       <div className="space-y-3">
         {canSeeIngredients && <Segmented label="Cosa è finito" value={tab} onChange={setTab} options={[{ id: 'dishes', label: 'Piatti' }, { id: 'ingredients', label: 'Ingredienti' }]} />}
-        {!items ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+        {!items ? <Loading /> : (
           <ul className="space-y-1.5">
             {items.map(x => (
               <li key={x.id} className={`${row} flex items-center gap-3`}>

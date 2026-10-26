@@ -8,6 +8,7 @@ import { useLongPress } from '../../hooks/useLongPress';
 import { canForceSale, ingredientPortionsLeft, tighterLimit } from '../../inventory/availability';
 import { normalizeText } from '../../smarteats/floor/checkMath';
 import { formatEuro } from '../../utils/format';
+import Loading from './Loading';
 
 // La carta per fare un ordine: ricerca, categorie e tessere dei prodotti. È una sola in tutta l'app: la cassa delle sagre, la Sala
 // (comanda al tavolo) e l'Asporto. Ogni tessera ha il pallino del colore della categoria (e una tinta appena accennata), la quantità
@@ -44,9 +45,9 @@ const ProductPicker = ({ products, cart, onAdd, onRemove, onLongPress, lowStockA
         <Segmented scroll label="Categoria" className="mb-3 shrink-0" value={category} onChange={setCategory} options={categories.map(c => ({ id: c, label: c }))} />)}
 
       <div className={`flex-1 overflow-y-auto no-scrollbar ${scrollPadding}`}>
-        {!products && <p className="text-[var(--text-muted)] text-sm">Caricamento carta…</p>}
+        {!products && <Loading />}
         {products && !shown.length && <div className="flex items-center justify-center h-40 text-[var(--text-muted)]"><p className="text-sm">Nessun prodotto disponibile</p></div>}
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-2.5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-2.5">
           {shown.map(p => {
             const inCart = (cart ?? []).filter(l => l.id === p.id).reduce((s, l) => s + l.quantity, 0);
             const countedLeft = p.stock_enabled && p.stock !== null ? p.stock - inCart : null;

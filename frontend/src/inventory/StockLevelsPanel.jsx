@@ -6,6 +6,7 @@ import UsageModal from './UsageModal';
 import { btn, btnPrimary, row } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
+import Loading from '../components/shared/Loading';
 
 // I controlli di magazzino, dal più recente: quando, chi, e quante differenze sono uscite. Un tocco apre il dettaglio.
 // Nei locali senza ricette (`simpleDepletion`) c'è anche lo scarico di fine servizio: quanto si è usato o quanto è rimasto.
@@ -28,7 +29,7 @@ const StockLevelsPanel = ({ ingredients, simpleDepletion, onChanged }) => {
           <button className={btnPrimary} onClick={() => setCreating(true)} disabled={ingredients.length === 0}><ClipboardCheck size={16} /> Nuovo controllo</button>
         </div>
       </div>
-      {levels === null && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+      {levels === null && <Loading />}
       {levels?.length === 0 && <p className="py-10 text-center text-sm text-[var(--text-muted)]">Nessun controllo. Il primo si fa di solito a fine servizio.</p>}
       <ul className="space-y-1.5">
         {(levels ?? []).map(l => (

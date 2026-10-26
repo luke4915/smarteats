@@ -7,6 +7,7 @@ import { formatEuro } from '../utils/format';
 import { PublicShell, StepSection } from '../components/public/PublicShell';
 import { useSystemTheme } from '../hooks/useSystemTheme';
 import { CategoryChips, ProductRows } from '../components/public/MenuList';
+import Loading from '../components/shared/Loading';
 
 // Pagina pubblica per ordinare da asporto (`/order`): il cliente sceglie i prodotti, il giorno e la fascia di ritiro,
 // lascia nome e telefono e invia una *richiesta*: il locale la approva. Si paga al ritiro. `/order/<codice>` è la
@@ -44,7 +45,7 @@ const Status = ({ token, info }) => {
   };
 
   if (error && !data) return <p className="text-sm text-red-500" role="alert">{error}</p>;
-  if (!data) return <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>;
+  if (!data) return <Loading />;
   const text = STATUS_TEXT[data.status] ?? STATUS_TEXT.requested;
   const phone = data.restaurant.phone || info?.phone;
   return (
@@ -136,7 +137,7 @@ const OrderPage = () => {
   };
 
   if (error && !info) return <PublicShell><p className="text-sm text-[var(--text-muted)] text-center py-10" role="alert">{error}</p></PublicShell>;
-  if (!info) return <PublicShell><p className="text-sm text-[var(--text-muted)]">Caricamento…</p></PublicShell>;
+  if (!info) return <PublicShell><Loading /></PublicShell>;
   if (token) return <PublicShell info={info} kicker="Il tuo ordine da asporto"><Status token={token} info={info} /></PublicShell>;
 
   const products = info.products.filter(p => p.category === category);
@@ -181,7 +182,7 @@ const OrderPage = () => {
           </StepSection>
 
           <StepSection n={2} title="Quando ritiri?">
-            {!days ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+            {!days ? <Loading /> : (
               <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Giorno">
                 {days.map(d => {
                   const label = formatDay(d.date, { short: true });

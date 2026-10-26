@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Save, Send } from 'lucide-react';
 import { btn, btnPrimary, input } from '../../smarteats/floor/ui';
 import { apiFetch } from '../../utils/apiClient';
+import Loading from '../shared/Loading';
 
 // Scheda «WhatsApp» della finestra di un locale: quali eventi mandano un messaggio, tetto mensile di pratiche, registro degli ultimi
 // invii e un messaggio di prova. Il modulo si accende da «Moduli». Il locale non configura nulla: solo qui.
@@ -50,7 +51,7 @@ const TenantWhatsApp = ({ tenant }) => {
 
   return (
     <div>
-        {!data && !error && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+        {!data && !error && <Loading />}
         {data && (
           <div className="space-y-6">
             {!data.module_enabled && <p className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-3 text-sm text-amber-500">Il modulo è spento per questo locale: accendilo da «Moduli» perché gli avvisi partano.</p>}

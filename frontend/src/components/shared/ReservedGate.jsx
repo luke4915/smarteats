@@ -4,6 +4,7 @@ import { unlockedUntilLabel } from './reservedLabels';
 import { btn } from '../../smarteats/floor/ui';
 import { useReservedData } from '../../context/useReservedData';
 import { useToast } from '../../context/useToast';
+import Loading from './Loading';
 
 // Avvolge una schermata fatta di dati riservati (report, statistiche): finché è bloccata mostra la scheda di sblocco e i dati
 // non si chiedono nemmeno al server; sbloccata li mostra, con una riga che dice fino a quando e un modo per richiudere subito.
@@ -11,7 +12,7 @@ import { useToast } from '../../context/useToast';
 const ReservedGate = ({ children, what }) => {
   const { ready, locked, unlockedUntil, lock } = useReservedData();
   const { showToast } = useToast();
-  if (!ready) return <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>;
+  if (!ready) return <Loading />;
   if (locked) return <UnlockCard what={what} />;
   return (
     <>
