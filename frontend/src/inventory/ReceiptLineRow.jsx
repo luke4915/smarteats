@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import QuantityInput from './QuantityInput';
-import { iconBtn, input, label } from '../smarteats/floor/ui';
+import { iconBtnField, input, label } from '../smarteats/floor/ui';
 import { VAT_RATES, rowAmounts, rowForIngredient, centsToEuroText } from './receipt';
 
 const Field = ({ title, children, className = '' }) => (
@@ -24,7 +24,7 @@ const ReceiptLineRow = ({ row, ingredients, supplierItems = [], showQuantity = t
         <Field title="Confezione" className="flex-1">
           <input className={input} aria-label="Confezione" placeholder="Es. Sacco da 25 kg" maxLength={40} value={row.purchase_unit_name} onChange={e => onChange({ ...row, purchase_unit_name: e.target.value })} />
         </Field>
-        <button type="button" className={`${iconBtn} hover:!text-red-500`} aria-label="Togli la riga" onClick={onRemove}><Trash2 size={16} /></button>
+        <button type="button" className={`${iconBtnField} hover:!text-red-500`} aria-label="Togli la riga" onClick={onRemove}><Trash2 size={16} /></button>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-[1fr_1.4fr_1fr_0.8fr_auto] gap-2 items-end">
         {showQuantity && (

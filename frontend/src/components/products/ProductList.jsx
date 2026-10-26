@@ -4,6 +4,10 @@ import { useIsMobile } from '../../hooks/useBreakpoint';
 import { Minus } from 'lucide-react';
 import Segmented from '../../smarteats/floor/Segmented';
 import { input } from '../../smarteats/floor/ui';
+import { useAuth } from '../../context/useAuth';
+import { useToast } from '../../context/useToast';
+import { useAvailability } from '../../hooks/useAvailability';
+import { canForceSale, ingredientPortionsLeft, tighterLimit } from '../../inventory/availability';
 
 const LONG_PRESS_MS = 1500;
 const VISIBLE_THRESHOLD_PCT = 10; // sotto questa soglia il bordo resta invisibile: evita il "flash" su un click veloce
@@ -12,6 +16,10 @@ const VISIBLE_THRESHOLD_PCT = 10; // sotto questa soglia il bordo resta invisibi
 // quantità in carrello e un «−» per toglierne una senza aprire il carrello. Da 768 px in su resta come prima.
 const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThreshold = 15, setProducts }) => {
   const phone = useIsMobile();
+  const { user } = useAuth();
+  const { showToast } = useToast();
+  const portions = useAvailability();       // quante porzioni permettono gli ingredienti (vuoto senza magazzino con ricette)
+  const canForce = canForceSale(user?.role);
   const [activeCategory, setActiveCategory] = useState('Tutti');
   const [searchTerm, setSearchTerm] = useState('');
   const [progressById, setProgressById] = useState({});
@@ -152,9 +160,10 @@ const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThresh
               const color = product.color || 'var(--accent)';
 
               const cartQty = cart?.filter(i => i.id === product.id).reduce((sum, i) => sum + i.quantity, 0) || 0;
-              const remainingStock = product.stock_enabled && product.stock !== null
-                ? product.stock - cartQty
-                : null;
+              const countedLeft = product.stock_enabled && product.stock !== null ? product.stock - cartQty : null;
+              const ingredientLeft = ingredientPortionsLeft(portions, product.id, cartQty);
+              const ingredientOut = ingredientLeft === 0;
+              const remainingStock = tighterLimit(countedLeft, ingredientLeft);
               const showStockBadge = remainingStock !== null && remainingStock <= lowStockThreshold;
 
               const progress = progressById[product.id] || 0;
@@ -162,7 +171,12 @@ const ProductList = ({ products, addToCart, removeLastItem, cart, lowStockThresh
               return (
                 <button
                   key={product.id}
-                  onClick={() => { if (!endPress(product.id)) addToCart(product); }}
+                  onClick={() => {
+                    if (endPress(product.id)) return;
+                    // Ingrediente finito: lo vende comunque solo chi può (il server chiederà conferma all'invio)
+                    if (ingredientOut && countedLeft !== 0 && !canForce) return showToast(`"${product.name}": ingrediente esaurito`, 'warning');
+                    addToCart(product);
+                  }}
                   onMouseDown={() => startPress(product)}
                   onMouseLeave={() => clearPress(product.id)}
                   onTouchStart={() => startPress(product)}

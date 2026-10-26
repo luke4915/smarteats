@@ -121,6 +121,31 @@ test('magazzino: ingredienti e ricetta di un piatto; la cucina può segnare esau
   await expect(chef.getByRole('dialog', { name: 'Esaurito' })).toBeVisible();
   await expect(chef.getByRole('switch', { name: 'Bruschetta: disponibile' })).toBeChecked();
   await shot(chef, 'inventory-05-esaurito');
+
+  // la cucina segna finita la farina: in sala il piatto è «Esaurito» e l'amministratore lo vende comunque, dopo la conferma
+  await chef.getByRole('tab', { name: 'Ingredienti' }).click();
+  await chef.getByRole('switch', { name: 'Farina 00: disponibile' }).click();
+  await expect(chef.getByRole('switch', { name: 'Farina 00: disponibile' })).not.toBeChecked();
+  await admin.locator('a[href="/floor"]').first().click();
+  await admin.getByRole('button', { name: /^T2: Libero/ }).click();
+  await admin.getByRole('button', { name: 'Apri tavolo' }).click();
+  await admin.getByRole('button', { name: 'Aggiungi' }).click();
+  await expect(admin.getByRole('button', { name: /Bruschetta.*Esaurito/ })).toBeVisible();
+  await shot(admin, 'inventory-11-esaurito-in-sala');
+  await admin.getByRole('button', { name: /Bruschetta/ }).click();
+  await admin.getByRole('button', { name: 'Invia in cucina' }).click();
+  await expect(admin.getByRole('dialog', { name: 'Ingrediente esaurito' })).toBeVisible();
+  await shot(admin, 'inventory-12-vendi-comunque');
+  await admin.getByRole('button', { name: 'Vendi comunque' }).click();
+  await expect(admin.getByRole('button', { name: 'Incassa' })).toBeVisible();     // la comanda è partita: si è tornati al conto
+
+  // si rimette tutto a posto: conto eliminato (la farina torna in dispensa) e farina di nuovo disponibile
+  await admin.getByRole('button', { name: 'Altre azioni' }).click();
+  await admin.getByRole('menuitem', { name: 'Elimina conto' }).click();
+  await admin.getByRole('button', { name: 'Sì, elimina' }).click();
+  await expect(admin.getByRole('button', { name: /^T2: Libero/ })).toBeVisible();
+  await chef.getByRole('switch', { name: 'Farina 00: disponibile' }).click();
+  await expect(chef.getByRole('switch', { name: 'Farina 00: disponibile' })).toBeChecked();
   await chef.close();
   await admin.close();
 

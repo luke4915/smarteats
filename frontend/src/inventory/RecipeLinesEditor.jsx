@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react';
-import { btn, iconBtn, input } from '../smarteats/floor/ui';
+import { btn, iconBtnField, input } from '../smarteats/floor/ui';
 import Segmented from '../smarteats/floor/Segmented';
 import QuantityInput from './QuantityInput';
 import { blankRow, resolveRef, unitAfterChoosing } from './recipeLines';
@@ -27,7 +27,7 @@ const RecipeLinesEditor = ({ rows, onChange, ingredients, preparations = [], sig
               {preparations.length > 0 && <optgroup label="Preparazioni">{usable(preparations).map(p => <option key={`p${p.id}`} value={`p${p.id}`}>{p.name}</option>)}</optgroup>}
             </select>
             <QuantityInput className="sm:w-52" baseUnit={target?.base_unit ?? 'g'} label="Quantità" text={row.text} unit={row.unit} onChange={changes => update(row.key, changes)} />
-            <button type="button" className={`${iconBtn} hover:!text-red-500`} aria-label="Togli la riga" onClick={() => onChange(rows.filter(r => r.key !== row.key))}><Trash2 size={16} /></button>
+            <button type="button" className={`${iconBtnField} hover:!text-red-500`} aria-label="Togli la riga" onClick={() => onChange(rows.filter(r => r.key !== row.key))}><Trash2 size={16} /></button>
           </div>
         );
       })}

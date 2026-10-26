@@ -1,9 +1,15 @@
 import { useState, useMemo } from 'react';
 import { Search, ChevronLeft, X } from 'lucide-react';
 import { formatEuro, normalizeText } from './checkMath';
+import { useAuth } from '../../context/useAuth';
+import { useAvailability } from '../../hooks/useAvailability';
+import { canForceSale, ingredientPortionsLeft, tighterLimit } from '../../inventory/availability';
 
 // La carta per fare una comanda: stessa disposizione della cassa (categoria, ricerca, tessere dei prodotti).
 const OrderMenu = ({ products, cart, tableName, onAdd, onBack }) => {
+  const { user } = useAuth();
+  const portions = useAvailability();       // quante porzioni permettono gli ingredienti (vuoto senza magazzino con ricette)
+  const canForce = canForceSale(user?.role);
   const [category, setCategory] = useState('Tutti');
   const [search, setSearch] = useState('');
 
@@ -40,12 +46,14 @@ const OrderMenu = ({ products, cart, tableName, onAdd, onBack }) => {
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
           {shown.map(p => {
             const inCart = cart.filter(l => l.id === p.id).reduce((s, l) => s + l.quantity, 0);
-            const remaining = p.stock_enabled && p.stock !== null ? p.stock - inCart : null;
+            const countedLeft = p.stock_enabled && p.stock !== null ? p.stock - inCart : null;
+            const remaining = tighterLimit(countedLeft, ingredientPortionsLeft(portions, p.id, inCart));
             const out = remaining !== null && remaining <= 0;
+            const blocked = out && (countedLeft !== null && countedLeft <= 0 || !canForce);   // finita la scorta contata, o ingrediente finito e non si può forzare
             const color = p.color || 'var(--accent)';
             return (
-              <button key={p.id} disabled={out} onClick={() => onAdd(p)}
-                className={`relative flex flex-col justify-between rounded-lg p-3 min-h-[84px] border border-[var(--border)] bg-[var(--bg-card-2)] text-left select-none transition ${out ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:border-[var(--border-hover)] active:scale-[0.98] cursor-pointer'}`}>
+              <button key={p.id} disabled={blocked} onClick={() => onAdd(p)}
+                className={`relative flex flex-col justify-between rounded-lg p-3 min-h-[84px] border border-[var(--border)] bg-[var(--bg-card-2)] text-left select-none transition ${out ? `opacity-50 grayscale ${blocked ? 'cursor-not-allowed' : 'cursor-pointer'}` : 'hover:border-[var(--border-hover)] active:scale-[0.98] cursor-pointer'}`}>
                 <span className="flex items-start gap-2 font-medium text-sm leading-tight text-[var(--text-main)]"><span className="mt-1 w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} aria-hidden="true" />{p.name}</span>
                 <span className="flex items-baseline justify-between w-full mt-2">
                   <span className="text-xs font-semibold tabular-nums text-[var(--text-muted)]">{formatEuro(p.price)}</span>

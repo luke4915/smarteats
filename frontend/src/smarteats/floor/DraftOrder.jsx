@@ -1,6 +1,8 @@
 import { useState, useRef, useMemo } from 'react';
 import { Minus, Plus, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react';
 import { fetchWithAuth, NetworkError } from '../../utils/apiClient';
+import { useForceSale, SHORTAGE_CODE } from '../../hooks/useForceSale';
+import ForceSaleDialog from '../../components/shared/ForceSaleDialog';
 import { useToast } from '../../context/useToast';
 import { printFired } from './printFired';
 import PanelFrame from './PanelFrame';
@@ -15,6 +17,7 @@ import { btnPrimary, iconBtn } from './ui';
 // Le comande dei tavoli richiedono il server: lo stato del conto è condiviso fra i dispositivi.
 const DraftOrder = ({ detail, service, cart, setCart, products, courses, onBack, onSent }) => {
   const { showToast } = useToast();
+  const force = useForceSale();
   const [editing, setEditing] = useState(null);       // indice della riga aperta nell'editor
   const [holdAll, setHoldAll] = useState(false);      // non mandare niente ora
   const [sending, setSending] = useState(false);
@@ -45,7 +48,12 @@ const DraftOrder = ({ detail, service, cart, setCart, products, courses, onBack,
     setSending(true);
     try {
       const payload = toPayload(schedule).map(g => ({ ...g, client_order_id: (attempt.current[`${g.seq}:${g.course_id ?? 0}`] ??= crypto.randomUUID()) }));
-      const res = await fetchWithAuth(`/checks/${detail.id}/courses`, { method: 'POST', body: { groups: payload, fire_first: !holdAll } });
+      const post = (extra) => fetchWithAuth(`/checks/${detail.id}/courses`, { method: 'POST', body: { groups: payload, fire_first: !holdAll, ...extra } });
+      // Un ingrediente non basta: amministratore e responsabile possono vendere comunque (gli altri vedono il rifiuto)
+      const res = await post().catch(async (err) => {
+        if (err?.code === SHORTAGE_CODE && await force.askForce(err.message)) return post({ force_stock: true });
+        throw err;
+      });
       if (res.duplicate) showToast('Comanda già inviata', 'info');
       else {
         await printFired(res.orders, res.fired, detail, service, showToast);
@@ -142,6 +150,7 @@ const DraftOrder = ({ detail, service, cart, setCart, products, courses, onBack,
           ))}
         </ol>
       )}
+      {force.pending && <ForceSaleDialog message={force.pending} onAnswer={force.answer} />}
     </PanelFrame>
   );
 };

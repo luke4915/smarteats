@@ -5,6 +5,8 @@ import { useToast } from '../context/useToast';
 import { useIsMobile } from '../hooks/useBreakpoint';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { sendOrder } from '../utils/sendOrder';
+import { useForceSale } from '../hooks/useForceSale';
+import ForceSaleDialog from '../components/shared/ForceSaleDialog';
 import { fetchWithAuth } from '../utils/apiClient';
 import { termsFor } from '../utils/terms';
 import { defaultView } from '../components/layout/viewRoles';
@@ -34,6 +36,7 @@ const FestivalApp = () => {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
   const data = useFestivalData(user);
+  const force = useForceSale();
   const { cartState, activeSession, products, setProducts } = data;
 
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
@@ -50,7 +53,7 @@ const FestivalApp = () => {
   const onCashPage = pathname === '/dashboard';
   const handleSendOrder = (isTakeaway = false) => sendOrder({
     cart: cartState.cart, isTakeaway, activeSession, orderMode: data.orderMode, clearCart: cartState.clearCart,
-    playSound: data.playSound, showToast, onSent: () => { if (isMobile) setIsMobileCartOpen(false); },
+    playSound: data.playSound, showToast, confirmForce: force.askForce, onSent: () => { if (isMobile) setIsMobileCartOpen(false); },
   });
   const performLogout = async () => {
     try { await logout(); setShowLogoutConfirm(false); showToast('Sessione chiusa', 'info'); navigate('/login'); }
@@ -91,6 +94,7 @@ const FestivalApp = () => {
       )}
       {showLogoutConfirm && <LogoutConfirmModal onConfirm={performLogout} onCancel={() => setShowLogoutConfirm(false)} />}
       {showReversePopup && <ReverseOrder onClose={() => setShowReversePopup(false)} />}
+      {force.pending && <ForceSaleDialog message={force.pending} onAnswer={force.answer} />}
     </div>
   );
 };
