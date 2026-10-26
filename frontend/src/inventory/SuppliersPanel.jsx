@@ -12,7 +12,7 @@ const SuppliersPanel = ({ suppliers, ingredients, onChanged }) => {
         <p className="text-sm text-[var(--text-muted)]">Chi ti vende la merce, e a che prezzo.</p>
         <button className={btnPrimary} onClick={() => setEditing(null)}><Plus size={16} /> Nuovo fornitore</button>
       </div>
-      {suppliers.length === 0 && <p className="py-10 text-center text-sm text-[var(--text-muted)]">Nessun fornitore. Aggiungine uno per poter registrare i carichi.</p>}
+      {suppliers.length === 0 && <p className="py-10 text-center text-sm text-[var(--text-muted)]">Nessun fornitore. Aggiungine uno per poter registrare i scarichi.</p>}
       <ul className="space-y-1.5">
         {suppliers.map(s => (
           <li key={s.id}>

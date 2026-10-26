@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Eye, EyeOff, CheckSquare, Square, ListChecks } from 'lucide-react';
+import { Plus, Trash2, Eye, EyeOff, CheckSquare, Square, ListChecks, ChefHat } from 'lucide-react';
 import Segmented from '../../smarteats/floor/Segmented';
 import SearchField from '../shared/SearchField';
 import { btn, btnPrimary, iconBtn } from '../../smarteats/floor/ui';
@@ -10,8 +10,9 @@ const DESTINATION = { bar: 'Bar', kitchen: 'Cucina' };
 // L'elenco dei prodotti, uguale nella sagra e nel ristorante: le categorie in alto, un prodotto per riga (nome, portata e destinazione
 // in piccolo, prezzo, visibilità), il resto si apre con un tocco sulla riga. I prodotti nascosti restano fuori finché non si chiede di
 // vederli. «Seleziona» (se `onSetManyVisible`) permette di mostrare o nascondere più prodotti insieme, per esempio a inizio serata.
-// `noun`: come si chiamano in questo locale («piatto» al ristorante, «prodotto» in sagra).
-const CompactCatalog = ({ products, courses, noun = 'prodotto', onAdd, onEdit, onDelete, onToggleVisible, onSetManyVisible }) => {
+// `noun`: come si chiamano in questo locale («piatto» al ristorante, «prodotto» in sagra). `recipes` ({ summaryOf, onOpen }, solo nei locali
+// con le ricette): ogni riga ha il pulsante «Ricetta» e dice se la ricetta c'è.
+const CompactCatalog = ({ products, courses, recipes, noun = 'prodotto', onAdd, onEdit, onDelete, onToggleVisible, onSetManyVisible }) => {
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [showHidden, setShowHidden] = useState(false);
@@ -65,6 +66,7 @@ const CompactCatalog = ({ products, courses, noun = 'prodotto', onAdd, onEdit, o
               const hidden = p.visible === false;
               const course = courseName.get(p.course_id);
               const detail = [course && course !== p.category ? course : null, DESTINATION[p.print_destination], p.stock_enabled && p.stock !== null ? `${p.stock} disponibili` : null].filter(Boolean).join(' · ');
+              const recipe = recipes?.summaryOf.get(p.id);
               return (
                 <li key={p.id} className={`flex items-center gap-1 pr-2 ${hidden ? 'opacity-55' : ''}`}>
                   <button onClick={() => (selecting ? toggleSelected(p.id) : onEdit(p))} className="flex-1 min-w-0 flex items-center gap-3 pl-4 py-3 text-left cursor-pointer hover:bg-[var(--bg-card-2)] transition-colors" aria-label={selecting ? `Seleziona ${p.name}` : `Modifica ${p.name}`}>
@@ -73,12 +75,21 @@ const CompactCatalog = ({ products, courses, noun = 'prodotto', onAdd, onEdit, o
                       : <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: p.color || 'var(--accent)' }} aria-hidden="true" />}
                     <span className="min-w-0 flex-1">
                       <span className="block text-sm font-medium text-[var(--text-main)] truncate">{p.name}{hidden && <span className="ml-2 text-xs font-normal text-[var(--text-muted)]">nascosto</span>}</span>
-                      {detail && <span className="block text-xs text-[var(--text-muted)] truncate">{detail}</span>}
+                      {(detail || recipes) && (
+                        <span className="block text-xs text-[var(--text-muted)] truncate">
+                          {detail}{detail && recipes ? ' · ' : ''}
+                          {recipes && (recipe ? `${recipe.lines} ${recipe.lines === 1 ? 'ingrediente' : 'ingredienti'}` : <span className="text-amber-500">Senza ricetta</span>)}
+                        </span>)}
                     </span>
                     <span className="text-sm font-medium tabular-nums text-[var(--text-main)] pr-2">{formatEuro(p.price || 0)}</span>
                   </button>
                   {!selecting && (
                     <>
+                      {recipes && (
+                        <button onClick={() => recipes.onOpen(p)} aria-label={`Ricetta di ${p.name}`} title={recipe ? 'Modifica la ricetta' : 'Scrivi la ricetta'}
+                          className={`${btn} !h-9 !px-3 text-xs shrink-0 sm:w-40 ${recipe ? '' : '!border-[var(--accent)]/50 !text-[var(--accent)]'}`}>
+                          <ChefHat size={15} /> <span className="hidden sm:inline">{recipe ? 'Ricetta' : 'Aggiungi ricetta'}</span>
+                        </button>)}
                       <button onClick={() => onToggleVisible(p)} title={hidden ? 'Mostra nelle comande' : 'Nascondi dalle comande'} aria-label={hidden ? `Mostra ${p.name}` : `Nascondi ${p.name}`} className={iconBtn}>{hidden ? <EyeOff size={17} /> : <Eye size={17} />}</button>
                       <button onClick={() => onDelete(p)} title="Elimina" aria-label={`Elimina ${p.name}`} className={`${iconBtn} hover:!text-red-500 hover:!bg-red-500/10`}><Trash2 size={16} /></button>
                     </>

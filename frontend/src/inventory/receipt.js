@@ -1,4 +1,4 @@
-// Il carico di merce (la «bolla») come si compila a schermo e come va al server. Logica pura, provata in receipt.test.js.
+// Lo scarico di merce (la «bolla») come si compila a schermo e come va al server. Logica pura, provata in receipt.test.js.
 //
 // Una riga a schermo: { key, ingredient_id, purchase_unit_name, content_text, content_unit, quantity_text, price_text, vat }:
 //   quantità in confezioni, contenuto di una confezione nell'unità scelta («25 kg»), prezzo di una confezione in euro SENZA IVA,
@@ -8,7 +8,7 @@ import { parseDecimal, toBaseQuantity, toDisplayQuantity } from './units.js';
 export const VAT_RATES = ['4', '5', '10', '22'];
 
 let counter = 0;
-export const blankReceiptRow = () => ({ key: `carico-${(counter += 1)}`, ingredient_id: '', purchase_unit_name: '', content_text: '', content_unit: 'g', quantity_text: '', price_text: '', vat: '' });
+export const blankReceiptRow = () => ({ key: `scarico-${(counter += 1)}`, ingredient_id: '', purchase_unit_name: '', content_text: '', content_unit: 'g', quantity_text: '', price_text: '', vat: '' });
 
 // Euro scritti a mano («18,50») in centesimi interi, o null se non è un importo.
 export function parseEuroToCents(text) {
@@ -45,7 +45,7 @@ export function rowAmounts(row) {
   return { quantity, content, priceCents, lineCents: Math.round(quantity * priceCents), vatRate };
 }
 
-// Totali del carico per l'anteprima: senza IVA, IVA, con IVA (le righe incomplete non contano).
+// Totali dello scarico per l'anteprima: senza IVA, IVA, con IVA (le righe incomplete non contano).
 export function summarize(rows) {
   const amounts = rows.map(rowAmounts).filter(Boolean);
   const net = amounts.reduce((sum, a) => sum + a.lineCents, 0);
@@ -53,12 +53,12 @@ export function summarize(rows) {
   return { netCents: net, vatCents: vat, grossCents: net + vat };
 }
 
-// Le righe che contano: quelle con una quantità scritta. Scelto il fornitore, il carico si apre con tutti i suoi prodotti;
+// Le righe che contano: quelle con una quantità scritta. Scelto il fornitore, lo scarico si apre con tutti i suoi prodotti;
 // si scrive la quantità solo di quelli arrivati e gli altri si ignorano.
 export const arrivedRows = (rows) => rows.filter(r => r.quantity_text.trim() !== '');
 
-// Il carico dopo aver scelto un fornitore: restano le righe dove si è già scritto una quantità, poi i prodotti del fornitore
-// (con confezione, contenuto, prezzo e IVA dell'ultimo carico) che non ci sono già. Senza listino, una riga vuota.
+// Lo scarico dopo aver scelto un fornitore: restano le righe dove si è già scritto una quantità, poi i prodotti del fornitore
+// (con confezione, contenuto, prezzo e IVA dell'ultimo scarico) che non ci sono già. Senza listino, una riga vuota.
 export function rowsForSupplier(currentRows, supplier, ingredients) {
   const kept = arrivedRows(currentRows);
   const taken = new Set(kept.map(r => Number(r.ingredient_id)));
@@ -109,17 +109,17 @@ export function receiptPayload(form, allRows, ingredients) {
 }
 
 // Oggi come «AAAA-MM-GG» nel fuso del dispositivo (per la data di arrivo di partenza).
-// L'IVA di un carico già registrato: ogni riga ha il suo costo (centesimi) e la sua aliquota.
+// L'IVA di uno scarico già registrato: ogni riga ha il suo costo (centesimi) e la sua aliquota.
 export const vatOfLines = (lines) => lines.reduce((sum, l) => sum + Math.round((l.line_cost_cents * (l.vat_rate ?? 0)) / 100), 0);
 
 export const todayText = (now = new Date()) => `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-// ── Il listino di un fornitore: le stesse righe del carico, senza la quantità ──
+// ── Il listino di un fornitore: le stesse righe dello scarico, senza la quantità ──
 export function rowFromPriceItem(item, ingredients, quantityText = '1') {
   const ingredient = ingredients.find(i => i.id === item.ingredient_id);
   const content = toDisplayQuantity(item.base_units_per_purchase_unit, ingredient?.base_unit ?? 'g');
   return {
-    key: `carico-${(counter += 1)}`, ingredient_id: item.ingredient_id, purchase_unit_name: item.purchase_unit_name,
+    key: `scarico-${(counter += 1)}`, ingredient_id: item.ingredient_id, purchase_unit_name: item.purchase_unit_name,
     content_text: String(content.value).replace('.', ','), content_unit: content.unit, quantity_text: quantityText,
     price_text: centsToEuroText(item.unit_cost_cents), vat: item.vat_rate === null ? '' : String(item.vat_rate),
   };

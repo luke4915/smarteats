@@ -41,7 +41,7 @@ router.get('/:id', ...guard, validate({ params: idParamsSchema }), tenantScope, 
     const { rows: [receipt] } = await req.db.query(
       `SELECT r.id, r.supplier_id, s.name AS supplier_name, to_char(r.received_on, 'YYYY-MM-DD') AS received_on, r.document_number, r.notes, r.total_cost_cents, r.created_at
        FROM goods_receipts r JOIN suppliers s ON s.id = r.supplier_id WHERE r.id = $1`, [req.params.id]);
-    if (!receipt) throw new HttpError(404, 'Carico non trovato');
+    if (!receipt) throw new HttpError(404, 'Scarico non trovato');
     const [{ rows: lines }, { rows: documents }] = await Promise.all([
       req.db.query(
         `SELECT l.ingredient_id, i.name AS ingredient_name, i.base_unit, l.purchase_unit_name, l.quantity, l.base_quantity, l.unit_cost_cents, l.vat_rate, l.line_cost_cents
@@ -69,7 +69,7 @@ router.post('/', ...guard, validate({ body: goodsReceiptSchema }), tenantScope, 
   } catch (err) {
     if (sendHttpError(res, err)) return;
     logger.error({ err }, 'Errore POST /api/goods-receipts');
-    res.status(500).json({ error: 'Errore registrazione carico' });
+    res.status(500).json({ error: 'Errore registrazione scarico' });
   }
 });
 
@@ -86,8 +86,8 @@ router.put('/:id/documents', ...guard, validate({ params: idParamsSchema }), raw
     if (!type || type !== req.headers['content-type']?.split(';')[0]) throw new HttpError(400, 'Il file non è una foto o un PDF valido', 'INVALID_DOCUMENT');
     const { rows: [counted] } = await req.db.query(
       'SELECT (SELECT count(*)::int FROM stored_documents WHERE goods_receipt_id = $1) AS n, EXISTS (SELECT 1 FROM goods_receipts WHERE id = $1) AS found', [req.params.id]);
-    if (!counted.found) throw new HttpError(404, 'Carico non trovato');
-    if (counted.n >= MAX_DOCUMENTS_PER_RECEIPT) throw new HttpError(409, `Al massimo ${MAX_DOCUMENTS_PER_RECEIPT} allegati per carico`, 'TOO_MANY_DOCUMENTS');
+    if (!counted.found) throw new HttpError(404, 'Scarico non trovato');
+    if (counted.n >= MAX_DOCUMENTS_PER_RECEIPT) throw new HttpError(409, `Al massimo ${MAX_DOCUMENTS_PER_RECEIPT} allegati per scarico`, 'TOO_MANY_DOCUMENTS');
     const { rows: [doc] } = await req.db.query(
       `INSERT INTO stored_documents (goods_receipt_id, file_name, content_type, size_bytes, data) VALUES ($1, $2, $3, $4, $5) RETURNING id, file_name, content_type, size_bytes`,
       [req.params.id, safeFileName(req.headers['x-file-name']), type, body.length, body]);

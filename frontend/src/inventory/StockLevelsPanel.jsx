@@ -9,7 +9,7 @@ import { useToast } from '../context/useToast';
 import Loading from '../components/shared/Loading';
 
 // I controlli di magazzino, dal più recente: quando, chi, e quante differenze sono uscite. Un tocco apre il dettaglio.
-// Nei locali senza ricette (`simpleDepletion`) c'è anche lo scarico di fine servizio: quanto si è usato o quanto è rimasto.
+// Nei locali senza ricette (`simpleDepletion`) c'è anche il consumo di fine servizio: quanto si è usato o quanto è rimasto.
 const StockLevelsPanel = ({ ingredients, simpleDepletion, onChanged }) => {
   const { showToast } = useToast();
   const [levels, setLevels] = useState(null);
@@ -25,7 +25,7 @@ const StockLevelsPanel = ({ ingredients, simpleDepletion, onChanged }) => {
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-[var(--text-muted)]">Conta cosa c'è davvero in dispensa: ogni differenza con il registro resta scritta.</p>
         <div className="flex flex-wrap gap-2 justify-end">
-          {simpleDepletion && <button className={btn} onClick={() => setUsage(true)} disabled={ingredients.length === 0}><ClipboardList size={16} /> Scarico di fine servizio</button>}
+          {simpleDepletion && <button className={btn} onClick={() => setUsage(true)} disabled={ingredients.length === 0}><ClipboardList size={16} /> Consumo di fine servizio</button>}
           <button className={btnPrimary} onClick={() => setCreating(true)} disabled={ingredients.length === 0}><ClipboardCheck size={16} /> Nuovo controllo</button>
         </div>
       </div>

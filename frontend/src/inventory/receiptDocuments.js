@@ -1,4 +1,4 @@
-// Invio degli allegati di un carico (foto o PDF della bolla) e indirizzo per aprirli. Il file va come corpo grezzo, col suo
+// Invio degli allegati di uno scarico (foto o PDF della bolla) e indirizzo per aprirli. Il file va come corpo grezzo, col suo
 // tipo nell'intestazione e il nome in `X-File-Name`.
 import { fetchWithAuth } from '../utils/apiClient';
 import { API_URL } from '../config/api';

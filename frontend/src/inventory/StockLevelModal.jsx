@@ -13,7 +13,7 @@ import { formatQuantity } from './units';
 const KINDS = [{ id: 'closing', label: 'Fine servizio' }, { id: 'periodic', label: 'Periodico' }];
 
 // Un controllo di magazzino: si conta ciò che c'è davvero e si scrive solo per gli ingredienti contati. Al salvataggio la dispensa
-// si allinea al conteggio e ogni differenza resta nel registro (manca = scarto non registrato, avanza = carico mancato).
+// si allinea al conteggio e ogni differenza resta nel registro (manca = scarto non registrato, avanza = scarico mancato).
 const StockLevelModal = ({ ingredients, onClose, onSaved }) => {
   const { showToast } = useToast();
   const [kind, setKind] = useState('closing');

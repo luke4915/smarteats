@@ -54,14 +54,14 @@ router.post('/movements', ...guard, validate({ body: movementSchema }), tenantSc
 router.post('/usage', ...guard, validate({ body: usageSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     if ((await getTenantModules(req.user.tenantId))?.inventory?.depletion !== 'simple')
-      throw new HttpError(409, 'Questo locale scala gli ingredienti dalle ricette: lo scarico a mano non serve', 'NOT_SIMPLE_DEPLETION');
+      throw new HttpError(409, 'Questo locale scala gli ingredienti dalle ricette: il consumo a mano non serve', 'NOT_SIMPLE_DEPLETION');
     const written = await inTransaction(req.db, (db) => recordUsage(db, { lines: req.body.lines, userId: req.user.id }));
     await logAudit(req.db, req.user.id, 'INVENTORY_USAGE', { lines: written });
     res.status(201).json({ written });
   } catch (err) {
     if (sendHttpError(res, err)) return;
     logger.error({ err }, 'Errore POST /api/inventory/usage');
-    res.status(500).json({ error: 'Errore registrazione dello scarico' });
+    res.status(500).json({ error: 'Errore registrazione del consumo' });
   }
 });
 

@@ -7,7 +7,7 @@ const Field = ({ title, children, className = '' }) => (
   <label className={`block min-w-0 ${className}`}><span className={`${label} block mb-1`}>{title}</span>{children}</label>
 );
 
-// Una riga di carico o di listino: ingrediente, confezione, contenuto di una confezione, prezzo (senza IVA) e IVA. Nel carico c'è
+// Una riga di scarico o di listino: ingrediente, confezione, contenuto di una confezione, prezzo (senza IVA) e IVA. Nel scarico c'è
 // anche la quantità di confezioni arrivate, e in fondo il totale della riga. `supplierItems` precompila dal listino del fornitore.
 const ReceiptLineRow = ({ row, ingredients, supplierItems = [], showQuantity = true, onChange, onRemove }) => {
   const ingredient = ingredients.find(i => i.id === Number(row.ingredient_id));

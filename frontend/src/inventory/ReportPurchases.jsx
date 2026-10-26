@@ -2,8 +2,8 @@ import { row } from '../smarteats/floor/ui';
 import { formatCostPerUnit, formatPercent } from './units';
 import { formatCents } from '../utils/format';
 
-// Gli acquisti nel report: quanto si è speso con ogni fornitore e quali prezzi sono cambiati rispetto al carico precedente.
-// Importi senza IVA (l'IVA dei carichi si legge a parte). Le parti del report sul venduto stanno in ReportSections.jsx.
+// Gli acquisti nel report: quanto si è speso con ogni fornitore e quali prezzi sono cambiati rispetto allo scarico precedente.
+// Importi senza IVA (l'IVA dei scarichi si legge a parte). Le parti del report sul venduto stanno in ReportSections.jsx.
 
 const Section = ({ title, hint, children }) => (
   <section className="space-y-2">
@@ -14,13 +14,13 @@ const Section = ({ title, hint, children }) => (
 
 export const Spending = ({ spending }) => (
   <Section title="Acquisti per fornitore" hint="Merce arrivata nel periodo, senza IVA.">
-    {spending.by_supplier.length === 0 ? <p className="py-3 text-sm text-[var(--text-muted)]">Nessun carico di merce in questo periodo.</p> : (
+    {spending.by_supplier.length === 0 ? <p className="py-3 text-sm text-[var(--text-muted)]">Nessuno scarico di merce in questo periodo.</p> : (
       <>
         <p className="text-sm text-[var(--text-main)]">Totale <b className="tabular-nums">{formatCents(spending.total_cents)}</b></p>
         <ul className="space-y-1.5">
           {spending.by_supplier.map(s => (
             <li key={s.supplier_id} className={`${row} flex items-center gap-3`}>
-              <span className="flex-1 min-w-0 truncate text-[var(--text-main)]">{s.name} <span className="text-xs text-[var(--text-muted)]">· {s.receipts} {s.receipts === 1 ? 'carico' : 'carichi'}</span></span>
+              <span className="flex-1 min-w-0 truncate text-[var(--text-main)]">{s.name} <span className="text-xs text-[var(--text-muted)]">· {s.receipts} {s.receipts === 1 ? 'scarico' : 'scarichi'}</span></span>
               <span className="text-xs text-[var(--text-muted)] tabular-nums hidden sm:block">IVA {formatCents(s.vat_cents)}</span>
               <span className="text-sm tabular-nums text-[var(--text-main)] w-24 text-right">{formatCents(s.net_cents)}</span>
             </li>))}
@@ -30,7 +30,7 @@ export const Spending = ({ spending }) => (
 );
 
 export const PriceChanges = ({ changes }) => (
-  <Section title="Prezzi cambiati" hint="L'ultimo carico del periodo contro quello precedente dello stesso fornitore.">
+  <Section title="Prezzi cambiati" hint="L'ultimo scarico del periodo contro quello precedente dello stesso fornitore.">
     {changes.length === 0 ? <p className="py-3 text-sm text-[var(--text-muted)]">Nessun prezzo è cambiato.</p> : (
       <ul className="space-y-1.5">
         {changes.map(c => (

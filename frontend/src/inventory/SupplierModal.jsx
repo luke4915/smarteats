@@ -12,7 +12,7 @@ import { blankReceiptRow, rowFromPriceItem, priceListProblem, priceListPayload }
 const Field = ({ title, children }) => <label className="block"><span className={`${label} block mb-1`}>{title}</span>{children}</label>;
 
 // Un fornitore: i suoi dati e il listino di ciò che vende (confezione e prezzo di ogni ingrediente). Il listino si aggiorna anche
-// da solo a ogni carico registrato.
+// da solo a ogni scarico registrato.
 const SupplierModal = ({ supplier, ingredients, onClose, onSaved }) => {
   const { showToast } = useToast();
   const editing = !!supplier;
@@ -54,7 +54,7 @@ const SupplierModal = ({ supplier, ingredients, onClose, onSaved }) => {
         {editing && <div className="flex items-center justify-between gap-3"><span className="text-sm text-[var(--text-main)]">Attivo</span><Switch label="Fornitore attivo" checked={form.active} onChange={active => patch({ active })} /></div>}
 
         <div className="space-y-2">
-          <div><span className={`${label} block`}>Cosa vende</span><p className="text-sm text-[var(--text-muted)]">Confezione e prezzo di ogni ingrediente: nei carichi si compila da solo.</p></div>
+          <div><span className={`${label} block`}>Cosa vende</span><p className="text-sm text-[var(--text-muted)]">Confezione e prezzo di ogni ingrediente: nei scarichi si compila da solo.</p></div>
           {rows.map(row => (
             <ReceiptLineRow key={row.key} row={row} ingredients={ingredients} showQuantity={false}
               onChange={next => setRows(list => list.map(r => (r.key === row.key ? next : r)))} onRemove={() => setRows(list => list.filter(r => r.key !== row.key))} />))}

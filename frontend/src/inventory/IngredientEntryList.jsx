@@ -2,7 +2,7 @@ import QuantityInput from './QuantityInput';
 import { blankEntry } from './controls';
 import { row } from '../smarteats/floor/ui';
 
-// L'elenco degli ingredienti con un campo quantità per ciascuno: lo usano il controllo di magazzino (quanto ne conto) e lo scarico
+// L'elenco degli ingredienti con un campo quantità per ciascuno: lo usano il controllo di magazzino (quanto ne conto) e il consumo
 // di fine servizio (quanto ne ho usato o ne è rimasto). `entries` è { idIngrediente: { text, unit } }; `note` scrive la riga
 // sotto il nome (cosa c'era in dispensa, la differenza…).
 const IngredientEntryList = ({ ingredients, entries, onChange, note }) => (

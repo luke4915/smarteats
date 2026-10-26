@@ -13,7 +13,7 @@ export const WASTE_REASONS = [
 ];
 
 const KIND_LABELS = {
-  receipt: 'Carico', sale: 'Vendita', sale_reversal: 'Storno', usage: 'Scarico', waste: 'Scarto', adjustment: 'Rettifica', stock_level: 'Controllo',
+  receipt: 'Scarico merce', sale: 'Vendita', sale_reversal: 'Storno', usage: 'Consumo', waste: 'Scarto', adjustment: 'Rettifica', stock_level: 'Controllo',
 };
 export const kindLabel = (kind) => KIND_LABELS[kind] ?? kind;
 
@@ -69,7 +69,7 @@ export function movementPayload(form) {
   return { type: 'adjustment', ingredient_id: Number(form.ingredient_id), quantity_change: form.direction === 'remove' ? -quantity : quantity, note: form.note.trim() };
 }
 
-// Lo scarico di fine servizio (locali senza ricette): per ogni ingrediente si scrive quanto è stato usato o quanto è rimasto.
+// Il consumo di fine servizio (locali senza ricette): per ogni ingrediente si scrive quanto è stato usato o quanto è rimasto.
 // Le righe vuote si saltano; `mode` dice come leggere ciò che è scritto.
 export function usagePayload(mode, ingredients, entries) {
   const lines = ingredients.flatMap(i => {
