@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import Switch from '../components/shared/Switch';
 import ReceiptLineRow from './ReceiptLineRow';
 import { btn, btnPrimary, btnDanger, input, label } from '../smarteats/floor/ui';
@@ -38,11 +39,10 @@ const SupplierModal = ({ supplier, ingredients, onClose, onSaved }) => {
   return (
     <Modal title={editing ? 'Modifica fornitore' : 'Nuovo fornitore'} size="max-w-4xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={(e) => { e.preventDefault(); if (!problem) save(); }}
       footer={(
-        <div className="flex gap-2">
-          {editing && <button type="button" className={btnDanger} disabled={busy} onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}>{confirmingDelete ? 'Sì, elimina' : 'Elimina'}</button>}
-          <button type="button" className={`${btn} ml-auto`} onClick={onClose}>Annulla</button>
+        <ModalActions onCancel={onClose}
+          start={editing && <button type="button" className={btnDanger} disabled={busy} onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}>{confirmingDelete ? 'Sì, elimina' : 'Elimina'}</button>}>
           <button type="submit" className={btnPrimary} disabled={busy || !!problem} title={problem ?? undefined}>Salva</button>
-        </div>)}>
+        </ModalActions>)}>
       <div className="space-y-5">
         <div className="grid sm:grid-cols-2 gap-3">
           <Field title="Nome"><input className={input} autoFocus maxLength={80} value={form.name} onChange={e => patch({ name: e.target.value })} placeholder="Es. Rossi Alimentari" /></Field>

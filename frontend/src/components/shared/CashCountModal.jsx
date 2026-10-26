@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Banknote, Coins, Check, Minus, Plus } from 'lucide-react';
 import Modal from './Modal';
+import ModalActions from './ModalActions';
 import { btnPrimary } from '../../smarteats/floor/ui';
 
 const NOTES = [100, 50, 20, 10, 5];
@@ -71,7 +72,7 @@ const CashCountModal = ({ expectedCash = 0, onConfirm, onClose }) => {
           <div className="flex justify-between text-sm text-[var(--text-muted)]"><span>Atteso da sistema</span><span className="tabular-nums">{expectedCash.toFixed(2)} €</span></div>
           <div className="flex justify-between text-base font-semibold text-[var(--text-main)]"><span>Contato</span><span className="tabular-nums">{total.toFixed(2)} €</span></div>
           <div className={`flex justify-between text-base font-semibold ${diffColor}`}><span>Differenza</span><span className="tabular-nums">{difference > 0 ? '+' : ''}{difference.toFixed(2)} €</span></div>
-          <button onClick={() => onConfirm(total)} className={`${btnPrimary} w-full !mt-3`}><Check size={18} /> Conferma chiusura</button>
+          <div className="!mt-3"><ModalActions fill onCancel={onClose}><button type="button" onClick={() => onConfirm(total)} className={btnPrimary}><Check size={18} /> Conferma chiusura</button></ModalActions></div>
         </div>
       )}>
       <p className="text-sm text-[var(--text-muted)] mb-4">Conta i contanti a taglio.</p>

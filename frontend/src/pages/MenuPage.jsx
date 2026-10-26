@@ -5,6 +5,7 @@ import { ShoppingCart, Plus, Minus, X, ChefHat, Trash2, Download, QrCode } from 
 
 import { apiFetch } from '../utils/apiClient';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import { btn, btnDanger } from '../smarteats/floor/ui';
 
 // Le righe del carrello e il totale, uguali nel riepilogo e nella finestra del QR.
@@ -202,7 +203,7 @@ export default function MenuPage() {
 
             {showClearConfirm && (
                 <Modal title="Svuotare il carrello?" onClose={() => setShowClearConfirm(false)}
-                    footer={<div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className={`${btn} flex-1`}>Annulla</button><button onClick={clearCart} className={`${btnDanger} flex-1`}>Svuota</button></div>}>
+                    footer={<ModalActions fill onCancel={() => setShowClearConfirm(false)}><button type="button" onClick={clearCart} className={btnDanger}>Svuota</button></ModalActions>}>
                     <p className="text-sm text-[var(--text-muted)]">Tutti i prodotti selezionati verranno rimossi.</p>
                 </Modal>
             )}

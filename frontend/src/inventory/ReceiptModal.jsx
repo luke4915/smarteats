@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import ReceiptLineRow from './ReceiptLineRow';
 import DocumentPicker from './DocumentPicker';
 import { btn, btnPrimary, input, label } from '../smarteats/floor/ui';
@@ -42,14 +43,13 @@ const ReceiptModal = ({ suppliers, ingredients, onClose, onSaved }) => {
   return (
     <Modal title="Nuovo carico di merce" size="max-w-4xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={(e) => { e.preventDefault(); if (!problem) save(); }}
       footer={(
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-sm text-[var(--text-muted)] tabular-nums mr-auto">
+        <ModalActions onCancel={onClose} note={(
+          <span className="tabular-nums">
             {arrivedRows(rows).length} {arrivedRows(rows).length === 1 ? 'prodotto' : 'prodotti'} · 
             Senza IVA <b className="text-[var(--text-main)]">{centsToEuroText(totals.netCents)} €</b> · IVA {centsToEuroText(totals.vatCents)} € · Totale <b className="text-[var(--text-main)]">{centsToEuroText(totals.grossCents)} €</b>
-          </p>
-          <button type="button" className={btn} onClick={onClose}>Annulla</button>
+          </span>)}>
           <button type="submit" className={btnPrimary} disabled={busy || !!problem} title={problem ?? undefined}>{busy ? 'Salvataggio…' : 'Registra il carico'}</button>
-        </div>)}>
+        </ModalActions>)}>
       <div className="space-y-5">
         <div className="grid sm:grid-cols-3 gap-3">
           <label className="block"><span className={`${label} block mb-1`}>Fornitore</span>

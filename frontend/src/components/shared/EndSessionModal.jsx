@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Modal from './Modal';
-import { btn, btnPrimary, label } from '../../smarteats/floor/ui';
+import ModalActions from './ModalActions';
+import { btnPrimary, label } from '../../smarteats/floor/ui';
 
 // Conferma della chiusura serata o servizio. Se ci sono ordini ancora aperti (in attesa o in preparazione) chi chiude
 // sceglie: completarli (entrano nei conti) o lasciarli fuori da totale atteso e statistiche.
@@ -19,10 +20,9 @@ const EndSessionModal = ({ title, sessionName, openOrders, openOrdersTotal, onCa
   return (
     <Modal title={title} onClose={onCancel}
       footer={(
-        <div className="flex gap-3">
-          <button onClick={onCancel} className={`${btn} flex-1`}>Annulla</button>
-          <button onClick={() => onConfirm(needsChoice ? choice : undefined)} disabled={needsChoice && !choice} className={`${btnPrimary} flex-1`}>Conferma</button>
-        </div>
+        <ModalActions fill onCancel={onCancel}>
+          <button type="button" onClick={() => onConfirm(needsChoice ? choice : undefined)} disabled={needsChoice && !choice} className={btnPrimary}>Conferma</button>
+        </ModalActions>
       )}>
       <p className="text-sm text-[var(--text-muted)]">Stai per chiudere <span className="font-semibold text-[var(--text-main)]">«{sessionName}»</span>.</p>
       {needsChoice && (

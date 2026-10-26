@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import Segmented from '../smarteats/floor/Segmented';
 import IngredientEntryList from './IngredientEntryList';
-import { btn, btnPrimary } from '../smarteats/floor/ui';
+import { btnPrimary } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { usagePayload, blankEntry } from './controls';
@@ -34,11 +35,9 @@ const UsageModal = ({ ingredients, onClose, onSaved }) => {
   return (
     <Modal title="Scarico di fine servizio" size="max-w-3xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={(e) => { e.preventDefault(); if (payload.lines.length) save(); }}
       footer={(
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-sm text-[var(--text-muted)] mr-auto">{payload.lines.length === 0 ? 'Scrivi una quantità per almeno un ingrediente.' : `${payload.lines.length} ingredienti`}</p>
-          <button type="button" className={btn} onClick={onClose}>Annulla</button>
+        <ModalActions onCancel={onClose} note={payload.lines.length === 0 ? 'Scrivi una quantità per almeno un ingrediente.' : `${payload.lines.length} ingredienti`}>
           <button type="submit" className={btnPrimary} disabled={busy || payload.lines.length === 0}>{busy ? 'Salvataggio…' : 'Registra lo scarico'}</button>
-        </div>)}>
+        </ModalActions>)}>
       <div className="space-y-4">
         <Segmented label="Come scrivi lo scarico" className="w-full sm:w-96" value={mode} onChange={setMode} options={MODES} />
         <IngredientEntryList ingredients={active} entries={entries} note={i => `In dispensa ${formatQuantity(i.quantity_on_hand, i.base_unit)}`}

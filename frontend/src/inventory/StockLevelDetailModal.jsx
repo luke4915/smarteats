@@ -16,8 +16,7 @@ const StockLevelDetailModal = ({ levelId, onClose }) => {
   const total = hidden ? null : level?.lines.reduce((sum, l) => sum + l.difference_value_cents, 0) ?? 0;
 
   return (
-    <Modal title={level ? `Controllo del ${new Date(level.created_at).toLocaleDateString('it-IT')}` : 'Controllo'} size="max-w-3xl" onClose={onClose}
-      footer={level && <p className="text-sm text-[var(--text-muted)] tabular-nums text-right">Valore delle differenze {formatCents(total)}</p>}>
+    <Modal title={level ? `Controllo del ${new Date(level.created_at).toLocaleDateString('it-IT')}` : 'Controllo'} size="max-w-3xl" onClose={onClose}>
       {!level ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
         <div className="space-y-3">
           {level.notes && <p className="text-sm text-[var(--text-muted)]">{level.notes}</p>}
@@ -30,6 +29,7 @@ const StockLevelDetailModal = ({ levelId, onClose }) => {
                   {differenceText(l.difference, l.base_unit)}{l.difference !== 0 && ` (${formatCents(l.difference_value_cents)})`}</span>
               </li>))}
           </ul>
+          <p className="text-sm text-[var(--text-muted)] tabular-nums text-right">Valore delle differenze {formatCents(total)}</p>
         </div>)}
     </Modal>
   );

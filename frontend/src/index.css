@@ -112,15 +112,20 @@ body {
 @keyframes motion-rise { from { opacity: 0; transform: translateY(6px); } }
 @keyframes motion-slide-in { from { transform: translateX(12px); } }
 @keyframes motion-pop { from { opacity: 0; transform: translateY(8px) scale(0.97); } }
-.motion-page { animation: motion-rise var(--dur-slow) var(--ease) both; }
-/* `backwards` e non `both`: finita l'entrata l'elemento torna normale. Con `both` resterebbe «animato» e farebbe da contenitore per i
-   figli a tutto schermo (`fixed inset-0`, come l'editor della pianta), che si ridurrebbero alle sue dimensioni. */
+/* `backwards` e non `both` (pagine e pannelli): finita l'entrata l'elemento torna normale. Con `both` resterebbe «animato» e farebbe da
+   contenitore per i figli a tutto schermo (`fixed inset-0`: finestre, editor della pianta), che si ridurrebbero alle sue dimensioni. */
+.motion-page { animation: motion-rise var(--dur-slow) var(--ease) backwards; }
 .motion-panel { animation: motion-slide-in var(--dur-base) var(--ease) backwards; }
 /* Finestre: lo sfondo sfuma, la scheda sale appena. Vale per ogni sfondo scuro a tutto schermo e ogni role="dialog". */
 :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) { animation: motion-fade var(--dur-base) var(--ease) both; }
 :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) > :first-child, :where([role="dialog"]) { animation: motion-pop var(--dur-base) var(--ease) both; }
+/* Sul telefono la finestra è una scheda che sale dal basso (curva e durata di iOS); altrove vale l'entrata di tutte le finestre. */
+@keyframes motion-sheet { from { transform: translateY(100%); } }
+@media (max-width: 639px) {
+  .modal-sheet { animation: motion-sheet 340ms cubic-bezier(0.32, 0.72, 0, 1) both; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .motion-page, .motion-panel, :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]), :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) > :first-child, :where([role="dialog"]) { animation: none; }
+  .motion-page, .motion-panel, .modal-sheet, :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]), :where(div[class~="fixed"][class~="inset-0"][class*="bg-black"]) > :first-child, :where([role="dialog"]) { animation: none; }
 }
 
 /* Transizioni di base: cambio tema e passaggio del mouse. Stanno nel livello `base` perché le classi di Tailwind

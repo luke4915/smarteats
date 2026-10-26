@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Power } from 'lucide-react';
 import { useToast } from '../../context/useToast';
 import Modal from '../../components/shared/Modal';
+import ModalActions from '../../components/shared/ModalActions';
 import EndSessionModal from '../../components/shared/EndSessionModal';
 import CashCountModal from '../../components/shared/CashCountModal';
-import { btn, btnPrimary, input } from '../../smarteats/floor/ui';
+import { btnPrimary, input } from '../../smarteats/floor/ui';
 
 // Proposta di nome in base all'ora: pranzo fino alle 16, poi cena.
 const suggestedName = () => {
@@ -59,7 +60,7 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end, terms }) 
 
       {step === 'start' && (
         <Modal title={terms.startTitle} onClose={() => setStep(null)} onSubmit={submitStart}
-          footer={<div className="flex gap-3"><button type="button" onClick={() => setStep(null)} className={`${btn} flex-1`}>Annulla</button><button type="submit" className={`${btnPrimary} flex-1`}>{terms.startAction}</button></div>}>
+          footer={<ModalActions fill onCancel={() => setStep(null)}><button type="submit" className={btnPrimary}>{terms.startAction}</button></ModalActions>}>
           <p className="text-sm text-[var(--text-muted)] mb-4">{terms.startHint}</p>
           <input type="text" autoFocus value={name} onChange={e => setName(e.target.value)} aria-label="Nome del servizio" className={input} />
         </Modal>

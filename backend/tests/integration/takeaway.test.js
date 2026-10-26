@@ -212,7 +212,7 @@ describe('asporto', () => {
     await adminDb.query(`INSERT INTO sessions (name, start_time, tenant_id) SELECT 'Aperta da ieri', now() - interval '20 hours', $1 WHERE NOT EXISTS (SELECT 1 FROM sessions WHERE tenant_id = $1 AND end_time IS NULL)`, [t.id]);
     const early = await cashier.post('/takeaway/orders', { date: tomorrow, time: '12:30', items: [pizza(1)], customer_name: 'Pranzo di oggi', source: 'phone' });
     assert.equal(early.body.order_id, null, 'accettato ieri: non c\'è ancora l\'ordine di cucina');
-    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = ((pickup_at AT TIME ZONE 'Europe/Rome') - interval '1 day') AT TIME ZONE 'Europe/Rome' WHERE id = $1`, [early.body.id]);
+    await adminDb.query('UPDATE takeaway_orders SET pickup_at = now() WHERE id = $1', [early.body.id]);   // arriva il suo momento
     const announced = [];
     assert.ok(await fireDueTakeawayAllTenants((tenantId, message) => announced.push([tenantId, message.type])) >= 1);
     assert.deepEqual(announced.filter(([id]) => id === t.id), [[t.id, 'order_created']], 'la cucina viene avvisata');
@@ -220,6 +220,16 @@ describe('asporto', () => {
     assert.equal(inKitchen.length, 1);
     assert.equal(await fireDueTakeawayAllTenants(() => {}), 0, 'una seconda volta non nasce niente di nuovo');
     await cashier.post(`/takeaway/orders/${early.body.id}/cancel`, {});
+  });
+
+  it('un ritiro passato da molte ore non va in cucina: resta accettato nell\'elenco, dove il locale lo gestisce', async () => {
+    await adminDb.query(`INSERT INTO sessions (name, start_time, tenant_id) SELECT 'Aperta', now(), $1 WHERE NOT EXISTS (SELECT 1 FROM sessions WHERE tenant_id = $1 AND end_time IS NULL)`, [t.id]);
+    const old = await cashier.post('/takeaway/orders', { date: tomorrow, time: '12:30', items: [pizza(1)], customer_name: 'Pranzo dimenticato', source: 'phone' });
+    await adminDb.query(`UPDATE takeaway_orders SET pickup_at = now() - interval '5 hours' WHERE id = $1`, [old.body.id]);
+    assert.equal(await fireDueTakeawayAllTenants(() => {}), 0, 'cinque ore di ritardo: non si cucina');
+    const row = (await adminDb.query('SELECT status, order_id FROM takeaway_orders WHERE id = $1', [old.body.id])).rows[0];
+    assert.deepEqual([row.status, row.order_id], ['accepted', null]);
+    assert.equal((await cashier.post(`/takeaway/orders/${old.body.id}/cancel`, {})).body.status, 'cancelled', 'il locale lo può annullare');
   });
 
   it('senza servizio aperto il giro asporti non fa nulla', async () => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import Modal from '../../shared/Modal';
+import ModalActions from '../../shared/ModalActions';
 import { btn, btnPrimary } from '../../../smarteats/floor/ui';
 import jsQR from 'jsqr';
 
@@ -136,7 +137,8 @@ const QRScanModal = ({ currentCart, onMerge, onReplace, onClose }) => {
     const hasCart = currentCart.length > 0;
 
     return (
-        <Modal title="Importa ordine da QR" onClose={onClose}>
+        <Modal title="Importa ordine da QR" onClose={onClose}
+            footer={!scanned && <ModalActions fill cancelLabel="Annulla scansione" onCancel={onClose} />}>
             {!scanned && (
                 <div className="flex flex-col items-center gap-3">
                     <div className="relative w-full aspect-video rounded-lg overflow-hidden border-2 border-[var(--accent)] bg-black flex items-center justify-center">
@@ -144,7 +146,6 @@ const QRScanModal = ({ currentCart, onMerge, onReplace, onClose }) => {
                         <div className="absolute inset-0 border-2 border-dashed border-white/30 m-4 pointer-events-none rounded-lg" />
                     </div>
                     {scannerError && <p className="text-red-500 text-xs font-medium text-center bg-red-500/10 p-2 rounded-lg border border-red-500/20 w-full">{scannerError}</p>}
-                    <button onClick={onClose} className={`${btn} w-full`}>Annulla scansione</button>
                 </div>
             )}
 

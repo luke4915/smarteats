@@ -19,9 +19,9 @@ const IngredientHistory = ({ ingredient, onMovement }) => {
 
   return (
     <section className="space-y-3 pt-4 border-t border-[var(--border)]">
-      <div className="flex flex-wrap gap-2">
-        <button type="button" className={btn} onClick={() => onMovement('waste')}><Trash2 size={16} /> Registra uno scarto</button>
-        <button type="button" className={btn} onClick={() => onMovement('adjustment')}><SlidersHorizontal size={16} /> Correggi la quantità</button>
+      <div className="grid sm:grid-cols-2 gap-2">
+        <button type="button" className={`${btn} w-full`} onClick={() => onMovement('waste')}><Trash2 size={16} /> Registra uno scarto</button>
+        <button type="button" className={`${btn} w-full`} onClick={() => onMovement('adjustment')}><SlidersHorizontal size={16} /> Correggi la quantità</button>
       </div>
       {movements?.length > 0 && (
         <div>

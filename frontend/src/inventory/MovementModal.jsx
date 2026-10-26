@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import Segmented from '../smarteats/floor/Segmented';
 import QuantityInput from './QuantityInput';
-import { btn, btnPrimary, input, label } from '../smarteats/floor/ui';
+import { btnPrimary, input, label } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { WASTE_REASONS, blankEntry, movementProblem, movementPayload } from './controls';
@@ -33,11 +34,9 @@ const MovementModal = ({ type, ingredientId = '', ingredients, onClose, onSaved 
   return (
     <Modal title={type === 'waste' ? 'Registra uno scarto' : 'Registra una rettifica'} size="max-w-lg" dismissOnBackdrop={false} onClose={onClose} onSubmit={(e) => { e.preventDefault(); if (!problem) save(); }}
       footer={(
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-sm text-[var(--text-muted)] mr-auto">{problem}</p>
-          <button type="button" className={btn} onClick={onClose}>Annulla</button>
+        <ModalActions onCancel={onClose} note={problem}>
           <button type="submit" className={btnPrimary} disabled={busy || !!problem}>{busy ? 'Salvataggio…' : 'Registra'}</button>
-        </div>)}>
+        </ModalActions>)}>
       <div className="space-y-4">
         <label className="block"><span className={`${label} block mb-1`}>Ingrediente</span>
           <select className={input} aria-label="Ingrediente" value={form.ingredient_id}

@@ -1,4 +1,6 @@
 import Modal from '../shared/Modal';
+import ModalActions from '../shared/ModalActions';
+import { btnPrimary } from '../../smarteats/floor/ui';
 import Combobox from './Combobox';
 import PortionsField from './PortionsField';
 import { categoryColors, namesForCategory } from './productForm';
@@ -28,10 +30,9 @@ const ProductFormModal = ({ form, setForm, products, editing, courses, modifierG
   return (
     <Modal title={editing ? 'Modifica prodotto' : 'Nuovo prodotto'} size="max-w-2xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={onSubmit}
       footer={
-        <button type="submit" disabled={submitDisabled}
-          className="w-full py-2.5 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-semibold text-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-          {editing ? 'Salva modifiche' : 'Aggiungi prodotto'}
-        </button>}>
+        <ModalActions onCancel={onClose}>
+          <button type="submit" disabled={submitDisabled} className={btnPrimary}>{editing ? 'Salva modifiche' : 'Aggiungi prodotto'}</button>
+        </ModalActions>}>
     <div className="grid grid-cols-2 gap-3 mb-3">
       <div className={`col-span-2 ${box} space-y-1.5`}>
         <label className={smallLabel}>Categoria</label>

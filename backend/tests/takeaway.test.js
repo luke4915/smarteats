@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { slotsOn, slotWithinWindow, pickupIsDue, orderLoad, slotStates, isSlot, clock } from '../utils/takeaway.js';
+import { slotsOn, slotWithinWindow, pickupIsDue, pickupIsStale, orderLoad, slotStates, isSlot, clock } from '../utils/takeaway.js';
 
 const HOURS = [
   { weekday: 5, open_time: '18:30:00', close_time: '20:00:00' },     // venerdì
@@ -33,6 +33,19 @@ test('ritiro per oggi: l\'ordine va in cucina; per un altro giorno aspetta', () 
   assert.equal(pickupIsDue('2026-10-24', now), false, 'domani: aspetta la serata di domani');
   assert.equal(pickupIsDue('2026-10-30', now), false, 'anche fra una settimana');
   assert.equal(pickupIsDue('2026-10-22', now), true, 'ieri: un ordine in ritardo non deve restare bloccato');
+});
+
+test('un ritiro passato da più di due ore non va più in cucina da solo', () => {
+  const now = { date: '2026-10-23', minutes: 23 * 60 };                // oggi, le 23:00
+  assert.equal(pickupIsStale('2026-10-23', '12:30', now), true, 'il pranzo di stasera sarebbe un ordine fantasma');
+  assert.equal(pickupIsStale('2026-10-23', '21:30', now), false, 'un\'ora e mezza di ritardo: ancora da servire');
+  assert.equal(pickupIsStale('2026-10-23', '21:00', now), false, 'esattamente due ore: il limite non è superato');
+  assert.equal(pickupIsStale('2026-10-23', '20:59', now), true);
+  assert.equal(pickupIsStale('2026-10-23', '23:30', now), false, 'tra mezz\'ora: nessun ritardo');
+  assert.equal(pickupIsStale('2026-10-22', '23:30', { date: '2026-10-23', minutes: 30 }), false, 'ieri alle 23:30, ora è mezzanotte e mezza');
+  assert.equal(pickupIsStale('2026-10-22', '23:30', { date: '2026-10-23', minutes: 2 * 60 }), true, 'tre ore dopo la mezzanotte: troppo tardi');
+  assert.equal(pickupIsStale('2026-10-20', '19:00', now), true, 'giorni fa');
+  assert.equal(pickupIsStale('2026-10-24', '09:00', now), false, 'domani');
 });
 
 test('carico: quantità per carico del prodotto (le bibite non occupano il forno)', () => {

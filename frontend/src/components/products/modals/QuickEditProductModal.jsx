@@ -3,8 +3,9 @@ import { Check } from 'lucide-react';
 import { fetchWithAuth } from '../../../utils/apiClient';
 import { useToast } from '../../../context/useToast';
 import Modal from '../../shared/Modal';
+import ModalActions from '../../shared/ModalActions';
 import Switch from '../../shared/Switch';
-import { btn, btnPrimary, input, label } from '../../../smarteats/floor/ui';
+import { btnPrimary, input, label } from '../../../smarteats/floor/ui';
 
 const QuickEditProductModal = ({ product, onClose, onSaved }) => {
   const { showToast } = useToast();
@@ -77,10 +78,9 @@ const QuickEditProductModal = ({ product, onClose, onSaved }) => {
   return (
     <Modal title={product.name} onClose={onClose}
       footer={(
-        <div className="flex gap-3">
-          <button onClick={onClose} className={`${btn} flex-1`}>Annulla</button>
-          <button onClick={handleSave} disabled={isSaveDisabled} className={`${btnPrimary} flex-1`}><Check size={16} /> {saving ? 'Salvataggio...' : 'Salva'}</button>
-        </div>
+        <ModalActions fill onCancel={onClose}>
+          <button type="button" onClick={handleSave} disabled={isSaveDisabled} className={btnPrimary}><Check size={16} /> {saving ? 'Salvataggio...' : 'Salva'}</button>
+        </ModalActions>
       )}>
       <label htmlFor="qe_price" className={`${label} block mb-1.5`}>Prezzo</label>
       <input id="qe_price" type="text" inputMode="decimal" value={price} onChange={handlePriceChange} placeholder="Prezzo (es. 8.50 o 8,50)" className={`${input} mb-4`} />

@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import Segmented from '../smarteats/floor/Segmented';
 import SearchField from '../components/shared/SearchField';
 import IngredientEntryList from './IngredientEntryList';
-import { btn, btnPrimary, input, label } from '../smarteats/floor/ui';
+import { btnPrimary, input, label } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { stockLevelPayload, countDifference, differenceText, blankEntry } from './controls';
@@ -43,11 +44,9 @@ const StockLevelModal = ({ ingredients, onClose, onSaved }) => {
   return (
     <Modal title="Nuovo controllo di magazzino" size="max-w-3xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={(e) => { e.preventDefault(); if (payload.lines.length) save(); }}
       footer={(
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-sm text-[var(--text-muted)] mr-auto">{payload.lines.length === 0 ? 'Scrivi la quantità degli ingredienti che hai contato.' : `${payload.lines.length} contati`}</p>
-          <button type="button" className={btn} onClick={onClose}>Annulla</button>
+        <ModalActions onCancel={onClose} note={payload.lines.length === 0 ? 'Scrivi la quantità degli ingredienti che hai contato.' : `${payload.lines.length} contati`}>
           <button type="submit" className={btnPrimary} disabled={busy || payload.lines.length === 0}>{busy ? 'Salvataggio…' : 'Registra il controllo'}</button>
-        </div>)}>
+        </ModalActions>)}>
       <div className="space-y-4">
         <Segmented label="Tipo di controllo" className="w-72" value={kind} onChange={setKind} options={KINDS} />
         <SearchField value={search} onChange={setSearch} placeholder="Cerca un ingrediente" />

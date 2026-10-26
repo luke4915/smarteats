@@ -6,7 +6,8 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { refreshPrintConfig } from '../../print/config';
 import PrinterCheck from './PrinterCheck';
 import Modal from '../shared/Modal';
-import { btn, btnPrimary, btnDanger, input, label as uiLabel } from '../../smarteats/floor/ui';
+import ModalActions from '../shared/ModalActions';
+import { btnPrimary, btnDanger, input, label as uiLabel } from '../../smarteats/floor/ui';
 const BACKEND_TEMPLATES = ['Cliente', 'Associazione', 'Cucina', 'Ritiro Bar', 'Ritiro Gastronomia', 'Numeretto'];
 
 const PrintProfiles = () => {
@@ -387,7 +388,7 @@ const PrintProfiles = () => {
 
       {confirmDelete && (
         <Modal title="Eliminare questo tipo di copia?" onClose={() => setConfirmDelete(null)}
-          footer={<div className="flex gap-3"><button onClick={() => setConfirmDelete(null)} className={`${btn} flex-1`}>Annulla</button><button onClick={() => deleteCopyType(confirmDelete)} className={`${btnDanger} flex-1`}>Elimina</button></div>}>
+          footer={<ModalActions fill onCancel={() => setConfirmDelete(null)}><button type="button" onClick={() => deleteCopyType(confirmDelete)} className={btnDanger}>Elimina</button></ModalActions>}>
           <p className="text-sm text-[var(--text-muted)]">Tutte le impostazioni associate verranno perse.</p>
         </Modal>
       )}
@@ -411,10 +412,9 @@ const CopyTypeModal = ({ initial, templatesOptions, onSave, onClose }) => {
   return (
     <Modal title={initial ? 'Modifica tipo copia' : 'Nuovo tipo copia'} onClose={onClose}
       footer={(
-        <div className="flex gap-3">
-          <button onClick={onClose} className={`${btn} flex-1`}>Annulla</button>
-          <button onClick={submit} disabled={saving || !name.trim() || !label.trim()} className={`${btnPrimary} flex-1`}>{saving ? 'Salvataggio...' : 'Salva'}</button>
-        </div>
+        <ModalActions fill onCancel={onClose}>
+          <button type="button" onClick={submit} disabled={saving || !name.trim() || !label.trim()} className={btnPrimary}>{saving ? 'Salvataggio...' : 'Salva'}</button>
+        </ModalActions>
       )}>
       <div className="flex flex-col gap-4">
         <select aria-label="Template" className={input} value={name} onChange={e => setName(e.target.value)} disabled={!!initial}>
