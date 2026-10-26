@@ -8,7 +8,8 @@ const VIEWS = [
   { id: 'kitchen', label: 'Cucina' },
   { id: 'statistics', label: 'Statistiche' },
   { id: 'config', label: 'Menu' },
+  { id: 'inventory', label: 'Magazzino' },
   { id: 'setup', label: 'Sistema' },
 ];
 
-export const festivalViews = (role, modules) => VIEWS.filter(v => canView(role, v.id, modules));
+export const festivalViews = (role, modules, inventory) => VIEWS.filter(v => canView(role, v.id, modules, inventory));

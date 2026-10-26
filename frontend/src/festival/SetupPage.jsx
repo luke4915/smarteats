@@ -4,6 +4,7 @@ import MenuSettings from '../components/setup/MenuSettings';
 import AccountSection from '../components/setup/AccountSection';
 import FeedbackBox from '../components/shared/FeedbackBox';
 import TakeawaySettings from '../smarteats/takeaway/TakeawaySettings';
+import InventorySettings from '../inventory/InventorySettings';
 import DeviceSettings from './DeviceSettings';
 import { festivalSections } from './sections';
 
@@ -12,6 +13,7 @@ const SetupPage = ({ user, ...device }) => {
   const content = {
     device: () => <DeviceSettings {...device} />,
     takeaway: () => <TakeawaySettings />,
+    inventory: () => <InventorySettings />,
     menu: () => <MenuSettings />,
     printing: () => <PrintProfiles />,
     feedback: () => <FeedbackBox modules={['pos', 'kitchen', 'catalog', 'stats', 'settings']} />,

@@ -46,13 +46,14 @@ export function useFestivalData(user) {
     }
   }, { enabled: true, onUnauthorized: refreshSession });
 
-  // Notifiche: gli ordini da asporto da approvare (solo chi li gestisce, solo con il modulo acceso)
+  // Notifiche: gli ordini da asporto da approvare (solo chi li gestisce, solo con il modulo acceso) e gli ingredienti da riordinare
   const hasTakeaway = !!user.modules?.includes('takeaway') && ['admin', 'manager', 'cashier'].includes(user.role);
-  const inbox = useInbox({ bookings: false, takeaway: hasTakeaway, event });
+  const hasInventory = ['admin', 'manager'].includes(user.role) && !!user.modules?.includes('inventory') && user.inventory?.mode === 'warehouse';
+  const inbox = useInbox({ bookings: false, takeaway: hasTakeaway, inventory: hasInventory, event });
 
   return {
     theme, setTheme, isSoundEnabled, setIsSoundEnabled, orderMode, setOrderMode, playSound,
     products, setProducts, activeSession, startSession, endSession, cartState,
-    event, connected, inbox: hasTakeaway ? inbox : null,
+    event, connected, inbox: hasTakeaway || hasInventory ? inbox : null,
   };
 }

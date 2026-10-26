@@ -95,3 +95,13 @@ test('il numero di partenza va al server solo con «da N a ogni servizio»', () 
   assert.equal(buildPayload({ price: '5', portions_reset_rule: 'carry_over', portions_start: '40' }).portions_start, null);
   assert.equal('portions_start' in buildPayload({ price: '5' }), false);
 });
+
+test('l\'IVA del prodotto esiste solo nella modalità magazzino e vuota vale «quella del locale»', () => {
+  assert.equal('vat_rate' in blankForm(), false);
+  assert.equal(blankForm({ vat: true }).vat_rate, '');
+  assert.equal(formFromProduct({ id: 1, vat_rate: '10.00' }, { vat: true }).vat_rate, '10');
+  assert.equal(formFromProduct({ id: 1, vat_rate: null }, { vat: true }).vat_rate, '');
+  assert.equal(buildPayload({ price: '5', vat_rate: '22' }).vat_rate, 22);
+  assert.equal(buildPayload({ price: '5', vat_rate: '' }).vat_rate, null);
+  assert.equal('vat_rate' in buildPayload({ price: '5' }), false);
+});

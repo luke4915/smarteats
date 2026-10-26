@@ -22,6 +22,7 @@ import { lineStatusSchema } from '../schemas/lineStatusSchema.js';
 import { withCheckInfo } from '../utils/orderCheck.js';
 import { lockCheck, assertOrderCancelable } from '../utils/payments.js';
 import { getCheckSummary } from '../utils/checks.js';
+import { returnIngredientsOfOrder, defaultDisposition } from '../utils/inventory/orderStock.js';
 
 const router = express.Router();
 
@@ -94,7 +95,7 @@ export default function (broadcast) {
     try {
       const { items: verifiedItems, total: verifiedTotal, orderType: order_type } = await verifyOrderItems(req.db, items, req.user.role);
       const { order, orderStatus, sessionOpen, stockUpdates } = await inTransaction(req.db, async (db) => {
-        return insertOrder(db, { tenantId: req.user.tenantId, userId: req.user.id, verifiedItems, verifiedTotal, order_type, status, is_takeaway, client_order_id, session_id, client_created_at, device_id, device_seq, check_id });
+        return insertOrder(db, { tenantId: req.user.tenantId, userId: req.user.id, role: req.user.role, forceStock: req.body.force_stock, verifiedItems, verifiedTotal, order_type, status, is_takeaway, client_order_id, session_id, client_created_at, device_id, device_seq, check_id });
       });
 
       await logAudit(req.db, req.user.id, 'CREATE_ORDER', {
@@ -146,7 +147,7 @@ export default function (broadcast) {
   // PUT /orders/:id — cambio stato; lo storno ripristina lo stock nella stessa transazione
   router.put('/:id', authenticate, validate({ params: idParamsSchema, body: updateOrderStatusSchema }), tenantScope, async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, ingredients: ingredientsChoice } = req.body;
 
     // La cucina fa avanzare lo stato (in preparazione, completato), ma non storna.
     // Stornano i ruoli di cassa; il cameriere solo le comande dei suoi tavoli (controllo più sotto, sull'ordine)
@@ -209,6 +210,9 @@ export default function (broadcast) {
         const stockUpdates = status === 'canceled'
           ? await applyStockChange(db, sumQuantitiesByProduct(updated.items.filter(i => i.id !== null)), +1)
           : [];
+        // Col magazzino a ricette: gli ingredienti tornano in dispensa o, se la cucina aveva già iniziato, diventano scarto.
+        if (status === 'canceled')
+          await returnIngredientsOfOrder(db, { tenantId: req.user.tenantId, orderId: Number(id), userId: req.user.id, disposition: ingredientsChoice ?? defaultDisposition(order, updated.items) });
         return { previousStatus: order.status, updated, stockUpdates };
       });
 

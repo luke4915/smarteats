@@ -43,6 +43,8 @@ export const adjustSchema = z.object({
 // Annulla il conto. Con `cancel_orders` annulla anche le sue comande (solo admin).
 export const voidCheckSchema = z.object({
   cancel_orders: z.boolean().default(false),
+  // Col magazzino a ricette: gli ingredienti delle comande annullate tornano in dispensa o diventano scarto (assente = per ogni comanda, scarto se la cucina aveva iniziato).
+  ingredients: z.enum(['return', 'waste']).optional(),
 });
 
 export const receiptQuerySchema = z.object({

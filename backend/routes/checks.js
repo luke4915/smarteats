@@ -20,6 +20,7 @@ import { idParamsSchema } from '../schemas/common.js';
 import { openCheckSchema, listChecksQuerySchema, billRequestSchema, paymentSchema, adjustSchema, voidCheckSchema, receiptQuerySchema, moveCheckSchema, mergeCheckSchema, coversSchema } from '../schemas/checkSchema.js';
 import { courseOrdersSchema, fireCoursesSchema, resequenceSchema } from '../schemas/courseSchema.js';
 import { createCourseOrders, fireCourses, resequenceCourses, loadOrdersForNotify, findExistingCourseOrders } from '../utils/courseOrders.js';
+import { returnIngredientsOfOrder, defaultDisposition } from '../utils/inventory/orderStock.js';
 
 // Conti dei tavoli (modulo `tables`). Eventi WebSocket: `check_updated` (solo personale, mai al KDS pubblico).
 const router = express.Router();
@@ -136,7 +137,7 @@ export default function (broadcast) {
   // POST /api/checks/:id/courses — il giro del tavolo diviso per portate: una comanda per portata, la prima esce
   // subito (se `fire_first`), le altre restano «da mandare». Risponde con le comande create, per stampare quelle mandate.
   router.post('/:id/courses', ...waiterGuard, validate({ params: idParamsSchema, body: courseOrdersSchema }), tenantScope, async (req, res) => {
-    const { groups, fire_first: fireFirst } = req.body;
+    const { groups, fire_first: fireFirst, force_stock: forceStock } = req.body;
     // Reinvio dello stesso giro (risposta persa, doppio tocco): si risponde con le comande già create, senza rifare nulla.
     const alreadySent = async () => {
       const ids = await findExistingCourseOrders(req.db, groups);
@@ -145,7 +146,7 @@ export default function (broadcast) {
     try {
       if (await alreadySent()) return;
       const result = await inTransaction(req.db, (db) => createCourseOrders(db, {
-        tenantId: req.user.tenantId, userId: req.user.id, role: req.user.role, checkId: req.params.id, groups, fireFirst }));
+        tenantId: req.user.tenantId, userId: req.user.id, role: req.user.role, forceStock, checkId: req.params.id, groups, fireFirst }));
       await logAudit(req.db, req.user.id, 'CREATE_COURSE_ORDERS', { checkId: Number(req.params.id), orders: result.orderIds, fired: result.firedIds });
       if (broadcast) result.stockUpdates.forEach(product => broadcast(req.user.tenantId, { type: 'product_stock_updated', product }));
       await notifyFired(req.db, req.user.tenantId, result.firedIds);
@@ -277,7 +278,7 @@ export default function (broadcast) {
   // `cancel_orders` (solo admin): le comande vengono annullate e lo stock torna. Con pagamenti già incassati non si
   // annulla: i soldi sono stati presi.
   router.post('/:id/void', authenticate, requireModule('tables'), authorizeDiscount, validate({ params: idParamsSchema, body: voidCheckSchema }), tenantScope, async (req, res) => {
-    const { cancel_orders: cancelOrders } = req.body;
+    const { cancel_orders: cancelOrders, ingredients: ingredientsChoice } = req.body;
     if (cancelOrders && req.user.role !== 'admin')
       return res.status(403).json({ error: 'Solo un amministratore può eliminare un conto con le sue comande' });
     try {
@@ -287,14 +288,17 @@ export default function (broadcast) {
         if (payments.length) throw new HttpError(409, 'Il conto ha già dei pagamenti: non si può annullare', 'CHECK_HAS_PAYMENTS');
 
         let canceledIds = [], stockUpdates = [];
-        const { rows: active } = await db.query(`SELECT id, order_type FROM orders WHERE check_id = $1 AND status <> 'canceled' FOR UPDATE`, [req.params.id]);
+        const { rows: active } = await db.query(`SELECT id, order_type, status FROM orders WHERE check_id = $1 AND status <> 'canceled' FOR UPDATE`, [req.params.id]);
         // Il coperto è automatico: non conta come comanda, si annulla insieme al conto.
         if (active.some(o => o.order_type !== 'cover') && !cancelOrders) throw new HttpError(409, 'Il conto ha comande attive: annullale prima', 'CHECK_HAS_ORDERS');
         if (active.length) {
           canceledIds = active.map(o => o.id);
           await db.query(`UPDATE orders SET status = 'canceled' WHERE id = ANY($1::int[])`, [canceledIds]);
-          const items = [...(await loadItems(db, canceledIds)).values()].flat().filter(i => i.id !== null);
+          const itemsByOrder = await loadItems(db, canceledIds);
+          const items = [...itemsByOrder.values()].flat().filter(i => i.id !== null);
           stockUpdates = await applyStockChange(db, sumQuantitiesByProduct(items), +1);
+          for (const o of active)
+            await returnIngredientsOfOrder(db, { tenantId: req.user.tenantId, orderId: o.id, userId: req.user.id, disposition: ingredientsChoice ?? defaultDisposition(o, itemsByOrder.get(o.id) ?? []) });
         }
         await db.query(`UPDATE checks SET status = 'void', closed_at = now(), bill_requested_at = NULL WHERE id = $1`, [req.params.id]);
         await settleReservationForCheck(db, req.params.id, 'void');

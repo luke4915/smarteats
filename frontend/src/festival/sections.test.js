@@ -20,3 +20,10 @@ test('la cassa lavora con il dispositivo, il menu e la stampa: niente account', 
 test('la cucina non ha impostazioni', () => {
   assert.deepEqual(ids({ role: 'kitchen', modules: ['kds'] }), []);
 });
+
+test('l\'IVA predefinita compare solo all\'admin nella modalità magazzino', () => {
+  const warehouse = { mode: 'warehouse', depletion: 'recipes' };
+  assert.equal(ids({ role: 'admin', modules: ['inventory'], inventory: warehouse }).includes('inventory'), true);
+  assert.equal(ids({ role: 'admin', modules: ['inventory'], inventory: { mode: 'portions' } }).includes('inventory'), false);
+  assert.equal(ids({ role: 'manager', modules: ['inventory'], inventory: warehouse }).includes('inventory'), false);
+});

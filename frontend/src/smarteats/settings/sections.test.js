@@ -24,3 +24,10 @@ test('cameriere e cassa hanno solo le notifiche del dispositivo, e solo se servo
 test('la cucina non ha impostazioni: la password gliela dà l\'admin', () => {
   assert.deepEqual(ids({ role: 'kitchen', modules: ['kds', 'bookings'] }), []);
 });
+
+test('l\'IVA predefinita compare solo all\'admin nella modalità magazzino', () => {
+  const warehouse = { mode: 'warehouse', depletion: 'recipes' };
+  assert.equal(ids({ role: 'admin', modules: ['inventory'], inventory: warehouse }).includes('inventory'), true);
+  assert.equal(ids({ role: 'admin', modules: ['inventory'], inventory: { mode: 'portions' } }).includes('inventory'), false);
+  assert.equal(ids({ role: 'manager', modules: ['inventory'], inventory: warehouse }).includes('inventory'), false);
+});

@@ -23,6 +23,7 @@ import { useInbox } from '../notifications/useInbox';
 
 const KitchenPage = lazy(() => import('../kitchen/KitchenPage'));
 const StatsPage = lazy(() => import('../stats/StatsPage'));
+const InventoryPage = lazy(() => import('../../inventory/InventoryPage'));
 // Senza tavoli (solo asporto) valgono le statistiche della cassa: incasso, prodotti, fasce orarie
 const CounterStats = lazy(() => import('../../components/shared/Statistics'));
 
@@ -49,18 +50,17 @@ const SmartEatsApp = () => {
   const staff = ['admin', 'manager', 'cashier', 'waiter'].includes(user.role);
   const hasBookings = staff && !!user.modules?.includes('bookings');
   const hasTakeaway = staff && !!user.modules?.includes('takeaway');
-  const hasInbox = hasBookings || hasTakeaway;
-  const inbox = useInbox({ bookings: hasBookings, takeaway: hasTakeaway, event });
-  const badges = {
-    reservations: inbox.items.filter(i => i.kind !== 'takeaway_request').length,
-    takeaway: inbox.items.filter(i => i.kind === 'takeaway_request').length,
-  };
-  const views = visibleViews(user.role, user.modules);
+  const hasInventory = ['admin', 'manager'].includes(user.role) && !!user.modules?.includes('inventory') && user.inventory?.mode === 'warehouse';   // ingredienti da riordinare
+  const hasInbox = hasBookings || hasTakeaway || hasInventory;
+  const inbox = useInbox({ bookings: hasBookings, takeaway: hasTakeaway, inventory: hasInventory, event });
+  const count = (...kinds) => inbox.items.filter(i => kinds.includes(i.kind)).length;
+  const badges = { reservations: count('request', 'cancel_request'), takeaway: count('takeaway_request'), inventory: count('low_stock') };
+  const views = visibleViews(user.role, user.modules, user.inventory);
   usePageTitle(views.find(v => pathname === `/${v.id}`)?.label, user.tenantName, inbox.items.length);
-  const home = smartEatsHome(user.role, user.modules);
+  const home = smartEatsHome(user.role, user.modules, user.inventory);
   if (!home) return <NoViewAvailable onLogout={logout} />;
 
-  const guard = (id, element) => (canViewSmartEats(user.role, id, user.modules) ? element : <Navigate to={`/${home}`} replace />);
+  const guard = (id, element) => (canViewSmartEats(user.role, id, user.modules, user.inventory) ? element : <Navigate to={`/${home}`} replace />);
   const doLogout = async () => { try { await logout(); showToast('Sessione chiusa', 'info'); navigate('/login'); } catch (err) { console.error(err); } };
   const canManageService = ['admin', 'manager', 'cashier'].includes(user.role);
 
@@ -70,9 +70,11 @@ const SmartEatsApp = () => {
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <AppHeader user={user} serviceControl={<ServiceControl service={service} canManage={canManageService} start={start} closingInfo={closingInfo} end={end} terms={termsFor(user.businessType)} />}
-          inbox={hasInbox ? inbox : null} onOpenNotification={(i) => (i.kind === 'takeaway_request'
-            ? navigate('/takeaway', { state: { orderId: i.id, date: i.date } })
-            : navigate('/reservations', { state: { reservationId: i.id, date: i.date } }))}
+          inbox={hasInbox ? inbox : null} onOpenNotification={(i) => {
+            if (i.kind === 'low_stock') navigate('/inventory');
+            else if (i.kind === 'takeaway_request') navigate('/takeaway', { state: { orderId: i.id, date: i.date } });
+            else navigate('/reservations', { state: { reservationId: i.id, date: i.date } });
+          }}
           theme={theme} onToggleTheme={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))} onLogout={doLogout} />
 
         <div key={pathname} className="motion-page flex-1 min-h-0 flex gap-4 p-3 sm:p-4">
@@ -83,6 +85,7 @@ const SmartEatsApp = () => {
               <Route path="/takeaway" element={guard('takeaway', <TakeawayPage event={event} />)} />
               <Route path="/kitchen" element={guard('kitchen', <Page><KitchenPage event={event} /></Page>)} />
               <Route path="/catalog" element={guard('catalog', <Page><CatalogPage /></Page>)} />
+              <Route path="/inventory" element={guard('inventory', <Page><InventoryPage /></Page>)} />
               <Route path="/stats" element={guard('stats', <Page>{user.modules?.includes('tables') ? <StatsPage /> : <CounterStats />}</Page>)} />
               <Route path="/settings" element={guard('settings', <Page><SettingsPage user={user} /></Page>)} />
               <Route path="*" element={<Navigate to={`/${home}`} replace />} />

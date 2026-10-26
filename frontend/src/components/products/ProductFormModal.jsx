@@ -11,12 +11,13 @@ const PRINT_OPTIONS = [
   { value: 'bar', label: 'Solo Bar', desc: 'Ritiro Bar' },
   { value: 'kitchen', label: 'Solo Cucina', desc: 'Gastronomia' },
 ];
+const VAT_RATES = ['4', '5', '10', '22', '0'];
 const OVEN_LOAD = [[0, 'Niente (bibite, dolci già pronti…)'], [1, 'Una porzione (una pizza)'], [2, 'Due porzioni (pizza grande, teglia)'], [3, 'Tre porzioni']];
 
 // La finestra per aggiungere o modificare un prodotto. Non salva nulla da sola: mostra `form` e avvisa chi la usa
 // (`onField`, `onChange`, `onSubmit`). Sta sempre nello schermo: il corpo scorre, il pulsante resta fisso in basso.
-// `courses`, `modifierGroups`, `takeawayEnabled` e `portionsEnabled` (modulo magazzino) accendono i campi che esistono solo in certi locali.
-const ProductFormModal = ({ form, setForm, products, editing, courses, modifierGroups, takeawayEnabled, portionsEnabled, submitDisabled, onField, onChange, onSubmit, onClose }) => {
+// `courses`, `modifierGroups`, `takeawayEnabled`, `portionsEnabled` (modulo magazzino) e `vatEnabled` (modalità «magazzino») accendono i campi che esistono solo in certi locali.
+const ProductFormModal = ({ form, setForm, products, editing, courses, modifierGroups, takeawayEnabled, portionsEnabled, vatEnabled, submitDisabled, onField, onChange, onSubmit, onClose }) => {
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
   const patch = (changes) => setForm(prev => ({ ...prev, ...changes }));
   const toggleModifierGroup = (id) => setForm(prev => {
@@ -108,6 +109,16 @@ const ProductFormModal = ({ form, setForm, products, editing, courses, modifierG
           <label htmlFor="takeaway_load" className="text-xs font-medium text-[var(--text-muted)] block mb-2">Asporto: quanto impegna il forno</label>
           <select id="takeaway_load" value={form.takeaway_load ?? 1} onChange={e => patch({ takeaway_load: Number(e.target.value) })} className={selectClass}>
             {OVEN_LOAD.map(([value, text]) => <option key={value} value={value}>{text}</option>)}
+          </select>
+        </div>
+      )}
+
+      {vatEnabled && (
+        <div className={box}>
+          <label htmlFor="vat_rate" className="text-xs font-medium text-[var(--text-muted)] block mb-2">IVA (per i margini)</label>
+          <select id="vat_rate" value={form.vat_rate ?? ''} onChange={e => patch({ vat_rate: e.target.value })} className={selectClass}>
+            <option value="">Quella predefinita del locale</option>
+            {VAT_RATES.map(rate => <option key={rate} value={rate}>{rate}%</option>)}
           </select>
         </div>
       )}

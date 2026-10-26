@@ -3,6 +3,7 @@ import { formatDisplayCode, formatDeviceCode } from './displayCode.js';
 import { sumQuantitiesByProduct, lockAndFindShortages, applyStockChange } from './stock.js';
 import { computeExpectedCash, clampToSession } from './session.js';
 import { writeOrderItems } from './orderItemsWrite.js';
+import { assertIngredientsAvailable, sellIngredients } from './inventory/orderStock.js';
 
 // Creazione di un ordine (POST /orders e le comande dei tavoli): la parte che scrive nel database, senza HTTP.
 // La route (routes/orders.js) controlla chi può farlo, ricalcola i prezzi e dopo risponde e avvisa via WebSocket;
@@ -51,7 +52,7 @@ export const duplicateResponse = (order) => ({ success: true, orderId: order.id,
 // Scrive l'ordine con le sue righe, aggiorna lo stock (o il totale di cassa, per un ordine in ritardo su una sessione già
 // chiusa) e ritorna ciò che serve per rispondere e avvisare. `verifiedItems` e `verifiedTotal` li ha già ricalcolati il
 // server dal catalogo (`verifyOrderItems`): dal client non si prende mai un prezzo.
-export async function insertOrder(db, { tenantId, userId, verifiedItems, verifiedTotal, order_type, status, is_takeaway, client_order_id, session_id, client_created_at, device_id, device_seq, check_id }) {
+export async function insertOrder(db, { tenantId, userId, role, forceStock, verifiedItems, verifiedTotal, order_type, status, is_takeaway, client_order_id, session_id, client_created_at, device_id, device_seq, check_id }) {
   const isLateSync = session_id !== undefined;
   const session = await findOrderSession(db, session_id, device_id === undefined);
   const sessionOpen = !session.end_time;
@@ -67,13 +68,14 @@ export async function insertOrder(db, { tenantId, userId, verifiedItems, verifie
   }
   const totals = sumQuantitiesByProduct(verifiedItems);
 
-  // Un ordine sincronizzato in ritardo è già stato venduto: non si rifiuta per stock.
+  // Un ordine sincronizzato in ritardo è già stato venduto: non si rifiuta per stock (né per ingredienti).
   if (!isLateSync) {
     const shortages = await lockAndFindShortages(db, totals);
     if (shortages.length) {
       throw new HttpError(409, `Prodotto esaurito o insufficiente: ${shortages.map(p => p.name).join(', ')}`, 'OUT_OF_STOCK');
     }
   }
+  await assertIngredientsAvailable(db, { tenantId, items: verifiedItems, role, force: forceStock, skip: isLateSync });
 
   // In una sessione già chiusa l'ordine è per forza concluso: entra nel totale
   // di cassa e non finisce in cucina.
@@ -88,6 +90,7 @@ export async function insertOrder(db, { tenantId, userId, verifiedItems, verifie
   );
   // Le righe sono parte dell'ordine: se non si scrivono, l'ordine non nasce (la transazione si annulla).
   await writeOrderItems(db, tenantId, rows[0].id, verifiedItems);
+  await sellIngredients(db, { tenantId, orderId: rows[0].id, items: verifiedItems, sessionId: session.id, userId });
 
   // Lo stock riguarda la serata in corso: dopo la chiusura non si tocca più
   // (all'apertura della successiva riparte comunque da disponibilità illimitata).

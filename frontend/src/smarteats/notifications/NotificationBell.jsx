@@ -1,13 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, CalendarPlus, CalendarX2, CheckCheck, ShoppingBag } from 'lucide-react';
+import { Bell, CalendarPlus, CalendarX2, CheckCheck, PackageMinus, ShoppingBag } from 'lucide-react';
 import { formatDay } from '../reservations/rules';
+import { formatQuantity } from '../../inventory/units';
 
 // La campanella in testata: il numero di cose da fare e, al tocco, l'elenco. Ogni voce porta direttamente alla
 // prenotazione da approvare. Si chiude toccando fuori o con Esc.
 const KIND = {
   request: { icon: CalendarPlus, title: (i) => `Nuova richiesta · ${i.customer_name}`, tone: 'text-amber-500 bg-amber-500/15' },
   cancel_request: { icon: CalendarX2, title: (i) => `Chiede di annullare · ${i.customer_name}`, tone: 'text-red-500 bg-red-500/15' },
+  low_stock: { icon: PackageMinus, title: (i) => `Da riordinare · ${i.name}`, tone: 'text-amber-500 bg-amber-500/15' },
   takeaway_request: { icon: ShoppingBag, title: (i) => `Ordine da asporto · ${i.customer_name}`, tone: 'text-[var(--accent)] bg-[var(--accent)]/15' },
+};
+
+const ACTION = { cancel_request: 'Tocca per decidere sull\'annullo', low_stock: 'Tocca per aprire il magazzino', request: 'Tocca per approvare o rifiutare' };
+
+// La riga sotto il titolo: quando e quanti per una prenotazione, il ritiro per l'asporto, la scorta per un ingrediente.
+const detail = (i) => {
+  if (i.kind === 'low_stock') return `In dispensa ${formatQuantity(i.quantity_on_hand, i.base_unit)} · scorta minima ${formatQuantity(i.reorder_level, i.base_unit)}`;
+  if (i.kind === 'takeaway_request') return `Ritiro ${formatDay(i.date, { short: true })} alle ${i.start_time} · ${Number(i.total).toFixed(2).replace('.', ',')} €`;
+  return `${formatDay(i.date, { short: true })} · ${i.start_time} · ${i.party_size} ${i.party_size === 1 ? 'persona' : 'persone'}`;
 };
 
 const NotificationBell = ({ items, onOpen }) => {
@@ -42,7 +53,7 @@ const NotificationBell = ({ items, onOpen }) => {
           {items.length === 0 ? (
             <div className="px-4 py-8 text-center text-[var(--text-muted)]">
               <CheckCheck size={28} className="mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Tutto a posto: niente da approvare.</p>
+              <p className="text-sm">Tutto a posto: niente da fare.</p>
             </div>
           ) : (
             <ul className="max-h-[60vh] overflow-y-auto divide-y divide-[var(--border)]">
@@ -56,11 +67,9 @@ const NotificationBell = ({ items, onOpen }) => {
                       <span className="min-w-0">
                         <span className="block text-sm font-medium text-[var(--text-main)] truncate">{k.title(i)}</span>
                         <span className="block text-xs text-[var(--text-muted)]">
-                          {i.kind === 'takeaway_request'
-                            ? `Ritiro ${formatDay(i.date, { short: true })} alle ${i.start_time} · ${Number(i.total).toFixed(2).replace('.', ',')} €`
-                            : `${formatDay(i.date, { short: true })} · ${i.start_time} · ${i.party_size} ${i.party_size === 1 ? 'persona' : 'persone'}`}
+                          {detail(i)}
                         </span>
-                        <span className="block text-xs text-[var(--accent)] mt-0.5">{i.kind === 'cancel_request' ? 'Tocca per decidere sull\'annullo' : 'Tocca per approvare o rifiutare'}</span>
+                        <span className="block text-xs text-[var(--accent)] mt-0.5">{ACTION[i.kind] ?? ACTION.request}</span>
                       </span>
                     </button>
                   </li>

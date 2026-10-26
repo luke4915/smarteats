@@ -4,20 +4,22 @@
 export const DEFAULT_COLOR = '#3b82f6';
 
 // Il modulo di un prodotto nuovo. I campi in più dipendono dal locale: la portata e le opzioni solo nei ristoranti,
-// il carico sul forno solo con l'asporto, le porzioni (regola di azzeramento) solo col modulo magazzino (`portions`).
-export function blankForm({ courses = null, takeawayEnabled = false, modifierGroups = null, portions = false } = {}) {
+// il carico sul forno solo con l'asporto, le porzioni (regola di azzeramento) solo col modulo magazzino (`portions`),
+// l'aliquota IVA solo nella modalità «magazzino» (`vat`: serve ai margini; vuota = quella predefinita del locale).
+export function blankForm({ courses = null, takeawayEnabled = false, modifierGroups = null, portions = false, vat = false } = {}) {
   return {
     name: '', price: '', category: '', color: DEFAULT_COLOR, visible: true, print_destination: 'both',
     ...(courses && { course_id: null }),
     ...(takeawayEnabled && { takeaway_load: 1 }),
     ...(modifierGroups && { modifier_group_ids: [] }),
     ...(portions && { portions_reset_rule: 'unlimited', portions_start: '' }),
+    ...(vat && { vat_rate: '' }),
     stock_enabled: false, stock: '',
   };
 }
 
 // Il modulo precompilato con un prodotto esistente.
-export function formFromProduct(product, { courses = null, takeawayEnabled = false, modifierGroups = null, portions = false } = {}) {
+export function formFromProduct(product, { courses = null, takeawayEnabled = false, modifierGroups = null, portions = false, vat = false } = {}) {
   return {
     name: product.name || '',
     price: product.price !== undefined && product.price !== null ? String(product.price) : '',
@@ -29,6 +31,7 @@ export function formFromProduct(product, { courses = null, takeawayEnabled = fal
     ...(takeawayEnabled && { takeaway_load: product.takeaway_load ?? 1 }),
     ...(modifierGroups && { modifier_group_ids: modifierGroups.filter(g => g.product_ids.includes(product.id)).map(g => g.id) }),
     ...(portions && { portions_reset_rule: product.portions_reset_rule ?? 'unlimited', portions_start: product.portions_start != null ? String(product.portions_start) : '' }),
+    ...(vat && { vat_rate: product.vat_rate != null ? String(Number(product.vat_rate)) : '' }),
     stock_enabled: product.stock_enabled ?? false,
     stock: product.stock !== undefined && product.stock !== null ? String(product.stock) : '',
   };
@@ -90,6 +93,7 @@ export const buildPayload = (form) => ({
   ...form,
   price: parseFloat(String(form.price).replace(',', '.')) || 0,
   ...(form.portions_reset_rule && { portions_start: form.portions_reset_rule === 'restart_each_service' ? parseInt(form.portions_start, 10) : null }),
+  ...(form.vat_rate !== undefined && { vat_rate: form.vat_rate === '' ? null : Number(form.vat_rate) }),
 });
 
 // Le categorie con il loro colore, una sola volta ciascuna (per i pallini di scelta rapida del colore).

@@ -14,6 +14,16 @@ import sessionRoutes from './routes/sessions.js';
 import statsRoutes from './routes/stats.js';
 import { roomsRouter, tablesRouter } from './routes/rooms.js';
 import coursesRouter from './routes/courses.js';
+import ingredientsRouter from './routes/ingredients.js';
+import preparationsRouter from './routes/preparations.js';
+import suppliersRouter from './routes/suppliers.js';
+import goodsReceiptsRouter from './routes/goodsReceipts.js';
+import stockLevelsRouter from './routes/stockLevels.js';
+import inventoryMovementsRouter from './routes/inventoryMovements.js';
+import inventoryReportsRouter from './routes/inventoryReports.js';
+import inventoryRestockRouter from './routes/inventoryRestock.js';
+import { productRecipeRouter, modifierRecipeRouter } from './routes/recipes.js';
+import { inventoryRouter, productAvailabilityRouter } from './routes/inventoryAvailability.js';
 import bookingRoutes from './routes/bookings.js';
 import publicBookingRoutes from './routes/publicBooking.js';
 import takeawayRoutes from './routes/takeaway.js';
@@ -86,8 +96,20 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/auth', authRoutes);
   app.use('/api/profile', profileRoutes);
   app.use('/api/products', productModifiersRouter); // PUT /:id/modifier-groups, prima delle route dei prodotti
+  app.use('/api/products', productRecipeRouter);          // GET/PUT /:id/recipe (magazzino)
+  app.use('/api/products', productAvailabilityRouter);    // PUT /:id/availability (esaurito)
   app.use('/api/products', productRoutes);
   app.use('/api/modifier-groups', modifierGroupsRouter);
+  app.use('/api/modifiers', modifierRecipeRouter);        // GET/PUT /:id/recipe (magazzino)
+  app.use('/api/ingredients', ingredientsRouter);
+  app.use('/api/preparations', preparationsRouter);
+  app.use('/api/suppliers', suppliersRouter);
+  app.use('/api/goods-receipts', goodsReceiptsRouter);
+  app.use('/api/inventory', inventoryRouter);
+  app.use('/api/inventory', inventoryMovementsRouter);       // /movements, /usage
+  app.use('/api/inventory/report', inventoryReportsRouter);
+  app.use('/api/inventory/restock', inventoryRestockRouter);
+  app.use('/api/stock-levels', stockLevelsRouter);
   app.use('/api/print-settings', printSettingsRoutes);
   app.use('/api/orders', orderRoutes(broadcast));
   app.use('/api/devices', deviceRoutes);

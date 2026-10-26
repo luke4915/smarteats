@@ -35,6 +35,8 @@ export const createOrderSchema = z.object({
     device_seq: z.number().int().positive().max(99999).optional(),
     // Comanda su un conto aperto di un tavolo (modulo `tables`): non si paga subito e richiede il server.
     check_id: z.number().int().positive().optional(),
+    // Vendere comunque un piatto i cui ingredienti non bastano (solo admin e responsabile, magazzino con ricette).
+    force_stock: z.boolean().optional(),
 }).refine(
     // Le comande dei tavoli sono sempre online: niente sessione in ritardo, niente numero del dispositivo.
     (o) => o.check_id === undefined || (o.session_id === undefined && o.device_id === undefined),
@@ -54,6 +56,9 @@ const ORDER_STATUSES = ['pending', 'preparing', 'completed', 'canceled'];
 
 export const updateOrderStatusSchema = z.object({
     status: z.enum(ORDER_STATUSES),
+    // Solo per lo storno, col magazzino: gli ingredienti tornano in dispensa o diventano scarto. Assente = lo decide il server
+    // (scarto se la cucina ha già iniziato, altrimenti tornano).
+    ingredients: z.enum(['return', 'waste']).optional(),
 });
 
 // Ristampe fatte offline da una cassa, comunicate al server quando torna la rete (solo per l'audit).

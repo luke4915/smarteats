@@ -117,11 +117,11 @@ Una sola migrazione (056) e il codice in fasi, ognuna una PR con i suoi test mir
 
 | Fase | Contenuto |
 |---|---|
-| 1 | Migrazione, modulo `inventory` e modalità (master), porzioni con azzeramento a ogni servizio, opzioni con `id` stabili |
-| 2 | Ingredienti, preparazioni e ricette; scarico alle vendite e storni; piatti esauriti; «esaurito» dalla cucina |
-| 3 | Fornitori, carichi di merce con foto o scansione della bolla, costo medio, IVA |
-| 4 | Controlli di magazzino, scarti e rettifiche, scarico semplificato; report: food cost, margini, teorico contro reale, valore del magazzino |
-| 5 | Scorta minima e «Da riordinare», giorni di scorta, spesa per fornitore, andamento dei prezzi |
+| 1 | **Realizzata.** Migrazione, modulo `inventory` e modalità (master), porzioni con azzeramento a ogni servizio, opzioni con `id` stabili |
+| 2 | **Realizzata.** Ingredienti, preparazioni e ricette; scarico alle vendite e storni; piatti esauriti; «esaurito» dalla cucina |
+| 3 | **Realizzata.** Fornitori, carichi di merce con foto o scansione della bolla, costo medio, IVA |
+| 4 | **Realizzata.** Controlli di magazzino, scarti e rettifiche, scarico semplificato; report: food cost, margini, teorico contro reale, valore del magazzino. IVA per prodotto e predefinita del locale |
+| 5 | **Realizzata.** Scorta minima e «Da riordinare» (campanella e filtro), giorni di scorta, spesa per fornitore, andamento dei prezzi |
 
 **Struttura del codice** (leggibile e mantenibile): logica pura in file piccoli con test (`utils/inventory/`: `portions.js`, `recipeCost.js`, `availability.js`,
 `unitConversion.js`, `weightedAverageCost.js`), accesso ai dati separato (`utils/inventory/*Db.js`), una route per tema (`ingredients`, `suppliers`,
