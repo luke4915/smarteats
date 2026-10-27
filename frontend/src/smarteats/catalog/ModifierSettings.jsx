@@ -4,7 +4,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { btn, btnPrimary, btnDanger, iconBtn, input, label } from '../floor/ui';
 import { groupHint } from '../floor/modifierRules';
-import { formatEuro } from '../floor/checkMath';
+import { formatEuro } from '../../utils/format';
 
 const EMPTY = { name: '', min_select: 0, max_select: null, options: [{ name: '', price: '' }] };
 const toDraft = (g) => ({ id: g.id, name: g.name, min_select: g.min_select, max_select: g.max_select, options: g.options.map(o => ({ id: o.id, name: o.name, price: o.price_delta ? String(o.price_delta).replace('.', ',') : '' })) });

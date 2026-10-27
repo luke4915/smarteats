@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import Modal from '../components/shared/Modal';
-import { btn, row } from '../smarteats/floor/ui';
+import { row } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
-import { formatQuantity, formatCents } from './units';
+import { formatQuantity } from './units';
+import { formatCents } from '../utils/format';
 import { differenceText } from './controls';
+import Loading from '../components/shared/Loading';
 
 // Un controllo già registrato: per ogni ingrediente cosa prevedeva il registro, cosa è stato contato e quanto vale la differenza.
 const StockLevelDetailModal = ({ levelId, onClose }) => {
@@ -12,12 +14,12 @@ const StockLevelDetailModal = ({ levelId, onClose }) => {
   const [level, setLevel] = useState(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchWithAuth(`/stock-levels/${levelId}`).then(setLevel).catch(err => { showToast(err.message, 'error'); onClose(); }); }, [levelId]);
-  const total = level?.lines.reduce((sum, l) => sum + l.difference_value_cents, 0) ?? 0;
+  const hidden = level?.lines.some(l => l.difference_value_cents === null);     // dati riservati bloccati
+  const total = hidden ? null : level?.lines.reduce((sum, l) => sum + l.difference_value_cents, 0) ?? 0;
 
   return (
-    <Modal title={level ? `Controllo del ${new Date(level.created_at).toLocaleDateString('it-IT')}` : 'Controllo'} size="max-w-3xl" onClose={onClose}
-      footer={<div className="flex items-center gap-3"><p className="text-sm text-[var(--text-muted)] tabular-nums mr-auto">{level && `Valore delle differenze ${formatCents(total)}`}</p><button type="button" className={btn} onClick={onClose}>Chiudi</button></div>}>
-      {!level ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+    <Modal title={level ? `Controllo del ${new Date(level.created_at).toLocaleDateString('it-IT')}` : 'Controllo'} size="max-w-3xl" onClose={onClose}>
+      {!level ? <Loading /> : (
         <div className="space-y-3">
           {level.notes && <p className="text-sm text-[var(--text-muted)]">{level.notes}</p>}
           <ul className="space-y-1.5">
@@ -29,6 +31,7 @@ const StockLevelDetailModal = ({ levelId, onClose }) => {
                   {differenceText(l.difference, l.base_unit)}{l.difference !== 0 && ` (${formatCents(l.difference_value_cents)})`}</span>
               </li>))}
           </ul>
+          <p className="text-sm text-[var(--text-muted)] tabular-nums text-right">Valore delle differenze {formatCents(total)}</p>
         </div>)}
     </Modal>
   );

@@ -22,6 +22,7 @@ import stockLevelsRouter from './routes/stockLevels.js';
 import inventoryMovementsRouter from './routes/inventoryMovements.js';
 import inventoryReportsRouter from './routes/inventoryReports.js';
 import inventoryRestockRouter from './routes/inventoryRestock.js';
+import reservedDataRouter from './routes/reservedData.js';
 import { productRecipeRouter, modifierRecipeRouter } from './routes/recipes.js';
 import { inventoryRouter, productAvailabilityRouter } from './routes/inventoryAvailability.js';
 import bookingRoutes from './routes/bookings.js';
@@ -40,7 +41,7 @@ import exportRoutes from './routes/exports.js';
 import printSettingsRoutes from './routes/printSettings.js';
 import settingsRoutes from './routes/settings.js';
 import masterRoutes from './routes/master.js';
-import { loginLimiter, apiLimiter, ordersLimiter, devicesLimiter, exportsLimiter, publicBookingReadLimiter, publicBookingWriteLimiter } from './middleware/rateLimiter.js';
+import { loginLimiter, apiLimiter, ordersLimiter, devicesLimiter, exportsLimiter, reservedUnlockLimiter, publicBookingReadLimiter, publicBookingWriteLimiter } from './middleware/rateLimiter.js';
 import { isAllowedOrigin } from './utils/origins.js';
 import logger from './logger.js';
 
@@ -89,11 +90,13 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
     app.use('/api/orders', ordersLimiter);
     app.use('/api/devices', devicesLimiter);
     app.use('/api/exports', exportsLimiter);
+    app.use('/api/reserved-data/unlock', reservedUnlockLimiter);
     app.use('/api/public/booking', (req, res, next) => (req.method === 'POST' ? publicBookingWriteLimiter : publicBookingReadLimiter)(req, res, next));
     app.use('/api/public/takeaway', (req, res, next) => (req.method === 'POST' ? publicBookingWriteLimiter : publicBookingReadLimiter)(req, res, next));
   }
 
   app.use('/api/auth', authRoutes);
+  app.use('/api/reserved-data', reservedDataRouter);
   app.use('/api/profile', profileRoutes);
   app.use('/api/products', productModifiersRouter); // PUT /:id/modifier-groups, prima delle route dei prodotti
   app.use('/api/products', productRecipeRouter);          // GET/PUT /:id/recipe (magazzino)

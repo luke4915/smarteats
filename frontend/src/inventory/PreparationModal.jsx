@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import Segmented from '../smarteats/floor/Segmented';
 import QuantityInput from './QuantityInput';
 import RecipeLinesEditor from './RecipeLinesEditor';
-import { btn, btnPrimary, btnDanger, input, label } from '../smarteats/floor/ui';
+import { btnPrimary, btnDanger, input, label } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { BASE_UNITS, parseDecimal, toBaseQuantity, toDisplayQuantity } from './units';
@@ -39,11 +40,10 @@ const PreparationModal = ({ preparation, ingredients, preparations, onClose, onS
   return (
     <Modal title={editing ? 'Modifica preparazione' : 'Nuova preparazione'} size="max-w-2xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={(e) => { e.preventDefault(); if (!problem) save(); }}
       footer={(
-        <div className="flex gap-2">
-          {editing && <button type="button" className={btnDanger} disabled={busy} onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}>{confirmingDelete ? 'Sì, elimina' : 'Elimina'}</button>}
-          <button type="button" className={`${btn} ml-auto`} onClick={onClose}>Annulla</button>
+        <ModalActions onCancel={onClose}
+          start={editing && <button type="button" className={btnDanger} disabled={busy} onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}>{confirmingDelete ? 'Sì, elimina' : 'Elimina'}</button>}>
           <button type="submit" className={btnPrimary} disabled={busy || !!problem} title={problem ?? undefined}>Salva</button>
-        </div>)}>
+        </ModalActions>)}>
       <div className="space-y-4">
         <label className="block"><span className={`${label} block mb-1`}>Nome</span>
           <input className={input} autoFocus maxLength={60} value={form.name} onChange={e => patch({ name: e.target.value })} placeholder="Es. Sugo base" /></label>

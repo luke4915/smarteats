@@ -6,7 +6,8 @@ import { useToast } from '../../context/useToast';
 import StatCard from './statistics/StatCard';
 import ChartCard from './statistics/ChartCard';
 import { HBars, Columns } from './charts';
-import { useStatistics, formatEuro, formatMin, activeHours, reorderHours } from './statistics/useStatistics';
+import { useStatistics, activeHours, reorderHours } from './statistics/useStatistics';
+import { formatEuro, formatMin } from '../../utils/format';
 import { exportStatsPdf } from './statistics/pdfExport';
 import { useAuth } from '../../context/useAuth';
 import { termsFor } from '../../utils/terms';
@@ -14,6 +15,8 @@ import { PageHeader, PageBody } from './PageHeader';
 import Modal from './Modal';
 import Segmented from '../../smarteats/floor/Segmented';
 import { btn, iconBtn } from '../../smarteats/floor/ui';
+import ScrollRow from './ScrollRow';
+import Loading from './Loading';
 
 // Le fasce orarie attive (da prima a ultima con valori), riordinate dalle 12:00 come nel resto dell'app.
 const hourItems = (data, key) => activeHours(reorderHours(data), key).map(d => ({ key: d.ora, label: `${d.ora}`, short: String(d.ora).slice(0, 2), value: d[key] ?? 0 }));
@@ -53,7 +56,7 @@ const Statistics = () => {
 
   if (loading) return (
     <div className="flex items-center justify-center h-64 text-[var(--text-muted)]">
-      <p className="text-sm">Caricamento…</p>
+      <Loading />
     </div>
   );
 
@@ -80,13 +83,13 @@ const Statistics = () => {
 
       {sessions.length > 0 && (
         <ChartCard title={terms.filter}>
-          <div className="flex flex-wrap gap-2">
+          <ScrollRow className="flex gap-2 pb-1">
             {sessions.map(s => {
               const selected = selectedSessionIds.includes(String(s.id));
               return (
                 <button key={s.id} onClick={() => toggleSession(s.id)}
                   aria-pressed={selected}
-                  className={`flex items-center gap-1.5 h-9 px-3 rounded-lg border text-sm font-medium transition-colors cursor-pointer ${selected
+                  className={`flex shrink-0 whitespace-nowrap items-center gap-1.5 h-9 coarse:h-11 px-3 rounded-lg border text-sm font-medium transition-colors cursor-pointer ${selected
                     ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]'
                     : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'
                     }`}>
@@ -98,11 +101,11 @@ const Statistics = () => {
             })}
             {selectedSessionIds.length > 0 && (
               <button onClick={() => setSelectedSessionIds([])}
-                className="h-9 px-3 rounded-lg text-sm text-[var(--text-muted)] hover:text-red-500 transition-colors cursor-pointer">
+                className="shrink-0 whitespace-nowrap h-9 coarse:h-11 px-3 rounded-lg text-sm text-[var(--text-muted)] hover:text-red-500 transition-colors cursor-pointer">
                 Rimuovi filtri
               </button>
             )}
-          </div>
+          </ScrollRow>
         </ChartCard>
       )}
 

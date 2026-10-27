@@ -10,6 +10,7 @@ import { requireWarehouseMode } from '../utils/inventory/guards.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { supplierSchema, supplierPriceListSchema } from '../schemas/supplierSchema.js';
+import { maskReserved } from '../utils/reservedData.js';
 
 // Fornitori del locale (modulo `inventory`, modalità magazzino) e il listino di ciò che vendono (confezione e prezzo, senza IVA).
 // Li gestiscono amministratore e responsabile: sono prezzi.
@@ -32,7 +33,7 @@ async function listSuppliers(db) {
   }));
 }
 
-router.get('/', ...guard, tenantScope, async (req, res) => {
+router.get('/', ...guard, tenantScope, maskReserved, async (req, res) => {
   try { res.json(await listSuppliers(req.db)); }
   catch (err) {
     logger.error({ err }, 'Errore GET /api/suppliers');
@@ -40,7 +41,7 @@ router.get('/', ...guard, tenantScope, async (req, res) => {
   }
 });
 
-router.post('/', ...guard, validate({ body: supplierSchema }), tenantScope, async (req, res) => {
+router.post('/', ...guard, validate({ body: supplierSchema }), tenantScope, maskReserved, async (req, res) => {
   const { name, phone, email, vat_number: vatNumber, notes, active } = req.body;
   try {
     const { rows } = await req.db.query(
@@ -54,7 +55,7 @@ router.post('/', ...guard, validate({ body: supplierSchema }), tenantScope, asyn
   }
 });
 
-router.put('/:id', ...guard, validate({ params: idParamsSchema, body: supplierSchema }), tenantScope, async (req, res) => {
+router.put('/:id', ...guard, validate({ params: idParamsSchema, body: supplierSchema }), tenantScope, maskReserved, async (req, res) => {
   const { name, phone, email, vat_number: vatNumber, notes, active } = req.body;
   try {
     const { rowCount } = await req.db.query(
@@ -70,11 +71,11 @@ router.put('/:id', ...guard, validate({ params: idParamsSchema, body: supplierSc
   }
 });
 
-// Un fornitore con dei carichi non si elimina (lo storico dei costi resta): si disattiva.
-router.delete('/:id', ...guard, validate({ params: idParamsSchema }), tenantScope, async (req, res) => {
+// Un fornitore con degli scarichi di merce non si elimina (lo storico dei costi resta): si disattiva.
+router.delete('/:id', ...guard, validate({ params: idParamsSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     if ((await req.db.query('SELECT 1 FROM goods_receipts WHERE supplier_id = $1 LIMIT 1', [req.params.id])).rowCount)
-      throw new HttpError(409, 'Questo fornitore ha dei carichi: disattivalo invece di eliminarlo', 'SUPPLIER_IN_USE');
+      throw new HttpError(409, 'Questo fornitore ha degli scarichi di merce: disattivalo invece di eliminarlo', 'SUPPLIER_IN_USE');
     const { rows } = await req.db.query('DELETE FROM suppliers WHERE id = $1 RETURNING name', [req.params.id]);
     if (!rows.length) throw new HttpError(404, 'Fornitore non trovato');
     await logAudit(req.db, req.user.id, 'DELETE_SUPPLIER', { supplierId: Number(req.params.id), name: rows[0].name });
@@ -87,7 +88,7 @@ router.delete('/:id', ...guard, validate({ params: idParamsSchema }), tenantScop
 });
 
 // Il listino del fornitore: ingredienti che vende, con confezione e prezzo. Sostituisce quello di prima.
-router.put('/:id/price-list', ...guard, validate({ params: idParamsSchema, body: supplierPriceListSchema }), tenantScope, async (req, res) => {
+router.put('/:id/price-list', ...guard, validate({ params: idParamsSchema, body: supplierPriceListSchema }), tenantScope, maskReserved, async (req, res) => {
   try {
     await inTransaction(req.db, async (db) => {
       if (!(await db.query('SELECT 1 FROM suppliers WHERE id = $1 FOR UPDATE', [req.params.id])).rowCount) throw new HttpError(404, 'Fornitore non trovato');

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import Switch from '../components/shared/Switch';
 import ReceiptLineRow from './ReceiptLineRow';
 import { btn, btnPrimary, btnDanger, input, label } from '../smarteats/floor/ui';
@@ -11,7 +12,7 @@ import { blankReceiptRow, rowFromPriceItem, priceListProblem, priceListPayload }
 const Field = ({ title, children }) => <label className="block"><span className={`${label} block mb-1`}>{title}</span>{children}</label>;
 
 // Un fornitore: i suoi dati e il listino di ciò che vende (confezione e prezzo di ogni ingrediente). Il listino si aggiorna anche
-// da solo a ogni carico registrato.
+// da solo a ogni scarico registrato.
 const SupplierModal = ({ supplier, ingredients, onClose, onSaved }) => {
   const { showToast } = useToast();
   const editing = !!supplier;
@@ -38,11 +39,10 @@ const SupplierModal = ({ supplier, ingredients, onClose, onSaved }) => {
   return (
     <Modal title={editing ? 'Modifica fornitore' : 'Nuovo fornitore'} size="max-w-4xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={(e) => { e.preventDefault(); if (!problem) save(); }}
       footer={(
-        <div className="flex gap-2">
-          {editing && <button type="button" className={btnDanger} disabled={busy} onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}>{confirmingDelete ? 'Sì, elimina' : 'Elimina'}</button>}
-          <button type="button" className={`${btn} ml-auto`} onClick={onClose}>Annulla</button>
+        <ModalActions onCancel={onClose}
+          start={editing && <button type="button" className={btnDanger} disabled={busy} onClick={() => (confirmingDelete ? remove() : setConfirmingDelete(true))}>{confirmingDelete ? 'Sì, elimina' : 'Elimina'}</button>}>
           <button type="submit" className={btnPrimary} disabled={busy || !!problem} title={problem ?? undefined}>Salva</button>
-        </div>)}>
+        </ModalActions>)}>
       <div className="space-y-5">
         <div className="grid sm:grid-cols-2 gap-3">
           <Field title="Nome"><input className={input} autoFocus maxLength={80} value={form.name} onChange={e => patch({ name: e.target.value })} placeholder="Es. Rossi Alimentari" /></Field>
@@ -54,7 +54,7 @@ const SupplierModal = ({ supplier, ingredients, onClose, onSaved }) => {
         {editing && <div className="flex items-center justify-between gap-3"><span className="text-sm text-[var(--text-main)]">Attivo</span><Switch label="Fornitore attivo" checked={form.active} onChange={active => patch({ active })} /></div>}
 
         <div className="space-y-2">
-          <div><span className={`${label} block`}>Cosa vende</span><p className="text-sm text-[var(--text-muted)]">Confezione e prezzo di ogni ingrediente: nei carichi si compila da solo.</p></div>
+          <div><span className={`${label} block`}>Cosa vende</span><p className="text-sm text-[var(--text-muted)]">Confezione e prezzo di ogni ingrediente: nei scarichi si compila da solo.</p></div>
           {rows.map(row => (
             <ReceiptLineRow key={row.key} row={row} ingredients={ingredients} showQuantity={false}
               onChange={next => setRows(list => list.map(r => (r.key === row.key ? next : r)))} onRemove={() => setRows(list => list.filter(r => r.key !== row.key))} />))}

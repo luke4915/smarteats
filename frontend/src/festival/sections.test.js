@@ -5,8 +5,8 @@ import { festivalSections } from './sections.js';
 const ids = (user) => festivalSections(user).map(s => s.id);
 
 test('l\'admin vede tutto, l\'asporto solo se il modulo è acceso', () => {
-  assert.deepEqual(ids({ role: 'admin', modules: ['kds', 'stats'] }), ['device', 'menu', 'printing', 'feedback', 'account']);
-  assert.deepEqual(ids({ role: 'admin', modules: ['takeaway'] }), ['device', 'takeaway', 'menu', 'printing', 'feedback', 'account']);
+  assert.deepEqual(ids({ role: 'admin', modules: ['kds', 'stats'] }), ['device', 'menu', 'printing', 'reserved', 'feedback', 'account']);
+  assert.deepEqual(ids({ role: 'admin', modules: ['takeaway'] }), ['device', 'takeaway', 'menu', 'printing', 'reserved', 'feedback', 'account']);
 });
 
 test('il responsabile ha anche l\'account, ma non l\'asporto da configurare', () => {

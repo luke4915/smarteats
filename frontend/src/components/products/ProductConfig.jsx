@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { PageHeader } from '../shared/PageHeader';
 import { useAuth } from '../../context/useAuth';
+import RecipeModal from '../../inventory/RecipeModal';
+import { useRecipeData, recipesEnabled } from '../../inventory/useRecipeData';
 import CompactCatalog from './CompactCatalog';
-import ProductGroups from './ProductGroups';
 import ProductFormModal from './ProductFormModal';
 import { DuplicateDialog, DeleteDialog } from './ProductDialogs';
 import { useProductActions } from './useProductActions';
@@ -12,10 +13,10 @@ import { blankForm, formFromProduct, cleanPriceInput, colorOfCategory, findNameC
 //   - `productForm.js`        le regole del modulo (valori iniziali, doppioni, quantità valide), pure e provate
 //   - `useProductActions.js`  le chiamate al server (salva, mostra/nascondi, elimina)
 //   - `ProductFormModal.jsx`  la finestra del modulo;  `ProductDialogs.jsx` le conferme
-//   - `CompactCatalog.jsx` (ristorante) e `ProductGroups.jsx` (sagra) l'elenco
-// `compact`: elenco del ristorante. `courses` (portate) e `modifierGroups` (opzioni) esistono solo nei ristoranti;
+//   - `CompactCatalog.jsx`   l'elenco, uguale nella sagra e nel ristorante
+// `noun`: come si chiamano i prodotti nel locale. `courses` (portate) e `modifierGroups` (opzioni) esistono solo nei ristoranti;
 // `takeawayEnabled` aggiunge il carico sul forno. `onModifiersSaved` rilegge le opzioni dopo un salvataggio.
-const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved, hideHeader = false, takeawayEnabled = false, compact = false }) => {
+const ProductConfig = ({ products, setProducts, courses = null, modifierGroups = null, onModifiersSaved, hideHeader = false, takeawayEnabled = false, noun = 'prodotto' }) => {
   const { user } = useAuth();
   const portionsEnabled = !!user?.inventory;            // col modulo magazzino le porzioni hanno una regola di azzeramento
   const vatEnabled = user?.inventory?.mode === 'warehouse';   // l'IVA serve ai margini del magazzino
@@ -25,6 +26,8 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
   const [form, setForm] = useState(null);                // il modulo aperto (null = chiuso)
   const [conflict, setConflict] = useState(null);        // un prodotto con lo stesso nome esiste già
   const [toDelete, setToDelete] = useState(null);
+  const kitchen = useRecipeData(recipesEnabled(user));   // ricette dei piatti (solo con il magazzino «dalle ricette»)
+  const [recipeOf, setRecipeOf] = useState(null);         // il prodotto di cui si scrive la ricetta
 
   const openNew = () => { setEditing(null); setForm(blankForm(options)); };
   const openEdit = (product) => { setEditing(product); setForm(formFromProduct(product, options)); };
@@ -53,14 +56,14 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
     <div className="max-w-5xl mx-auto w-full space-y-5 relative">
       {!hideHeader && <PageHeader title="Menu" subtitle="Gestione prodotti" />}
 
-      {compact
-        ? <CompactCatalog products={products} courses={courses} onAdd={openNew} onEdit={openEdit} onDelete={setToDelete} onToggleVisible={actions.toggleVisibility} />
-        : <ProductGroups products={products} onAdd={openNew} onEdit={openEdit} onDelete={setToDelete} onToggleVisible={actions.toggleVisibility} onSetManyVisible={actions.setManyVisible} />}
+      <CompactCatalog products={products} courses={courses} noun={noun} recipes={kitchen.data && { summaryOf: kitchen.data.summaryOf, onOpen: setRecipeOf }} onAdd={openNew} onEdit={openEdit} onDelete={setToDelete}
+        onToggleVisible={actions.toggleVisibility} onSetManyVisible={actions.setManyVisible} />
 
       {form && (
         <ProductFormModal form={form} setForm={setForm} products={products} editing={editing} courses={courses} modifierGroups={modifierGroups} takeawayEnabled={takeawayEnabled} portionsEnabled={portionsEnabled} vatEnabled={vatEnabled}
           submitDisabled={!!stockProblem(form)} onField={setField} onChange={handleChange} onSubmit={submit} onClose={close} />
       )}
+      {recipeOf && <RecipeModal product={recipeOf} dish={noun} showCosts ingredients={kitchen.data.ingredients} preparations={kitchen.data.preparations} onClose={() => setRecipeOf(null)} onSaved={kitchen.reload} />}
       {conflict && <DuplicateDialog conflict={conflict} onClose={() => setConflict(null)} onUseCategory={() => { setField('category', conflict.product.category); setConflict(null); }} />}
       {toDelete && <DeleteDialog product={toDelete} onClose={() => setToDelete(null)} onConfirm={async () => { if (await actions.remove(toDelete)) setToDelete(null); }} />}
     </div>

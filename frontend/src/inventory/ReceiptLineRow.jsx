@@ -1,30 +1,30 @@
 import { Trash2 } from 'lucide-react';
 import QuantityInput from './QuantityInput';
-import { iconBtn, input, label } from '../smarteats/floor/ui';
+import { iconBtnField, input, label } from '../smarteats/floor/ui';
 import { VAT_RATES, rowAmounts, rowForIngredient, centsToEuroText } from './receipt';
 
 const Field = ({ title, children, className = '' }) => (
   <label className={`block min-w-0 ${className}`}><span className={`${label} block mb-1`}>{title}</span>{children}</label>
 );
 
-// Una riga di carico o di listino: ingrediente, confezione, contenuto di una confezione, prezzo (senza IVA) e IVA. Nel carico c'è
+// Una riga di scarico o di listino: ingrediente, confezione, contenuto di una confezione, prezzo (senza IVA) e IVA. Nel scarico c'è
 // anche la quantità di confezioni arrivate, e in fondo il totale della riga. `supplierItems` precompila dal listino del fornitore.
 const ReceiptLineRow = ({ row, ingredients, supplierItems = [], showQuantity = true, onChange, onRemove }) => {
   const ingredient = ingredients.find(i => i.id === Number(row.ingredient_id));
   const amounts = rowAmounts(row);
   return (
     <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] space-y-3">
-      <div className="flex gap-2 items-end">
-        <Field title="Ingrediente" className="flex-1">
+      <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+        <Field title="Ingrediente" className="col-span-2 sm:col-span-1">
           <select className={input} aria-label="Ingrediente" value={row.ingredient_id} onChange={e => onChange(rowForIngredient(row, e.target.value, ingredients, supplierItems))}>
             <option value="">Scegli…</option>
             {ingredients.filter(i => i.active).map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
         </Field>
-        <Field title="Confezione" className="flex-1">
+        <Field title="Confezione">
           <input className={input} aria-label="Confezione" placeholder="Es. Sacco da 25 kg" maxLength={40} value={row.purchase_unit_name} onChange={e => onChange({ ...row, purchase_unit_name: e.target.value })} />
         </Field>
-        <button type="button" className={`${iconBtn} hover:!text-red-500`} aria-label="Togli la riga" onClick={onRemove}><Trash2 size={16} /></button>
+        <button type="button" className={`${iconBtnField} hover:!text-red-500`} aria-label="Togli la riga" onClick={onRemove}><Trash2 size={16} /></button>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-[1fr_1.4fr_1fr_0.8fr_auto] gap-2 items-end">
         {showQuantity && (

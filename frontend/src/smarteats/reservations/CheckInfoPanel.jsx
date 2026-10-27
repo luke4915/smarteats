@@ -1,6 +1,6 @@
 import { Users, Receipt, Clock } from 'lucide-react';
 import PanelFrame from '../floor/PanelFrame';
-import { formatEuro } from '../floor/checkMath';
+import { formatEuro } from '../../utils/format';
 import { btnPrimary } from '../floor/ui';
 
 // Chi è seduto senza prenotazione (un blocco «Senza prenotazione» della Timeline): un tocco mostra qui un riepilogo, senza

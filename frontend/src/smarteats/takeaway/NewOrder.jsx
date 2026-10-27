@@ -1,58 +1,14 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Search, Minus, Plus, Phone, Store } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Minus, Plus, Phone, Store } from 'lucide-react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from '../floor/PanelFrame';
-import { btn, btnPrimary, input, label, segment, segmentBox } from '../floor/ui';
-import { formatEuro, normalizeText } from '../floor/checkMath';
+import { btn, btnPrimary, iconBtn, input, label, segment, segmentBox } from '../floor/ui';
+import { formatEuro } from '../../utils/format';
 import { addToCart, cartCount, cartTotal, cartLoad } from './rules';
-import ScrollRow from '../../components/shared/ScrollRow';
 
-// L'ordine preso al banco o al telefono: a sinistra la carta (stessa disposizione della cassa), a destra il riepilogo
+// L'ordine preso al banco o al telefono: a sinistra la carta comune (`ProductPicker`, la stessa della Sala), a destra il riepilogo
 // con nome, telefono e fascia di ritiro. Nasce già accettato e va subito in cucina.
-export const ProductPicker = ({ products, cart, onAdd }) => {
-  const [category, setCategory] = useState('Tutti');
-  const [search, setSearch] = useState('');
-  const categories = useMemo(() => ['Tutti', ...new Set((products ?? []).map(p => p.category || 'Generico'))], [products]);
-  const shown = useMemo(() => {
-    const words = normalizeText(search).trim().split(/\s+/).filter(Boolean);
-    return (products ?? []).filter(p => (category === 'Tutti' || (p.category || 'Generico') === category) && words.every(w => normalizeText(`${p.name} ${p.category || ''}`).includes(w)));
-  }, [products, category, search]);
-
-  return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="flex gap-2 pb-3 shrink-0">
-        <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
-          <input type="text" placeholder="Cerca prodotto…" aria-label="Cerca prodotto" value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full h-11 pl-9 pr-3 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-main)] text-sm placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]" />
-        </div>
-      </div>
-      <ScrollRow className="flex gap-1.5 pb-3 shrink-0" role="tablist" aria-label="Categoria">
-        {categories.map(c => (
-          <button key={c} role="tab" aria-selected={category === c} onClick={() => setCategory(c)}
-            className={`h-9 px-3.5 rounded-full text-sm font-medium whitespace-nowrap border cursor-pointer ${category === c ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]' : 'border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text-main)]'}`}>{c}</button>
-        ))}
-      </ScrollRow>
-      <div className="flex-1 min-h-0 overflow-y-auto no-scrollbar">
-        {!products && <p className="text-sm text-[var(--text-muted)]">Caricamento carta…</p>}
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5">
-          {shown.map(p => {
-            const n = cart.find(l => l.id === p.id)?.quantity ?? 0;
-            return (
-              <button key={p.id} onClick={() => onAdd(p, 1)} className="relative text-left rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] p-3 min-h-[76px] flex flex-col justify-between hover:border-[var(--border-hover)] active:scale-[0.98] transition cursor-pointer">
-                <span className="text-sm font-medium leading-tight text-[var(--text-main)]">{p.name}</span>
-                <span className="text-xs font-semibold tabular-nums text-[var(--text-muted)] mt-2">{formatEuro(p.price)}</span>
-                {n > 0 && <span className="absolute top-2 right-2 min-w-5 h-5 px-1 rounded-full bg-[var(--accent)] text-white text-xs font-semibold flex items-center justify-center tabular-nums">{n}</span>}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const NewOrder = ({ date, cart, setCart, onBack, onCreated }) => {
   const { showToast } = useToast();
   const [form, setForm] = useState({ customer_name: '', phone: '', notes: '', source: 'counter', date, time: '' });
@@ -102,14 +58,16 @@ const NewOrder = ({ date, cart, setCart, onBack, onCreated }) => {
       }>
       <div className="px-1 space-y-4 pb-2">
         {cart.length === 0 ? <p className="text-sm text-[var(--text-muted)] py-6 text-center">Tocca i prodotti a sinistra per aggiungerli.</p> : (
-          <ul className="rounded-lg border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden">
+          <ul className="divide-y divide-[var(--border)]">
             {cart.map(l => (
-              <li key={l.id} className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-card-2)]">
-                <span className="min-w-0 flex-1 text-sm text-[var(--text-main)] truncate">{l.name}</span>
-                <button className="p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-card)] cursor-pointer" aria-label={`Una in meno: ${l.name}`} onClick={() => setCart(c => addToCart(c, l, -1))}><Minus size={16} /></button>
-                <span className="w-6 text-center text-sm font-semibold tabular-nums">{l.quantity}</span>
-                <button className="p-1.5 rounded-lg text-[var(--text-muted)] hover:bg-[var(--bg-card)] cursor-pointer" aria-label={`Una in più: ${l.name}`} onClick={() => setCart(c => addToCart(c, l, 1))}><Plus size={16} /></button>
-                <span className="w-16 text-right text-sm tabular-nums text-[var(--text-muted)]">{formatEuro(l.price * l.quantity)}</span>
+              <li key={l.id} className="flex items-center gap-2 py-1.5">
+                <div className="flex items-center shrink-0">
+                  <button className={`${iconBtn} !p-2.5`} aria-label={`Una in meno: ${l.name}`} onClick={() => setCart(c => addToCart(c, l, -1))}><Minus size={16} /></button>
+                  <span className="w-7 text-center text-base font-semibold tabular-nums text-[var(--text-main)]">{l.quantity}</span>
+                  <button className={`${iconBtn} !p-2.5`} aria-label={`Una in più: ${l.name}`} onClick={() => setCart(c => addToCart(c, l, 1))}><Plus size={16} /></button>
+                </div>
+                <span className="flex-1 min-w-0 text-base text-[var(--text-main)] leading-snug">{l.name}</span>
+                <span className="text-base tabular-nums text-[var(--text-main)] shrink-0">{formatEuro(l.price * l.quantity)}</span>
               </li>
             ))}
           </ul>

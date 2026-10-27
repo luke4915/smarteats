@@ -5,6 +5,7 @@ import { formatDay } from '../smarteats/reservations/rules';
 import { btnPrimary, btn, input } from '../smarteats/floor/ui';
 import { PublicShell, StepSection } from '../components/public/PublicShell';
 import { useSystemTheme } from '../hooks/useSystemTheme';
+import Loading from '../components/shared/Loading';
 
 // Pagina pubblica di prenotazione (`/book`): il cliente sceglie quanti siete, il giorno e il turno, lascia i suoi
 // dati e invia una *richiesta*: il locale la conferma. `/book/<codice>` è la pagina di stato con l'annullo.
@@ -43,7 +44,7 @@ const Status = ({ token, info }) => {
   };
 
   if (error && !data) return <p className="text-sm text-red-500" role="alert">{error}</p>;
-  if (!data) return <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>;
+  if (!data) return <Loading />;
   const text = STATUS_TEXT[data.status] ?? STATUS_TEXT.requested;
   const phone = data.restaurant.phone || info?.phone;
   return (
@@ -153,7 +154,7 @@ const BookingPage = () => {
   const weekdays = useMemo(() => (days ?? []).map(d => ({ ...d, label: formatDay(d.date, { short: true }) })), [days]);
 
   if (error && !info) return <Shell><p className="text-sm text-[var(--text-muted)] text-center py-10" role="alert">{error}</p></Shell>;
-  if (!info) return <Shell><p className="text-sm text-[var(--text-muted)]">Caricamento…</p></Shell>;
+  if (!info) return <Shell><Loading /></Shell>;
   if (token) return <Shell info={info}><Status token={token} info={info} /></Shell>;
 
   return (
@@ -171,7 +172,7 @@ const BookingPage = () => {
         </Section>
 
         <Section n={2} title="Che giorno?">
-          {!days ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+          {!days ? <Loading /> : (
             <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Giorno">
               {weekdays.map(d => (
                 <button key={d.date} type="button" role="radio" aria-checked={date === d.date} disabled={!d.available} onClick={() => setDate(d.date)}
@@ -187,7 +188,7 @@ const BookingPage = () => {
 
         {date && (
           <Section n={3} title="A che ora?">
-            {!shifts ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+            {!shifts ? <Loading /> : (
               <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Turno">
                 {shifts.map(s => (
                   <button key={s.id} type="button" role="radio" aria-checked={shiftId === s.id} disabled={!s.available} onClick={() => setShiftId(s.id)}

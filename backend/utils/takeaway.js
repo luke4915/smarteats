@@ -7,6 +7,7 @@ export const MAX_DAYS_AHEAD = 7;           // dal portale si ordina fino a una s
 export const MAX_ITEMS_PER_ORDER = 40;     // pezzi in un ordine dal portale (oltre: telefonare)
 export const MAX_PENDING_PER_PHONE = 3;    // richieste in attesa dello stesso telefono
 export const DEFAULTS = { slotMinutes: 15, capacity: 12, minLeadMinutes: 30 };
+export const STALE_PICKUP_MINUTES = 120;   // oltre queste ore di ritardo un asporto accettato non va più in cucina da solo
 
 const pad = (n) => String(n).padStart(2, '0');
 export const clock = (minutes) => `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
@@ -38,6 +39,14 @@ export function slotWithinWindow(date, time, now, minLeadMinutes = DEFAULTS.minL
 // `pickupDate` è `YYYY-MM-DD` nel fuso del locale; `now` è localNow().
 export function pickupIsDue(pickupDate, now) {
   return daysBetween(now.date, pickupDate) <= 0;
+}
+
+// Il ritiro è passato da troppo tempo (per esempio un pranzo accettato e mai gestito, che la sera apre il servizio)? Allora
+// non si cucina: sarebbe un ordine fantasma. Resta «accettato» nell'elenco dell'asporto, dove il locale lo consegna o lo annulla.
+// `pickupTime` è `HH:MM` nel fuso del locale; `now` è localNow().
+export function pickupIsStale(pickupDate, pickupTime, now, graceMinutes = STALE_PICKUP_MINUTES) {
+  const minutesLate = now.minutes - minutesOf(pickupTime) - daysBetween(now.date, pickupDate) * 1440;
+  return minutesLate > graceMinutes;
 }
 
 // Carico di un insieme di righe: somma di quantità × `takeaway_load` del prodotto. `loadOf(productId)` → intero.

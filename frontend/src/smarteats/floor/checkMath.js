@@ -2,7 +2,6 @@
 // li calcola sempre il server e la schermata li rilegge dopo ogni operazione.
 
 export const toCents = (euro) => Math.round(Number(euro) * 100);
-export const formatEuro = (euro) => `${Number(euro).toFixed(2).replace('.', ',')} €`;
 
 // Stato del tavolo: libero, occupato o conto richiesto (non si memorizza: lo dice il conto aperto).
 export const tableState = (check) => (!check ? 'free' : check.bill_requested_at ? 'bill' : 'busy');

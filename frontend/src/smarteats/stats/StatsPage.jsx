@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import { formatEuro } from '../floor/checkMath';
+import { formatEuro } from '../../utils/format';
 import { input } from '../floor/ui';
 import Segmented from '../floor/Segmented';
 import { HBars, HourBars, HourTable } from './Bars';
 import { Columns } from '../../components/shared/charts';
 import { PageHeader, PageBody } from '../../components/shared/PageHeader';
 import { fillHours, peakHour, hourLabel, formatDuration, METHOD_LABEL } from './chartData';
+import Loading from '../../components/shared/Loading';
 
 const pct = (v) => (v === null || v === undefined ? '—' : `${Math.round(v * 100)} %`);
 const clock = (minute) => `${String(Math.floor(minute / 60)).padStart(2, '0')}:${String(minute % 60).padStart(2, '0')}`;
@@ -64,7 +65,7 @@ const StatsPage = () => {
         </select>
       </PageHeader>
 
-      {!stats && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+      {!stats && <Loading />}
       {stats && t.checks === 0 && <Empty>Nessun conto pagato in questo periodo.</Empty>}
       {stats && t.checks > 0 && (
         <>

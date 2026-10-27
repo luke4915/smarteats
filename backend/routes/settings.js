@@ -52,6 +52,8 @@ router.put('/:key', authenticate, authorizeAdmin, validate({ params: settingPara
     if (key === 'default_vat_rate' && !(typeof value === 'string' && /^\d{1,2}([.,]\d{1,2})?$/.test(value.trim()) && Number(value.trim().replace(',', '.')) <= 99))
         return res.status(400).json({ error: 'value: indica un\'aliquota IVA da 0 a 99 (es. 10)' });
     if (key === 'default_vat_rate') value = String(Number(value.trim().replace(',', '.')));
+    if (key === 'reserved_data_lock' && !['0', '1'].includes(value))
+        return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
     if (key === 'booking_portal_enabled' && !['0', '1'].includes(value))
         return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
     if (key === 'booking_portal_phone' && value && !/^[+\d][\d\s./-]{4,38}$/.test(value.trim()))

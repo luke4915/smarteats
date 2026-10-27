@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Banknote, Coins, Check, Minus, Plus } from 'lucide-react';
 import Modal from './Modal';
+import ModalActions from './ModalActions';
 import { btnPrimary } from '../../smarteats/floor/ui';
+import { formatEuro } from '../../utils/format';
 
 const NOTES = [100, 50, 20, 10, 5];
 const COINS = [2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01];
@@ -20,7 +22,7 @@ const DenomTile = ({ value, qty, onChange }) => {
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-[var(--text-main)]">{label}</p>
-        <p className="text-xs font-bold text-[var(--text-muted)]">{subtotal.toFixed(2)} €</p>
+        <p className="text-xs font-bold text-[var(--text-muted)]">{formatEuro(subtotal)}</p>
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
         <button
@@ -61,17 +63,17 @@ const CashCountModal = ({ expectedCash = 0, onConfirm, onClose }) => {
     [counts]
   );
 
-  const difference = +(total - expectedCash).toFixed(2);
+  const difference = Math.round((total - expectedCash) * 100) / 100;
   const diffColor = difference === 0 ? 'text-green-500' : Math.abs(difference) < 1 ? 'text-orange-500' : 'text-red-500';
 
   return (
     <Modal title="Conteggio cassa" size="max-w-2xl" onClose={onClose}
       footer={(
         <div className="space-y-2">
-          <div className="flex justify-between text-sm text-[var(--text-muted)]"><span>Atteso da sistema</span><span className="tabular-nums">{expectedCash.toFixed(2)} €</span></div>
-          <div className="flex justify-between text-base font-semibold text-[var(--text-main)]"><span>Contato</span><span className="tabular-nums">{total.toFixed(2)} €</span></div>
-          <div className={`flex justify-between text-base font-semibold ${diffColor}`}><span>Differenza</span><span className="tabular-nums">{difference > 0 ? '+' : ''}{difference.toFixed(2)} €</span></div>
-          <button onClick={() => onConfirm(total)} className={`${btnPrimary} w-full !mt-3`}><Check size={18} /> Conferma chiusura</button>
+          <div className="flex justify-between text-sm text-[var(--text-muted)]"><span>Atteso da sistema</span><span className="tabular-nums">{formatEuro(expectedCash)}</span></div>
+          <div className="flex justify-between text-base font-semibold text-[var(--text-main)]"><span>Contato</span><span className="tabular-nums">{formatEuro(total)}</span></div>
+          <div className={`flex justify-between text-base font-semibold ${diffColor}`}><span>Differenza</span><span className="tabular-nums">{difference > 0 ? '+' : ''}{formatEuro(difference)}</span></div>
+          <div className="!mt-3"><ModalActions fill onCancel={onClose}><button type="button" onClick={() => onConfirm(total)} className={btnPrimary}><Check size={18} /> Conferma chiusura</button></ModalActions></div>
         </div>
       )}>
       <p className="text-sm text-[var(--text-muted)] mb-4">Conta i contanti a taglio.</p>

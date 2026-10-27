@@ -55,12 +55,12 @@ const ModulePicker = ({ catalog, value, onChange, typeLocked = false }) => {
           <legend className={labelClass}>Magazzino e scorte</legend>
           <Segmented label="Modalità del magazzino" options={options(catalog.inventory.modes)} value={inventory.mode} onChange={mode => setInventory({ mode })} />
           <p className="text-xs text-[var(--text-muted)]">
-            {inventory.mode === 'portions' ? 'Un conteggio per piatto, che riparte a ogni servizio.' : 'Ingredienti, fornitori, carichi di merce, costi e margini.'}
+            {inventory.mode === 'portions' ? 'Un conteggio per piatto, che riparte a ogni servizio.' : 'Ingredienti, fornitori, scarichi di merce, costi e margini.'}
           </p>
           {inventory.mode === 'warehouse' && (
             <>
               <span className={labelClass}>Come si scalano gli ingredienti</span>
-              <Segmented scroll label="Scarico degli ingredienti" options={options(catalog.inventory.depletions)} value={inventory.depletion} onChange={depletion => setInventory({ depletion })} />
+              <Segmented scroll label="Consumo degli ingredienti" options={options(catalog.inventory.depletions)} value={inventory.depletion} onChange={depletion => setInventory({ depletion })} />
               <p className="text-xs text-[var(--text-muted)]">
                 {inventory.depletion === 'recipes' ? 'Ogni vendita scala gli ingredienti della ricetta del piatto.' : 'Senza ricette: a fine servizio si scrive quanto è stato usato (o quanto è rimasto).'}
               </p>

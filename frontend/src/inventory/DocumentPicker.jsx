@@ -5,7 +5,7 @@ import { prepareDocument } from './imageUpload';
 import { useToast } from '../context/useToast';
 
 // Foto o file della bolla. Su iPhone e iPad il selettore offre fotocamera e «Scansiona documenti»; su computer si sceglie un
-// file. `files` sono già pronti per l'invio: [{ blob, name }]; il genitore li invia dopo aver salvato il carico.
+// file. `files` sono già pronti per l'invio: [{ blob, name }]; il genitore li invia dopo aver salvato lo scarico.
 const DocumentPicker = ({ files, onChange }) => {
   const { showToast } = useToast();
   const camera = useRef(null);

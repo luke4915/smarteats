@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from './PanelFrame';
-import { formatEuro } from './checkMath';
+import { formatEuro } from '../../utils/format';
 import { label, row } from './ui';
 import Segmented from './Segmented';
 import { seatsLabel } from './seats';
+import Loading from '../../components/shared/Loading';
 
 // Cambio di posto: «Sposta» il conto su un tavolo libero, «Unisci» lo riunisce a quello di un altro tavolo
 // (comande, pagamenti e coperti confluiscono lì). Tutto nello stesso pannello del conto.
@@ -38,7 +39,7 @@ const MoveView = ({ detail, canMerge, onBack, onMoved, onMerged }) => {
         <Segmented label="Cosa fare" value={mode} onChange={setMode} options={[{ id: 'move', label: 'Sposta' }, { id: 'merge', label: 'Unisci' }]} />
       )}
 
-      {!rooms && <p className="text-sm text-[var(--text-muted)] px-1 pt-2">Caricamento…</p>}
+      {!rooms && <Loading />}
 
       {rooms && mode === 'move' && rooms.filter(r => r.active).map(room => {
         const free = room.tables.filter(t => t.active && !busyTables.has(t.id));

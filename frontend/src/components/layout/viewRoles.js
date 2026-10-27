@@ -31,3 +31,8 @@ export const canView = (role, view, modules, inventory) => {
 // Prima pagina disponibile per questo utente, o null se non ne ha nessuna (es. cucina senza il modulo KDS).
 export const defaultView = (role, modules, inventory) =>
   ['dashboard', 'kitchen', 'statistics', 'setup', 'config'].find(view => canView(role, view, modules, inventory)) ?? null;
+
+// Le statistiche del magazzino (costi, margini, scarti, acquisti) stanno in Statistiche, scheda «Magazzino»: solo admin e
+// responsabile, e solo dove il magazzino ha gli ingredienti.
+export const canViewInventoryStats = (role, modules, inventory) =>
+  ['admin', 'manager'].includes(role) && !!modules?.includes('inventory') && inventory?.mode === 'warehouse';

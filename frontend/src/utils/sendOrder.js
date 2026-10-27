@@ -2,13 +2,15 @@ import { enqueueOrder } from '../offline/syncQueue';
 import { nextOrderNumber } from '../offline/device';
 import { printOrderTickets } from '../print/printOrder';
 import { fetchWithAuth, NetworkError } from './apiClient';
+import { SHORTAGE_CODE } from '../hooks/useForceSale';
 
 // Invio di un ordine dalla cassa. In ordine:
 // 1. la cassa dà il numero all'ordine (A13), anche senza rete;
 // 2. lo manda al server; se la rete non c'è lo mette in coda locale (verrà inviato al ritorno);
 // 3. stampa le comande dalla cassa, solo dopo che il server l'ha accettato o messo in coda;
 // 4. svuota il carrello e chiama `onSent`.
-export async function sendOrder({ cart, isTakeaway = false, activeSession, orderMode, clearCart, playSound, showToast, onSent }) {
+// Se un ingrediente non basta (409) e `confirmForce` risponde sì (solo amministratore e responsabile), l'ordine si rimanda forzato.
+export async function sendOrder({ cart, isTakeaway = false, activeSession, orderMode, clearCart, playSound, showToast, onSent, confirmForce }) {
   if (!activeSession) return showToast('Nessuna sessione attiva!', 'error');
   if (cart.length === 0) return showToast('Carrello vuoto!', 'error');
 
@@ -50,7 +52,11 @@ export async function sendOrder({ cart, isTakeaway = false, activeSession, order
 
   if (!navigator.onLine) return queueOffline();
   try {
-    const saved = await fetchWithAuth('/orders', { method: 'POST', body: payload });
+    const post = (body) => fetchWithAuth('/orders', { method: 'POST', body });
+    const saved = await post(payload).catch(async (err) => {
+      if (err?.code === SHORTAGE_CODE && confirmForce && await confirmForce(err.message)) return post({ ...payload, force_stock: true });
+      throw err;
+    });
     // Se il dispositivo non era abbinato il codice lo ha dato il server
     printTickets(saved.displayCode ?? displayCode);
     confirmOrder('Ordine inviato!', 'success');

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/useAuth';
 import Modal from '../shared/Modal';
+import { btnPrimary } from '../../smarteats/floor/ui';
 import { CHANGELOG } from '../../changelog';
 import { APP_VERSION } from '../../utils/appVersion';
 import { entriesToShow } from '../../utils/whatsNew';
@@ -26,7 +27,7 @@ const WhatsNew = () => {
   const close = () => { write(APP_VERSION); setClosed(true); };
   return (
     <Modal title="Novità" onClose={close} size="max-w-md"
-      footer={<button onClick={close} className="w-full h-11 rounded-lg bg-[var(--accent)] text-white font-medium cursor-pointer">Ho capito</button>}>
+      footer={<button type="button" onClick={close} className={`${btnPrimary} w-full`}>Ho capito</button>}>
       <div className="space-y-5">
         {entries.map(e => (
           <section key={e.version}>

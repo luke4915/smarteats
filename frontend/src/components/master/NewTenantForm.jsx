@@ -4,6 +4,7 @@ import TempPasswordField from '../shared/TempPasswordField';
 import Segmented from '../../smarteats/floor/Segmented';
 import { btnPrimary, input } from '../../smarteats/floor/ui';
 import { LICENSE_PRESETS, slugify, addressOf } from './licenseStatus';
+import Loading from '../shared/Loading';
 
 const EMPTY = { slug: '', name: '', plan: 'trial', expiresInDays: 7, adminUsername: '', adminPassword: '', businessType: 'street_food', modules: ['kds', 'stats', 'qr_menu'] };
 
@@ -38,7 +39,7 @@ const NewTenantForm = ({ catalog, error, onCreate, onClose }) => {
         <p className="text-sm font-medium text-[var(--text-main)] mb-1.5">1. Tipo di attività e moduli</p>
         {catalog
           ? <ModulePicker catalog={catalog} value={{ businessType: form.businessType, modules: form.modules, inventory: form.inventory }} onChange={v => setForm(f => ({ ...f, ...v }))} />
-          : <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+          : <Loading />}
       </div>
 
       <div className="space-y-3">

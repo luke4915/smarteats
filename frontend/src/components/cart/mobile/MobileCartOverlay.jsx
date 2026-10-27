@@ -1,9 +1,10 @@
 import { ShoppingCart } from 'lucide-react';
 import Cart from '../Cart';
+import { formatEuro } from '../../../utils/format';
 
 // Carrello su telefono: una barra fissa in basso (quanti articoli e il totale) che apre
 // il carrello a tutto schermo. `cartProps` sono le stesse del carrello desktop. Con `aboveNav` la barra sta sopra
-// il menu in basso (BottomNav), che resta raggiungibile.
+// il menu in basso (TabBar), che resta raggiungibile.
 const MobileCartOverlay = ({ aboveNav = false, isOpen, onOpen, onClose, onReverseClick, cartProps }) => {
   const { cart, total } = cartProps;
   const pieces = cart.reduce((s, i) => s + i.quantity, 0);
@@ -14,13 +15,13 @@ const MobileCartOverlay = ({ aboveNav = false, isOpen, onOpen, onClose, onRevers
         <button
           onClick={onOpen}
           className={`fixed inset-x-3 z-[1400] h-14 px-4 rounded-xl flex items-center justify-between font-medium active:scale-[0.98] transition ${cart.length > 0 ? 'bg-[var(--accent)] text-white shadow-lg' : 'bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border)]'}`}
-          style={{ bottom: aboveNav ? 'calc(max(0.5rem, env(safe-area-inset-bottom)) + 4.25rem)' : 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          style={{ bottom: aboveNav ? 'calc(env(safe-area-inset-bottom) + 3.75rem)' : 'max(0.75rem, env(safe-area-inset-bottom))' }}
         >
           <span className="flex items-center gap-2.5 text-sm">
             <ShoppingCart size={20} />
             {cart.length > 0 ? `${pieces} ${pieces === 1 ? 'articolo' : 'articoli'}` : 'Apri la cassa'}
           </span>
-          {cart.length > 0 && <span className="text-base font-semibold tabular-nums">{total.toFixed(2)} €</span>}
+          {cart.length > 0 && <span className="text-base font-semibold tabular-nums">{formatEuro(total)}</span>}
         </button>
       )}
 

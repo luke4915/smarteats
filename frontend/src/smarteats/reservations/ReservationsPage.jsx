@@ -16,10 +16,10 @@ import StatusChip from './StatusChip';
 import TimelineView from './TimelineView';
 import CheckInfoPanel from './CheckInfoPanel';
 import WalkInPanel from './WalkInPanel';
-import { btnPrimary, btn } from '../floor/ui';
+import { btnPrimary, btn, card } from '../floor/ui';
 import Segmented from '../floor/Segmented';
+import Loading from '../../components/shared/Loading';
 
-const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
 
 const Empty = () => (
   <div className="h-full flex flex-col items-center justify-center gap-2 bg-[var(--bg-card)] rounded-xl border border-[var(--border)] text-[var(--text-muted)] opacity-60">
@@ -92,7 +92,7 @@ const ReservationsPage = ({ event }) => {
           onFreeCell={(tableId) => setPanel({ kind: 'walkin', tableId })} />
       )}
       {view === 'list' && <div className="flex-1 overflow-y-auto no-scrollbar space-y-6 pr-1">
-        {loading && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+        {loading && <Loading />}
         {!loading && activeShifts.map(shift => {
           const a = availability.find(x => x.shift_id === shift.id);
           const mine = reservations.filter(r => r.shift_id === shift.id);
@@ -176,7 +176,7 @@ const ReservationsPage = ({ event }) => {
     <>
       <div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div>
       {panel && (
-        <div className="motion-page fixed inset-0 z-[1700] bg-[var(--bg-main)] p-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))', paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>{side}</div>
+        <div className="motion-page fullscreen-sheet fixed inset-0 z-[1700] bg-[var(--bg-main)]">{side}</div>
       )}
     </>
   );

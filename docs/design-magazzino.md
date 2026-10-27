@@ -151,11 +151,11 @@ SmartEats Stand e Restaurant), una cartella per tema, nessun file oltre le 300 r
 | teorico / reale | `theoretical` / `actual` |
 | IVA | `vat` |
 
-## 7. Dati riservati (trasversale, una PR a parte, prima delle fasi 3 e 4)
+## 7. Dati riservati (trasversale) — realizzati
 Un livello in più di privacy per i numeri delicati: **costi, margini, food cost, prezzi dei fornitori, valore del magazzino e le statistiche di incasso**. Finché sono
 «riservati» non si vedono: al posto dei numeri compaiono cifre e codici a caso (sfocati). Si sbloccano con la **password di un amministratore**, per pochi minuti.
-- **Vale sul server, non solo sulla grafica:** da bloccati, gli endpoint di quei dati **non mandano i valori** (campi vuoti e `locked: true`); la grafica disegna cifre finte. Altrimenti basterebbe aprire gli strumenti del browser. Anche l'esportazione (CSV, PDF) si blocca.
-- **Sblocco:** `POST /auth/unlock-reserved-data` con la password di **un** amministratore del locale (la verifica e non la salva; limitatore di tentativi); sblocca **la sessione di chi la chiede** per 10 minuti e si registra nell'audit (chi ha sbloccato, quale amministratore ha autorizzato). L'amministratore può digitarla sul dispositivo del responsabile senza dargliela.
+- **Vale sul server, non solo sulla grafica:** da bloccati, gli endpoint di quei dati **non mandano i valori**. Quelli fatti solo di dati riservati (report, statistiche, esportazioni) rispondono 403 `RESERVED_LOCKED` e la grafica mostra la scheda di sblocco; quelli misti (ingredienti, fornitori, carichi, registro, ricette) mandano i campi dei costi a `null`, che la grafica scrive come «•••». Altrimenti basterebbe aprire gli strumenti del browser. Anche l'esportazione (CSV, PDF) si blocca.
+- **Sblocco:** `POST /api/reserved-data/unlock` con la password di **un** amministratore del locale (la verifica e non la salva; limitatore di tentativi); sblocca **la sessione di chi la chiede** per 10 minuti e si registra nell'audit (chi ha sbloccato, quale amministratore ha autorizzato). L'amministratore può digitarla sul dispositivo del responsabile senza dargliela.
 - **Chi lo accende:** l'admin del locale, da Impostazioni (impostazione `reserved_data_lock`). Spento di partenza.
 - Riguarda anche le statistiche che esistono già (cassa e ristorante), non solo il magazzino.
 

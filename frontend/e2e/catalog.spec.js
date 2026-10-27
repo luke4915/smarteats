@@ -27,7 +27,7 @@ test('carta del ristorante: aggiungo un piatto con portata, provo un doppione, l
   await page.getByRole('button', { name: 'Aggiungi prodotto' }).click();
   await expect(page.getByText('Prodotto già esistente')).toBeVisible();
   await page.getByRole('button', { name: 'Ho capito' }).click();
-  await page.getByRole('button', { name: 'Chiudi', exact: true }).click();
+  await page.getByRole('button', { name: 'Annulla', exact: true }).click();     // il modulo ha «Annulla», non la X
 
   // Modifica del prezzo
   await page.getByRole('button', { name: 'Modifica Risotto di prova' }).click();
@@ -53,11 +53,11 @@ test('listino della sagra: aggiungo un prodotto con disponibilità limitata e lo
   await expect(page.getByText('Panino con salsiccia')).toBeVisible();
   await shot(page, 'catalog-02-listino-sagra');
 
-  await page.getByRole('button', { name: 'Aggiungi' }).click();
+  await page.getByRole('button', { name: 'Nuovo prodotto' }).click();
   await page.locator('input[name="category"]').fill('Panini');
   await page.locator('input[name="name"]').fill('Panino di prova');
   await page.locator('input[name="price"]').fill('6');
-  await page.getByLabel('Disponibilità limitata').check();
+  await page.getByRole('switch', { name: 'Disponibilità limitata' }).click();
   // Senza una quantità il salvataggio resta bloccato
   await expect(page.getByRole('button', { name: 'Aggiungi prodotto' })).toBeDisabled();
   await page.locator('input[name="stock"]').fill('10');

@@ -36,3 +36,8 @@ export const changePasswordSchema = z.object({
     oldPassword: z.string().min(1, 'Inserisci la password attuale').max(200),
     newPassword: passwordSchema,
 });
+
+// La password di un amministratore del locale, per sbloccare i dati riservati.
+export const unlockReservedSchema = z.object({
+    password: z.string().min(1, 'Inserisci la password').max(200),
+});

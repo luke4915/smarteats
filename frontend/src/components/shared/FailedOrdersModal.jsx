@@ -2,8 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import Modal from './Modal';
 import { btn } from '../../smarteats/floor/ui';
+import { formatEuro } from '../../utils/format';
 import { useToast } from '../../context/useToast';
 import { listFailedOrders, retryFailedOrder, discardFailedOrder } from '../../offline/failedOrders';
+import Loading from './Loading';
 
 // Ordini battuti offline che il server ha rifiutato per sempre (es. sessione chiusa da più di 24 ore):
 // restano in cassa finché non si decide cosa farne. Riprova li rimanda; Elimina li toglie per sempre.
@@ -28,13 +30,13 @@ const FailedOrdersModal = ({ onClose, onChanged }) => {
     <Modal title="Ordini non sincronizzati" size="max-w-lg" onClose={onClose}>
       <p className="text-xs text-[var(--text-muted)] mb-4">Il server li ha rifiutati. Verifica in cassa se vanno registrati a mano, poi toglili dall'elenco.</p>
       <div className="space-y-3">
-        {!orders && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+        {!orders && <Loading />}
         {orders?.length === 0 && <p className="text-sm text-[var(--text-muted)]">Nessun ordine da controllare.</p>}
         {orders?.map(o => (
           <div key={o.localId} className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)]">
             <div className="flex items-baseline justify-between gap-2">
               <p className="font-medium text-sm text-[var(--text-main)]">{o.displayCode ? `Ordine ${o.displayCode}` : 'Ordine offline'}</p>
-              <p className="text-xs text-[var(--text-muted)] tabular-nums">{formatTime(o.createdAt)}{o.total != null && ` · € ${Number(o.total).toFixed(2)}`}</p>
+              <p className="text-xs text-[var(--text-muted)] tabular-nums">{formatTime(o.createdAt)}{o.total != null && ` · ${formatEuro(o.total)}`}</p>
             </div>
             <ul className="mt-1.5 text-xs text-[var(--text-main)]">
               {o.items.map((i, n) => (

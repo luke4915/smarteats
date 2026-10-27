@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { unitsFor, parseDecimal, toBaseQuantity, toDisplayQuantity, formatQuantity, formatCostPerUnit, formatCents, formatPercent, formatDays } from './units.js';
+import { formatCents, RESERVED_TEXT } from '../utils/format.js';
+import { unitsFor, parseDecimal, toBaseQuantity, toDisplayQuantity, formatQuantity, formatCostPerUnit, formatPercent, formatDays } from './units.js';
 
 test('le unità tra cui scegliere dipendono dall\'unità di base', () => {
   assert.deepEqual(unitsFor('g').map(u => u.id), ['g', 'kg']);
@@ -50,4 +51,11 @@ test('i giorni di scorta a parole', () => {
   assert.equal(formatDays(0.4), 'meno di un giorno');
   assert.equal(formatDays(1.2), '1 giorno');
   assert.equal(formatDays(11.7), '12 giorni');
+});
+
+test('un importo riservato (null) si legge come puntini, mai come zero', () => {
+  assert.equal(formatCents(null), RESERVED_TEXT);
+  assert.equal(formatCents(undefined), RESERVED_TEXT);
+  assert.equal(formatCostPerUnit(null, 'g'), RESERVED_TEXT);
+  assert.notEqual(formatCents(0), RESERVED_TEXT, 'zero è un importo vero');
 });

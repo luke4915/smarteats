@@ -3,6 +3,7 @@ import { LayoutGrid, Plus } from 'lucide-react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import RoomCard from './RoomCard';
+import Loading from '../shared/Loading';
 
 // Sale e tavoli del locale (solo admin, modulo `tables`).
 const RoomsSettings = () => {
@@ -33,7 +34,7 @@ const RoomsSettings = () => {
       <p className="text-xs text-[var(--text-muted)] mb-4">Le sale del locale e i loro tavoli. Un tavolo con conti registrati non si elimina: si disattiva.</p>
 
       {error && <p className="text-red-500 text-xs font-semibold mb-3">{error}</p>}
-      {!rooms && !error && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+      {!rooms && !error && <Loading />}
 
       <div className="space-y-3">
         {rooms?.map(room => <RoomCard key={room.id} room={room} onChanged={load} />)}

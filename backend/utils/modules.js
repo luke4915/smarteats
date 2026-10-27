@@ -28,7 +28,7 @@ export const BUSINESS_TYPES = {
 // servizio; `warehouse` = ingredienti, fornitori, costi. Scarico: `recipes` = gli ingredienti si scalano dalle ricette;
 // `simple` = senza ricette, a mano a fine servizio. Spento = il modulo non c'è. Le sceglie solo il master.
 export const INVENTORY_MODES = { portions: 'Porzioni', warehouse: 'Magazzino' };
-export const INVENTORY_DEPLETIONS = { recipes: 'Dalle ricette', simple: 'Scarico semplificato' };
+export const INVENTORY_DEPLETIONS = { recipes: 'Dalle ricette', simple: 'Consumo semplificato' };
 export const DEFAULT_INVENTORY = { mode: 'portions', depletion: 'recipes' };
 
 export const MODULE_IDS = Object.keys(MODULES);

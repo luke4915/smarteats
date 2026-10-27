@@ -13,10 +13,9 @@ export const WASTE_REASONS = [
 ];
 
 const KIND_LABELS = {
-  receipt: 'Carico', sale: 'Vendita', sale_reversal: 'Storno', usage: 'Scarico', waste: 'Scarto', adjustment: 'Rettifica', stock_level: 'Controllo',
+  receipt: 'Scarico merce', sale: 'Vendita', sale_reversal: 'Storno', usage: 'Consumo', waste: 'Scarto', adjustment: 'Rettifica', stock_level: 'Controllo',
 };
 export const kindLabel = (kind) => KIND_LABELS[kind] ?? kind;
-export const MOVEMENT_FILTERS = [{ id: '', label: 'Tutti' }, { id: 'waste', label: 'Scarti' }, { id: 'adjustment', label: 'Rettifiche' }, { id: 'stock_level', label: 'Controlli' }, { id: 'usage', label: 'Scarichi' }];
 
 // Gli altri motivi che il server scrive da solo nel registro: il tipo di controllo e l'ordine stornato.
 const SYSTEM_REASONS = [{ id: 'closing', label: 'Fine servizio' }, { id: 'periodic', label: 'Periodico' }, { id: 'order_canceled', label: 'Ordine stornato' }];
@@ -70,7 +69,7 @@ export function movementPayload(form) {
   return { type: 'adjustment', ingredient_id: Number(form.ingredient_id), quantity_change: form.direction === 'remove' ? -quantity : quantity, note: form.note.trim() };
 }
 
-// Lo scarico di fine servizio (locali senza ricette): per ogni ingrediente si scrive quanto è stato usato o quanto è rimasto.
+// Il consumo di fine servizio (locali senza ricette): per ogni ingrediente si scrive quanto è stato usato o quanto è rimasto.
 // Le righe vuote si saltano; `mode` dice come leggere ciò che è scritto.
 export function usagePayload(mode, ingredients, entries) {
   const lines = ingredients.flatMap(i => {

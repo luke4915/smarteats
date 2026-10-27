@@ -6,6 +6,8 @@ import { useToast } from '../../../context/useToast';
 import { reprintOrder, reprintLocal } from '../../../print/printOrder';
 import { recentLocalOrders } from '../../../print/localOrders';
 import { recall } from '../../../offline/lastKnown';
+import { formatEuro } from '../../../utils/format';
+import Loading from '../../shared/Loading';
 
 const MAX_ORDERS = 10;
 
@@ -67,7 +69,7 @@ const ReprintSelectionModal = ({ onClose }) => {
     return (
         <Modal title="Ristampa uno scontrino" onClose={onClose}>
             <div className="space-y-2">
-                {loading && <p className="text-xs text-center py-4 text-[var(--text-muted)]">Caricamento...</p>}
+                {loading && <Loading />}
                 {error && <p className="text-xs text-center py-4 text-red-500">{error}</p>}
                 {offline && !loading && <p className="text-xs text-center text-amber-500">Sei offline: sono disponibili gli ordini battuti da questa cassa.</p>}
                 {!loading && !error && recentOrders.length === 0 && <p className="text-xs text-center py-4 text-[var(--text-muted)]">Nessun ordine trovato.</p>}
@@ -81,7 +83,7 @@ const ReprintSelectionModal = ({ onClose }) => {
                             <div className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">{order.items?.map(i => `${i.quantity}x ${i.name}`).join(', ') || '—'}</div>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
-                            <span className="font-semibold text-xs text-[var(--accent)] tabular-nums">{Number(order.total).toFixed(2)} €</span>
+                            <span className="font-semibold text-xs text-[var(--accent)] tabular-nums">{formatEuro(Number(order.total))}</span>
                             <button disabled={reprintingId !== null} onClick={() => handleReprint(order)}
                                 aria-label={`Ristampa ${order.display_code || order.id}`} className="p-2 rounded-lg bg-[var(--accent)] cursor-pointer hover:bg-[var(--accent-hover)] disabled:opacity-40 text-white transition">
                                 <Printer size={14} />

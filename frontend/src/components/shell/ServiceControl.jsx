@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Power } from 'lucide-react';
 import { useToast } from '../../context/useToast';
 import Modal from '../../components/shared/Modal';
+import ModalActions from '../../components/shared/ModalActions';
 import EndSessionModal from '../../components/shared/EndSessionModal';
 import CashCountModal from '../../components/shared/CashCountModal';
-import { btn, btnPrimary, input } from '../../smarteats/floor/ui';
+import { btnPrimary, input } from '../../smarteats/floor/ui';
 
 // Proposta di nome in base all'ora: pranzo fino alle 16, poi cena.
 const suggestedName = () => {
@@ -47,19 +48,21 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end, terms }) 
     catch (err) { showToast(err.message || 'Operazione non riuscita', 'error'); }
   };
 
+  // Chi non può aprire e chiudere vede solo lo stato: niente «Chiudi», che per lui non è un pulsante
+  const label = service ? (canManage ? `${service.name} · Chiudi` : service.name) : terms.open;
   return (
     <>
-      <button onClick={canManage ? begin : undefined} disabled={!canManage}
-        className={`flex items-center gap-2 h-9 coarse:h-11 px-3 rounded-lg border text-sm font-medium transition-colors
+      <button onClick={canManage ? begin : undefined} disabled={!canManage} aria-label={label}
+        className={`flex shrink-0 items-center justify-center gap-2 h-9 coarse:h-11 w-9 coarse:w-11 sm:w-auto sm:px-3.5 rounded-full border whitespace-nowrap text-sm font-medium transition-colors
           ${service ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-red-500/10 border-red-500/30 text-red-500'}
           ${canManage ? 'cursor-pointer enabled:hover:opacity-80' : 'cursor-default'}`}>
         <Power size={16} className="pointer-events-none" />
-        <span className="hidden sm:inline">{service ? `${service.name} · Chiudi` : terms.open}</span>
+        <span className="hidden sm:inline truncate max-w-[16rem]">{label}</span>
       </button>
 
       {step === 'start' && (
         <Modal title={terms.startTitle} onClose={() => setStep(null)} onSubmit={submitStart}
-          footer={<div className="flex gap-3"><button type="button" onClick={() => setStep(null)} className={`${btn} flex-1`}>Annulla</button><button type="submit" className={`${btnPrimary} flex-1`}>{terms.startAction}</button></div>}>
+          footer={<ModalActions fill onCancel={() => setStep(null)}><button type="submit" className={btnPrimary}>{terms.startAction}</button></ModalActions>}>
           <p className="text-sm text-[var(--text-muted)] mb-4">{terms.startHint}</p>
           <input type="text" autoFocus value={name} onChange={e => setName(e.target.value)} aria-label="Nome del servizio" className={input} />
         </Modal>

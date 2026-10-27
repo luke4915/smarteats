@@ -8,13 +8,14 @@ import { useTakeaway } from './useTakeaway';
 import { todayLocal, addDays, formatDay } from '../reservations/rules';
 import { STATUS, SOURCE, groupOrders, itemsSummary, shownStatus, addToCart } from './rules';
 import OrderPanel from './OrderPanel';
-import NewOrder, { ProductPicker } from './NewOrder';
-import { formatEuro } from '../floor/checkMath';
+import NewOrder from './NewOrder';
+import ProductPicker from '../../components/shared/ProductPicker';
+import { formatEuro } from '../../utils/format';
 import { useProducts } from '../floor/useProducts';
-import { btnPrimary, iconBtn, btn } from '../floor/ui';
+import { btnPrimary, iconBtn, btn, card } from '../floor/ui';
 import ScrollRow from '../../components/shared/ScrollRow';
+import Loading from '../../components/shared/Loading';
 
-const card = 'bg-[var(--bg-card)] rounded-xl border border-[var(--border)] p-4 sm:p-5 min-w-0';
 const TONES = {
   amber: 'bg-amber-500/15 text-amber-500', green: 'bg-emerald-500/15 text-emerald-500',
   accent: 'bg-[var(--accent)]/15 text-[var(--accent)]', muted: 'bg-[var(--bg-card-2)] text-[var(--text-muted)]',
@@ -80,7 +81,7 @@ const TakeawayPage = ({ event }) => {
       )}
 
       <div className="flex-1 overflow-y-auto no-scrollbar space-y-5 pr-1">
-        {loading && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
+        {loading && <Loading />}
         {!loading && groups.length === 0 && (
           <div className="py-14 flex flex-col items-center gap-2 text-[var(--text-muted)]"><ShoppingBag size={32} className="opacity-50" /><p className="text-sm">Nessun ordine per questo giorno.</p></div>
         )}
@@ -100,10 +101,8 @@ const TakeawayPage = ({ event }) => {
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border text-left transition cursor-pointer ${panel?.id === o.id ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-[var(--border)] bg-[var(--bg-card-2)] hover:border-[var(--border-hover)]'} ${g.key === 'closed' || g.key === 'done' ? 'opacity-70' : ''}`}>
                       <span className="w-14 text-center text-lg font-semibold tabular-nums text-[var(--text-main)]">{o.time}</span>
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2"><span className="text-sm font-medium text-[var(--text-main)] truncate">{o.customer_name}</span>
-                          {o.display_code && <span className="text-xs font-semibold text-[var(--text-muted)]">#{o.display_code}</span>}
-                          <span className="text-xs text-[var(--text-muted)]">{SOURCE[o.source]}</span></span>
-                        <span className="block text-xs text-[var(--text-muted)] truncate">{itemsSummary(o.items)}</span>
+                        <span className="block text-sm font-medium text-[var(--text-main)] truncate">{o.customer_name}</span>
+                        <span className="block text-xs text-[var(--text-muted)] truncate">{[o.display_code && `#${o.display_code}`, SOURCE[o.source], itemsSummary(o.items)].filter(Boolean).join(' · ')}</span>
                       </span>
                       <span className="text-sm font-semibold tabular-nums text-[var(--text-main)] hidden sm:block">{formatEuro(o.total)}</span>
                       {o.status === 'requested'
@@ -132,7 +131,7 @@ const TakeawayPage = ({ event }) => {
 
   // Nuovo ordine: la carta occupa la colonna grande, il riepilogo sta a destra
   if (panel?.kind === 'new') {
-    const picker = <div className={`${card} flex-1 min-h-0 overflow-hidden`}><ProductPicker products={products} cart={cart} onAdd={(p, d) => setCart(c => addToCart(c, p, d))} /></div>;
+    const picker = <div className={`${card} flex-1 min-h-0 overflow-hidden`}><ProductPicker products={products} cart={cart} onAdd={(p) => setCart(c => addToCart(c, p, 1))} /></div>;
     if (narrow) return <div className="flex-1 min-h-0 flex flex-col gap-3 w-full"><div className="h-[45%] min-h-0 flex">{picker}</div><div className="flex-1 min-h-0">{side}</div></div>;
     return <>{picker}<div className="w-[400px] xl:w-[440px] shrink-0 h-full">{side}</div></>;
   }

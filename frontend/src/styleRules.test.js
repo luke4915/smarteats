@@ -43,3 +43,29 @@ test('niente alert(): i messaggi passano da useToast', () => {
   const alerts = sources.filter(f => /\balert\(/.test(text(f))).map(rel);
   assert.deepEqual(alerts, []);
 });
+
+// Ogni ricerca è `components/shared/SearchField.jsx` (pillola con lente e X): stesso aspetto e stessa tastiera ovunque.
+test('nessun campo di ricerca fatto a mano: si usa SearchField', () => {
+  const handmade = sources.filter(f => !/shared\/SearchField\.jsx$/.test(f) && /<input[^>]*(placeholder|aria-label)="Cerc[ah]/.test(text(f))).map(rel);
+  assert.deepEqual(handmade, [], 'Usa <SearchField> di components/shared/SearchField.jsx invece di un input con la lente fatto a mano');
+});
+
+// Un solo linguaggio visivo per la cassa e per SmartEats (CLAUDE.md, «Stile uniforme»): niente maiuscolo, ombre colorate, angoli
+// esagerati né testi minuscoli. Prima la cassa delle sagre li aveva e un blocco di CSS li toglieva nel ristorante: ora non esistono.
+test('niente maiuscolo, ombre colorate, angoli esagerati né testi sotto gli 11 px', () => {
+  const heavy = sources.filter(f => !/shared\/Modal\.jsx$/.test(f) && /(^|["' `])uppercase(["' `]|$)|tracking-wider|tracking-tighter|font-extrabold|text-\[9px\]|accent-shadow|rounded-3xl/.test(text(f))).map(rel);
+  assert.deepEqual(heavy, [], 'Togli uppercase, tracking-wider/tighter, font-extrabold, text-[9px], le ombre colorate e rounded-3xl: vedi smarteats/floor/ui.js');
+});
+
+// Gli importi si scrivono con `formatEuro` / `formatCents` (utils/format.js): «6,00 €», mai «6.00€».
+test('nessun prezzo scritto a mano con toFixed: si usa formatEuro', () => {
+  const handmade = sources.filter(f => /\.jsx$/.test(f) && /toFixed\(2\)[^\n]*€|€[^\n]*toFixed\(2\)/.test(text(f))).map(rel);
+  assert.deepEqual(handmade, [], 'Usa formatEuro di utils/format.js invece di toFixed(2) per mostrare un importo');
+});
+
+// I pulsanti in fondo a una finestra sono `ModalActions` (components/shared/ModalActions.jsx): «Annulla» a sinistra dell'azione,
+// uguali ovunque. Con il piede la finestra non mostra la X: l'uscita è «Annulla».
+test('nessun piede di finestra fatto a mano: si usa ModalActions', () => {
+  const handmade = sources.filter(f => !/shared\/ModalActions\.jsx$/.test(f) && /footer=\{?\(?\s*<div className="flex gap-/.test(text(f))).map(rel);
+  assert.deepEqual(handmade, [], 'Usa <ModalActions> invece di un <div className="flex gap-…"> nel footer di Modal');
+});

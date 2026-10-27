@@ -1,259 +1,126 @@
 import { useEffect, useState, useMemo } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 import { QRCodeCanvas } from 'qrcode.react';
-import { ShoppingCart, Plus, Minus, X, ChefHat, Trash2, Download, QrCode } from 'lucide-react';
+import { ChefHat, Download, QrCode, Maximize2 } from 'lucide-react';
 
 import { apiFetch } from '../utils/apiClient';
+import { PublicShell } from '../components/public/PublicShell';
+import { CategoryChips, ProductRows } from '../components/public/MenuList';
 import Modal from '../components/shared/Modal';
-import { btn, btnDanger } from '../smarteats/floor/ui';
+import ModalActions from '../components/shared/ModalActions';
+import { useSystemTheme } from '../hooks/useSystemTheme';
+import { btn, btnPrimary, btnDanger } from '../smarteats/floor/ui';
+import { formatEuro } from '../utils/format';
+import Loading from '../components/shared/Loading';
 
-// Le righe del carrello e il totale, uguali nel riepilogo e nella finestra del QR.
-const CartSummary = ({ items, total }) => (
-    <>
-        <ul className="space-y-1.5">
-            {items.map(item => (
-                <li key={item.id} className="flex justify-between text-sm">
-                    <span className="text-[var(--text-main)] font-medium">×{item.quantity} {item.name}</span>
-                    <span className="text-[var(--text-muted)] tabular-nums">€{(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
-                </li>
-            ))}
-        </ul>
-        <div className="flex justify-between font-semibold text-[var(--text-main)] border-t border-[var(--border)] pt-3 mt-3">
-            <span>Totale</span>
-            <span className="text-[var(--accent)] tabular-nums">€{total.toFixed(2)}</span>
-        </div>
-    </>
-);
-const ProductCard = ({ product, quantity, onAdd, onRemove }) => (
-    <div className="flex items-center justify-between gap-3 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border)]">
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-            <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: product.color || 'var(--accent)' }} />
-            <div className="min-w-0">
-                <p className="font-semibold text-sm uppercase tracking-tight text-[var(--text-main)] truncate">{product.name}</p>
-                <p className="text-[var(--accent)] font-semibold text-sm mt-0.5">€{parseFloat(product.price).toFixed(2)}</p>
-            </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-            {quantity > 0 && (
-                <>
-                    <button onClick={() => onRemove(product)}
-                        className="w-8 h-8 flex items-center justify-center rounded-xl bg-[var(--bg-card-2)] border border-[var(--border)] text-[var(--text-muted)] hover:text-red-500 transition-all active:scale-95">
-                        <Minus size={14} />
-                    </button>
-                    <span className="w-6 text-center font-semibold text-[var(--text-main)]">{quantity}</span>
-                </>
-            )}
-            <button onClick={() => onAdd(product)}
-                className="w-8 h-8 flex items-center justify-center rounded-xl bg-[var(--accent)] text-white hover:opacity-90 transition-all active:scale-95">
-                <Plus size={14} />
-            </button>
-        </div>
-    </div>
+// Il menu pubblico della sagra (`/menu`, dal QR): il cliente sceglie i prodotti e mostra alla cassa un QR con id e quantità. Non è un
+// ordine: la cassa lo legge e ricalcola prezzi e disponibilità dal proprio catalogo. Stessa grafica dell'ordine da asporto.
+
+// Le righe dell'ordine e il totale, nella finestra del QR.
+const Summary = ({ lines, total }) => (
+  <div>
+    <ul className="space-y-1.5">
+      {lines.map(line => (
+        <li key={line.id} className="flex justify-between text-sm">
+          <span className="font-medium">×{line.quantity} {line.name}</span>
+          <span className="text-[var(--text-muted)] tabular-nums">{formatEuro(parseFloat(line.price) * line.quantity)}</span>
+        </li>
+      ))}
+    </ul>
+    <div className="flex justify-between font-semibold border-t border-[var(--border)] pt-3 mt-3"><span>Totale</span><span className="tabular-nums">{formatEuro(total)}</span></div>
+  </div>
 );
 
 export default function MenuPage() {
-    const [sessionName, setSessionName] = useState('');
-    const [welcomeMessage, setWelcomeMessage] = useState('');
-    const [products, setProducts] = useState([]);
-    const [cart, setCart] = useState({});
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [showQR, setShowQR] = useState(false);
-    const [enlargedQR, setEnlargedQR] = useState(false);
-    const [showCart, setShowCart] = useState(false)
-    const [showClearConfirm, setShowClearConfirm] = useState(false);
+  useSystemTheme();
+  const [menu, setMenu] = useState(null);
+  const [welcome, setWelcome] = useState('');
+  const [error, setError] = useState('');
+  const [cart, setCart] = useState({});            // { [id prodotto]: quantità }
+  const [category, setCategory] = useState(null);
+  const [sheet, setSheet] = useState(null);        // 'qr' | 'big' | null
+  const [clearing, setClearing] = useState(false);
 
-    useEffect(() => {
-        const load = async () => {
-            try {
-                // Il messaggio di benvenuto è facoltativo: se non arriva il menu si mostra comunque.
-                const [menuData, settingsData] = await Promise.all([
-                    apiFetch('/products/menu'),
-                    apiFetch('/settings').catch(() => ({})),
-                ]);
-                setSessionName(menuData.sessionName || 'Menu');
-                setProducts(menuData.products);
-                setWelcomeMessage(settingsData.welcome_message || '');
-            } catch {
-                setError('Menu non disponibile al momento.');
-            } finally {
-                setLoading(false);
-            }
-        };
-        load();
-    }, []);
+  useEffect(() => {
+    // Il messaggio di benvenuto è facoltativo: se non arriva il menu si mostra comunque.
+    Promise.all([apiFetch('/products/menu'), apiFetch('/settings').catch(() => ({}))])
+      .then(([data, settings]) => { setMenu(data); setWelcome(settings.welcome_message || ''); })
+      .catch(() => setError('Menu non disponibile al momento.'));
+  }, []);
 
-    const addToCart = (product) => {
-        setCart(prev => ({ ...prev, [product.id]: { ...product, quantity: (prev[product.id]?.quantity || 0) + 1 } }));
-    };
+  const categories = useMemo(() => [...new Set((menu?.products ?? []).map(p => p.category))], [menu]);
+  const shownCategory = category ?? categories[0];
+  const lines = useMemo(() => (menu?.products ?? []).filter(p => cart[p.id]).map(p => ({ ...p, quantity: cart[p.id] })), [menu, cart]);
+  const total = lines.reduce((sum, l) => sum + parseFloat(l.price) * l.quantity, 0);
+  const count = lines.reduce((sum, l) => sum + l.quantity, 0);
+  // Solo id e quantità: la cassa legge il resto dal proprio catalogo
+  const qrData = useMemo(() => (lines.length ? btoa(JSON.stringify(lines.map(l => ({ id: l.id, quantity: l.quantity })))) : ''), [lines]);
 
-    const removeFromCart = (product) => {
-        setCart(prev => {
-            const qty = (prev[product.id]?.quantity || 0) - 1;
-            if (qty <= 0) { const next = { ...prev }; delete next[product.id]; return next; }
-            return { ...prev, [product.id]: { ...prev[product.id], quantity: qty } };
-        });
-    };
+  const change = (id, delta) => setCart(prev => {
+    const quantity = (prev[id] ?? 0) + delta;
+    const next = { ...prev };
+    if (quantity > 0) next[id] = quantity; else delete next[id];
+    return next;
+  });
+  const closeSheet = () => { setSheet(null); setClearing(false); };
+  const clear = () => { setCart({}); closeSheet(); };
+  const downloadQr = () => {
+    const link = document.createElement('a');
+    link.href = document.getElementById('qr-canvas')?.toDataURL('image/png') ?? '';
+    link.download = 'ordine-qr.png';
+    link.click();
+  };
 
-    const clearCart = () => { setCart({}); setShowClearConfirm(false); setShowQR(false); };
-
-    const cartItems = Object.values(cart);
-    const total = cartItems.reduce((sum, i) => sum + parseFloat(i.price) * i.quantity, 0);
-    const totalItems = cartItems.reduce((sum, i) => sum + i.quantity, 0);
-
-    const qrData = useMemo(() => {
-        if (!cartItems.length) return '';
-        // Solo id e quantità: la cassa legge il resto dal proprio catalogo
-        return btoa(JSON.stringify(cartItems.map(i => ({ id: i.id, quantity: i.quantity }))));
-    }, [cartItems]);
-
-    const grouped = useMemo(() => {
-        const map = {};
-        products.forEach(p => {
-            if (!map[p.category]) map[p.category] = [];
-            map[p.category].push(p);
-        });
-        return map;
-    }, [products]);
-
-    const downloadQR = () => {
-        const canvas = document.getElementById('qr-canvas');
-        if (!canvas) return;
-        const url = canvas.toDataURL('image/png');
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'ordine-qr.png';
-        a.click();
-    };
-
-    if (loading) return (
-        <div className="min-h-dvh bg-[var(--bg-main)] flex items-center justify-center">
-            <p className="text-[var(--text-muted)] text-sm font-semibold">Caricamento...</p>
-        </div>
-    );
-
-    if (error) return (
-        <div className="min-h-dvh bg-[var(--bg-main)] flex flex-col items-center justify-center gap-4 px-6">
-            <ChefHat size={48} className="text-[var(--text-muted)] opacity-30" />
-            <p className="text-[var(--text-muted)] font-semibold text-sm text-center">{error}</p>
-        </div>
-    );
-
+  if (error) {
     return (
-        <div style={{ position: 'fixed', inset: 0, overflowY: 'scroll', WebkitOverflowScrolling: 'touch', backgroundColor: 'var(--bg-main)' }}>
-            <div className="pb-32">
-
-                {/* Header */}
-                <div className="sticky top-0 z-10 bg-[var(--bg-main)] border-b border-[var(--border)] px-4 py-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-[var(--accent)] rounded-xl flex items-center justify-center font-semibold text-white shadow-lg shadow-[var(--accent-shadow)]">S</div>
-                        <div>
-                            <p className="font-semibold text-base text-[var(--text-main)] leading-none">{sessionName}</p>
-                            <p className="text-xs text-[var(--text-muted)] mt-0.5">Scegli i tuoi prodotti</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Messaggio benvenuto */}
-                {welcomeMessage && (
-                    <div className="mx-4 mt-4 px-4 py-3 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-2xl">
-                        <p className="text-sm text-[var(--text-main)] font-medium">{welcomeMessage}</p>
-                    </div>
-                )}
-
-                {/* Prodotti */}
-                <div className="px-4 pt-5 space-y-6">
-                    {Object.entries(grouped).map(([category, items]) => (
-                        <div key={category}>
-                            <p className="text-[10px] font-semibold text-[var(--text-muted)] mb-3">{category}</p>
-                            <div className="space-y-2">
-                                {items.map(product => (
-                                    <ProductCard key={product.id} product={product}
-                                        quantity={cart[product.id]?.quantity || 0}
-                                        onAdd={addToCart} onRemove={removeFromCart} />
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Carrello fisso in basso */}
-            {totalItems > 0 && (
-                <div className="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3 bg-gradient-to-t from-[var(--bg-main)] via-[var(--bg-main)] to-transparent">
-                    <div className="flex gap-2">
-                        <button onClick={() => setShowClearConfirm(true)}
-                            className="w-12 h-12 flex items-center justify-center bg-[var(--bg-card)] border border-[var(--border)] text-red-500 rounded-2xl hover:bg-red-500/10 transition-all active:scale-95">
-                            <Trash2 size={18} />
-                        </button>
-                        <button onClick={() => setShowCart(true)}
-                            className="flex-1 flex items-center justify-center gap-2 py-3 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-main)] rounded-2xl font-semibold text-sm transition-all active:scale-95">
-                            <ShoppingCart size={18} />
-                            <span className="uppercase">{totalItems}</span>
-                            <span className="text-[var(--text-muted)] font-bold">€{total.toFixed(2)}</span>
-                        </button>
-                        <button onClick={() => setShowQR(true)}
-                            className="w-12 h-12 flex items-center justify-center bg-[var(--accent)] text-white rounded-2xl shadow-lg shadow-[var(--accent-shadow)] hover:bg-[var(--accent-hover)] transition-all active:scale-95">
-                            <QrCode size={18} />
-                        </button>
-                    </div>
-                </div>
-            )}
-
-            {showClearConfirm && (
-                <Modal title="Svuotare il carrello?" onClose={() => setShowClearConfirm(false)}
-                    footer={<div className="flex gap-3"><button onClick={() => setShowClearConfirm(false)} className={`${btn} flex-1`}>Annulla</button><button onClick={clearCart} className={`${btnDanger} flex-1`}>Svuota</button></div>}>
-                    <p className="text-sm text-[var(--text-muted)]">Tutti i prodotti selezionati verranno rimossi.</p>
-                </Modal>
-            )}
-
-            {showCart && (
-                <Modal title="Il tuo carrello" onClose={() => setShowCart(false)}>
-                    <CartSummary items={cartItems} total={total} />
-                </Modal>
-            )}
-
-            {showQR && (
-                <Modal title="Il tuo ordine" onClose={() => setShowQR(false)}>
-                    <div className="space-y-4">
-                        <CartSummary items={cartItems} total={total} />
-                        <div className="flex flex-col items-center gap-3">
-                            <button onClick={() => setEnlargedQR(true)} className="p-4 bg-white rounded-xl cursor-pointer hover:scale-105 transition-transform" title="Tocca per ingrandire" aria-label="Ingrandisci il codice QR">
-                                <QRCodeCanvas id="qr-canvas" value={qrData} size={200} />
-                            </button>
-                            <p className="text-xs text-[var(--text-muted)] text-center">Mostra questo QR alla cassa</p>
-                            <button onClick={downloadQR} className={btn}><Download size={16} /> Salva QR</button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
-
-            {/* 📱 NUOVO: Modal QR a Schermo Intero (Ottimizzato per iOS e Android) */}
-            {enlargedQR && (
-                <div className="fixed inset-0 bg-black flex flex-col items-center justify-center z-[100] animate-fade-in select-none">
-
-                    {/* Pulsante di chiusura (X) in alto a destra */}
-                    <button
-                        onClick={() => setEnlargedQR(false)}
-                        className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-95 transition-all"
-                    >
-                        <X size={24} />
-                    </button>
-
-                    {/* Contenitore centrale del QR gigante */}
-                    <div className="w-full max-w-xs px-4 flex flex-col items-center gap-6 text-center">
-                        <div className="p-6 bg-white rounded-3xl shadow-2xl">
-                            {/* Ne disegniamo un secondo, più grande (300px), per facilitare la scansione laser */}
-                            <QRCodeCanvas value={qrData} size={280} />
-                        </div>
-
-                        <div>
-                            <p className="font-semibold text-lg text-white uppercase tracking-wider">Il tuo codice QR:</p>
-                            <p className="text-xs text-white/60 mt-1">Mostralo direttamente in cassa!</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
+      <PublicShell>
+        <div className="flex flex-col items-center gap-4 py-20"><ChefHat size={48} className="text-[var(--text-muted)] opacity-30" /><p className="text-sm text-[var(--text-muted)] text-center" role="alert">{error}</p></div>
+      </PublicShell>
     );
+  }
+  if (!menu) return <PublicShell><Loading /></PublicShell>;
+
+  const bar = count > 0 && (
+    <div className="sticky bottom-0 -mx-4 px-4 pt-3 bg-[var(--bg-main)] border-t border-[var(--border)]" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+      <button className={`${btnPrimary} w-full !h-12 !text-base justify-between`} onClick={() => setSheet('qr')}>
+        <span className="flex items-center gap-2"><QrCode size={18} /> {count} {count === 1 ? 'articolo' : 'articoli'}</span><span>Mostra il QR · {formatEuro(total)}</span>
+      </button>
+    </div>
+  );
+
+  return (
+    <PublicShell info={{ name: menu.tenantName ?? 'Menu', welcome }} kicker={menu.sessionName ? `Menu · ${menu.sessionName}` : 'Menu'} footer={bar}>
+      {categories.length > 1 && <CategoryChips categories={categories} value={shownCategory} onChange={setCategory} />}
+      <ProductRows products={menu.products.filter(p => categories.length < 2 || p.category === shownCategory)} quantities={cart} onChange={change} />
+      {menu.products.length === 0 && <p className="text-sm text-[var(--text-muted)] text-center py-8">Al momento non ci sono prodotti da scegliere.</p>}
+
+      {sheet === 'qr' && (
+        <Modal title="Il tuo ordine" onClose={closeSheet}
+          footer={(
+            <ModalActions cancelLabel="Chiudi" onCancel={closeSheet}
+              start={<button type="button" className={btnDanger} onClick={() => (clearing ? clear() : setClearing(true))}>{clearing ? 'Sì, svuota' : 'Svuota'}</button>} />
+          )}>
+          <div className="space-y-5">
+            <Summary lines={lines} total={total} />
+            <div className="flex flex-col items-center gap-3">
+              <button onClick={() => setSheet('big')} className="p-4 bg-white rounded-xl cursor-pointer" aria-label="Ingrandisci il codice QR"><QRCodeCanvas id="qr-canvas" value={qrData} size={200} /></button>
+              <p className="text-xs text-[var(--text-muted)] text-center">Mostra questo QR alla cassa</p>
+              <div className="flex gap-2">
+                <button onClick={() => setSheet('big')} className={btn}><Maximize2 size={16} /> Ingrandisci</button>
+                <button onClick={downloadQr} className={btn}><Download size={16} /> Salva</button>
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {sheet === 'big' && (
+        <Modal onClose={() => setSheet('qr')} footer={<ModalActions fill cancelLabel="Indietro" onCancel={() => setSheet('qr')} />}>
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="p-5 bg-white rounded-2xl"><QRCodeCanvas value={qrData} size={260} /></div>
+            <p className="text-sm text-[var(--text-muted)]">Mostralo direttamente in cassa.</p>
+          </div>
+        </Modal>
+      )}
+    </PublicShell>
+  );
 }

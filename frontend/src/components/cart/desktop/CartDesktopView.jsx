@@ -4,6 +4,7 @@ import { getLineTotal, getAdjustmentLabel } from '../../../utils/pricing';
 import OrderDiscountPanel from '../OrderDiscountPanel';
 import ActionMenu from '../../shared/ActionMenu';
 import { iconBtn, btnPrimary, btnDanger } from '../../../smarteats/floor/ui';
+import { formatEuro } from '../../../utils/format';
 
 const CartDesktopView = ({
     // Props passate dal Container padre
@@ -69,28 +70,28 @@ const CartDesktopView = ({
                     const effTotal = getLineTotal(item);
                     return (
                         <div key={cartKey(item)} onClick={() => setSelectedItem(item)}
-                            className="px-3 py-2 rounded-xl cursor-pointer border border-[var(--border)] bg-[var(--bg-card-2)] hover:border-[var(--accent)]/60 active:scale-[0.99] transition-all">
+                            className="px-3 py-2.5 rounded-lg cursor-pointer border border-[var(--border)] bg-[var(--bg-card-2)] hover:border-[var(--border-hover)] active:scale-[0.99] transition">
                             <div className="flex justify-between items-center gap-2">
                                 <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                    <span className="bg-[var(--accent)] text-white text-xs font-semibold w-5 h-5 flex items-center justify-center rounded shrink-0">{item.quantity}</span>
-                                    <span className="font-bold text-xs text-[var(--text-main)] leading-tight truncate">{item.name}</span>
+                                    <span className="bg-[var(--accent)] text-white text-xs font-semibold min-w-6 h-6 px-1 flex items-center justify-center rounded-md tabular-nums shrink-0">{item.quantity}</span>
+                                    <span className="font-medium text-sm text-[var(--text-main)] leading-tight truncate">{item.name}</span>
                                     {adjLabel && (
                                         <span className={`shrink-0 text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${item.type === 'gift' ? 'bg-purple-500/10 text-purple-500' : 'bg-orange-500/10 text-orange-500'}`}>{adjLabel}</span>
                                     )}
                                 </div>
                                 {adjLabel ? (
                                     <span className="flex items-baseline gap-1.5 shrink-0">
-                                        <span className="text-xs font-bold tabular-nums text-[var(--text-muted)] line-through">{(item.price * item.quantity).toFixed(2)}€</span>
-                                        <span className={`font-semibold text-xs tabular-nums ${item.type === 'gift' ? 'text-purple-500' : 'text-orange-500'}`}>{effTotal.toFixed(2)}€</span>
+                                        <span className="text-xs tabular-nums text-[var(--text-muted)] line-through">{formatEuro(item.price * item.quantity)}</span>
+                                        <span className={`font-medium text-sm tabular-nums ${item.type === 'gift' ? 'text-purple-500' : 'text-orange-500'}`}>{formatEuro(effTotal)}</span>
                                     </span>
                                 ) : (
-                                    <span className="font-semibold text-xs tabular-nums text-[var(--text-main)] shrink-0">{(item.price * item.quantity).toFixed(2)}€</span>
+                                    <span className="font-medium text-sm tabular-nums text-[var(--text-main)] shrink-0">{formatEuro(item.price * item.quantity)}</span>
                                 )}
                             </div>
                             {item.note && (
-                                <div className="ml-7 mt-1.5 flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-2 py-1">
-                                    <MessageSquare size={9} className="text-yellow-500 shrink-0" />
-                                    <span className="text-xs font-semibold tracking-wide text-yellow-500 truncate">{item.note}</span>
+                                <div className="ml-8 mt-1.5 flex items-center gap-1.5 text-yellow-500 min-w-0">
+                                    <MessageSquare size={12} className="shrink-0" />
+                                    <span className="text-xs truncate">{item.note}</span>
                                 </div>
                             )}
                         </div>
@@ -101,20 +102,20 @@ const CartDesktopView = ({
             {/* Footer Cassa Desktop */}
             <div className="px-4 py-3 border-t border-[var(--border)] space-y-2 bg-[var(--bg-card-2)]">
                 <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-[var(--bg-card)] px-3 py-1 rounded-xl border border-[var(--border)]">
-                        <span className="text-[13px] font-semibold text-[var(--text-muted)] block">Ricevuti</span>
+                    <div className="bg-[var(--bg-card)] px-3 py-1 rounded-lg border border-[var(--border)]">
+                        <span className="text-xs text-[var(--text-muted)] block">Ricevuti</span>
                         <div className="flex items-center justify-end w-full gap-1 font-semibold text-xl text-[var(--text-main)] tabular-nums">
                             <input
                                 type="text"
                                 inputMode="decimal"
-                                value={amountReceived}
+                                value={amountReceived.replace('.', ',')}
                                 onChange={e => {
-                                    const val = e.target.value;
+                                    const val = e.target.value.replace(',', '.');
                                     if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) {
                                         setAmountReceived(val);
                                     }
                                 }}
-                                placeholder="0.00"
+                                placeholder="0,00"
                                 className="w-full bg-transparent outline-none text-right"
                             />
                             {/* L'euro cambia colore dinamicamente in base a amountReceived */}
@@ -124,15 +125,15 @@ const CartDesktopView = ({
                             </span>
                         </div>
                     </div>
-                    <div className="bg-[var(--bg-card)] px-3 py-1 rounded-xl border border-[var(--border)]">
-                        <span className="text-[13px] font-semibold text-[var(--text-muted)] block">Resto</span>
+                    <div className="bg-[var(--bg-card)] px-3 py-1 rounded-lg border border-[var(--border)]">
+                        <span className="text-xs text-[var(--text-muted)] block">Resto</span>
                         <span className={`text-xl font-semibold tabular-nums block text-right transition-colors duration-150 ${!amountReceived
                             ? 'text-[var(--text-muted)]'
                             : change < 0
                                 ? 'text-red-500'
                                 : 'text-green-500'
                             }`}>
-                            {change >= 0 ? change.toFixed(2) : '0.00'} €
+                            {formatEuro(Math.max(0, change))}
                         </span>
                     </div>
                 </div>
@@ -145,11 +146,11 @@ const CartDesktopView = ({
                     </div>
                     {hasAnyDiscount ? (
                         <div className="flex items-baseline gap-2">
-                            <span className="text-base font-semibold line-through text-[var(--text-muted)] tabular-nums">{fullTotal.toFixed(2)} €</span>
-                            <span className={`text-2xl font-semibold tabular-nums ${isAllGift ? 'text-purple-500' : 'text-orange-500'}`}>{total.toFixed(2)} €</span>
+                            <span className="text-base font-semibold line-through text-[var(--text-muted)] tabular-nums">{formatEuro(fullTotal)}</span>
+                            <span className={`text-2xl font-semibold tabular-nums ${isAllGift ? 'text-purple-500' : 'text-orange-500'}`}>{formatEuro(total)}</span>
                         </div>
                     ) : (
-                        <span className="text-2xl font-semibold text-[var(--text-main)] tabular-nums">{total.toFixed(2)} €</span>
+                        <span className="text-2xl font-semibold text-[var(--text-main)] tabular-nums">{formatEuro(total)}</span>
                     )}
                 </div>
 

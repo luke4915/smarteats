@@ -7,7 +7,8 @@ import { createBrowserImages } from '../../print/raster';
 import { DEFAULT_BRANDING } from '../../print/templates';
 import { toBlackWhiteDataUrl } from './blackWhiteImage';
 import Modal from '../shared/Modal';
-import { btn, btnDanger } from '../../smarteats/floor/ui';
+import ModalActions from '../shared/ModalActions';
+import { btnDanger } from '../../smarteats/floor/ui';
 
 // Personalizzazione degli scontrini di un tenant (solo master): testi, logo, immagine laterale
 // e anteprima delle copie con gli stessi template che stampano davvero.
@@ -278,7 +279,7 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
 
       {confirmClose && (
         <Modal title="Uscire senza salvare?" onClose={() => setConfirmClose(false)}
-          footer={<div className="flex gap-3"><button onClick={() => setConfirmClose(false)} className={`${btn} flex-1`}>Continua</button><button onClick={onClose} className={`${btnDanger} flex-1`}>Esci</button></div>}>
+          footer={<ModalActions fill cancelLabel="Continua" onCancel={() => setConfirmClose(false)}><button type="button" onClick={onClose} className={btnDanger}>Esci</button></ModalActions>}>
           <p className="text-sm text-[var(--text-muted)]">Le modifiche a testi e immagini andranno perse.</p>
         </Modal>
       )}

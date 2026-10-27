@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShieldCheck, LogOut, Plus, Search, X } from 'lucide-react';
+import { ShieldCheck, LogOut, Plus, X } from 'lucide-react';
 import { useMaster } from '../components/master/useMaster';
 import { countByKind, filterTenants, FILTERS } from '../components/master/licenseStatus';
 import MasterLogin from '../components/master/MasterLogin';
@@ -10,7 +10,8 @@ import DeleteTenantModal from '../components/master/DeleteTenantModal';
 import TenantReceiptEditor from '../components/master/TenantReceiptEditor';
 import TenantManage from '../components/master/TenantManage';
 import Segmented from '../smarteats/floor/Segmented';
-import { btn, btnPrimary, input } from '../smarteats/floor/ui';
+import { btn, btnPrimary } from '../smarteats/floor/ui';
+import SearchField from '../components/shared/SearchField';
 
 const Kpi = ({ label, value, tone }) => (
   <div className="bg-[var(--bg-card)] rounded-xl p-4 border border-[var(--border)]">
@@ -64,10 +65,7 @@ const MasterPage = () => {
 
         <section className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="relative flex-1 min-w-48">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-              <input className={`${input} !pl-9`} placeholder="Cerca un locale" aria-label="Cerca un locale" value={query} onChange={e => setQuery(e.target.value)} />
-            </div>
+            <SearchField className="flex-1 min-w-48" value={query} onChange={setQuery} placeholder="Cerca un locale" />
             <button onClick={() => { setCreating(o => !o); m.setError(''); }} className={btnPrimary}>
               {creating ? <><X size={16} /> Chiudi</> : <><Plus size={16} /> Nuovo locale</>}
             </button>

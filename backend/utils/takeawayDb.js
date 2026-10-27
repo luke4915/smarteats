@@ -4,7 +4,7 @@ import { writeOrderItems } from './orderItemsWrite.js';
 import { sumQuantitiesByProduct, lockAndFindShortages, applyStockChange } from './stock.js';
 import { formatDisplayCode } from './displayCode.js';
 import { PORTAL_TZ, localNow } from './bookingPortal.js';
-import { DEFAULTS, slotsOn, orderLoad, pickupIsDue } from './takeaway.js';
+import { DEFAULTS, slotsOn, orderLoad, pickupIsDue, pickupIsStale } from './takeaway.js';
 import { inTransaction } from '../db.js';
 import logger from '../logger.js';
 import { assertIngredientsAvailable, sellIngredients, returnIngredientsOfOrder, defaultDisposition } from './inventory/orderStock.js';
@@ -90,17 +90,18 @@ export function announceKitchenOrder(broadcast, tenantId, created, row, pickupAt
   } });
 }
 
-// Fa nascere gli ordini di cucina degli asporti accettati in anticipo il cui ritiro è per oggi (o già passato): si chiama
-// all'apertura della serata, quando c'è finalmente una sessione dove metterli (e lo stock è appena ripartito). Ogni ordine
+// Fa nascere gli ordini di cucina degli asporti accettati in anticipo il cui ritiro è per oggi: si chiama all'apertura
+// della serata e a intervalli finché è aperta, quando c'è una sessione dove metterli (e lo stock è appena ripartito).
+// Un ritiro già passato da più di `STALE_PICKUP_MINUTES` non si cucina più (vedi `pickupIsStale`). Ogni ordine
 // ha la sua transazione: se uno non riesce (stock esaurito, prodotto cambiato) gli altri partono comunque e quello resta
 // accettato, in attesa, con un avviso nel log. Ritorna gli ordini creati, per avvisare la cucina: [{ created, row }].
 export async function fireDueTakeaway(db, { tenantId, userId }) {
   const { rows: waiting } = await db.query(
-    `SELECT id, to_char(pickup_at AT TIME ZONE $1, 'YYYY-MM-DD') AS date
+    `SELECT id, to_char(pickup_at AT TIME ZONE $1, 'YYYY-MM-DD') AS date, to_char(pickup_at AT TIME ZONE $1, 'HH24:MI') AS time
      FROM takeaway_orders WHERE status = 'accepted' AND order_id IS NULL ORDER BY pickup_at, id`, [PORTAL_TZ]);
   const now = localNow();
   const fired = [];
-  for (const { id, date } of waiting.filter(w => pickupIsDue(w.date, now))) {
+  for (const { id } of waiting.filter(w => pickupIsDue(w.date, now) && !pickupIsStale(w.date, w.time, now))) {
     try {
       const result = await inTransaction(db, async (tx) => {
         // si rilegge l'ordine bloccandolo: se nel frattempo è stato annullato o acceso da un altro, non si fa nulla

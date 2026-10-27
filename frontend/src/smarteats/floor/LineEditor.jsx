@@ -1,6 +1,6 @@
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import PanelFrame from './PanelFrame';
-import { formatEuro } from './checkMath';
+import { formatEuro } from '../../utils/format';
 import { btnPrimary, btnDanger } from './ui';
 import { moveLine } from './courses';
 

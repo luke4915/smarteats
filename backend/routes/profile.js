@@ -18,7 +18,7 @@ router.patch('/username', authenticate, validate({ body: changeUsernameSchema })
 
     // Il token porta lo username: se ne emette uno nuovo, mantenendo l'inizio sessione, così /auth/me
     // e il resto dell'app non mostrano il nome vecchio fino al prossimo rinnovo.
-    setCookie(res, signToken({ ...req.user, username: rows[0].username, tenant_id: req.user.tenantId, tenant_name: req.user.tenantName }, req.user.loginAt));
+    setCookie(res, signToken({ ...req.user, username: rows[0].username, tenant_id: req.user.tenantId, tenant_name: req.user.tenantName }, req.user.loginAt, { reservedUntil: req.user.reservedUntil }));
 
     res.json({ success: true, username: rows[0].username });
   } catch (err) {

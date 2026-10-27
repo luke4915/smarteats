@@ -1,6 +1,7 @@
 import test from 'node:test';
+import { formatCents } from '../utils/format.js';
 import assert from 'node:assert/strict';
-import { parseEuroToCents, centsToEuroText, rowForIngredient, rowAmounts, summarize, receiptProblem, receiptPayload, blankReceiptRow, todayText, rowFromPriceItem, priceListProblem, priceListPayload, vatOfLines } from './receipt.js';
+import { parseEuroToCents, centsToEuroText, rowForIngredient, rowAmounts, summarize, receiptProblem, receiptPayload, blankReceiptRow, todayText, rowFromPriceItem, priceListProblem, priceListPayload, vatOfLines, rowsForSupplier, arrivedRows } from './receipt.js';
 
 const ingredients = [{ id: 1, name: 'Farina', base_unit: 'g' }, { id: 2, name: 'Olio', base_unit: 'ml' }];
 const row = (changes) => ({ ...blankReceiptRow(), ...changes });
@@ -70,4 +71,34 @@ test('il listino: un ingrediente ripetuto o una riga incompleta non si salvano',
   assert.ok(priceListProblem([good, good]));
   assert.ok(priceListProblem([{ ...good, price_text: '' }]));
   assert.ok(priceListProblem([{ ...good, ingredient_id: '' }]));
+});
+
+test('un importo riservato resta vuoto nei campi e diventa puntini a schermo', () => {
+  assert.equal(centsToEuroText(null), '');
+  assert.equal(formatCents(null), '•••');
+  assert.equal(formatCents(1850).replace(/\s/g, ' '), '18,50 €');
+});
+
+test('scelto il fornitore il carico si riempie con i suoi prodotti, senza quantità, con confezione e prezzo dell\'ultimo carico', () => {
+  const supplier = { items: [
+    { ingredient_id: 2, purchase_unit_name: 'Cassa da 6 l', base_units_per_purchase_unit: 6000, unit_cost_cents: 3600, vat_rate: 10 },
+    { ingredient_id: 1, purchase_unit_name: 'Sacco da 25 kg', base_units_per_purchase_unit: 25000, unit_cost_cents: 2500, vat_rate: 4 },
+    { ingredient_id: 9, purchase_unit_name: 'Di un ingrediente eliminato', base_units_per_purchase_unit: 1, unit_cost_cents: 1, vat_rate: null }] };
+  const active = ingredients.map(i => ({ ...i, active: true }));
+  const rows = rowsForSupplier([blankReceiptRow()], supplier, active);
+  assert.deepEqual(rows.map(r => [r.ingredient_id, r.quantity_text, r.purchase_unit_name, r.price_text]), [[1, '', 'Sacco da 25 kg', '25,00'], [2, '', 'Cassa da 6 l', '36,00']], 'in ordine di nome, senza gli ingredienti non più attivi');
+  assert.equal(arrivedRows(rows).length, 0, 'finché non si scrive una quantità non c\'è nulla da registrare');
+  assert.equal(receiptProblem({ supplier_id: '1', received_on: '2026-10-20' }, rows), 'Scrivi la quantità arrivata di almeno un prodotto');
+});
+
+test('cambiando fornitore restano le righe già compilate; i prodotti non arrivati non vanno nel carico', () => {
+  const active = ingredients.map(i => ({ ...i, active: true }));
+  const supplier = { items: [{ ingredient_id: 1, purchase_unit_name: 'Sacco da 25 kg', base_units_per_purchase_unit: 25000, unit_cost_cents: 2500, vat_rate: 4 }] };
+  const rows = rowsForSupplier([flourRow, blankReceiptRow()], supplier, active);
+  assert.equal(rows.length, 1, 'la farina c\'è già con la sua quantità: non si ripete');
+  assert.equal(rows[0].quantity_text, '4');
+  const withEmpty = [...rowsForSupplier([], { items: [{ ingredient_id: 2, purchase_unit_name: 'Cassa', base_units_per_purchase_unit: 6000, unit_cost_cents: 3600, vat_rate: 10 }] }, active), flourRow];
+  const payload = receiptPayload({ supplier_id: '3', received_on: '2026-10-20', document_number: '', notes: '' }, withEmpty, ingredients);
+  assert.deepEqual(payload.lines.map(l => l.ingredient_id), [1], 'solo la riga con la quantità');
+  assert.equal(receiptProblem({ supplier_id: '3', received_on: '2026-10-20' }, withEmpty), null);
 });

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import Switch from '../components/shared/Switch';
 import RecipeLinesEditor from './RecipeLinesEditor';
-import { btn, btnPrimary } from '../smarteats/floor/ui';
+import { btnPrimary } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { optionRowsFromLines, optionLinesFromRows, recipeProblem } from './recipeLines';
+import Loading from '../components/shared/Loading';
 
 // Cosa cambia un'opzione di un piatto nel magazzino: ingredienti in più («extra mozzarella») o in meno («senza cipolla»).
 // Con l'interruttore spento l'opzione non tocca la dispensa.
@@ -33,8 +35,8 @@ const OptionRecipeModal = ({ option, ingredients, onClose }) => {
 
   return (
     <Modal title={`${option.group} · ${option.name}`} size="max-w-2xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={(e) => { e.preventDefault(); if (!problem) save(); }}
-      footer={<div className="flex gap-2"><button type="button" className={`${btn} ml-auto`} onClick={onClose}>Annulla</button><button type="submit" className={btnPrimary} disabled={busy || !!problem} title={problem ?? undefined}>Salva</button></div>}>
-      {state === null ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+      footer={<ModalActions onCancel={onClose}><button type="submit" className={btnPrimary} disabled={busy || !!problem} title={problem ?? undefined}>Salva</button></ModalActions>}>
+      {state === null ? <Loading /> : (
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3"><span className="text-sm text-[var(--text-main)]">Scala il magazzino</span>
             <Switch label="Scala il magazzino" checked={state.affects} onChange={affects => setState(s => ({ ...s, affects }))} /></div>

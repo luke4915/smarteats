@@ -13,6 +13,7 @@ import { checkSecrets } from './utils/jwtConfig.js';
 import { purgeAllTenants } from './utils/bookingRetention.js';
 import { runAllTenants } from './utils/whatsapp/outbox.js';
 import { expireAll } from './utils/caseExpiry.js';
+import { fireDueTakeawayAllTenants } from './utils/takeawayJob.js';
 
 dotenv.config();
 
@@ -74,4 +75,6 @@ server.listen(PORT, '0.0.0.0', () => logger.info(`API e WebSocket in ascolto su 
 purgeAllTenants().catch(err => logger.error({ err }, 'Pulizia dati prenotazioni non riuscita'));
 // Avvisi WhatsApp: ogni 20 secondi scadenze e invii dei locali con il modulo acceso
 setInterval(() => runAllTenants({ expire: expireAll }).catch(err => logger.error({ err }, 'Giro avvisi WhatsApp non riuscito')), 20_000).unref();
+// Asporti accettati in anticipo: ogni minuto arrivano in cucina quelli il cui ritiro è per oggi
+setInterval(() => fireDueTakeawayAllTenants(hub.broadcast).catch(err => logger.error({ err }, 'Giro asporti in anticipo non riuscito')), 60_000).unref();
 setInterval(() => purgeAllTenants().catch(err => logger.error({ err }, 'Pulizia dati prenotazioni non riuscita')), 24 * 60 * 60 * 1000).unref();

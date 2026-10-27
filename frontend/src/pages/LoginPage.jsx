@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { btnPrimary } from '../smarteats/floor/ui';
 import { apiFetch } from '../utils/apiClient';
 import { useToast } from '../context/useToast'; // Hook globale
 import CenteredScreen from '../components/layout/CenteredScreen';
@@ -37,43 +38,25 @@ const Login = ({ onLogin }) => {
     }
   };
 
-  // Gestione invio con tasto Enter
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleLogin();
-  };
-
   return (
-    <CenteredScreen>
+    <CenteredScreen glow>
+      <form className="w-full max-w-sm flex flex-col items-center" onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+        <div className="w-16 h-16 mb-5 bg-[var(--accent)] rounded-2xl flex items-center justify-center text-white font-semibold text-4xl select-none shadow-[0_14px_34px_-10px_color-mix(in_srgb,var(--accent)_70%,transparent)]" aria-hidden="true">S</div>
+        <h1 className="text-3xl font-semibold tracking-tight text-[var(--text-main)]">SmartEats</h1>
+        <p className="text-sm text-[var(--text-muted)] mt-1 mb-8">Accedi per iniziare il servizio</p>
 
-      <div className="w-14 h-14 mb-4 bg-[var(--accent)] rounded-xl flex items-center justify-center text-white font-semibold text-3xl select-none" aria-hidden="true">S</div>
-      <h1 className="text-2xl font-semibold mb-6 text-[var(--text-main)]">SmartEats</h1>
-
-      <div className="flex flex-col gap-4 w-full max-w-80">
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="p-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] focus:ring-2 focus:ring-[var(--accent)] outline-none placeholder:text-[var(--text-muted)]"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          onKeyDown={handleKeyDown}
-          className="p-3 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] focus:ring-2 focus:ring-[var(--accent)] outline-none placeholder:text-[var(--text-muted)]"
-        />
-        <button
-          onClick={handleLogin}
-          disabled={loading}
-          className={`w-full py-3 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white rounded-xl font-semibold text-sm shadow-lg shadow-[var(--accent)]/30 transition-all ${loading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-        >
-          {loading ? "Accesso in corso..." : "Login"}
+        <div className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-card)] divide-y divide-[var(--border)] overflow-hidden">
+          <input type="text" placeholder="Username" aria-label="Username" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+            value={username} onChange={(e) => setUsername(e.target.value)}
+            className="w-full h-12 px-4 bg-transparent text-[var(--text-main)] outline-none placeholder:text-[var(--text-muted)] focus-visible:bg-[var(--bg-card-2)]" />
+          <input type="password" placeholder="Password" aria-label="Password" autoComplete="current-password"
+            value={password} onChange={(e) => setPassword(e.target.value)}
+            className="w-full h-12 px-4 bg-transparent text-[var(--text-main)] outline-none placeholder:text-[var(--text-muted)] focus-visible:bg-[var(--bg-card-2)]" />
+        </div>
+        <button type="submit" disabled={loading} className={`${btnPrimary} w-full !h-12 !text-base mt-4`}>
+          {loading ? 'Accesso in corso…' : 'Login'}
         </button>
-      </div>
+      </form>
     </CenteredScreen>
   );
 };

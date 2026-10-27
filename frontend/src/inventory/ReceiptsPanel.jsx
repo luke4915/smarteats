@@ -5,9 +5,10 @@ import ReceiptDetailModal from './ReceiptDetailModal';
 import { btnPrimary, row } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
-import { centsToEuroText } from './receipt';
+import { formatCents } from '../utils/format';
+import Loading from '../components/shared/Loading';
 
-// I carichi di merce, dal più recente: chi, quando, quanto. Un tocco apre il dettaglio con righe e bolla allegata.
+// I scarichi di merce, dal più recente: chi, quando, quanto. Un tocco apre il dettaglio con righe e bolla allegata.
 const ReceiptsPanel = ({ suppliers, ingredients, onChanged }) => {
   const { showToast } = useToast();
   const [receipts, setReceipts] = useState(null);
@@ -21,11 +22,11 @@ const ReceiptsPanel = ({ suppliers, ingredients, onChanged }) => {
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-[var(--text-muted)]">Ogni arrivo di merce: la dispensa sale e il costo di ogni ingrediente si aggiorna.</p>
-        <button className={btnPrimary} onClick={() => setCreating(true)} disabled={suppliers.length === 0} title={suppliers.length === 0 ? 'Aggiungi prima un fornitore' : undefined}><Plus size={16} /> Nuovo carico</button>
+        <button className={btnPrimary} onClick={() => setCreating(true)} disabled={suppliers.length === 0} title={suppliers.length === 0 ? 'Aggiungi prima un fornitore' : undefined}><Plus size={16} /> Nuovo scarico</button>
       </div>
-      {suppliers.length === 0 && <p className="text-sm text-[var(--text-muted)]">Per registrare un carico serve almeno un fornitore: aggiungilo dalla scheda «Fornitori».</p>}
-      {receipts === null && <p className="text-sm text-[var(--text-muted)]">Caricamento…</p>}
-      {receipts?.length === 0 && suppliers.length > 0 && <p className="py-10 text-center text-sm text-[var(--text-muted)]">Nessun carico. Registra il primo quando arriva la merce.</p>}
+      {suppliers.length === 0 && <p className="text-sm text-[var(--text-muted)]">Per registrare uno scarico serve almeno un fornitore: aggiungilo dalla scheda «Fornitori».</p>}
+      {receipts === null && <Loading />}
+      {receipts?.length === 0 && suppliers.length > 0 && <p className="py-10 text-center text-sm text-[var(--text-muted)]">Nessuno scarico. Registra il primo quando arriva la merce.</p>}
       <ul className="space-y-1.5">
         {(receipts ?? []).map(r => (
           <li key={r.id}>
@@ -34,7 +35,7 @@ const ReceiptsPanel = ({ suppliers, ingredients, onChanged }) => {
               <span className="min-w-0 flex-1"><span className="block truncate font-medium text-[var(--text-main)]">{r.supplier_name}</span>
                 <span className="block text-xs text-[var(--text-muted)]">{r.lines} {r.lines === 1 ? 'riga' : 'righe'}{r.document_number ? ` · bolla ${r.document_number}` : ''}</span></span>
               {r.documents > 0 && <Paperclip size={15} className="text-[var(--text-muted)] shrink-0" aria-label="Con bolla allegata" />}
-              <span className="tabular-nums text-[var(--text-main)] w-24 text-right">{centsToEuroText(r.total_cost_cents)} €</span>
+              <span className="tabular-nums text-[var(--text-main)] w-24 text-right">{formatCents(r.total_cost_cents)}</span>
             </button>
           </li>))}
       </ul>

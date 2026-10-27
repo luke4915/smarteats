@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import Modal from '../components/shared/Modal';
+import ModalActions from '../components/shared/ModalActions';
 import RecipeLinesEditor from './RecipeLinesEditor';
-import { btn, btnPrimary } from '../smarteats/floor/ui';
+import { btnPrimary } from '../smarteats/floor/ui';
 import { fetchWithAuth } from '../utils/apiClient';
 import { useToast } from '../context/useToast';
 import { rowsFromLines, recipeProblem, linesFromRows } from './recipeLines';
-import { formatCents } from './units';
+import { formatCents } from '../utils/format';
+import Loading from '../components/shared/Loading';
 
 // La ricetta di un piatto: cosa si scala dalla dispensa a ogni porzione. Mostra il costo di una porzione al costo medio di adesso.
 const RecipeModal = ({ product, dish, showCosts, ingredients, preparations, onClose, onSaved }) => {
@@ -34,8 +36,8 @@ const RecipeModal = ({ product, dish, showCosts, ingredients, preparations, onCl
 
   return (
     <Modal title={`Ricetta · ${product.name}`} size="max-w-2xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={(e) => { e.preventDefault(); if (!problem) save(); }}
-      footer={<div className="flex gap-2"><button type="button" className={`${btn} ml-auto`} onClick={onClose}>Annulla</button><button type="submit" className={btnPrimary} disabled={busy || !!problem} title={problem ?? undefined}>Salva</button></div>}>
-      {rows === null ? <p className="text-sm text-[var(--text-muted)]">Caricamento…</p> : (
+      footer={<ModalActions onCancel={onClose}><button type="submit" className={btnPrimary} disabled={busy || !!problem} title={problem ?? undefined}>Salva</button></ModalActions>}>
+      {rows === null ? <Loading /> : (
         <div className="space-y-4">
           <p className="text-sm text-[var(--text-muted)]">Ciò che serve per <b className="text-[var(--text-main)]">una porzione</b> di questo {dish}. A ogni vendita si scala dalla dispensa.</p>
           <RecipeLinesEditor rows={rows} onChange={setRows} ingredients={ingredients} preparations={preparations} />

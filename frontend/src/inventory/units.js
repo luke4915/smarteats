@@ -1,6 +1,8 @@
 // Le unità di misura del magazzino. Il server lavora sempre nell'unità di base dell'ingrediente (g, ml, pc); a schermo si
 // scrive e si legge in quella più comoda (200 g, 1,5 kg). Logica pura, provata in units.test.js.
 
+import { RESERVED_TEXT, formatEuro } from '../utils/format.js';
+
 export const BASE_UNITS = { g: 'Grammi', ml: 'Millilitri', pc: 'Pezzi' };
 
 // Ogni unità che si può digitare: a quale unità di base appartiene e per quanto si moltiplica.
@@ -44,12 +46,11 @@ export function formatQuantity(quantity, baseUnit) {
 
 // Costo di un ingrediente per l'unità più usata: i centesimi per grammo diventano «€/kg».
 export function formatCostPerUnit(costPerBaseUnit, baseUnit) {
+  if (costPerBaseUnit === null || costPerBaseUnit === undefined) return RESERVED_TEXT;
   const per = baseUnit === 'pc' ? 1 : 1000;
   const label = { g: 'kg', ml: 'l', pc: 'pz' }[baseUnit];
-  return `${new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format((costPerBaseUnit * per) / 100)}/${label}`;
+  return `${formatEuro((costPerBaseUnit * per) / 100)}/${label}`;
 }
-
-export const formatCents = (cents) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 
 // «26,4%», o un trattino se non c'è nulla da confrontare.
 export const formatPercent = (value) => (value === null || value === undefined ? '—' : `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(value)}%`);
