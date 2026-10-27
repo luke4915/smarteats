@@ -4,7 +4,7 @@
 export const CHANGELOG = [
   {
     version: '0.3.0',
-    date: '2026-10-25',
+    date: '2026-10-27',
     items: [
       'Nuovo nome: l\'app è SmartEats, con due versioni: SmartEats Stand per sagre e food truck, SmartEats Restaurant per ristoranti, pizzerie e solo asporto.',
       'Marchio aggiornato sulla schermata di accesso, sugli scontrini e nei report PDF.',
