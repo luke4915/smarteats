@@ -90,7 +90,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
     app.use('/api/orders', ordersLimiter);
     app.use('/api/devices', devicesLimiter);
     app.use('/api/exports', exportsLimiter);
-    app.use('/api/reserved-data/unlock', reservedUnlockLimiter);
+    app.use(['/api/reserved-data/unlock', '/api/reserved-data/disable'], reservedUnlockLimiter);
     app.use('/api/public/booking', (req, res, next) => (req.method === 'POST' ? publicBookingWriteLimiter : publicBookingReadLimiter)(req, res, next));
     app.use('/api/public/takeaway', (req, res, next) => (req.method === 'POST' ? publicBookingWriteLimiter : publicBookingReadLimiter)(req, res, next));
   }

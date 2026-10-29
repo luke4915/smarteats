@@ -1,5 +1,4 @@
 import AccountSection from '../../components/setup/AccountSection';
-import FeedbackBox from '../../components/shared/FeedbackBox';
 import RoomsSettings from '../../components/setup/RoomsSettings';
 import SectionsPage from '../../components/shell/SectionsPage';
 import CoverSettings from './CoverSettings';
@@ -20,7 +19,6 @@ const content = (user) => ({
   takeaway: () => <TakeawaySettings />,
   notifications: () => <NotificationSettings />,
   reserved: () => <ReservedDataSettings />,
-  feedback: () => <FeedbackBox />,
   account: () => <AccountSection user={user} />,
 });
 

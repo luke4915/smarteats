@@ -1,6 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
-import { authenticate, authorizeRoles, MANAGER_ROLES } from '../middleware/authenticate.js';
+import { authenticate, authorizeAdmin, authorizeRoles, MANAGER_ROLES } from '../middleware/authenticate.js';
 import { validate } from '../middleware/validate.js';
 import { tenantScope } from '../middleware/tenantScope.js';
 import logger from '../logger.js';
@@ -54,6 +54,27 @@ router.post('/unlock', authenticate, managers, validate({ body: unlockReservedSc
   } catch (err) {
     logger.error({ err }, 'Errore POST /api/reserved-data/unlock');
     res.status(500).json({ error: 'Errore durante lo sblocco' });
+  }
+});
+
+// Spegne il blocco: senza la password dell'amministratore che lo chiede non ci si arriva (altrimenti basterebbe un tablet lasciato
+// aperto sulle Impostazioni). Vale la password di chi sta facendo la richiesta, non quella di un altro amministratore.
+router.post('/disable', authenticate, authorizeAdmin, validate({ body: unlockReservedSchema }), tenantScope, async (req, res) => {
+  try {
+    const { rows } = await req.db.query('SELECT password_hash FROM users WHERE id = $1 AND tenant_id = $2', [req.user.id, req.user.tenantId]);
+    const hash = rows[0]?.password_hash?.trim() ? rows[0].password_hash : DUMMY_HASH;
+    const valid = await bcrypt.compare(req.body.password, hash);
+    if (!valid || hash === DUMMY_HASH) {
+      await logAudit(req.db, req.user.id, 'DISABLE_RESERVED_DATA_FAILED', {});
+      return res.status(403).json({ error: 'Password non corretta', code: 'WRONG_ADMIN_PASSWORD' });
+    }
+    await req.db.query(
+      `INSERT INTO settings (key, value) VALUES ('reserved_data_lock', '0') ON CONFLICT (tenant_id, key) DO UPDATE SET value = '0'`);
+    await logAudit(req.db, req.user.id, 'DISABLE_RESERVED_DATA', {});
+    res.json(await loadReservedState(req.db, req.user));
+  } catch (err) {
+    logger.error({ err }, 'Errore POST /api/reserved-data/disable');
+    res.status(500).json({ error: 'Errore durante lo spegnimento del blocco' });
   }
 });
 

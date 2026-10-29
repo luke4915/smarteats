@@ -54,6 +54,9 @@ router.put('/:key', authenticate, authorizeAdmin, validate({ params: settingPara
     if (key === 'default_vat_rate') value = String(Number(value.trim().replace(',', '.')));
     if (key === 'reserved_data_lock' && !['0', '1'].includes(value))
         return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
+    // Spegnere il blocco vuole la password dell'amministratore: si fa da POST /reserved-data/disable, mai da qui
+    if (key === 'reserved_data_lock' && value === '0')
+        return res.status(403).json({ error: 'Per spegnere il blocco dei dati riservati serve la password dell\'amministratore', code: 'PASSWORD_REQUIRED' });
     if (key === 'booking_portal_enabled' && !['0', '1'].includes(value))
         return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
     if (key === 'booking_portal_phone' && value && !/^[+\d][\d\s./-]{4,38}$/.test(value.trim()))

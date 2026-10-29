@@ -6,7 +6,8 @@ import TempPasswordField from './TempPasswordField';
 
 // Elenco e gestione degli utenti di un locale: lo usano l'admin del locale (Impostazioni) e il master (pannello locale).
 // `api` nasconde da dove arrivano i dati: { list, create, update, remove, resetPassword }.
-// `currentUserId` (solo admin del locale) esclude il proprio utente: lo si gestisce da «Il mio account».
+// `currentUserId` (solo nel locale): la riga «Tu» non si modifica come le altre, ma apre il proprio profilo (`renderProfile(onSaved)`,
+// username e password) nella stessa riga. Senza `canManage` (responsabile) l'elenco ha solo la riga «Tu», senza «Nuovo utente».
 // Una riga = un utente e un solo pulsante, «Modifica»: dentro ci sono nome, ruolo, password temporanea ed eliminazione.
 const input = 'w-full h-10 px-3 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] placeholder:text-[var(--text-muted)]';
 const label = 'block text-xs font-medium text-[var(--text-muted)] mb-1';
@@ -19,7 +20,7 @@ const Chip = ({ tone = 'muted', children }) => (
   <span className={`inline-flex items-center h-5 px-2 rounded-full text-[11px] font-medium ${tone === 'accent' ? 'bg-[var(--accent)]/10 text-[var(--accent)]' : tone === 'warn' ? 'bg-amber-500/15 text-amber-500' : 'bg-[var(--bg-card)] text-[var(--text-muted)] border border-[var(--border)]'}`}>{children}</span>
 );
 
-const UsersPanel = ({ api, currentUserId = null }) => {
+const UsersPanel = ({ api, currentUserId = null, renderProfile = null, canManage = true }) => {
   const { showToast } = useToast();
   const [users, setUsers] = useState(null);
   const [error, setError] = useState('');
@@ -27,6 +28,7 @@ const UsersPanel = ({ api, currentUserId = null }) => {
   const [creating, setCreating] = useState(false);
   const [newUser, setNewUser] = useState(EMPTY_NEW);
   const [editing, setEditing] = useState(null);       // { id, username, role, password, askDelete }
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const load = useCallback(async () => {
     try { setUsers(await api.list()); setError(''); }
@@ -85,10 +87,17 @@ const UsersPanel = ({ api, currentUserId = null }) => {
                   {!u.has_password && <Chip tone="warn">senza password</Chip>}
                   {u.has_password && u.must_change_password && <Chip tone="warn">password temporanea</Chip>}
                 </div>
-                {!isSelf && !isEditing && (
+                {!isSelf && !isEditing && canManage && (
                   <button className={btn} disabled={busy} onClick={() => setEditing({ id: u.id, username: u.username, role: u.role, password: '', askDelete: false })}><Pencil size={14} /> Modifica</button>
                 )}
+                {isSelf && renderProfile && (
+                  <button className={btn} aria-expanded={profileOpen} onClick={() => setProfileOpen(open => !open)}><KeyRound size={14} /> {profileOpen ? 'Chiudi' : 'Il mio profilo'}</button>
+                )}
               </div>
+
+              {isSelf && profileOpen && renderProfile && (
+                <div className="px-4 pb-4 pt-3 bg-[var(--bg-card-2)] border-t border-[var(--border)]">{renderProfile(load)}</div>
+              )}
 
               {isEditing && (
                 <div className="px-4 pb-4 pt-1 space-y-3 bg-[var(--bg-card-2)] border-t border-[var(--border)]">
@@ -126,7 +135,7 @@ const UsersPanel = ({ api, currentUserId = null }) => {
         })}
       </ul>
 
-      {creating ? (
+      {!canManage ? null : creating ? (
         <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--bg-card-2)] space-y-3">
           <p className="text-sm font-medium text-[var(--text-main)]">Nuovo utente</p>
           <div className="grid gap-3 sm:grid-cols-[1fr_1.4fr_1fr]">

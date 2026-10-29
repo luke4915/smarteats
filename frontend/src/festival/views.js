@@ -9,7 +9,7 @@ const VIEWS = [
   { id: 'statistics', label: 'Statistiche' },
   { id: 'config', label: 'Menu' },
   { id: 'inventory', label: 'Magazzino' },
-  { id: 'setup', label: 'Sistema' },
+  { id: 'setup', label: 'Impostazioni' },
 ];
 
 export const festivalViews = (role, modules, inventory) => VIEWS.filter(v => canView(role, v.id, modules, inventory));

@@ -136,8 +136,20 @@ describe('dati riservati', () => {
     assert.equal((await otherAdmin.get(`/inventory/report?from=${today()}&to=${today()}`)).status, 200);
   });
 
+  it('spegnere il blocco richiede la password dell\'amministratore', async () => {
+    const viaSettings = await setLock('0');
+    assert.equal(viaSettings.status, 403, 'dalle impostazioni non si spegne');
+    assert.equal(viaSettings.body.code, 'PASSWORD_REQUIRED');
+    assert.equal((await admin.post('/reserved-data/disable', {})).status, 400, 'senza password');
+    const wrong = await admin.post('/reserved-data/disable', { password: 'sbagliata123' });
+    assert.equal(wrong.status, 403);
+    assert.equal(wrong.body.code, 'WRONG_ADMIN_PASSWORD');
+    assert.equal((await manager.post('/reserved-data/disable', { password: PASSWORD })).status, 403, 'solo l\'amministratore');
+    assert.equal((await admin.get('/reserved-data/status')).body.enabled, true, 'dopo i rifiuti il blocco è ancora acceso');
+  });
+
   it('spento, tutto torna visibile anche senza sbloccare', async () => {
-    assert.equal((await setLock('0')).status, 200);
+    assert.equal((await admin.post('/reserved-data/disable', { password: PASSWORD })).status, 200);
     assert.equal((await manager.get(`/inventory/report?from=${today()}&to=${today()}`)).status, 200);
     assert.ok((await manager.get('/ingredients')).body[0].weighted_average_cost > 0);
   });
