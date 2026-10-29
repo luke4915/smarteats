@@ -51,12 +51,15 @@ test('asporto: ordine dal sito → approvazione → cucina → ritiro; ordine al
 
   // Il cliente vede la conferma senza ricaricare
   await expect(phone.getByRole('heading', { name: 'Ordine confermato' })).toBeVisible({ timeout: 30_000 });
+  await expect(phone.getByText('Il tuo codice di ritiro')).toBeVisible();      // il codice arriva con l'accettazione
+  await shot(phone, 'takeaway-04b-codice');
 
   if (todayOpen) {
     // La cucina lo vede con il nome di chi ritira
     const cucina = await (await browser.newContext({ ignoreHTTPSErrors: true })).newPage();
     await login(cucina, r.host, r.kitchen);
     await expect(cucina.getByText(/Giulia Verdi/)).toBeVisible();
+    await expect(cucina.locator('article', { hasText: 'Giulia Verdi' })).toContainText(/cod\. \d{3}/);
     await shot(cucina, 'takeaway-05-cucina');
     await cucina.locator('article', { hasText: 'Giulia Verdi' }).getByRole('button', { name: 'Pronta', exact: true }).click();
 

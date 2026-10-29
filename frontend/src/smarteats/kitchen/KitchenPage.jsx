@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { ChefHat, Clock, Check, Volume2, VolumeX } from 'lucide-react';
 import { useKitchenOrders } from './useKitchenOrders';
+import { formatElapsed } from '../../utils/format';
 import Segmented from '../floor/Segmented';
 import { playChime } from '../../utils/chime';
 import SoldOutButton from '../../inventory/SoldOutButton';
@@ -15,6 +16,9 @@ const HEAD = { ok: 'bg-emerald-600 text-white', warn: 'bg-amber-500 text-black',
 
 const beep = () => { playChime(); };
 
+// Minuti in modo leggibile: «12 min» finché è breve, «3 h 4'» oltre l'ora.
+const span = (minutes) => (minutes < 60 ? `${minutes} min` : formatElapsed(minutes));
+
 const Ticket = ({ order, fresh, onLines }) => {
   const level = orderUrgency(order);
   const takeaway = order.pickup_at != null;
@@ -23,14 +27,14 @@ const Ticket = ({ order, fresh, onLines }) => {
   // Senza tavolo né ritiro (banco della sagra) il titolo è il numero dell'ordine, quello che si chiama a voce
   const named = order.table_name || takeaway || order.is_takeaway;
   const where = order.table_name ? `Tavolo ${order.table_name}` : takeaway ? pickupTime : order.is_takeaway ? 'Asporto' : `#${order.display_code}`;
-  const wait = takeaway ? (order.pickupIn < 0 ? `${Math.abs(order.pickupIn)} min fa` : order.pickupIn === 0 ? 'ora' : `tra ${order.pickupIn} min`) : `${order.minutes} min`;
+  const wait = takeaway ? (order.pickupIn < 0 ? `${span(Math.abs(order.pickupIn))} fa` : order.pickupIn === 0 ? 'ora' : `tra ${span(order.pickupIn)}`) : span(order.minutes);
   return (
     <article className={`flex flex-col rounded-xl overflow-hidden bg-[var(--bg-card)] border-2 ${fresh ? 'border-[var(--accent)] ring-4 ring-[var(--accent)]/30' : 'border-[var(--border)]'}`}>
       <header className={`flex items-center justify-between gap-3 px-4 py-2.5 ${HEAD[level]}`}>
         <div className="min-w-0">
           {takeaway && <p className="text-xs font-medium opacity-90">Ritiro alle</p>}
           <h3 className="text-xl font-semibold leading-tight tabular-nums truncate">{where}</h3>
-          <p className="mt-0.5 text-sm opacity-90 truncate">{[order.pickup_name, order.pickup_code && `cod. ${order.pickup_code}`, order.course_name, order.covers > 0 && `${order.covers} cop.`, named && `#${order.display_code}`].filter(Boolean).join(' · ')}</p>
+          <p className="mt-0.5 text-sm opacity-90 break-words">{[order.pickup_name, order.pickup_code && `cod. ${order.pickup_code}`, order.course_name, order.covers > 0 && `${order.covers} cop.`, named && `#${order.display_code}`].filter(Boolean).join(' · ')}</p>
         </div>
         <span className="flex items-center gap-1.5 text-base font-semibold tabular-nums shrink-0 rounded-full bg-black/15 px-3 py-1" aria-label={takeaway ? `Ritiro ${wait}` : `In attesa da ${wait}`}><Clock size={16} />{wait}</span>
       </header>
