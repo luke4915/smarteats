@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingCart, Check, Printer, MessageSquare, QrCode, Trash2, ShoppingBag, ChevronLeft, Minus, Plus } from 'lucide-react';
+import { ShoppingCart, Check, Printer, MessageSquare, QrCode, Trash2, ShoppingBag, ChevronLeft, Minus, Plus, Undo2 } from 'lucide-react';
 import { getLineTotal, getAdjustmentLabel } from '../../../utils/pricing';
 import OrderDiscountPanel from '../OrderDiscountPanel';
 import ActionMenu from '../../shared/ActionMenu';
@@ -27,6 +27,7 @@ const CartMobileView = ({
     setIsQRScanModalOpen,
     setIsReprintModalOpen,
     setIsClearModalOpen,
+    setShowReversePopup,
     applyOrderDiscount,
     canDiscount,
     isAllGift,
@@ -34,8 +35,7 @@ const CartMobileView = ({
     isTakeaway,
     setIsTakeaway,
     addToCart,
-    removeLastItem,
-    children
+    removeLastItem
 }) => {
 
     const pieces = cart.reduce((s, i) => s + i.quantity, 0);
@@ -66,6 +66,7 @@ const CartMobileView = ({
                         buttonClassName="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center" />
                 )}
                 <ActionMenu items={[
+                    { label: 'Storno ordini', icon: Undo2, onClick: () => setShowReversePopup(true), disabled: !sessionActive, hint: 'Serve una serata aperta' },
                     { label: 'Importa ordine da QR', icon: QrCode, onClick: () => setIsQRScanModalOpen(true) },
                     { label: 'Ristampa scontrini recenti', icon: Printer, onClick: () => setIsReprintModalOpen(true), disabled: !sessionActive, hint: 'Serve una serata aperta' },
                 ]} />
@@ -161,17 +162,10 @@ const CartMobileView = ({
                     <Check size={20} /> {sending ? 'Invio…' : 'Invia ordine'}
                 </button>
 
-                <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => cart.length > 0 && setIsClearModalOpen(true)} disabled={cart.length === 0}
-                        className="h-10 border border-red-500/30 text-red-500 rounded-lg text-sm font-medium transition disabled:opacity-30 flex items-center justify-center gap-1.5 active:bg-red-500/10">
-                        <Trash2 size={14} /> Svuota
-                    </button>
-                    {children && (
-                        <div className="[&>*]:w-full [&>*]:h-10 [&>*]:rounded-lg [&>*]:text-sm [&>*]:font-medium [&>*]:flex [&>*]:items-center [&>*]:justify-center [&>*]:gap-1.5 [&>*]:border [&>*]:border-[var(--border)] [&>*]:bg-[var(--bg-card)]">
-                            {children}
-                        </div>
-                    )}
-                </div>
+                <button onClick={() => cart.length > 0 && setIsClearModalOpen(true)} disabled={cart.length === 0}
+                    className="w-full h-10 border border-red-500/30 text-red-500 rounded-lg text-sm font-medium transition disabled:opacity-30 flex items-center justify-center gap-1.5 active:bg-red-500/10">
+                    <Trash2 size={14} /> Svuota
+                </button>
             </div>
 
         </div>

@@ -17,6 +17,8 @@ export const CHANGELOG = [
       'Asporto: appena accetti un ordine il cliente ha un codice di ritiro di tre cifre, nella pagina del suo ordine; lo vedi anche nell\'elenco, nel dettaglio e in cucina.',
       'Asporto: le fasce si riempiono in base al tempo di preparazione di ogni piatto (in minuti, nel modulo del prodotto) e non più al numero di pezzi: le bevande non occupano la cucina. I valori di prima sono stati convertiti.',
       'Menu pubblico con il QR (sagre): si scarica il QR da stampare, si copia il link e i clienti possono cercare un prodotto. Il messaggio di benvenuto lo imposta ora l\'assistenza.',
+      'Piatti esauriti: restano in carta, in grigio e con «Esaurito», non spariscono più; quando la cucina o un responsabile cambia la disponibilità, tutte le casse e la sala si aggiornano subito.',
+      'Cassa da telefono: lo Storno ordini è nel menu ⋯ come su tablet e PC, e i tasti rapidi dei contanti occupano tutta la larghezza.',
       'Esporta una serata: report PDF completo (incasso, cassa con differenza, pagamenti, prodotti, andamento per ora), CSV delle righe con cassa o tavolo, omaggi e sconti, e CSV dei prodotti. Gli orari sono ora quelli del locale.',
     ],
   },

@@ -24,7 +24,9 @@ test('sagra da telefono: chip categoria, aggiungo, barra in basso, carrello, inv
   await expect(page.getByRole('heading', { name: 'Ordine' })).toBeVisible();
   await shot(page, 'phone-03-carrello');
   // In fondo al carrello c'è tutto, anche con i margini dell'iPhone: «Svuota» e «Storno ordini» si vedono sempre
-  await expect(page.getByRole('button', { name: 'Storno ordini' })).toBeInViewport();
+  await page.getByRole('button', { name: 'Altre azioni' }).click();
+  await expect(page.getByRole('menuitem', { name: /Storno ordini/ })).toBeVisible();   // come su tablet e PC
+  await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Svuota' })).toBeInViewport();
   // I tagli dei contanti si sommano (20 e poi 5 fanno 25) e la X azzera
   await page.getByRole('button', { name: 'Aggiungi 20 €' }).click();

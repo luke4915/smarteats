@@ -29,12 +29,8 @@ const MobileCartOverlay = ({ aboveNav = false, isOpen, onOpen, onClose, onRevers
         className={`fixed inset-0 z-[1700] flex flex-col bg-[var(--bg-main)] transition-transform duration-300 ease-out ${isOpen ? 'translate-y-0' : 'translate-y-full'}`}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <Cart {...cartProps} onClose={onClose}>
-          <button onClick={onReverseClick}
-            className="text-purple-600 !border-purple-500/30 active:bg-purple-500/10 transition">
-            Storno ordini
-          </button>
-        </Cart>
+        {/* Lo storno sta nel menu ⋯ del carrello (come su tablet e PC): si chiude il carrello e si apre la finestra */}
+        <Cart {...cartProps} onClose={onClose} setShowReversePopup={() => onReverseClick()} />
       </div>
     </>
   );

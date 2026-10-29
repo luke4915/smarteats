@@ -32,7 +32,7 @@ const TakeawayPage = ({ event }) => {
   const { settings, orders, slots, capacity, loading, reload } = useTakeaway(date, event);
   const [panel, setPanel] = useState(null);        // { kind: 'detail', id } | { kind: 'new' }
   const [cart, setCart] = useState([]);
-  const products = useProducts(panel?.kind === 'new');
+  const products = useProducts(panel?.kind === 'new', event);
 
   // Si arriva dalla campanella: si apre l'ordine da approvare
   useEffect(() => {

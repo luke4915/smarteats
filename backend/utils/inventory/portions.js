@@ -8,7 +8,8 @@
 
 export const PORTIONS_RULES = ['restart_each_service', 'carry_over', 'unlimited'];
 
-// Un piatto finito (stock 0) si nasconde da solo; quando torna disponibile deve ricomparire. Uno nascosto a mano dall'admin resta nascosto.
+// Un piatto finito (stock 0) resta in carta, in grigio (non si nasconde più da solo); i piatti nascosti da una versione precedente quando
+// finivano ricompaiono quando tornano disponibili. Uno nascosto a mano dall'admin con porzioni ancora disponibili resta nascosto.
 const visibleAgain = (product) => product.visible || product.stock === 0;
 
 // Come si presenta il piatto all'apertura di un nuovo servizio: { stock, stock_enabled, visible }.
@@ -38,5 +39,5 @@ export function portionsWhenBackInStock(product) {
   return { stock: null, stock_enabled: false, visible: true };
 }
 
-// Un piatto segnato esaurito: zero porzioni e nascosto, come quando le porzioni finiscono da sole.
-export const portionsWhenSoldOut = () => ({ stock: 0, stock_enabled: true, visible: false });
+// Un piatto segnato esaurito: zero porzioni, e la visibilità non cambia (resta in carta, in grigio, come quando le porzioni finiscono da sole).
+export const portionsWhenSoldOut = (product) => ({ stock: 0, stock_enabled: true, visible: product.visible });

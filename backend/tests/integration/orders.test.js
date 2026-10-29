@@ -35,7 +35,7 @@ describe('ordini', () => {
     assert.ok(rejected.every(r => r.body.code === 'OUT_OF_STOCK'));
     const codes = ok.map(r => r.body.displayCode).sort((x, y) => x - y);
     assert.deepEqual(codes, Array.from({ length: 10 }, (_, i) => String(i + 1)), 'numeri 1…10 senza buchi né doppioni');
-    assert.deepEqual(await productRow(), { stock: 0, stock_enabled: true, visible: false });
+    assert.deepEqual(await productRow(), { stock: 0, stock_enabled: true, visible: true }, 'finito ma ancora in carta (in grigio)');
   });
 
   it('righe dello stesso prodotto scalano la somma, lo storno la ripristina una volta sola', async () => {
