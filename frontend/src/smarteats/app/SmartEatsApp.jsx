@@ -9,6 +9,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useService } from './useService';
 import AppHeader from '../../components/shell/AppHeader';
+import PrintStatus from '../../components/shell/PrintStatus';
 import ServiceControl from '../../components/shell/ServiceControl';
 import SideNav from '../../components/shell/SideNav';
 import TabBar from '../../components/shell/TabBar';
@@ -70,7 +71,7 @@ const SmartEatsApp = () => {
       <SideNav views={views} icons={ICONS} brand="SmartEats Restaurant" badges={badges} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <AppHeader user={user} title={views.find(v => pathname === `/${v.id}`)?.label} serviceControl={<ServiceControl service={service} canManage={canManageService} start={start} closingInfo={closingInfo} end={end} terms={termsFor(user.businessType)} />}
+        <AppHeader user={user} title={views.find(v => pathname === `/${v.id}`)?.label} serviceControl={<ServiceControl service={service} canManage={canManageService} start={start} closingInfo={closingInfo} end={end} terms={termsFor(user.businessType)} />} status={<PrintStatus />}
           inbox={hasInbox ? inbox : null} onOpenNotification={(i) => {
             if (i.kind === 'low_stock') navigate('/inventory');
             else if (i.kind === 'takeaway_request') navigate('/takeaway', { state: { orderId: i.id, date: i.date } });

@@ -232,6 +232,8 @@ test('la ricevuta va alla stampante della copia Cliente, altrimenti alla prima a
   assert.equal(pickReceiptPrinter(settings).printer_address, '10.0.0.1:9443');
   assert.equal(pickReceiptPrinter([settings[0]]).printer_address, '10.0.0.2');
   assert.equal(pickReceiptPrinter([{ ...settings[1], enabled: false }, { copy_type: 'Bar', printer_address: '', enabled: true }]), null);
+  // la stampante «Conto» del ristorante ha la precedenza, anche sulla copia «Cliente»
+  assert.equal(pickReceiptPrinter([{ copy_type: 'Cliente', printer_address: '10.0.0.1', enabled: true }, { copy_type: 'Conto', printer_address: '10.0.0.9', enabled: true }]).printer_address, '10.0.0.9');
 
   const receipt = { scope: 'check', total: 5, paid: 0, due: 5, check: { id: 1, number: 2, table_name: 'T1', covers: 1 },
     lines: [{ name: 'Panino', quantity: 1, amount: 5 }], payments: [] };
