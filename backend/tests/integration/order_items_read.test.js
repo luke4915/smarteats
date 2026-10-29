@@ -96,7 +96,7 @@ describe('order_items: letture', () => {
     const ids = res.body.map(o => o.id).sort();
     assert.deepEqual(ids, orders.filter(o => o.id !== orders[2].id).map(o => o.id).sort(), 'l\'ordine completato non c\'è');
     const first = res.body.find(o => o.id === orders[0].id);
-    assert.deepEqual(first.items, [{ id: 1, name: 'Panino', quantity: 2, note: '', category: null }, { id: 2, name: 'Birra', quantity: 1, note: 'fredda', category: null }]);
+    assert.deepEqual(first.items, [{ id: 1, name: 'Panino', quantity: 2, note: '', category: null, modifiers: [] }, { id: 2, name: 'Birra', quantity: 1, note: 'fredda', category: null, modifiers: [] }]);
     assert.equal(JSON.stringify(res.body).includes('price'), false);
     assert.equal(JSON.stringify(res.body).includes('line_total'), false);
   });
