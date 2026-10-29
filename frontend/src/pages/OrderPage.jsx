@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Minus, Plus, Check, ShoppingBag, ChevronLeft, Phone } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, ChevronLeft, Phone } from 'lucide-react';
+import StatusMark from '../components/public/StatusMark';
 import { apiFetch } from '../utils/apiClient';
 import { formatDay } from '../smarteats/reservations/rules';
 import { btnPrimary, btn, input } from '../smarteats/floor/ui';
@@ -21,6 +22,9 @@ const STATUS_TEXT = {
   cancelled: { title: 'Ordine annullato', body: 'L\'ordine è stato annullato.' },
   expired: { title: 'Ordine non confermato', body: 'Il locale non ha fatto in tempo a confermarlo. Puoi inviare una nuova richiesta o chiamare il locale.' },
 };
+
+// Come si presenta l'esito: spunta se confermato o ritirato, X se non è andato a buon fine, orologio in attesa del locale.
+const TONE = { requested: 'waiting', accepted: 'good', picked_up: 'good', rejected: 'bad', cancelled: 'bad', expired: 'bad' };
 
 const Status = ({ token, info }) => {
   const [data, setData] = useState(null);
@@ -52,7 +56,7 @@ const Status = ({ token, info }) => {
     <div className="space-y-5">
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center ${data.status === 'accepted' || data.status === 'picked_up' ? 'bg-green-500/15 text-green-500' : 'bg-[var(--accent)]/15 text-[var(--accent)]'}`}><Check size={18} /></span>
+          <StatusMark tone={TONE[data.status]} />
           <h2 className="text-lg font-semibold">{text.title}</h2>
         </div>
         <p className="text-sm text-[var(--text-muted)]">{text.body}</p>

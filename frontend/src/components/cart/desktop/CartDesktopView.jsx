@@ -5,6 +5,7 @@ import OrderDiscountPanel from '../OrderDiscountPanel';
 import ActionMenu from '../../shared/ActionMenu';
 import { iconBtn, btnPrimary, btnDanger } from '../../../smarteats/floor/ui';
 import { formatEuro } from '../../../utils/format';
+import QuickCash from '../QuickCash';
 
 const CartDesktopView = ({
     // Props passate dal Container padre
@@ -137,6 +138,8 @@ const CartDesktopView = ({
                         </span>
                     </div>
                 </div>
+
+                <QuickCash total={total} received={amountReceived} onChange={setAmountReceived} disabled={cart.length === 0} />
 
                 <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">

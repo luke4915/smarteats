@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Minus, Plus, Phone, Check, CalendarDays, Clock, Users } from 'lucide-react';
+import { Minus, Plus, Phone, CalendarDays, Clock, Users } from 'lucide-react';
+import StatusMark from '../components/public/StatusMark';
 import { apiFetch } from '../utils/apiClient';
 import { formatDay } from '../smarteats/reservations/rules';
 import { btnPrimary, btn, input } from '../smarteats/floor/ui';
@@ -24,6 +25,9 @@ const STATUS_TEXT = {
 
 const Shell = ({ info, children }) => <PublicShell info={info} kicker="Prenota un tavolo">{children}</PublicShell>;
 const Section = StepSection;
+
+// Come si presenta l'esito: spunta se va bene, X se non è andato a buon fine, orologio in attesa del locale.
+const TONE = { requested: 'waiting', confirmed: 'good', seated: 'good', completed: 'good', declined: 'bad', cancelled: 'bad', expired: 'bad', no_show: 'bad' };
 
 // Pagina di stato di una richiesta, dal link personale
 const Status = ({ token, info }) => {
@@ -51,7 +55,7 @@ const Status = ({ token, info }) => {
     <div className="space-y-5">
       <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 space-y-3">
         <div className="flex items-center gap-2">
-          <span className={`w-8 h-8 rounded-full flex items-center justify-center ${data.status === 'confirmed' ? 'bg-green-500/15 text-green-500' : 'bg-[var(--accent)]/15 text-[var(--accent)]'}`}><Check size={18} /></span>
+          <StatusMark tone={TONE[data.status]} />
           <h2 className="text-lg font-semibold">{text.title}</h2>
         </div>
         <p className="text-sm text-[var(--text-muted)]">{text.body}</p>
