@@ -11,7 +11,7 @@ import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { portalOrderSchema, slotsQuerySchema, tokenParamsSchema } from '../schemas/takeawaySchema.js';
 import { localNow, addDays, phoneDigits, MIN_FILL_MS, PORTAL_TZ } from '../utils/bookingPortal.js';
 import { MAX_DAYS_AHEAD, MAX_ITEMS_PER_ORDER, MAX_PENDING_PER_PHONE, slotStates, slotWithinWindow, isSlot } from '../utils/takeaway.js';
-import { loadSettings, loadHours, loadByTime, loadOfItems, snapshotItems } from '../utils/takeawayDb.js';
+import { loadSettings, loadHours, loadUsedByTime, loadWorkMinutes, smallestPrepMinutes, snapshotItems } from '../utils/takeawayDb.js';
 import { verifyOrderItems } from '../utils/orderLines.js';
 import { expireTakeaway } from '../utils/caseExpiry.js';
 import { enqueue } from '../utils/whatsapp/outbox.js';
@@ -51,12 +51,13 @@ export default function (broadcast) {
     };
   }));
 
-  // GET /slots?date=&load= — le fasce del giorno: ciascuna richiedibile o no (mai numeri)
+  // GET /slots?date=&cart=id:qtà,… — le fasce del giorno: ciascuna richiedibile o no (mai numeri). Con il carrello si controlla che
+  // l'ordine ci stia; senza, che ci stia almeno un pezzo.
   router.get('/slots', ...guard, validate({ query: slotsQuerySchema }), inPortal(async (db, { req, settings }) => {
-    const { date, load } = req.validQuery;
+    const { date, cart } = req.validQuery;
     await expireTakeaway(db);
-    const [hours, byTime] = await Promise.all([loadHours(db), loadByTime(db, date)]);
-    const slots = slotStates({ date, hours, slotMinutes: settings.slotMinutes, capacity: settings.capacity, loadByTime: byTime, now: localNow(), minLeadMinutes: settings.minLeadMinutes, load });
+    const [hours, usedByTime, minutes] = await Promise.all([loadHours(db), loadUsedByTime(db, date), cart?.length ? loadWorkMinutes(db, cart) : smallestPrepMinutes(db)]);
+    const slots = slotStates({ date, hours, slotMinutes: settings.slotMinutes, capacity: settings.capacity, usedByTime, now: localNow(), minLeadMinutes: settings.minLeadMinutes, minutes });
     return { date, slots: slots.map(s => ({ time: s.time, available: s.available })) };
   }));
 
@@ -69,8 +70,8 @@ export default function (broadcast) {
     const out = [];
     for (let i = 0; i <= MAX_DAYS_AHEAD; i += 1) {
       const date = addDays(today, i);
-      const byTime = await loadByTime(db, date);
-      const slots = slotStates({ date, hours, slotMinutes: settings.slotMinutes, capacity: settings.capacity, loadByTime: byTime, now, minLeadMinutes: settings.minLeadMinutes, load: 1 });
+      const usedByTime = await loadUsedByTime(db, date);
+      const slots = slotStates({ date, hours, slotMinutes: settings.slotMinutes, capacity: settings.capacity, usedByTime, now, minLeadMinutes: settings.minLeadMinutes, minutes: await smallestPrepMinutes(db) });
       out.push({ date, available: slots.some(s => s.available) });
     }
     return { days: out };
@@ -98,14 +99,14 @@ export default function (broadcast) {
       if (n >= MAX_PENDING_PER_PHONE)
         throw new HttpError(429, `Hai già ${MAX_PENDING_PER_PHONE} ordini in attesa di conferma: aspetta l'esito oppure chiama il locale`, 'TOO_MANY_PENDING');
       const { items, total } = await verifyOrderItems(tx, b.items.map(i => ({ id: i.id, quantity: i.quantity, note: i.note })), 'customer');
-      const load = await loadOfItems(tx, items);
-      const taken = (await loadByTime(tx, b.date)).get(b.time) ?? 0;
-      if (taken + load > settings.capacity) throw new HttpError(409, 'Questa fascia non ha più posto per il vostro ordine: scegli un altro orario', 'SLOT_FULL');
+      const minutes = await loadWorkMinutes(tx, items);
+      const taken = (await loadUsedByTime(tx, b.date)).get(b.time) ?? 0;
+      if (taken + minutes > settings.capacity) throw new HttpError(409, 'Questa fascia non ha più posto per il vostro ordine: scegli un altro orario', 'SLOT_FULL');
       const at = (await tx.query(`SELECT (($1::date + $2::time) AT TIME ZONE $3) AS at`, [b.date, b.time, PORTAL_TZ])).rows[0].at;
       const { rows: [row] } = await tx.query(
-        `INSERT INTO takeaway_orders (status, source, pickup_at, load, customer_name, phone, email, notes, items, total, public_token, consent_at)
+        `INSERT INTO takeaway_orders (status, source, pickup_at, work_minutes, customer_name, phone, email, notes, items, total, public_token, consent_at)
          VALUES ('requested', 'portal', $1, $2, $3, $4, $5, $6, $7, $8, $9, now()) RETURNING id`,
-        [at, load, b.customer_name, b.phone, b.email, b.notes, JSON.stringify(snapshotItems(items)), total, token]);
+        [at, minutes, b.customer_name, b.phone, b.email, b.notes, JSON.stringify(snapshotItems(items)), total, token]);
       await enqueue(tx, 'takeaway', row.id, 'received');
       return row.id;
     });
@@ -118,7 +119,7 @@ export default function (broadcast) {
   const loadMine = async (db, token) => {
     await expireTakeaway(db);
     const { rows } = await db.query(
-      `SELECT id, status, items, total, customer_name, notes, reject_reason, paid_method,
+      `SELECT id, status, items, total, customer_name, notes, reject_reason, paid_method, pickup_code,
               to_char(pickup_at AT TIME ZONE $2, 'YYYY-MM-DD') AS date, to_char(pickup_at AT TIME ZONE $2, 'HH24:MI') AS time
        FROM takeaway_orders WHERE public_token = $1`, [token, PORTAL_TZ]);
     if (!rows.length) throw new HttpError(404, 'Ordine non trovato', 'NOT_FOUND');
@@ -126,6 +127,8 @@ export default function (broadcast) {
   };
   const present = (r, restaurant) => ({
     status: r.status, date: r.date, time: r.time, customer_name: r.customer_name, notes: r.notes, total: Number(r.total),
+    // il codice che il cliente dice al ritiro: c'è da quando il locale accetta
+    pickup_code: r.status === 'accepted' ? r.pickup_code : null,
     items: r.items.map(i => ({ name: i.name, quantity: i.quantity, note: i.note || '' })),
     reject_reason: r.status === 'rejected' ? r.reject_reason : '',
     // Prima dell'approvazione il cliente può ritirare l'ordine; dopo, il locale ci ha già lavorato: si telefona

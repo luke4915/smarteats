@@ -12,7 +12,7 @@ import { idParamsSchema } from '../schemas/common.js';
 import { staffOrderSchema, acceptSchema, rejectSchema, pickedUpSchema, ordersQuerySchema, slotsQuerySchema, hoursSchema } from '../schemas/takeawaySchema.js';
 import { localNow, PORTAL_TZ } from '../utils/bookingPortal.js';
 import { slotStates, slotWithinWindow, pickupIsDue, isSlot } from '../utils/takeaway.js';
-import { loadSettings, loadHours, loadByTime, loadOfItems, createKitchenOrder, announceKitchenOrder, cancelKitchenOrder } from '../utils/takeawayDb.js';
+import { loadSettings, loadHours, loadUsedByTime, loadWorkMinutes, assignPickupCode, createKitchenOrder, announceKitchenOrder, cancelKitchenOrder } from '../utils/takeawayDb.js';
 import { verifyOrderItems } from '../utils/orderLines.js';
 import { expireTakeaway } from '../utils/caseExpiry.js';
 import { enqueue } from '../utils/whatsapp/outbox.js';
@@ -26,7 +26,7 @@ const guard = [authenticate, requireModule('takeaway'), authorizeWaiter];
 
 const ORDER_SQL = `
   SELECT t.id, t.status, t.source, t.pickup_at, to_char(t.pickup_at AT TIME ZONE $1, 'YYYY-MM-DD') AS date,
-         to_char(t.pickup_at AT TIME ZONE $1, 'HH24:MI') AS time, t.load, t.customer_name, t.phone, t.email, t.notes, t.items, t.total,
+         to_char(t.pickup_at AT TIME ZONE $1, 'HH24:MI') AS time, t.work_minutes, t.pickup_code, t.customer_name, t.phone, t.email, t.notes, t.items, t.total,
          t.order_id, t.payment_mode, t.paid_method, t.reject_reason, t.requested_at, t.decided_at, t.picked_up_at,
          o.display_code, o.status AS kitchen_status
   FROM takeaway_orders t LEFT JOIN orders o ON o.id = t.order_id`;
@@ -71,14 +71,15 @@ export default function (broadcast) {
     }
   });
 
-  // GET /slots?date=&load= — le fasce del giorno con il carico già preso (per scegliere l'orario al banco)
+  // GET /slots?date=&cart=id:qtà,… — le fasce del giorno con i minuti di lavoro già presi (per scegliere l'orario al banco).
+  // Senza carrello `available` si riferisce a un ordine vuoto: serve solo a vedere quanto è piena ogni fascia.
   router.get('/slots', ...guard, validate({ query: slotsQuerySchema }), tenantScope, async (req, res) => {
-    const { date, load } = req.validQuery;
+    const { date, cart } = req.validQuery;
     try {
-      const [settings, hours, byTime] = await Promise.all([loadSettings(req.db), loadHours(req.db), loadByTime(req.db, date)]);
+      const [settings, hours, usedByTime, minutes] = await Promise.all([loadSettings(req.db), loadHours(req.db), loadUsedByTime(req.db, date), cart?.length ? loadWorkMinutes(req.db, cart) : 0]);
       res.json({
         date, capacity: settings.capacity,
-        slots: slotStates({ date, hours, slotMinutes: settings.slotMinutes, capacity: settings.capacity, loadByTime: byTime, now: localNow(), minLeadMinutes: 0, load }),
+        slots: slotStates({ date, hours, slotMinutes: settings.slotMinutes, capacity: settings.capacity, usedByTime, now: localNow(), minLeadMinutes: 0, minutes }),
       });
     } catch (err) {
       logger.error({ err }, 'Errore GET /api/takeaway/slots');
@@ -106,7 +107,7 @@ export default function (broadcast) {
       const { rows } = await req.db.query(
         `${ORDER_SQL} WHERE t.status = 'requested' AND t.pickup_at > now() - interval '1 day' ORDER BY t.requested_at, t.id`, [PORTAL_TZ]);
       res.json(rows.map(r => ({ id: r.id, kind: 'takeaway_request', customer_name: r.customer_name, party_size: null, date: r.date, start_time: r.time,
-        load: r.load, total: Number(r.total), at: r.requested_at })));
+        work_minutes: r.work_minutes, total: Number(r.total), at: r.requested_at })));
     } catch (err) {
       logger.error({ err }, 'Errore GET /api/takeaway/inbox');
       res.status(500).json({ error: 'Errore caricamento notifiche' });
@@ -128,6 +129,8 @@ export default function (broadcast) {
     await db.query(
       `UPDATE takeaway_orders SET status = 'accepted', order_id = $2, pickup_at = $3, total = $4, decided_by = $5, decided_at = now() WHERE id = $1`,
       [row.id, created?.order.id ?? null, stamp, created?.total ?? row.total, req.user.id]);
+    // Il codice di ritiro c'è da subito: il cliente lo vede nella pagina del suo ordine, anche se la cucina lo riceve più tardi
+    await assignPickupCode(db, row.id);
     return created;
   }
 
@@ -149,23 +152,23 @@ export default function (broadcast) {
         await db.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`takeaway:${req.user.tenantId}`]);
         const { items, total } = await verifyOrderItems(db, b.items, req.user.role);
         const snapshot = snapshotItems(items);
-        const load = await loadOfItems(db, items);
-        const taken = (await loadByTime(db, b.date)).get(b.time) ?? 0;
-        if (!b.ignore_capacity && taken + load > settings.capacity)
+        const minutes = await loadWorkMinutes(db, items);
+        const taken = (await loadUsedByTime(db, b.date)).get(b.time) ?? 0;
+        if (!b.ignore_capacity && taken + minutes > settings.capacity)
           throw new HttpError(409, `La fascia delle ${b.time} è piena (${taken} su ${settings.capacity}): scegline un'altra`, 'SLOT_FULL');
         const at = (await db.query(`SELECT (($1::date + $2::time) AT TIME ZONE $3) AS at`, [b.date, b.time, PORTAL_TZ])).rows[0].at;
         const { rows: [row] } = await db.query(
-          `INSERT INTO takeaway_orders (status, source, pickup_at, load, customer_name, phone, notes, items, total, public_token, created_by)
+          `INSERT INTO takeaway_orders (status, source, pickup_at, work_minutes, customer_name, phone, notes, items, total, public_token, created_by)
            VALUES ('requested', $1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
-          [b.source, at, load, b.customer_name, b.phone, b.notes, JSON.stringify(snapshot), total, crypto.randomBytes(18).toString('base64url'), req.user.id]);
+          [b.source, at, minutes, b.customer_name, b.phone, b.notes, JSON.stringify(snapshot), total, crypto.randomBytes(18).toString('base64url'), req.user.id]);
         const full = { id: row.id, items: snapshot, customer_name: b.customer_name, pickup_at: at, total };
         const created = await accept(db, req, full, { date: b.date });
         await enqueue(db, 'takeaway', row.id, 'accepted');
         return { id: row.id, created, full, at };
       });
       await logAudit(req.db, req.user.id, 'TAKEAWAY_CREATE', { takeawayId: result.id, source: b.source, total: result.full.total });
-      if (result.created) announce(req, result.created, result.full, result.at);     // senza ordine di cucina non c'è nulla da annunciare
       const order = present(await loadOne(req.db, result.id));
+      if (result.created) announce(req, result.created, { ...result.full, pickup_code: order.pickup_code }, result.at);     // senza ordine di cucina non c'è nulla da annunciare
       notify(req.user.tenantId, order);
       res.status(201).json(order);
     } catch (err) {
@@ -186,8 +189,8 @@ export default function (broadcast) {
           // Il locale propone un altro orario: deve essere una fascia con posto
           const [settings, hours] = [await loadSettings(db), await loadHours(db)];
           if (!isSlot(row.date, req.body.time, hours, settings.slotMinutes)) throw new HttpError(409, 'Scegli una fascia dall\'elenco', 'NOT_A_SLOT');
-          const taken = (await loadByTime(db, row.date, { excludeId: row.id })).get(req.body.time) ?? 0;
-          if (!req.body.ignore_capacity && taken + row.load > settings.capacity) throw new HttpError(409, `La fascia delle ${req.body.time} è piena`, 'SLOT_FULL');
+          const taken = (await loadUsedByTime(db, row.date, { excludeId: row.id })).get(req.body.time) ?? 0;
+          if (!req.body.ignore_capacity && taken + row.work_minutes > settings.capacity) throw new HttpError(409, `La fascia delle ${req.body.time} è piena`, 'SLOT_FULL');
           time = req.body.time;
         }
         const created = await accept(db, req, { ...row, items: row.items }, { time, date });
@@ -196,7 +199,7 @@ export default function (broadcast) {
       });
       await logAudit(req.db, req.user.id, 'TAKEAWAY_ACCEPT', { takeawayId: Number(req.params.id) });
       const order = present(await loadOne(req.db, req.params.id));
-      if (result.created) announce(req, result.created, result.row, order.pickup_at);
+      if (result.created) announce(req, result.created, { ...result.row, pickup_code: order.pickup_code }, order.pickup_at);
       notify(req.user.tenantId, order);
       res.json(order);
     } catch (err) {

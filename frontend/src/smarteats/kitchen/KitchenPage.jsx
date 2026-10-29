@@ -30,7 +30,7 @@ const Ticket = ({ order, fresh, onLines }) => {
         <div className="min-w-0">
           {takeaway && <p className="text-xs font-medium opacity-90">Ritiro alle</p>}
           <h3 className="text-xl font-semibold leading-tight tabular-nums truncate">{where}</h3>
-          <p className="mt-0.5 text-sm opacity-90 truncate">{[order.pickup_name, order.course_name, order.covers > 0 && `${order.covers} cop.`, named && `#${order.display_code}`].filter(Boolean).join(' · ')}</p>
+          <p className="mt-0.5 text-sm opacity-90 truncate">{[order.pickup_name, order.pickup_code && `cod. ${order.pickup_code}`, order.course_name, order.covers > 0 && `${order.covers} cop.`, named && `#${order.display_code}`].filter(Boolean).join(' · ')}</p>
         </div>
         <span className="flex items-center gap-1.5 text-base font-semibold tabular-nums shrink-0 rounded-full bg-black/15 px-3 py-1" aria-label={takeaway ? `Ritiro ${wait}` : `In attesa da ${wait}`}><Clock size={16} />{wait}</span>
       </header>

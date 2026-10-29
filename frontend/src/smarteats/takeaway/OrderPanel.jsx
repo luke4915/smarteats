@@ -87,13 +87,20 @@ const OrderPanel = ({ order, slots, onBack, onChanged }) => {
   ) : null;
 
   return (
-    <PanelFrame title={order.customer_name} subtitle={`${formatDay(order.date, { short: true })} · ritiro ${order.time}${order.display_code ? ` · ${order.display_code}` : ''}`} onBack={onBack} footer={footer}>
+    <PanelFrame title={order.customer_name} subtitle={`${formatDay(order.date, { short: true })} · ritiro ${order.time}${order.display_code ? ` · #${order.display_code}` : ''}`} onBack={onBack} footer={footer}>
       <div className="px-1 space-y-4 pb-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`inline-flex items-center h-6 px-2.5 rounded-full text-xs font-medium ${TONES[status.tone]}`}>{status.label}</span>
           <span className="text-sm text-[var(--text-muted)]">{SOURCE[order.source] ?? order.source}</span>
           {order.paid_method && <span className="text-sm text-[var(--text-muted)]">· pagato {({ cash: 'in contanti', card: 'con carta', other: 'altro' })[order.paid_method]}</span>}
         </div>
+
+        {order.pickup_code && (
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] px-3 py-2.5 flex items-center justify-between gap-3">
+            <span className="text-sm text-[var(--text-muted)]">Codice di ritiro</span>
+            <span className="text-2xl font-semibold tabular-nums tracking-[0.08em] text-[var(--text-main)]" aria-label={`Codice di ritiro ${order.pickup_code}`}>{order.pickup_code}</span>
+          </div>
+        )}
 
         <ul className="rounded-lg border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden">
           {order.items.map((i, n) => (

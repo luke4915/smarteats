@@ -135,7 +135,7 @@ export default function (broadcast) {
         const existing = await findOrderByClientId(req.db, client_order_id);
         if (existing) return res.json(duplicateResponse(existing));
       }
-      if (err.constraint === 'uniq_orders_device_seq') {
+      if (['uniq_orders_device_seq', 'uniq_orders_session_source_number'].includes(err.constraint)) {
         return res.status(409).json({ error: 'Numero ordine già usato da questo dispositivo', code: 'DEVICE_SEQ_CONFLICT' });
       }
       if (sendHttpError(res, err)) return;

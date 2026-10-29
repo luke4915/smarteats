@@ -60,6 +60,13 @@ const Status = ({ token, info }) => {
           <h2 className="text-lg font-semibold">{text.title}</h2>
         </div>
         <p className="text-sm text-[var(--text-muted)]">{text.body}</p>
+        {data.pickup_code && (
+          <div className="rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] px-4 py-3 text-center">
+            <p className="text-xs text-[var(--text-muted)]">Il tuo codice di ritiro</p>
+            <p className="text-4xl font-semibold tabular-nums tracking-[0.12em] text-[var(--text-main)]" aria-label={`Codice di ritiro ${data.pickup_code.split('').join(' ')}`}>{data.pickup_code}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Dillo al banco quando arrivi.</p>
+          </div>
+        )}
         {data.status === 'rejected' && data.reject_reason && <p className="text-sm">«{data.reject_reason}»</p>}
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm pt-2 border-t border-[var(--border)]">
           <dt className="text-[var(--text-muted)]">Ritiro</dt><dd className="font-medium">{formatDay(data.date)} · {data.time}</dd>
@@ -109,6 +116,7 @@ const OrderPage = () => {
 
   const lines = useMemo(() => (info ? info.products.filter(p => cart[p.id] > 0).map(p => ({ ...p, quantity: cart[p.id] })) : []), [info, cart]);
   const count = lines.reduce((n, l) => n + l.quantity, 0);
+  const cartParam = lines.map(l => `${l.id}:${l.quantity}`).join(',');   // il server calcola da qui quali fasce ci stanno
   const total = lines.reduce((s, l) => s + Math.round(l.price * 100) * l.quantity, 0) / 100;
   const change = (id, delta) => setCart(c => { const q = Math.max(0, (c[id] ?? 0) + delta); const next = { ...c, [id]: q }; if (!q) delete next[id]; return next; });
 
@@ -120,9 +128,9 @@ const OrderPage = () => {
     if (!date) { setSlots(null); return; }
     let cancelled = false;
     setTime('');
-    apiFetch(`/public/takeaway/slots?date=${date}&load=${Math.max(1, count)}`).then(r => { if (!cancelled) setSlots(r.slots); }).catch(err => !cancelled && setError(err.message));
+    apiFetch(`/public/takeaway/slots?date=${date}&cart=${cartParam}`).then(r => { if (!cancelled) setSlots(r.slots); }).catch(err => !cancelled && setError(err.message));
     return () => { cancelled = true; };
-  }, [date, count]);
+  }, [date, cartParam]);
 
   const valid = lines.length > 0 && date && time && form.customer_name.trim() && form.phone.replace(/\D/g, '').length >= 6 && form.consent;
   const setField = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
@@ -136,7 +144,7 @@ const OrderPage = () => {
       window.location.assign(`/order/${res.token}`);
     } catch (err) {
       setError(err.message);
-      if (err.code === 'SLOT_FULL') { setTime(''); apiFetch(`/public/takeaway/slots?date=${date}&load=${Math.max(1, count)}`).then(r => setSlots(r.slots)).catch(() => {}); }
+      if (err.code === 'SLOT_FULL') { setTime(''); apiFetch(`/public/takeaway/slots?date=${date}&cart=${cartParam}`).then(r => setSlots(r.slots)).catch(() => {}); }
     } finally { setSending(false); }
   };
 

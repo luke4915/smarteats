@@ -117,7 +117,7 @@ async function recreateTenant() {
 // ── Carta ──
 const COLORS = { Antipasti: '#f59e0b', Pizze: '#ef4444', Primi: '#f97316', Secondi: '#b45309', Contorni: '#16a34a', Dolci: '#ec4899', Bevande: '#3b82f6', Caffè: '#78350f' };
 const MENU = [
-  // [nome, prezzo, categoria, portata, destinazione, carico forno]
+  // [nome, prezzo, categoria, portata, destinazione, pezzi per volta in forno (1 = una pizza, 5 minuti)]
   ['Bruschetta al pomodoro', 6, 'Antipasti', 'Antipasti', 'kitchen'],
   ['Tagliere di salumi e formaggi', 14, 'Antipasti', 'Antipasti', 'kitchen'],
   ['Carpaccio di manzo', 13, 'Antipasti', 'Antipasti', 'kitchen'],
@@ -196,7 +196,7 @@ async function configure(api) {
   for (const [name, price, category, course, destination, load] of MENU) {
     const p = await api.post('/products', {
       name, price, category, color: COLORS[category], print_destination: destination,
-      course_id: course ? courses[course] : null, ...(load && { takeaway_load: load }),
+      course_id: course ? courses[course] : null, ...(['Bevande', 'Caffè'].includes(category) ? { prep_minutes: 0 } : load ? { prep_minutes: load * 6 } : {}),
     });
     products[name] = p.id;
   }

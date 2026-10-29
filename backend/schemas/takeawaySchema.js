@@ -44,7 +44,10 @@ export const acceptSchema = z.object({ time: time.optional(), ignore_capacity: z
 export const rejectSchema = z.object({ reason: z.string().trim().max(200).default('') });
 export const pickedUpSchema = z.object({ method: z.enum(['cash', 'card', 'other']) });
 export const ordersQuerySchema = z.object({ date });
-export const slotsQuerySchema = z.object({ date, load: z.coerce.number().int().min(0).max(999).default(1) });
+// Il carrello per cui si chiedono le fasce, come «id:quantità,id:quantità»: il server ne calcola i minuti di lavoro (il cliente non li vede).
+const cart = z.string().max(400).transform(v => v.split(',').filter(Boolean).map(part => { const [id, quantity] = part.split(':'); return { id: Number(id), quantity: Number(quantity) }; }))
+  .pipe(z.array(z.object({ id: z.number().int().positive(), quantity: z.number().int().min(1).max(99) })).max(60));
+export const slotsQuerySchema = z.object({ date, cart: cart.optional() });
 export const hoursSchema = z.object({
   hours: z.array(z.object({ weekday: z.number().int().min(0).max(6), open_time: time, close_time: time }))
     .max(28).refine(a => a.every(h => h.close_time > h.open_time), 'La chiusura deve essere dopo l\'apertura'),

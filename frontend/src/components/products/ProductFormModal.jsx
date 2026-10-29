@@ -9,7 +9,6 @@ import { categoryColors, namesForCategory } from './productForm';
 
 const PRINT_OPTIONS = [{ id: 'both', label: 'Bar e cucina' }, { id: 'bar', label: 'Solo bar' }, { id: 'kitchen', label: 'Solo cucina' }];
 const VAT_RATES = ['4', '5', '10', '22', '0'];
-const OVEN_LOAD = [[0, 'Niente (bibite, dolci già pronti…)'], [1, 'Una porzione (una pizza)'], [2, 'Due porzioni (pizza grande, teglia)'], [3, 'Tre porzioni']];
 
 // Un campo con la sua etichetta; `hint` è la spiegazione in piccolo.
 const Field = ({ title, htmlFor, hint, className = '', children }) => (
@@ -90,10 +89,9 @@ const ProductFormModal = ({ form, setForm, products, editing, courses, modifierG
               </Field>
             )}
             {takeawayEnabled && (
-              <Field title="Asporto: quanto impegna il forno" htmlFor="takeaway_load">
-                <select id="takeaway_load" value={form.takeaway_load ?? 1} onChange={e => patch({ takeaway_load: Number(e.target.value) })} className={input}>
-                  {OVEN_LOAD.map(([value, text]) => <option key={value} value={value}>{text}</option>)}
-                </select>
+              <Field title="Tempo di preparazione (minuti)" htmlFor="prep_minutes" hint="Serve all'asporto per sapere quanti ordini ci stanno in una fascia. 0 per bevande e cose già pronte.">
+                <input id="prep_minutes" type="number" inputMode="numeric" min="0" max="120" step="1" value={form.prep_minutes ?? 5}
+                  onChange={e => patch({ prep_minutes: e.target.value === '' ? 0 : Math.min(120, Math.max(0, Math.floor(Number(e.target.value)))) })} className={`${input} tabular-nums`} />
               </Field>
             )}
             {vatEnabled && (

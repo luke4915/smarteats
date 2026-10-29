@@ -49,6 +49,9 @@ describe('dispositivi e numerazione per cassa', () => {
     assert.equal(first.body.displayCode, `${device.letter}1`);
     const jump = await api1.post('/orders', order(device, 7)); // offline: i numeri possono arrivare a salti
     assert.equal(jump.body.displayCode, `${device.letter}7`);
+    // Il database ha sempre il numero (uguale per cassa e server): quello della cassa è il suo progressivo
+    const stored = await adminDb.query('SELECT display_code, number, device_seq FROM orders WHERE id IN ($1, $2) ORDER BY number', [first.body.orderId, jump.body.orderId]);
+    assert.deepEqual(stored.rows.map(r => [r.display_code, r.number, r.device_seq]), [[`${device.letter}1`, 1, 1], [`${device.letter}7`, 7, 7]]);
     const clash = await api1.post('/orders', order(device, 7));
     assert.equal(clash.status, 409);
     assert.equal(clash.body.code, 'DEVICE_SEQ_CONFLICT');
@@ -73,7 +76,9 @@ describe('dispositivi e numerazione per cassa', () => {
   it('senza dispositivo vale ancora il progressivo di sessione (ordini accodati prima dell\'aggiornamento)', async () => {
     const res = await api1.post('/orders', { items: [{ id: t1.productId, name: 'Panino', quantity: 1 }], status: 'completed' });
     assert.equal(res.status, 200);
-    assert.match(res.body.displayCode, /^[A-Z]\d+$/);
+    assert.match(res.body.displayCode, /^\d+$/, 'il server numera senza lettera: la lettera è solo delle casse');
+    const { rows } = await adminDb.query('SELECT number, display_code FROM orders WHERE id = $1', [res.body.orderId]);
+    assert.equal(String(rows[0].number), rows[0].display_code, 'il numero salvato è lo stesso del codice');
   });
 
   it('un dispositivo con ordini non si elimina; uno senza ordini sì', async () => {

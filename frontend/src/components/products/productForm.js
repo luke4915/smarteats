@@ -2,15 +2,16 @@
 // Il server ricontrolla tutto (backend/schemas/productSchema.js): qui si evita solo di mandare dati evidentemente sbagliati.
 
 export const DEFAULT_COLOR = '#3b82f6';
+export const DEFAULT_PREP_MINUTES = 5;     // quanto lavoro richiede un pezzo, se non si dice altro (0 = bevande e cose già pronte)
 
 // Il modulo di un prodotto nuovo. I campi in più dipendono dal locale: la portata e le opzioni solo nei ristoranti,
-// il carico sul forno solo con l'asporto, le porzioni (regola di azzeramento) solo col modulo magazzino (`portions`),
+// i minuti di preparazione solo con l'asporto, le porzioni (regola di azzeramento) solo col modulo magazzino (`portions`),
 // l'aliquota IVA solo nella modalità «magazzino» (`vat`: serve ai margini; vuota = quella predefinita del locale).
 export function blankForm({ courses = null, takeawayEnabled = false, modifierGroups = null, portions = false, vat = false } = {}) {
   return {
     name: '', price: '', category: '', color: DEFAULT_COLOR, visible: true, print_destination: 'both',
     ...(courses && { course_id: null }),
-    ...(takeawayEnabled && { takeaway_load: 1 }),
+    ...(takeawayEnabled && { prep_minutes: DEFAULT_PREP_MINUTES }),
     ...(modifierGroups && { modifier_group_ids: [] }),
     ...(portions && { portions_reset_rule: 'unlimited', portions_start: '' }),
     ...(vat && { vat_rate: '' }),
@@ -28,7 +29,7 @@ export function formFromProduct(product, { courses = null, takeawayEnabled = fal
     visible: product.visible ?? true,
     print_destination: product.print_destination || 'both',
     ...(courses && { course_id: product.course_id ?? null }),
-    ...(takeawayEnabled && { takeaway_load: product.takeaway_load ?? 1 }),
+    ...(takeawayEnabled && { prep_minutes: product.prep_minutes ?? DEFAULT_PREP_MINUTES }),
     ...(modifierGroups && { modifier_group_ids: modifierGroups.filter(g => g.product_ids.includes(product.id)).map(g => g.id) }),
     ...(portions && { portions_reset_rule: product.portions_reset_rule ?? 'unlimited', portions_start: product.portions_start != null ? String(product.portions_start) : '' }),
     ...(vat && { vat_rate: product.vat_rate != null ? String(Number(product.vat_rate)) : '' }),

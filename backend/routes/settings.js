@@ -66,7 +66,7 @@ router.put('/:key', authenticate, authorizeAdmin, validate({ params: settingPara
     if (key === 'takeaway_slot_minutes' && !['10', '15', '20', '30', '60'].includes(String(value)))
         return res.status(400).json({ error: 'value: la fascia dura 10, 15, 20, 30 o 60 minuti' });
     if (key === 'takeaway_slot_capacity' && !(/^\d{1,3}$/.test(String(value)) && Number(value) >= 1))
-        return res.status(400).json({ error: 'value: indica quante pizze per fascia (da 1 a 999)' });
+        return res.status(400).json({ error: 'value: indica i minuti di lavoro per fascia (da 1 a 999)' });
     if (key === 'takeaway_min_lead_minutes' && !(/^\d{1,3}$/.test(String(value)) && Number(value) <= 240))
         return res.status(400).json({ error: 'value: l\'anticipo minimo va da 0 a 240 minuti' });
     if (key === 'takeaway_phone' && value && !/^[+\d][\d\s./-]{4,38}$/.test(value.trim()))

@@ -1,4 +1,4 @@
-// Regole pure dell'asporto (migrazione 050, docs/design-asporto.md): fasce di ritiro, carico sul forno e anticipo.
+// Regole pure dell'asporto (migrazione 050 e 057, docs/design-asporto.md): fasce di ritiro, minuti di lavoro e anticipo.
 // Niente database: funzioni con test (tests/takeaway.test.js). Date `YYYY-MM-DD`, ore `HH:MM`, nel fuso del locale.
 import { minutesOf, weekdayOf } from './bookings.js';
 import { addDays, daysBetween } from './bookingPortal.js';
@@ -6,7 +6,8 @@ import { addDays, daysBetween } from './bookingPortal.js';
 export const MAX_DAYS_AHEAD = 7;           // dal portale si ordina fino a una settimana prima
 export const MAX_ITEMS_PER_ORDER = 40;     // pezzi in un ordine dal portale (oltre: telefonare)
 export const MAX_PENDING_PER_PHONE = 3;    // richieste in attesa dello stesso telefono
-export const DEFAULTS = { slotMinutes: 15, capacity: 12, minLeadMinutes: 30 };
+// `capacity` = minuti di lavoro disponibili in una fascia; `prepMinutes` = quanto vale un prodotto senza tempo indicato
+export const DEFAULTS = { slotMinutes: 15, capacity: 60, minLeadMinutes: 30, prepMinutes: 5 };
 export const STALE_PICKUP_MINUTES = 120;   // oltre queste ore di ritardo un asporto accettato non va più in cucina da solo
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -49,19 +50,31 @@ export function pickupIsStale(pickupDate, pickupTime, now, graceMinutes = STALE_
   return minutesLate > graceMinutes;
 }
 
-// Carico di un insieme di righe: somma di quantità × `takeaway_load` del prodotto. `loadOf(productId)` → intero.
-export const orderLoad = (items, loadOf) => items.reduce((sum, i) => sum + Number(i.quantity) * (loadOf(i.id) ?? 1), 0);
+// Minuti di lavoro di un insieme di righe: somma di quantità × minuti di preparazione del prodotto. `prepOf(productId)` → minuti
+// (0 per le bevande e le cose già pronte; un prodotto sconosciuto vale `DEFAULTS.prepMinutes`).
+export const orderWorkMinutes = (items, prepOf) => items.reduce((sum, i) => sum + Number(i.quantity) * (prepOf(i.id) ?? DEFAULTS.prepMinutes), 0);
 
-// Stato di ogni fascia di un giorno. `loadByTime` = Map «HH:MM» → carico già preso (ordini vivi); `capacity` per fascia.
-// `available` dice se un nuovo ordine di `load` unità ci sta ancora (e la fascia è nella finestra);
-// `status`: 'open' (c'è posto), 'full' (carico al limite), 'closed' (già passata o troppo vicina).
-export function slotStates({ date, hours, slotMinutes, capacity, loadByTime, now, minLeadMinutes, load = 1 }) {
+// Stato di ogni fascia di un giorno. `usedByTime` = Map «HH:MM» → minuti di lavoro già presi (ordini vivi); `capacity` = minuti per fascia.
+// `available` dice se un nuovo ordine di `minutes` minuti ci sta ancora (e la fascia è nella finestra);
+// `status`: 'open' (c'è posto), 'full' (capienza al limite), 'closed' (già passata o troppo vicina).
+export function slotStates({ date, hours, slotMinutes, capacity, usedByTime, now, minLeadMinutes, minutes = DEFAULTS.prepMinutes }) {
   return slotsOn(date, hours, slotMinutes).map(time => {
-    const taken = loadByTime.get(time) ?? 0;
+    const used = usedByTime.get(time) ?? 0;
     const within = slotWithinWindow(date, time, now, minLeadMinutes).ok;
-    const fits = taken + load <= capacity;
-    return { time, load: taken, capacity, available: within && fits, status: !within ? 'closed' : fits ? 'open' : 'full' };
+    const fits = used + minutes <= capacity;
+    return { time, used, capacity, available: within && fits, status: !within ? 'closed' : fits ? 'open' : 'full' };
   });
+}
+
+// Codice di ritiro: tre cifre (100-999) che il cliente dice al banco. Non deve ripetersi tra gli ordini vivi dello stesso giorno
+// (`taken` = i codici già dati). Si pesca a caso e, se la sorte insiste, si cerca il primo libero; `null` solo se sono finiti tutti.
+export function newPickupCode(taken, random = Math.random) {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const code = String(100 + Math.floor(random() * 900));
+    if (!taken.has(code)) return code;
+  }
+  for (let n = 100; n <= 999; n += 1) if (!taken.has(String(n))) return String(n);
+  return null;
 }
 
 // Un orario `HH:MM` del giorno `date` è una fascia valida di quel giorno?

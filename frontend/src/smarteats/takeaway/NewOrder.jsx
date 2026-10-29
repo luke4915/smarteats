@@ -5,7 +5,7 @@ import { useToast } from '../../context/useToast';
 import PanelFrame from '../floor/PanelFrame';
 import { btn, btnPrimary, iconBtn, input, label, segment, segmentBox } from '../floor/ui';
 import { formatEuro } from '../../utils/format';
-import { addToCart, cartCount, cartTotal, cartLoad } from './rules';
+import { addToCart, cartCount, cartTotal, cartParam } from './rules';
 
 // L'ordine preso al banco o al telefono: a sinistra la carta comune (`ProductPicker`, la stessa della Sala), a destra il riepilogo
 // con nome, telefono e fascia di ritiro. Nasce già accettato e va subito in cucina.
@@ -16,12 +16,12 @@ const NewOrder = ({ date, cart, setCart, onBack, onCreated }) => {
   const [busy, setBusy] = useState(false);
   const [full, setFull] = useState(null);
 
-  const load = cartLoad(cart);
+  const cartKey = cartParam(cart);
   useEffect(() => {
     let cancelled = false;
-    fetchWithAuth(`/takeaway/slots?date=${form.date}&load=${Math.max(load, 1)}`).then(r => { if (!cancelled) setSlots(r.slots.filter(s => s.status !== 'closed')); }).catch(() => {});
+    fetchWithAuth(`/takeaway/slots?date=${form.date}${cartKey ? `&cart=${cartKey}` : ''}`).then(r => { if (!cancelled) setSlots(r.slots.filter(s => s.status !== 'closed')); }).catch(() => {});
     return () => { cancelled = true; };
-  }, [form.date, load]);
+  }, [form.date, cartKey]);
   // La prima fascia libera è già scelta: al banco serve rapidità
   useEffect(() => {
     if (!form.time || !slots.some(s => s.time === form.time)) {
@@ -98,7 +98,7 @@ const NewOrder = ({ date, cart, setCart, onBack, onCreated }) => {
                 <button key={s.time} role="radio" aria-checked={on} onClick={() => setForm(f => ({ ...f, time: s.time }))}
                   className={`h-12 rounded-lg border text-center cursor-pointer leading-tight ${on ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : s.available ? 'border-[var(--border)] bg-[var(--bg-card-2)] text-[var(--text-main)] hover:border-[var(--accent)]' : 'border-amber-500/40 bg-amber-500/5 text-amber-500'}`}>
                   <span className="block text-sm font-semibold tabular-nums">{s.time}</span>
-                  <span className="block text-[10px] tabular-nums opacity-80">{s.load}/{s.capacity}</span>
+                  <span className="block text-[10px] tabular-nums opacity-80">{s.used}/{s.capacity} min</span>
                 </button>
               );
             })}
