@@ -152,7 +152,6 @@ const MENU = [
 
 async function configure(api) {
   const s = (key, value) => api.put(`/settings/${key}`, { value });
-  await s('welcome_message', 'Benvenuti alla Trattoria SmartEats');
   await s('cover_charge', '2');
   await s('booking_portal_enabled', '1');
   await s('booking_portal_phone', '+39 06 1234 5678');
@@ -548,6 +547,8 @@ async function main() {
     void waiter;
 
     const ctx = await configure(api);
+    // il messaggio del menu pubblico non è una impostazione del locale: lo scrive il master, qui direttamente nel database
+    await admin.query(`INSERT INTO settings (key, value, tenant_id) VALUES ('welcome_message', 'Benvenuti alla Trattoria SmartEats', $1) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value`, [tenantId]);
     const groups = await api.get('/modifier-groups');
     ctx.cooking = Object.fromEntries(groups.find(g => g.name === 'Cottura').options.map(o => [o.name, o.id]));
     ctx.extras = Object.fromEntries(groups.find(g => g.name === 'Aggiunte').options.map(o => [o.name, o.id]));

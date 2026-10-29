@@ -15,7 +15,7 @@ import { whatsappConfigSchema, whatsappTestSchema } from '../schemas/whatsappSch
 import { EVENTS, EVENT_IDS, eventSettingKey, QUOTA_SETTING_KEY, renderBody, normalizeMobile, templateName } from '../utils/whatsapp.js';
 import { loadConfig, monthUsage } from '../utils/whatsapp/outbox.js';
 import { getDriver } from '../utils/whatsapp/driver.js';
-import { masterLoginSchema, createTenantSchema, extendLicenseSchema, tenantActiveSchema, deleteTenantSchema, receiptCustomizationSchema, tenantUserParamsSchema, tenantModulesSchema } from '../schemas/masterSchema.js';
+import { masterLoginSchema, createTenantSchema, extendLicenseSchema, tenantActiveSchema, deleteTenantSchema, receiptCustomizationSchema, menuSettingsSchema, tenantUserParamsSchema, tenantModulesSchema } from '../schemas/masterSchema.js';
 import { createUserSchema, resetPasswordSchema, updateUserSchema } from '../schemas/authSchema.js';
 import { catalog, normalizeModules, firstModuleNotAllowed, inventoryColumnsFor, BUSINESS_TYPES } from '../utils/modules.js';
 import { invalidateTenantModules } from '../utils/tenantModules.js';
@@ -306,6 +306,34 @@ router.put('/tenants/:id/receipt', authenticateMaster, validate({ params: idPara
   } catch (err) {
     logger.error({ err }, 'Errore PUT /api/master/tenants/:id/receipt');
     res.status(500).json({ error: 'Errore salvataggio personalizzazione' });
+  }
+});
+
+// MENU PUBBLICO — il messaggio di benvenuto che i clienti leggono aprendo il QR. Lo scrive solo il master (non è tra le impostazioni
+// del locale): stessa strada della personalizzazione degli scontrini.
+router.get('/tenants/:id/menu', authenticateMaster, validate({ params: idParamsSchema }), async (req, res) => {
+  try {
+    if (!await tenantExists(req.params.id)) return res.status(404).json({ error: 'Tenant non trovato' });
+    const { rows } = await withTenantClient(req.params.id, (db) => db.query(`SELECT value FROM settings WHERE key = 'welcome_message'`), masterPool);
+    res.json({ welcome_message: rows[0]?.value ?? '' });
+  } catch (err) {
+    logger.error({ err }, 'Errore GET /api/master/tenants/:id/menu');
+    res.status(500).json({ error: 'Errore caricamento del menu pubblico' });
+  }
+});
+
+router.put('/tenants/:id/menu', authenticateMaster, validate({ params: idParamsSchema, body: menuSettingsSchema }), async (req, res) => {
+  try {
+    if (!await tenantExists(req.params.id)) return res.status(404).json({ error: 'Tenant non trovato' });
+    const text = req.body.welcome_message;
+    await withTenantClient(req.params.id, (db) => (text
+      ? db.query(`INSERT INTO settings (key, value) VALUES ('welcome_message', $1) ON CONFLICT (tenant_id, key) DO UPDATE SET value = $1`, [text])
+      : db.query(`DELETE FROM settings WHERE key = 'welcome_message'`)), masterPool);
+    logger.info({ tenantId: req.params.id }, 'Messaggio del menu pubblico aggiornato dal master');
+    res.json({ welcome_message: text });
+  } catch (err) {
+    logger.error({ err }, 'Errore PUT /api/master/tenants/:id/menu');
+    res.status(500).json({ error: 'Errore salvataggio del menu pubblico' });
   }
 });
 

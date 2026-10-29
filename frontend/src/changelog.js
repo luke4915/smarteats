@@ -16,6 +16,7 @@ export const CHANGELOG = [
       'Numero degli ordini uguale per tutti: la sagra tiene la lettera di ogni cassa (A13), ristorante e asporto usano un numero semplice (23) che riparte a ogni servizio.',
       'Asporto: appena accetti un ordine il cliente ha un codice di ritiro di tre cifre, nella pagina del suo ordine; lo vedi anche nell\'elenco, nel dettaglio e in cucina.',
       'Asporto: le fasce si riempiono in base al tempo di preparazione di ogni piatto (in minuti, nel modulo del prodotto) e non più al numero di pezzi: le bevande non occupano la cucina. I valori di prima sono stati convertiti.',
+      'Menu pubblico con il QR (sagre): si scarica il QR da stampare, si copia il link e i clienti possono cercare un prodotto. Il messaggio di benvenuto lo imposta ora l\'assistenza.',
       'Esporta una serata: report PDF completo (incasso, cassa con differenza, pagamenti, prodotti, andamento per ora), CSV delle righe con cassa o tavolo, omaggi e sconti, e CSV dei prodotti. Gli orari sono ora quelli del locale.',
     ],
   },

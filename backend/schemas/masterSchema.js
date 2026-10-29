@@ -78,5 +78,8 @@ if (RECEIPT_SETTINGS_KEYS.some(k => !(k in RECEIPT_FIELD_SCHEMAS)) || Object.key
 
 export const receiptCustomizationSchema = z.object(RECEIPT_FIELD_SCHEMAS);
 
+// Menu pubblico con il QR: il messaggio di benvenuto lo scrive solo il master (funzione a pagamento). Vuoto = nessun messaggio.
+export const menuSettingsSchema = z.object({ welcome_message: z.string().trim().max(300, 'Al massimo 300 caratteri') });
+
 // Utenti di un tenant: /master/tenants/:id/users/:userId
 export const tenantUserParamsSchema = z.object({ id: idSchema, userId: idSchema });

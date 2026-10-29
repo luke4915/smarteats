@@ -65,7 +65,8 @@ describe('sessione e impostazioni', () => {
     await adminDb.query(`INSERT INTO settings (key, value, tenant_id) VALUES ('chiave_interna', 'segreto', $1)`, [t.id]);
     const api = apiClient(server.port, t.host);
     await api.login(t.username);
-    assert.equal((await api.put('/settings/welcome_message', { value: 'Benvenuti' })).status, 200);
+    assert.equal((await api.put('/settings/welcome_message', { value: 'Benvenuti' })).status, 400, 'il messaggio lo scrive solo il master');
+    await adminDb.query(`INSERT INTO settings (key, value, tenant_id) VALUES ('welcome_message', 'Benvenuti', $1)`, [t.id]);
     assert.equal((await api.put('/settings/chiave_interna', { value: 'x' })).status, 400);
     const res = await apiClient(server.port, t.host).get('/settings');
     assert.deepEqual(res.body, { welcome_message: 'Benvenuti' });

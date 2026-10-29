@@ -110,6 +110,24 @@ describe('pannello master', () => {
     }
   });
 
+  it('messaggio del menu pubblico: lo scrive solo il master, per locale, e il QR lo mostra ai clienti', async () => {
+    const menu = (t) => `/master/tenants/${t.id}/menu`;
+    assert.equal((await master.get(menu(t1))).status, 401, 'serve il master');
+    assert.equal((await api1.request('PUT', menu(t1), { welcome_message: 'x' })).status, 401, 'nemmeno l\'admin del locale');
+    assert.deepEqual((await master.request('GET', menu(t1), undefined, masterCookie)).body, { welcome_message: '' });
+
+    const saved = await master.request('PUT', menu(t1), { welcome_message: '  Benvenuti alla sagra!  ' }, masterCookie);
+    assert.deepEqual([saved.status, saved.body.welcome_message], [200, 'Benvenuti alla sagra!']);
+    assert.deepEqual((await apiClient(server.port, t1.host).get('/settings')).body, { welcome_message: 'Benvenuti alla sagra!' }, 'i clienti lo leggono dal menu pubblico');
+    assert.deepEqual((await apiClient(server.port, t2.host).get('/settings')).body, {}, 'un altro locale non lo vede');
+    assert.equal((await api1.put('/settings/welcome_message', { value: 'Cambiato dal locale' })).status, 400, 'il locale non lo cambia');
+
+    assert.equal((await master.request('PUT', menu(t1), { welcome_message: 'a'.repeat(301) }, masterCookie)).status, 400);
+    assert.equal((await master.request('GET', '/master/tenants/999999999/menu', undefined, masterCookie)).status, 404);
+    assert.equal((await master.request('PUT', menu(t1), { welcome_message: '' }, masterCookie)).status, 200);
+    assert.deepEqual((await apiClient(server.port, t1.host).get('/settings')).body, {}, 'vuoto = nessun messaggio');
+  });
+
   it('elenco tenant del master con il numero di utenti', async () => {
     const res = await master.request('GET', '/master/tenants', undefined, masterCookie);
     assert.equal(res.status, 200);

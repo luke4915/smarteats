@@ -32,8 +32,8 @@ const TAKEAWAY_KEYS = ['takeaway_portal_enabled', 'takeaway_slot_minutes', 'take
 export const SETTINGS_KEYS = ['welcome_message', 'cover_charge', 'default_vat_rate', 'reserved_data_lock', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS, ...RECEIPT_SETTINGS_KEYS];
 export const PUBLIC_SETTINGS_KEYS = ['welcome_message'];
 
-// Chiavi che l'admin del tenant può modificare: quelle dello scontrino sono solo del master.
-const TENANT_WRITABLE_SETTINGS_KEYS = ['welcome_message', 'cover_charge', 'default_vat_rate', 'reserved_data_lock', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS];
+// Chiavi che l'admin del tenant può modificare: quelle dello scontrino e il messaggio del menu pubblico (`welcome_message`) sono solo del master.
+const TENANT_WRITABLE_SETTINGS_KEYS = ['cover_charge', 'default_vat_rate', 'reserved_data_lock', ...BOOKING_PORTAL_KEYS, ...TAKEAWAY_KEYS];
 
 export const settingParamsSchema = z.object({ key: z.enum(TENANT_WRITABLE_SETTINGS_KEYS) });
 

@@ -11,6 +11,7 @@ import { useSystemTheme } from '../hooks/useSystemTheme';
 import { btn, btnPrimary, btnDanger } from '../smarteats/floor/ui';
 import { formatEuro } from '../utils/format';
 import Loading from '../components/shared/Loading';
+import SearchField from '../components/shared/SearchField';
 
 // Il menu pubblico della sagra (`/menu`, dal QR): il cliente sceglie i prodotti e mostra alla cassa un QR con id e quantità. Non è un
 // ordine: la cassa lo legge e ricalcola prezzi e disponibilità dal proprio catalogo. Stessa grafica dell'ordine da asporto.
@@ -39,6 +40,7 @@ export default function MenuPage() {
   const [category, setCategory] = useState(null);
   const [sheet, setSheet] = useState(null);        // 'qr' | 'big' | null
   const [clearing, setClearing] = useState(false);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     // Il messaggio di benvenuto è facoltativo: se non arriva il menu si mostra comunque.
@@ -49,6 +51,7 @@ export default function MenuPage() {
 
   const categories = useMemo(() => [...new Set((menu?.products ?? []).map(p => p.category))], [menu]);
   const shownCategory = category ?? categories[0];
+  const term = query.trim().toLowerCase();
   const lines = useMemo(() => (menu?.products ?? []).filter(p => cart[p.id]).map(p => ({ ...p, quantity: cart[p.id] })), [menu, cart]);
   const total = lines.reduce((sum, l) => sum + parseFloat(l.price) * l.quantity, 0);
   const count = lines.reduce((sum, l) => sum + l.quantity, 0);
@@ -89,8 +92,10 @@ export default function MenuPage() {
 
   return (
     <PublicShell info={{ name: menu.tenantName ?? 'Menu', welcome }} kicker={menu.sessionName ? `Menu · ${menu.sessionName}` : 'Menu'} footer={bar}>
-      {categories.length > 1 && <CategoryChips categories={categories} value={shownCategory} onChange={setCategory} />}
-      <ProductRows products={menu.products.filter(p => categories.length < 2 || p.category === shownCategory)} quantities={cart} onChange={change} />
+      {menu.products.length > 8 && <SearchField value={query} onChange={setQuery} placeholder="Cerca un prodotto" />}
+      {categories.length > 1 && !term && <CategoryChips categories={categories} value={shownCategory} onChange={setCategory} />}
+      <ProductRows products={term ? menu.products.filter(p => p.name.toLowerCase().includes(term)) : menu.products.filter(p => categories.length < 2 || p.category === shownCategory)} quantities={cart} onChange={change} />
+      {term && !menu.products.some(p => p.name.toLowerCase().includes(term)) && <p className="text-sm text-[var(--text-muted)] text-center py-8">Nessun prodotto con «{query.trim()}».</p>}
       {menu.products.length === 0 && <p className="text-sm text-[var(--text-muted)] text-center py-8">Al momento non ci sono prodotti da scegliere.</p>}
 
       {sheet === 'qr' && (
