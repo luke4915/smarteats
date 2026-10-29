@@ -20,6 +20,7 @@ export const CHANGELOG = [
       'Piatti esauriti: restano in carta, in grigio e con «Esaurito», non spariscono più; quando la cucina o un responsabile cambia la disponibilità, tutte le casse e la sala si aggiornano subito.',
       'Cassa da telefono: lo Storno ordini è nel menu ⋯ come su tablet e PC, e i tasti rapidi dei contanti occupano tutta la larghezza.',
       'Schermo cucina (KDS) rifatto: tabellone scuro con le comande dalla più vecchia, testata verde, ambra o rossa secondo l\'attesa, codice grande, riepilogo «Da preparare» e ora.',
+      'Licenza e lavoro senza rete: se la licenza scade mentre la cassa è senza rete si può lavorare ancora per 10 ore, poi compare una schermata che chiede di collegarsi a internet. Gli ordini battuti in quelle ore si inviano al ritorno della rete.',
       'Esporta una serata: report PDF completo (incasso, cassa con differenza, pagamenti, prodotti, andamento per ora), CSV delle righe con cassa o tavolo, omaggi e sconti, e CSV dei prodotti. Gli orari sono ora quelli del locale.',
     ],
   },

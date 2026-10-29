@@ -5,6 +5,8 @@ import { useAuth } from './context/useAuth';
 import ChangePassword from './components/shared/ChangePassword';
 import Login from './pages/LoginPage';
 import FestivalApp from './festival/FestivalApp';
+import LicenseLockScreen from './components/layout/LicenseLockScreen';
+import { useLicenseLock } from './hooks/useLicenseLock';
 
 // Pagine pubbliche e del master: si caricano a richiesta (grafici, pagine dei clienti), il service worker le tiene in cache.
 const KDS = lazy(() => import('./pages/KDSPage'));
@@ -23,6 +25,7 @@ const PageLoading = () => (
 // accesso, cambio della password temporanea; poi la cassa delle sagre (festival/FestivalApp.jsx).
 const App = () => {
   const { user, loading, login } = useAuth();
+  const { locked } = useLicenseLock();
   const path = window.location.pathname;
 
   // Pagine dei clienti: pubbliche anche per chi ha una sessione aperta in questo browser
@@ -45,6 +48,9 @@ const App = () => {
       </Routes>
     </Suspense>
   );
+
+  // Licenza scaduta e dispositivo senza rete oltre le ore consentite: tutto fermo (offline/licenseLock.js)
+  if (locked) return <LicenseLockScreen />;
 
   // Password temporanea: il server blocca tutto il resto finché non la si cambia
   if (user.needsPassword) return <ChangePassword onPasswordChanged={() => login({ ...user, needsPassword: false })} />;

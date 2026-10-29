@@ -1,5 +1,6 @@
 import { pool } from '../db.js';
 import logger from '../logger.js';
+import { isLateOrderSync } from '../utils/license.js';
 
 // Verifica che il tenant sia attivo e con licenza valida. Ritorna null se
 // l'accesso è consentito, altrimenti { status, error, code } da restituire.
@@ -11,7 +12,7 @@ export async function checkTenantAccess(tenantId) {
     return { status: 403, error: 'Tenant disattivato', code: 'TENANT_INACTIVE' };
   }
   if (tenant.expires_at && new Date(tenant.expires_at) < new Date()) {
-    return { status: 402, error: 'Licenza scaduta', code: 'LICENSE_EXPIRED' };
+    return { status: 402, error: 'Licenza scaduta', code: 'LICENSE_EXPIRED', expiresAt: tenant.expires_at };
   }
   return null;
 }
@@ -35,7 +36,12 @@ export async function tenantScope(req, res, next) {
   // Licenza scaduta: blocca qui, prima di aprire la connessione scoped.
   try {
     const denied = await checkTenantAccess(req.user.tenantId);
-    if (denied) return res.status(denied.status).json({ error: denied.error, code: denied.code });
+    if (denied && denied.code === 'LICENSE_EXPIRED' && isLateOrderSync(req)) {
+      // Un ordine battuto offline prima della scadenza (o nelle ore di tolleranza) non si butta: la route controlla l'ora dichiarata
+      req.licenseExpiredAt = denied.expiresAt;
+    } else if (denied) {
+      return res.status(denied.status).json({ error: denied.error, code: denied.code });
+    }
   } catch (err) {
     logger.error({ err }, 'Errore verifica scadenza licenza');
     return res.status(500).json({ error: 'Errore interno' });

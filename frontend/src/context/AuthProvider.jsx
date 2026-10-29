@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { AuthContext } from './useAuth';
 import { apiFetch, fetchWithAuth, setAuthHandlers, NetworkError } from '../utils/apiClient';
 import { remember, recall } from '../offline/lastKnown';
+import { noteLicense, forgetLicense } from '../hooks/useLicenseLock';
 
 // Rinnovo silenzioso ogni ora: il token dura 8 ore, quindi c'è sempre margine.
 const REFRESH_INTERVAL_MS = 60 * 60 * 1000;
@@ -17,6 +18,7 @@ export const AuthProvider = ({ children }) => {
   const clearSession = useCallback(() => {
     setUser(null);
     remember('user', null);
+    forgetLicense();
     clearInterval(refreshTimer.current);
   }, []);
 
@@ -24,7 +26,7 @@ export const AuthProvider = ({ children }) => {
   // Con la rete assente non si butta fuori l'operatore: si riproverà più tardi.
   const executeRefresh = useCallback(async () => {
     try {
-      await apiFetch('/auth/refresh', { method: 'POST' });
+      noteLicense((await apiFetch('/auth/refresh', { method: 'POST' }))?.license);   // il server dice fino a quando si può lavorare senza rete
       return true;
     } catch (err) {
       if (err instanceof NetworkError) {
@@ -60,6 +62,7 @@ export const AuthProvider = ({ children }) => {
         const userData = await fetchWithAuth('/auth/me');
         setUser(userData);
         remember('user', userData);
+        noteLicense(userData.license);
         // A ogni apertura o ricaricamento della pagina il token riparte da 8 ore piene.
         await executeRefresh();
         startRefreshTimer();
@@ -82,6 +85,13 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(refreshTimer.current);
   }, [executeRefresh, startRefreshTimer, clearSession]);
 
+  // Tornata la rete si ricontrolla subito la licenza: se è rinnovata la cassa riparte, se è scaduta si torna al login.
+  useEffect(() => {
+    const back = () => { if (userRef.current) executeRefresh(); };
+    window.addEventListener('online', back);
+    return () => window.removeEventListener('online', back);
+  }, [executeRefresh]);
+
   // Il cookie di sessione è uno solo per sottodominio: se in un'altra scheda ci si collega con un altro utente,
   // questa continuerebbe a mostrare quello vecchio mentre le richieste partono con il nuovo (permessi «sbagliati»).
   // Al ritorno sulla scheda si controlla chi è davvero collegato.
@@ -101,6 +111,7 @@ export const AuthProvider = ({ children }) => {
   const login = (userData) => {
     setUser(userData);
     remember('user', userData);
+    noteLicense(userData.license);
     startRefreshTimer();
   };
 

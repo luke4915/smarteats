@@ -17,6 +17,7 @@ import { sendHttpError } from '../utils/httpError.js';
 import { invalidateUserStatus } from '../utils/userStatus.js';
 import { getTenantModules } from '../utils/tenantModules.js';
 import { inventoryOf } from '../utils/modules.js';
+import { licenseInfo } from '../utils/license.js';
 import { createUser, listUsers, updateUser, deleteUser, resetUserPassword } from '../utils/tenantUsers.js';
 
 const INVALID_CREDENTIALS = 'Credenziali non valide';
@@ -54,7 +55,7 @@ router.post('/login', validate({ body: loginSchema }), resolveTenantFromHost, as
     user.tenant_name = tenant.name;
     setCookie(res, signToken(user));
 
-    res.json({ id: user.id, username: user.username, role: user.role, needsPassword: user.must_change_password, tenantName: user.tenant_name, businessType: tenant.business_type, modules: tenant.modules, inventory: inventoryOf(tenant) });
+    res.json({ id: user.id, username: user.username, role: user.role, needsPassword: user.must_change_password, tenantName: user.tenant_name, businessType: tenant.business_type, modules: tenant.modules, inventory: inventoryOf(tenant), license: licenseInfo(tenant.expires_at) });
     } catch (err) {
     logger.error({ err }, 'Errore server')
     res.status(500).json({ error: 'Errore server' });
@@ -101,12 +102,12 @@ router.post('/refresh', async (req, res) => {
       return res.status(401).json({ error: 'Utente non trovato o disabilitato' });
     }
 
-    const { rows: tRows } = await pool.query('SELECT name FROM tenants WHERE id = $1', [decoded.tenantId]);
+    const { rows: tRows } = await pool.query('SELECT name, expires_at FROM tenants WHERE id = $1', [decoded.tenantId]);
     user.tenant_name = tRows[0]?.name;
 
     setCookie(res, signToken(user, loginAt));
     logger.info({ userId: user.id, tenantId: user.tenant_id }, 'Sessione rinnovata');
-    res.json({ ok: true });
+    res.json({ ok: true, license: licenseInfo(tRows[0]?.expires_at) });
   } catch (err) {
     logger.error({ err }, 'Errore durante il refresh del token');
     res.status(500).json({ error: 'Errore interno del server' });
@@ -219,6 +220,7 @@ router.post('/admin/users/:id/reset-password', authenticate, authorizeAdmin, val
 router.get('/me', authenticateAllowingPasswordChange, async (req, res) => {
   try {
     const tenant = await getTenantModules(req.user.tenantId);
+    const { rows: [lic] } = await pool.query('SELECT expires_at FROM tenants WHERE id = $1', [req.user.tenantId]);
     res.json({
       id: req.user.id,
       username: req.user.username,
@@ -228,6 +230,7 @@ router.get('/me', authenticateAllowingPasswordChange, async (req, res) => {
       modules: tenant?.modules ?? [],
       inventory: tenant?.inventory ?? null,
       needsPassword: req.user.mustChangePassword,
+      license: licenseInfo(lic?.expires_at),
     });
   } catch (err) {
     logger.error({ err }, 'Errore /auth/me');
