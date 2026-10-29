@@ -19,6 +19,7 @@ export const CHANGELOG = [
       'Menu pubblico con il QR (sagre): si scarica il QR da stampare, si copia il link e i clienti possono cercare un prodotto. Il messaggio di benvenuto lo imposta ora l\'assistenza.',
       'Piatti esauriti: restano in carta, in grigio e con «Esaurito», non spariscono più; quando la cucina o un responsabile cambia la disponibilità, tutte le casse e la sala si aggiornano subito.',
       'Cassa da telefono: lo Storno ordini è nel menu ⋯ come su tablet e PC, e i tasti rapidi dei contanti occupano tutta la larghezza.',
+      'Schermo cucina (KDS) rifatto: tabellone scuro con le comande dalla più vecchia, testata verde, ambra o rossa secondo l\'attesa, codice grande, riepilogo «Da preparare» e ora.',
       'Esporta una serata: report PDF completo (incasso, cassa con differenza, pagamenti, prodotti, andamento per ora), CSV delle righe con cassa o tavolo, omaggi e sconti, e CSV dei prodotti. Gli orari sono ora quelli del locale.',
     ],
   },
