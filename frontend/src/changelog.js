@@ -3,6 +3,18 @@
 // La prima voce deve avere lo stesso numero di `version` in frontend/package.json (lo controlla changelog.test.js).
 export const CHANGELOG = [
   {
+    version: '0.4.0',
+    date: '2026-10-29',
+    items: [
+      'Cassa da telefono: il tasto «Storno ordini» e «Svuota» ora si vedono sempre in fondo al carrello, anche su iPhone con la barra in basso.',
+      'Contanti ricevuti: i tasti rapidi si sommano (20 e poi 5 fanno 25) e una X azzera l\'importo se sbagli. Ci sono anche sul tablet.',
+      'Pagine dei clienti: se la prenotazione o l\'ordine da asporto non va a buon fine compare una X rossa al posto della spunta; mentre si aspetta la risposta del locale, un orologio.',
+      'Cucina: testi più piccoli e ordinati; per l\'asporto l\'orario di ritiro è in evidenza, con quanto manca.',
+      'Impostazioni: la voce «Sistema» si chiama ora «Impostazioni». Il tuo profilo (nome e password) si apre dalla tua riga nell\'elenco utenti. I Suggerimenti si scrivono dal menu del tuo account, in alto a destra.',
+      'Dati riservati: per togliere il blocco serve la tua password, non basta più l\'interruttore.',
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-10-25',
     items: [

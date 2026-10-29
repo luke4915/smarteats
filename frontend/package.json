@@ -1,7 +1,7 @@
 {
   "name": "smarteats-frontend",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "description": "Interfaccia web (PWA) di SmartEats: cassa, cucina, KDS, menu e amministrazione",
   "scripts": {
