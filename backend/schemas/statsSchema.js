@@ -13,6 +13,13 @@ export const statsQuerySchema = z.object({
   tz: timeZone.default('Europe/Rome'),
 });
 
+// Esportazioni di una serata: `type` sceglie il CSV (una riga per riga d'ordine, oppure il riepilogo per prodotto); le ore sono nel fuso `tz`.
+export const sessionExportQuerySchema = z.object({
+  type: z.enum(['lines', 'products']).default('lines'),
+  tz: timeZone.default('Europe/Rome'),
+});
+export const sessionReportQuerySchema = z.object({ tz: timeZone.default('Europe/Rome') });
+
 export const sharedProductsQuerySchema = z.object({
   a: idSchema.optional(),
   b: idSchema.optional(),

@@ -12,6 +12,8 @@ export const CHANGELOG = [
       'Cucina: testi più piccoli e ordinati; per l\'asporto l\'orario di ritiro è in evidenza, con quanto manca.',
       'Impostazioni: la voce «Sistema» si chiama ora «Impostazioni». Il tuo profilo (nome e password) si apre dalla tua riga nell\'elenco utenti. I Suggerimenti si scrivono dal menu del tuo account, in alto a destra.',
       'Dati riservati: per togliere il blocco serve la tua password, non basta più l\'interruttore.',
+      'SmartEats Restaurant: nuova sezione Impostazioni → Stampanti (cucina, bar, conto) con la prova di stampa. Le stampe in attesa compaiono in testata e si riprovano da sole.',
+      'Esporta una serata: report PDF completo (incasso, cassa con differenza, pagamenti, prodotti, andamento per ora), CSV delle righe con cassa o tavolo, omaggi e sconti, e CSV dei prodotti. Gli orari sono ora quelli del locale.',
     ],
   },
   {

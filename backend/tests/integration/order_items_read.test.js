@@ -126,9 +126,9 @@ describe('order_items: letture', () => {
     assert.equal(lines.length - 1, orders.reduce((n, o) => n + o.json.length, 0));
     const calzone = lines.find(l => l.includes('Calzone'));
     assert.match(calzone, /"Calzoni"/);
-    assert.match(calzone, /;1;2,50;2,50;/);
+    assert.match(calzone, /;1;2,50;Sconto;2,50;2,50;/, 'sconto del 50%: 2,50 non incassati');
     const combo = lines.find(l => l.includes('Combo'));
-    assert.match(combo, /;3;1,67;5,00;/);
+    assert.match(combo, /;3;1,67;Vendita;0,00;5,00;/);
     const old = lines.find(l => l.includes('Prodotto vecchio'));
     assert.match(old, /"Generico"/);
   });
