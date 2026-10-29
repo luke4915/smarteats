@@ -79,6 +79,9 @@ if (RECEIPT_SETTINGS_KEYS.some(k => !(k in RECEIPT_FIELD_SCHEMAS)) || Object.key
 export const receiptCustomizationSchema = z.object(RECEIPT_FIELD_SCHEMAS);
 
 // Menu pubblico con il QR: il messaggio di benvenuto lo scrive solo il master (funzione a pagamento). Vuoto = nessun messaggio.
+// Pagamenti con carta: il conto Stripe collegato del locale (acct_…), o null per scollegarlo.
+export const paymentsAccountSchema = z.object({ stripe_account_id: z.string().trim().regex(/^acct_[A-Za-z0-9]+$/, 'L\'identificativo del conto inizia con acct_').nullable() });
+
 export const menuSettingsSchema = z.object({ welcome_message: z.string().trim().max(300, 'Al massimo 300 caratteri') });
 
 // Utenti di un tenant: /master/tenants/:id/users/:userId

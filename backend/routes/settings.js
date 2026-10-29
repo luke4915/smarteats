@@ -63,6 +63,8 @@ router.put('/:key', authenticate, authorizeAdmin, validate({ params: settingPara
         return res.status(400).json({ error: 'value: scrivi un numero di telefono (cifre, spazi, + . / -)' });
     if (key === 'takeaway_portal_enabled' && !['0', '1'].includes(value))
         return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
+    if (key === 'takeaway_payment_mode' && !['off', 'optional', 'required'].includes(value))
+        return res.status(400).json({ error: 'value: usa off, optional o required' });
     if (key === 'takeaway_slot_minutes' && !['10', '15', '20', '30', '60'].includes(String(value)))
         return res.status(400).json({ error: 'value: la fascia dura 10, 15, 20, 30 o 60 minuti' });
     if (key === 'takeaway_slot_capacity' && !(/^\d{1,3}$/.test(String(value)) && Number(value) >= 1))

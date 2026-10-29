@@ -54,7 +54,7 @@ describe('asporto', () => {
 
   it('info, giorni e fasce: prodotti ordinabili e nessun numero di carico', async () => {
     const info = (await client.get('/public/takeaway/info')).body;
-    assert.deepEqual(Object.keys(info).sort(), ['categories', 'max_days', 'max_items', 'name', 'phone', 'products', 'today', 'welcome']);
+    assert.deepEqual(Object.keys(info).sort(), ['categories', 'max_days', 'max_items', 'name', 'payments', 'phone', 'products', 'today', 'welcome']);
     assert.deepEqual(Object.keys(info.products[0]).sort(), ['category', 'id', 'name', 'price']);
     assert.equal(info.phone, '+39 0123 456789');
     const days = (await client.get('/public/takeaway/days')).body.days;

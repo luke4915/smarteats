@@ -38,11 +38,14 @@ export const portalOrderSchema = z.object({
   consent: z.literal(true, { errorMap: () => ({ message: 'Serve il consenso al trattamento dei dati' }) }),
   website: z.string().max(200).default(''),
   opened_at: z.number().int().optional(),
+  // «Paga ora con carta»: vale solo se il locale ha i pagamenti attivi (il server decide: `paymentFor`)
+  pay_online: z.boolean().default(false),
 });
 
 export const acceptSchema = z.object({ time: time.optional(), ignore_capacity: z.boolean().default(false) });
 export const rejectSchema = z.object({ reason: z.string().trim().max(200).default('') });
-export const pickedUpSchema = z.object({ method: z.enum(['cash', 'card', 'other']) });
+// Il metodo si sceglie alla consegna; un ordine già pagato online non lo richiede (è carta)
+export const pickedUpSchema = z.object({ method: z.enum(['cash', 'card', 'other']).optional() });
 export const ordersQuerySchema = z.object({ date });
 // Il carrello per cui si chiedono le fasce, come «id:quantità,id:quantità»: il server ne calcola i minuti di lavoro (il cliente non li vede).
 const cart = z.string().max(400).transform(v => v.split(',').filter(Boolean).map(part => { const [id, quantity] = part.split(':'); return { id: Number(id), quantity: Number(quantity) }; }))

@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken';
 import { startServer, createTenant, deleteTenants, closePools, apiClient, adminDb } from './helpers.js';
 import { pool as appPool } from '../../db.js';
 
+process.env.STRIPE_DRIVER ||= 'mock';
 process.env.MASTER_JWT_SECRET ||= 'segreto-master-di-prova-lungo-almeno-32-caratteri';
 const masterCookie = { cookie: `master_token=${jwt.sign({ master: true }, process.env.MASTER_JWT_SECRET)}` };
 
@@ -126,6 +127,26 @@ describe('pannello master', () => {
     assert.equal((await master.request('GET', '/master/tenants/999999999/menu', undefined, masterCookie)).status, 404);
     assert.equal((await master.request('PUT', menu(t1), { welcome_message: '' }, masterCookie)).status, 200);
     assert.deepEqual((await apiClient(server.port, t1.host).get('/settings')).body, {}, 'vuoto = nessun messaggio');
+  });
+
+  it('pagamenti con carta: il master collega il conto Stripe del locale, a mano o con il collegamento guidato', async () => {
+    const pay = (t) => `/master/tenants/${t.id}/payments`;
+    assert.equal((await master.get(pay(t1))).status, 401);
+    assert.equal((await api1.request('PUT', pay(t1), { stripe_account_id: 'acct_x' }, undefined)).status, 401, 'nemmeno l\'admin del locale');
+    const start = (await master.request('GET', pay(t1), undefined, masterCookie)).body;
+    assert.deepEqual([start.driver, start.stripe_account_id, start.account, start.module_enabled], ['mock', null, null, false]);
+
+    assert.equal((await master.request('PUT', pay(t1), { stripe_account_id: 'non-un-conto' }, masterCookie)).status, 400);
+    const linked = await master.request('PUT', pay(t1), { stripe_account_id: 'acct_1AbCdEf' }, masterCookie);
+    assert.deepEqual([linked.status, linked.body.stripe_account_id, linked.body.account.chargesEnabled], [200, 'acct_1AbCdEf', true]);
+    assert.equal((await master.request('PUT', pay(t1), { stripe_account_id: null }, masterCookie)).body.stripe_account_id, null, 'si può scollegare');
+
+    const guided = await master.request('POST', `${pay(t2)}/onboard`, {}, masterCookie);
+    assert.equal(guided.status, 200, JSON.stringify(guided.body));
+    assert.match(guided.body.stripe_account_id, /^acct_mock\d+$/);
+    assert.match(guided.body.url, /^https:\/\/connect\.mock\/onboard\/acct_mock/);
+    assert.equal((await master.request('GET', pay(t2), undefined, masterCookie)).body.stripe_account_id, guided.body.stripe_account_id, 'il conto creato resta salvato');
+    assert.equal((await master.request('GET', '/master/tenants/999999999/payments', undefined, masterCookie)).status, 404);
   });
 
   it('elenco tenant del master con il numero di utenti', async () => {

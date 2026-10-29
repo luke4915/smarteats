@@ -105,9 +105,9 @@ async function recreateTenant() {
     await admin.query('DELETE FROM tenants WHERE id = $1', [old.id]);
     console.log('Locale demo precedente eliminato.');
   }
-  const modules = [...BUSINESS_TYPES.restaurant.modules, 'bookings', 'takeaway', 'whatsapp', 'inventory'];
+  const modules = [...BUSINESS_TYPES.restaurant.modules, 'bookings', 'takeaway', 'whatsapp', 'payments', 'inventory'];
   const { rows: [tenant] } = await admin.query(
-    `INSERT INTO tenants (slug, name, plan, business_type, modules, inventory_mode, inventory_depletion) VALUES ($1, $2, 'demo', 'restaurant', $3, 'warehouse', 'recipes') RETURNING id`, [SLUG, NAME, modules]);
+    `INSERT INTO tenants (slug, name, plan, business_type, modules, inventory_mode, inventory_depletion, stripe_account_id) VALUES ($1, $2, 'demo', 'restaurant', $3, 'warehouse', 'recipes', 'acct_demo') RETURNING id`, [SLUG, NAME, modules]);   // conto Stripe di prova: col driver finto non si muove nulla
   const hash = await bcrypt.hash(PASSWORD, 12);
   for (const [username, role] of [['demo', 'admin'], ['marta', 'manager'], ['luca', 'cashier'], ['giulia', 'waiter'], ['paolo', 'waiter'], ['chef', 'kitchen']])
     await admin.query('INSERT INTO users (username, password_hash, role, tenant_id, must_change_password) VALUES ($1, $2, $3, $4, false)', [username, hash, role, tenant.id]);
@@ -153,6 +153,7 @@ const MENU = [
 async function configure(api) {
   const s = (key, value) => api.put(`/settings/${key}`, { value });
   await s('cover_charge', '2');
+  await s('takeaway_payment_mode', 'optional');        // asporto: il cliente può pagare subito con carta (Stripe finto in sviluppo)
   await s('booking_portal_enabled', '1');
   await s('booking_portal_phone', '+39 06 1234 5678');
   await s('booking_portal_welcome', 'Prenota il tuo tavolo: ti rispondiamo entro poche ore.');

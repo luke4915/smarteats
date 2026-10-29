@@ -1,6 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Minus, Plus, ShoppingBag, ChevronLeft, Phone } from 'lucide-react';
 import StatusMark from '../components/public/StatusMark';
+import PaymentChoice from '../components/public/PaymentChoice';
+import PaymentBox from '../components/public/PaymentBox';
+import { paymentNote, totalLabel } from '../components/public/paymentText';
 import { apiFetch } from '../utils/apiClient';
 import { formatDay } from '../smarteats/reservations/rules';
 import { btnPrimary, btn, input } from '../smarteats/floor/ui';
@@ -37,9 +40,17 @@ const Status = ({ token, info }) => {
     const load = () => apiFetch(`/public/takeaway/orders/${token}`).then(d => alive && setData(d))
       .catch(err => alive && setError(err.status === 404 ? 'Non troviamo questo ordine: controlla il link.' : err.message));
     load();
-    const t = setInterval(load, 20_000);          // l'esito arriva da solo, senza ricaricare
+    // l'esito arriva da solo, senza ricaricare; appena tornati dalla pagina di pagamento si controlla più spesso (la conferma di Stripe arriva in pochi secondi)
+    const t = setInterval(load, new URLSearchParams(window.location.search).has('pagamento') ? 3_000 : 20_000);
     return () => { alive = false; clearInterval(t); };
   }, [token]);
+
+  // Ha chiuso la pagina di pagamento: se ne apre una nuova
+  const pay = async () => {
+    setBusy(true); setError('');
+    try { window.location.assign((await apiFetch(`/public/takeaway/orders/${token}/pay`, { method: 'POST', body: {} })).checkout_url); }
+    catch (err) { setError(err.message); setBusy(false); }
+  };
 
   const cancel = async () => {
     setBusy(true); setError('');
@@ -60,6 +71,7 @@ const Status = ({ token, info }) => {
           <h2 className="text-lg font-semibold">{text.title}</h2>
         </div>
         <p className="text-sm text-[var(--text-muted)]">{text.body}</p>
+        {paymentNote(data.payment, data.status) && <PaymentBox note={paymentNote(data.payment, data.status)} onPay={pay} busy={busy} />}
         {data.pickup_code && (
           <div className="rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] px-4 py-3 text-center">
             <p className="text-xs text-[var(--text-muted)]">Il tuo codice di ritiro</p>
@@ -74,7 +86,7 @@ const Status = ({ token, info }) => {
         </dl>
         <ul className="pt-2 border-t border-[var(--border)] space-y-1.5 text-sm">
           {data.items.map((i, n) => <li key={n} className="flex gap-3"><span className="w-6 tabular-nums font-medium">{i.quantity}×</span><span className="flex-1">{i.name}{i.note && <span className="block text-xs text-[var(--text-muted)]">{i.note}</span>}</span></li>)}
-          <li className="flex justify-between pt-2 border-t border-[var(--border)] font-semibold"><span>Totale da pagare al ritiro</span><span className="tabular-nums">{formatEuro(data.total)}</span></li>
+          <li className="flex justify-between pt-2 border-t border-[var(--border)] font-semibold"><span>{totalLabel(data.payment, data.status)}</span><span className="tabular-nums">{formatEuro(data.total)}</span></li>
         </ul>
       </div>
       {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
@@ -107,6 +119,7 @@ const OrderPage = () => {
   const [time, setTime] = useState('');
   const [form, setForm] = useState({ customer_name: '', phone: '', email: '', notes: '', consent: false, website: '' });
   const [sending, setSending] = useState(false);
+  const [payChoice, setPayChoice] = useState('online');     // «Paga ora» di partenza: chi paga subito lo trova pronto
   const openedAt = useRef(Date.now());
 
   useEffect(() => {
@@ -132,7 +145,9 @@ const OrderPage = () => {
     return () => { cancelled = true; };
   }, [date, cartParam]);
 
-  const valid = lines.length > 0 && date && time && form.customer_name.trim() && form.phone.replace(/\D/g, '').length >= 6 && form.consent;
+  const payMode = info?.payments?.mode ?? 'off';
+  const payNow = payChoice === 'online' && ['optional', 'required'].includes(payMode);
+  const valid = payMode !== 'unavailable' && lines.length > 0 && date && time && form.customer_name.trim() && form.phone.replace(/\D/g, '').length >= 6 && form.consent;
   const setField = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
 
   const send = async (e) => {
@@ -140,8 +155,8 @@ const OrderPage = () => {
     if (!valid || sending) return;
     setSending(true); setError('');
     try {
-      const res = await apiFetch('/public/takeaway/orders', { method: 'POST', body: { date, time, items: lines.map(l => ({ id: l.id, quantity: l.quantity })), ...form, opened_at: openedAt.current } });
-      window.location.assign(`/order/${res.token}`);
+      const res = await apiFetch('/public/takeaway/orders', { method: 'POST', body: { date, time, items: lines.map(l => ({ id: l.id, quantity: l.quantity })), ...form, pay_online: payNow, opened_at: openedAt.current } });
+      window.location.assign(res.checkout_url ?? `/order/${res.token}`);       // con la carta si passa dalla pagina di pagamento
     } catch (err) {
       setError(err.message);
       if (err.code === 'SLOT_FULL') { setTime(''); apiFetch(`/public/takeaway/slots?date=${date}&cart=${cartParam}`).then(r => setSlots(r.slots)).catch(() => {}); }
@@ -188,7 +203,7 @@ const OrderPage = () => {
                   <span className="w-16 text-right text-sm tabular-nums text-[var(--text-muted)]">{formatEuro(l.price * l.quantity)}</span>
                 </li>
               ))}
-              <li className="flex justify-between px-4 py-3 font-semibold"><span>Totale (si paga al ritiro)</span><span className="tabular-nums">{formatEuro(total)}</span></li>
+              <li className="flex justify-between px-4 py-3 font-semibold"><span>{payNow ? 'Totale (si paga ora con carta)' : 'Totale (si paga al ritiro)'}</span><span className="tabular-nums">{formatEuro(total)}</span></li>
             </ul>
             {lines.length === 0 && <button type="button" className={`${btn} w-full`} onClick={() => setStep('menu')}>Scegli i prodotti</button>}
           </StepSection>
@@ -237,10 +252,12 @@ const OrderPage = () => {
             </div>
           </StepSection>
 
+          {payMode !== 'off' && <StepSection n={4} title="Come paghi?"><PaymentChoice mode={payMode} value={payNow ? 'online' : 'on_pickup'} onChange={setPayChoice} /></StepSection>}
+
           {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
           <div className="sticky bottom-0 -mx-4 px-4 pt-3 bg-[var(--bg-main)] border-t border-[var(--border)] space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
-            <button type="submit" className={`${btnPrimary} w-full !h-12 !text-base`} disabled={!valid || sending}>{sending ? 'Invio…' : `Invia l'ordine · ${formatEuro(total)}`}</button>
-            <p className="text-xs text-[var(--text-muted)] text-center">Non è ancora confermato: il locale lo approva a breve. Si paga al ritiro.</p>
+            <button type="submit" className={`${btnPrimary} w-full !h-12 !text-base`} disabled={!valid || sending}>{sending ? 'Invio…' : payNow ? `Vai al pagamento · ${formatEuro(total)}` : `Invia l'ordine · ${formatEuro(total)}`}</button>
+            <p className="text-xs text-[var(--text-muted)] text-center">{payNow ? 'Non è ancora confermato: il locale lo approva a breve e solo allora addebitiamo la carta.' : 'Non è ancora confermato: il locale lo approva a breve. Si paga al ritiro.'}</p>
           </div>
         </form>
       )}

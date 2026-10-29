@@ -23,6 +23,7 @@ import inventoryMovementsRouter from './routes/inventoryMovements.js';
 import inventoryReportsRouter from './routes/inventoryReports.js';
 import inventoryRestockRouter from './routes/inventoryRestock.js';
 import reservedDataRouter from './routes/reservedData.js';
+import stripeWebhookRoutes from './routes/stripeWebhook.js';
 import { productRecipeRouter, modifierRecipeRouter } from './routes/recipes.js';
 import { inventoryRouter, productAvailabilityRouter } from './routes/inventoryAvailability.js';
 import bookingRoutes from './routes/bookings.js';
@@ -128,6 +129,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/feedback', feedbackRoutes);
   app.use('/api/whatsapp', whatsappRoutes);
   app.use('/api/webhooks/whatsapp', whatsappWebhookRoutes);
+  app.use('/api/webhooks/stripe', stripeWebhookRoutes(broadcast));
   app.use('/api/public/legal', legalRoutes);
   app.use('/api/public/takeaway', publicTakeawayRoutes(broadcast));
   app.use('/api/checks', checkRoutes(broadcast));

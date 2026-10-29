@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QEZxQAxfPC0ByaXwFolaMg0NKpflILrrFowCdoYeEdCO2gjLg8H6hFtRYk3NZm0
+\restrict nVwRAEridK1WJ39OsJFanM4iRsjSkb9UhoQGKEnbK0TtnBSRvLrrE8zJyJmQA1U
 
 -- Dumped from database version 17.10 (Homebrew)
 -- Dumped by pg_dump version 17.10 (Homebrew)
@@ -1695,9 +1695,13 @@ CREATE TABLE public.takeaway_orders (
     created_by integer,
     personal_data_purged_at timestamp with time zone,
     pickup_code text,
+    payment_status text DEFAULT 'none'::text NOT NULL,
+    stripe_session_id text,
+    stripe_payment_intent_id text,
     CONSTRAINT takeaway_orders_customer_name_check CHECK ((length(btrim(customer_name)) > 0)),
     CONSTRAINT takeaway_orders_paid_method_check CHECK ((paid_method = ANY (ARRAY['cash'::text, 'card'::text, 'other'::text]))),
     CONSTRAINT takeaway_orders_payment_mode_check CHECK ((payment_mode = ANY (ARRAY['on_pickup'::text, 'online'::text]))),
+    CONSTRAINT takeaway_orders_payment_status_check CHECK ((payment_status = ANY (ARRAY['none'::text, 'awaiting'::text, 'authorized'::text, 'paid'::text, 'canceled'::text, 'refunded'::text]))),
     CONSTRAINT takeaway_orders_pickup_code_check CHECK (((pickup_code IS NULL) OR (pickup_code ~ '^[0-9]{3}$'::text))),
     CONSTRAINT takeaway_orders_source_check CHECK ((source = ANY (ARRAY['portal'::text, 'counter'::text, 'phone'::text]))),
     CONSTRAINT takeaway_orders_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'accepted'::text, 'picked_up'::text, 'rejected'::text, 'cancelled'::text, 'expired'::text]))),
@@ -1748,9 +1752,11 @@ CREATE TABLE public.tenants (
     modules text[] DEFAULT ARRAY['kds'::text, 'stats'::text, 'qr_menu'::text] NOT NULL,
     inventory_mode text,
     inventory_depletion text DEFAULT 'recipes'::text NOT NULL,
+    stripe_account_id text,
     CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['street_food'::text, 'restaurant'::text, 'takeaway_shop'::text]))),
     CONSTRAINT tenants_inventory_depletion_check CHECK ((inventory_depletion = ANY (ARRAY['recipes'::text, 'simple'::text]))),
-    CONSTRAINT tenants_inventory_mode_check CHECK ((inventory_mode = ANY (ARRAY['portions'::text, 'warehouse'::text])))
+    CONSTRAINT tenants_inventory_mode_check CHECK ((inventory_mode = ANY (ARRAY['portions'::text, 'warehouse'::text]))),
+    CONSTRAINT tenants_stripe_account_id_check CHECK (((stripe_account_id IS NULL) OR (stripe_account_id ~ '^acct_[A-Za-z0-9]+$'::text)))
 );
 
 
@@ -2936,6 +2942,13 @@ CREATE INDEX idx_takeaway_hours_tenant ON public.takeaway_hours USING btree (ten
 
 
 --
+-- Name: idx_takeaway_orders_awaiting; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_takeaway_orders_awaiting ON public.takeaway_orders USING btree (tenant_id, requested_at) WHERE (payment_status = 'awaiting'::text);
+
+
+--
 -- Name: idx_takeaway_orders_pending_phone; Type: INDEX; Schema: public; Owner: colettas
 --
 
@@ -3129,6 +3142,13 @@ CREATE UNIQUE INDEX uniq_takeaway_orders_order ON public.takeaway_orders USING b
 --
 
 CREATE UNIQUE INDEX uniq_takeaway_orders_pickup_code ON public.takeaway_orders USING btree (tenant_id, (((pickup_at AT TIME ZONE 'Europe/Rome'::text))::date), pickup_code) WHERE ((pickup_code IS NOT NULL) AND (status = ANY (ARRAY['requested'::text, 'accepted'::text])));
+
+
+--
+-- Name: uniq_takeaway_orders_stripe_session; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_takeaway_orders_stripe_session ON public.takeaway_orders USING btree (stripe_session_id) WHERE (stripe_session_id IS NOT NULL);
 
 
 --
@@ -5113,5 +5133,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QEZxQAxfPC0ByaXwFolaMg0NKpflILrrFowCdoYeEdCO2gjLg8H6hFtRYk3NZm0
+\unrestrict nVwRAEridK1WJ39OsJFanM4iRsjSkb9UhoQGKEnbK0TtnBSRvLrrE8zJyJmQA1U
 

@@ -89,10 +89,17 @@ export async function loadSessionReport(db, sessionId, tz, tenantId) {
     db.query(
       `SELECT d.letter, COUNT(*) FILTER (WHERE ${kitchen})::int AS n, SUM(o.total) AS total
        FROM orders o LEFT JOIN devices d ON d.id = o.device_id WHERE ${isRevenue('o')} AND ${inSession} GROUP BY d.letter`, [sessionId]),
+    // Pagamenti per metodo: i conti dei tavoli e gli asporti pagati con carta (online o al ritiro), che non sono contanti
     db.query(
-      `SELECT p.method, SUM(p.amount) AS amount FROM payments p JOIN checks c ON c.id = p.check_id
-       WHERE c.status = 'paid' AND c.session_id = $1 GROUP BY p.method ORDER BY p.method`, [sessionId]),
-    db.query(`SELECT COALESCE(SUM(o.total), 0) AS total FROM orders o WHERE o.check_id IS NULL AND ${isRevenue('o')} AND ${inSession}`, [sessionId]),
+      `SELECT method, SUM(amount) AS amount FROM (
+         SELECT p.method, p.amount FROM payments p JOIN checks c ON c.id = p.check_id WHERE c.status = 'paid' AND c.session_id = $1
+         UNION ALL
+         SELECT ta.paid_method, o.total FROM orders o JOIN takeaway_orders ta ON ta.order_id = o.id
+         WHERE ${isRevenue('o')} AND ${inSession} AND ta.paid_method IN ('card', 'other')
+       ) x GROUP BY method ORDER BY method`, [sessionId]),
+    db.query(
+      `SELECT COALESCE(SUM(o.total), 0) AS total FROM orders o WHERE o.check_id IS NULL AND ${isRevenue('o')} AND ${inSession}
+         AND NOT EXISTS (SELECT 1 FROM takeaway_orders ta WHERE ta.order_id = o.id AND ta.paid_method IN ('card', 'other'))`, [sessionId]),
     db.query(
       `SELECT COUNT(*)::int AS n, COALESCE(SUM(c.covers), 0)::int AS covers,
               AVG(EXTRACT(EPOCH FROM (c.closed_at - c.opened_at)) / 60) FILTER (WHERE c.closed_at - c.opened_at < interval '6 hours') AS avg_minutes

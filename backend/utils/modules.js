@@ -14,6 +14,7 @@ export const MODULES = {
   bookings: { label: 'Prenotazioni', types: ['restaurant'] },
   takeaway: { label: 'Asporto', types: ALL_TYPES },
   whatsapp: { label: 'Avvisi WhatsApp', types: ['restaurant', 'takeaway_shop'] },
+  payments: { label: 'Pagamenti con carta (Stripe)', types: ALL_TYPES },   // asporto pagato online: serve anche il conto Stripe collegato (pannello master)
   inventory: { label: 'Magazzino e scorte', types: ALL_TYPES },   // funzione a pagamento: modalità e modo di scalare li sceglie il master
 };
 

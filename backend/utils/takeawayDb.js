@@ -12,7 +12,7 @@ import { assertIngredientsAvailable, sellIngredients, returnIngredientsOfOrder, 
 // Accesso ai dati dell'asporto, condiviso da chi gestisce (routes/takeaway.js) e dai clienti (routes/publicTakeaway.js).
 // Va chiamato con la connessione del locale (RLS).
 
-const KEYS = ['takeaway_portal_enabled', 'takeaway_slot_minutes', 'takeaway_slot_capacity', 'takeaway_min_lead_minutes', 'takeaway_phone', 'takeaway_welcome'];
+const KEYS = ['takeaway_portal_enabled', 'takeaway_slot_minutes', 'takeaway_slot_capacity', 'takeaway_min_lead_minutes', 'takeaway_phone', 'takeaway_welcome', 'takeaway_payment_mode'];
 
 export async function loadSettings(db) {
   const { rows } = await db.query('SELECT key, value FROM settings WHERE key = ANY($1)', [KEYS]);
@@ -25,6 +25,7 @@ export async function loadSettings(db) {
     minLeadMinutes: int(s.takeaway_min_lead_minutes, DEFAULTS.minLeadMinutes),
     phone: s.takeaway_phone ?? '',
     welcome: s.takeaway_welcome ?? '',
+    paymentMode: ['off', 'optional', 'required'].includes(s.takeaway_payment_mode) ? s.takeaway_payment_mode : 'off',
   };
 }
 

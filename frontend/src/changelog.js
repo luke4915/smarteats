@@ -21,6 +21,8 @@ export const CHANGELOG = [
       'Cassa da telefono: lo Storno ordini è nel menu ⋯ come su tablet e PC, e i tasti rapidi dei contanti occupano tutta la larghezza.',
       'Schermo cucina (KDS) rifatto: tabellone scuro con le comande dalla più vecchia, testata verde, ambra o rossa secondo l\'attesa, codice grande, riepilogo «Da preparare» e ora.',
       'Licenza e lavoro senza rete: se la licenza scade mentre la cassa è senza rete si può lavorare ancora per 10 ore, poi compare una schermata che chiede di collegarsi a internet. Gli ordini battuti in quelle ore si inviano al ritorno della rete.',
+      'Asporto con pagamento online (su richiesta): il cliente può pagare subito con la carta; l\'importo si addebita solo quando accetti l\'ordine, se rifiuti non paga nulla. Chi ha pagato online non deve più pagare al ritiro e non conta nei contanti del cassetto.',
+      'Asporto: il codice di ritiro e il tempo di preparazione dei piatti sono nel locale demo, per provare la capienza delle fasce.',
       'Esporta una serata: report PDF completo (incasso, cassa con differenza, pagamenti, prodotti, andamento per ora), CSV delle righe con cassa o tavolo, omaggi e sconti, e CSV dei prodotti. Gli orari sono ora quelli del locale.',
     ],
   },
