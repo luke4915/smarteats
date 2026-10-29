@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildReportModel, cashDifference, summaryPairs } from './reportModel.js';
+import { buildReportModel, cashDifference, summaryPairs, kpiCards, cashBox, chartsOf } from './reportModel.js';
 
 const NBSP = ' ';
 const report = (over = {}) => ({
@@ -20,30 +20,49 @@ const report = (over = {}) => ({
 test('la differenza di cassa si legge in italiano e col segno', () => {
   assert.equal(cashDifference(null), 'da contare alla chiusura');
   assert.equal(cashDifference(0), 'Quadra: nessuna differenza');
-  assert.equal(cashDifference(1.5), `+1,50${NBSP}€ in più del previsto`);
-  assert.equal(cashDifference(-1.5), `-1,50${NBSP}€ in meno del previsto`);
+  assert.equal(cashDifference(1.5), `+1,50${NBSP}€  in più del previsto`);
+  assert.equal(cashDifference(-1.5), `-1,50${NBSP}€  in meno del previsto`);
 });
 
-test('il riepilogo ha i coperti solo se ce ne sono', () => {
+test('le cifre grandi: incasso, ordini, importo medio e, al ristorante, l\'incasso per coperto', () => {
+  assert.deepEqual(kpiCards(report()).map(k => k.label), ['Incasso', 'Ordini', 'Importo medio', 'Da asporto']);
+  const rest = kpiCards(report({ summary: { ...report().summary, covers: 8, averagePerCover: 15 } }));
+  assert.deepEqual([rest[3].label, rest[3].value], ['Incasso per coperto', `15,00${NBSP}€ `]);
+});
+
+test('gli altri indicatori hanno i coperti e la durata solo se ci sono', () => {
   assert.equal(summaryPairs(report()).some(([k]) => k === 'Coperti'), false);
   const rest = summaryPairs(report({ summary: { ...report().summary, covers: 8, averagePerCover: 15, averageCheckMinutes: 62 } }));
-  assert.deepEqual(rest.filter(([k]) => ['Coperti', 'Incasso per coperto', 'Durata media del conto'].includes(k)).map(([, v]) => v), ['8', `15,00${NBSP}€`, '1 h 2\'']);
+  assert.deepEqual(rest.filter(([k]) => ['Coperti', 'Durata media del conto'].includes(k)).map(([, v]) => v), ['8', '1 h 2\'']);
 });
 
-test('il titolo, il periodo e le sezioni nell\'ordine del foglio', () => {
+test('la scatola della cassa: verde se quadra o avanza, rossa se mancano soldi, neutra se non è chiusa', () => {
+  assert.equal(cashBox(report()).tone, 'bad');
+  assert.equal(cashBox(report({ cash: { expected: 100, declared: 100, difference: 0 } })).tone, 'good');
+  const open = cashBox(report({ cash: { expected: 100, declared: null, difference: null } }));
+  assert.deepEqual([open.tone, open.declared], ['neutral', 'da contare']);
+});
+
+test('i grafici: pagamenti, categorie e ore, solo se ci sono dati', () => {
+  assert.deepEqual(chartsOf(report()).map(c => [c.id, c.type]), [['payments', 'split'], ['categories', 'bars'], ['hours', 'columns']]);
+  assert.equal(chartsOf(report({ payments: [], byHour: [] })).map(c => c.id).join(), 'categories');
+  const bars = chartsOf(report()).find(c => c.id === 'categories').rows[0];
+  assert.deepEqual([bars.label, bars.value, bars.text], ['Panini', 70, `70,00${NBSP}€  · 58,33%`]);
+});
+
+test('il titolo, il periodo e le sezioni in tabella', () => {
   const m = buildReportModel(report(), { noun: 'serata', generatedAt: new Date('2026-10-25T10:00:00Z') });
   assert.equal(m.place, 'Pro Loco di Prova');
   assert.equal(m.title, 'Report della serata: Sagra d\'autunno — sabato');
   assert.match(m.period, /^dal 24\/10\/2026 \d{2}:\d{2} al 24\/10\/2026 \d{2}:\d{2}$/);
-  assert.deepEqual(m.sections.map(s => s.title), ['Riepilogo', 'Cassa (contanti)', 'Incasso per metodo di pagamento', 'Incasso per categoria', 'Tutti i prodotti', 'Andamento della serata', 'Per cassa', 'Ordini annullati']);
+  assert.deepEqual(m.sections.map(s => s.title), ['Altri indicatori', 'Tutti i prodotti', 'Per cassa', 'Ordini annullati']);
 });
 
 test('una serata ancora aperta lo dice e non inventa il conteggio', () => {
   const m = buildReportModel(report({ session: { ...report().session, end: null, open: true }, cash: { expected: 50, declared: null, difference: null } }));
   assert.match(m.period, /\(ancora in corso\)$/);
-  const cash = m.sections.find(s => s.title === 'Cassa (contanti)');
-  assert.equal(cash.body[1][1], 'non ancora contati');
-  assert.equal(cash.body[2][1], 'da contare alla chiusura');
+  assert.equal(m.cashBox.declared, 'da contare');
+  assert.equal(m.cashBox.verdict, 'da contare alla chiusura');
 });
 
 test('i prodotti elencano tutto, con gli omaggi solo dove ci sono', () => {
@@ -53,11 +72,10 @@ test('i prodotti elencano tutto, con gli omaggi solo dove ci sono', () => {
 });
 
 test('con una sola origine senza cassa la sezione «Per cassa» non compare; le sezioni vuote spariscono', () => {
-  const m = buildReportModel(report({ bySource: [{ source: null, orders: 4, revenue: 120 }], canceled: [], payments: [] }));
+  const m = buildReportModel(report({ bySource: [{ source: null, orders: 4, revenue: 120 }], canceled: [] }));
   const titles = m.sections.map(s => s.title);
   assert.equal(titles.includes('Per cassa'), false);
   assert.equal(titles.includes('Ordini annullati'), false);
-  assert.equal(titles.includes('Incasso per metodo di pagamento'), false);
 });
 
 test('il nome del file è pulito', () => {

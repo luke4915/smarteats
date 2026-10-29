@@ -78,6 +78,7 @@ test('sagra: menu pubblico con il QR e esportazione di una serata in PDF e CSV',
   await shot(page, 'festival-08-esporta');
   const [pdf] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /^Scarica / }).first().click()]);
   expect(pdf.suggestedFilename()).toMatch(/^report_.*\.pdf$/);
+  await pdf.saveAs(new URL('./.run/schermate/report-serata.pdf', import.meta.url).pathname);   // da guardare a occhio
 
   await page.getByRole('button', { name: 'Esporta una serata' }).click();
   await page.getByRole('tab', { name: 'CSV righe' }).click();
