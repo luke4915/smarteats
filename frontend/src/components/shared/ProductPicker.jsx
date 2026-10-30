@@ -5,6 +5,8 @@ import SearchField from './SearchField';
 import { useAuth } from '../../context/useAuth';
 import { useAvailability } from '../../hooks/useAvailability';
 import { useLongPress } from '../../hooks/useLongPress';
+import { useOnceHint } from '../../hooks/useOnceHint';
+import Hint from './Hint';
 import { canForceSale, ingredientPortionsLeft, tighterLimit } from '../../inventory/availability';
 import { normalizeText } from '../../smarteats/floor/checkMath';
 import { formatEuro } from '../../utils/format';
@@ -16,14 +18,16 @@ import Loading from './Loading';
 // ingredienti lo aggiunge solo chi può venderlo comunque (amministratore e responsabile).
 //   onAdd           tocco sulla tessera
 //   onRemove        se c'è, la tessera con articoli nell'ordine ha un «−» per toglierne uno senza aprire il carrello
-//   onLongPress     se c'è, tenere premuto 1,5 s apre la modifica rapida del prodotto (cassa)
+//   onLongPress     se c'è, tenere premuto 1 s apre la disponibilità del prodotto (cassa); col mouse vale anche il tasto destro. Una tessera
+//                   esaurita non è «disabled»: deve poter ricevere la pressione per essere rimessa in vendita
 //   lowStockAt      sotto quante porzioni rimaste compare «N rimasti»; scrollPadding: spazio in fondo alla griglia
 // Va dentro un contenitore a colonna con altezza: la griglia scorre da sola. I prodotti nascosti non compaiono.
 const ProductPicker = ({ products, cart, onAdd, onRemove, onLongPress, lowStockAt = 10, scrollPadding = 'pb-2' }) => {
   const { user } = useAuth();
   const portions = useAvailability();       // quante porzioni permettono gli ingredienti (vuoto senza magazzino con ricette)
   const canForce = canForceSale(user?.role);
-  const press = useLongPress(onLongPress ?? (() => {}));
+  const hint = useOnceHint('availability', !!onLongPress);
+  const press = useLongPress((product) => { hint.dismiss(); onLongPress?.(product); });
   const [category, setCategory] = useState('Tutti');
   const [search, setSearch] = useState('');
 
@@ -44,6 +48,8 @@ const ProductPicker = ({ products, cart, onAdd, onRemove, onLongPress, lowStockA
       {categories.length > 2 && (
         <Segmented scroll label="Categoria" className="mb-3 shrink-0" value={category} onChange={setCategory} options={categories.map(c => ({ id: c, label: c }))} />)}
 
+      {hint.show && <div className="mb-3 shrink-0"><Hint onDismiss={hint.dismiss}>Tieni premuto un prodotto per cambiarne la disponibilità.</Hint></div>}
+
       <div className={`flex-1 overflow-y-auto no-scrollbar ${scrollPadding}`}>
         {!products && <Loading />}
         {products && !shown.length && <div className="flex items-center justify-center h-40 text-[var(--text-muted)]"><p className="text-sm">Nessun prodotto disponibile</p></div>}
@@ -58,11 +64,11 @@ const ProductPicker = ({ products, cart, onAdd, onRemove, onLongPress, lowStockA
             const pressed = press.progress(p.id);
             return (
               <div key={p.id} className="relative">
-                <button disabled={blocked} {...(onLongPress ? press.bind(p.id, p) : {})}
-                  onClick={() => { if (onLongPress && press.blocksClick(p.id)) return; onAdd(p); }}
+                <button {...(onLongPress ? { 'aria-disabled': blocked || undefined, ...press.bind(p.id, p) } : { disabled: blocked })}
+                  onClick={() => { if (onLongPress && press.blocksClick(p.id)) return; if (blocked) return; onAdd(p); }}
                   style={{ backgroundColor: `color-mix(in srgb, ${color} 7%, var(--bg-card-2))` }}
                   className={`relative overflow-hidden w-full h-full min-h-[5.5rem] flex flex-col justify-between rounded-xl p-3 border border-[var(--border)] text-left select-none transition ${out ? `opacity-50 grayscale ${blocked ? 'cursor-not-allowed' : 'cursor-pointer'}` : 'hover:border-[var(--border-hover)] active:scale-[0.97] cursor-pointer'}`}>
-                  {pressed > press.visibleAt && <span aria-hidden="true" className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pressed}%`, backgroundColor: color, opacity: 0.22 }} />}
+                  {pressed > 0 && <span aria-hidden="true" className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pressed}%`, backgroundColor: color, opacity: 0.22 }} />}
                   <span className="flex items-start gap-2 text-[15px] font-semibold leading-tight text-[var(--text-main)] pr-7">
                     <span className="mt-[5px] w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} aria-hidden="true" />
                     <span className="line-clamp-3">{p.name}</span>

@@ -8,7 +8,7 @@ const RULES = [
 ];
 const HINTS = {
   unlimited: 'Nessun limite: il piatto si può sempre ordinare.',
-  restart_each_service: 'A ogni apertura del servizio le porzioni tornano a questo numero. Quando finiscono il piatto si nasconde da solo.',
+  restart_each_service: 'A ogni apertura del servizio le porzioni tornano a questo numero. Quando finiscono il piatto resta in carta, in grigio, come «Esaurito».',
   carry_over: 'Le porzioni restano quelle di fine servizio (una torta fatta per due giorni).',
 };
 

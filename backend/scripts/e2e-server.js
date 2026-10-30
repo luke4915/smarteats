@@ -76,7 +76,7 @@ const ristoSeed = { host: `${risto.slug}.smarteats.local`, admin: risto.username
 const sagra = await createTenant({ businessType: 'street_food' });
 for (const [name, price, category] of [['Panino con salsiccia', 5, 'Panini'], ['Patatine', 3, 'Contorni'], ['Birra', 4, 'Bevande'], ['Acqua', 1, 'Bevande'], ['Tiramisù', 4, 'Dolci']])
   await addProduct(sagra, name, price, category);
-const sagraSeed = { host: `${sagra.slug}.smarteats.local`, admin: sagra.username, kitchen: await addUser(sagra, 'kitchen') };
+const sagraSeed = { host: `${sagra.slug}.smarteats.local`, admin: sagra.username, kitchen: await addUser(sagra, 'kitchen'), cashier: await addUser(sagra, 'cashier') };
 
 // ── Pizzeria di solo asporto: nessun tavolo, nessuna prenotazione ──
 const shop = await createTenant({ businessType: 'takeaway_shop' });
