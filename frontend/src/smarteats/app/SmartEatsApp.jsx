@@ -86,7 +86,7 @@ const SmartEatsApp = () => {
               <Route path="/reservations" element={guard('reservations', <ReservationsPage event={event} />)} />
               <Route path="/takeaway" element={guard('takeaway', <TakeawayPage event={event} />)} />
               <Route path="/kitchen" element={guard('kitchen', <PageCard><KitchenPage event={event} /></PageCard>)} />
-              <Route path="/catalog" element={guard('catalog', <PageCard><CatalogPage /></PageCard>)} />
+              <Route path="/catalog" element={guard('catalog', <PageCard><CatalogPage event={event} /></PageCard>)} />
               <Route path="/inventory" element={guard('inventory', <PageCard><InventoryPage /></PageCard>)} />
               <Route path="/stats" element={guard('stats', <PageCard><ReservedGate what="Le statistiche"><StatsTabs>{user.modules?.includes('tables') ? <StatsPage /> : <CounterStats />}</StatsTabs></ReservedGate></PageCard>)} />
               <Route path="/settings" element={guard('settings', <PageCard><SettingsPage user={user} /></PageCard>)} />

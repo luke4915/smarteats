@@ -2,7 +2,7 @@ import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
 import Switch from '../shared/Switch';
 import Segmented from '../../smarteats/floor/Segmented';
-import { btnPrimary, input, label } from '../../smarteats/floor/ui';
+import { btn, btnPrimary, input, label } from '../../smarteats/floor/ui';
 import Combobox from './Combobox';
 import PortionsField from './PortionsField';
 import { categoryColors, namesForCategory } from './productForm';
@@ -26,8 +26,10 @@ const SwitchRow = ({ title, checked, onChange }) => (
 
 // La finestra per aggiungere o modificare un prodotto. Non salva nulla da sola: mostra `form` e avvisa chi la usa
 // (`onField`, `onChange`, `onSubmit`). Sta sempre nello schermo: il corpo scorre, il pulsante resta fisso in basso.
+// `noun`: come si chiamano in questo locale («piatto» al ristorante, «prodotto» in sagra), stessa parola dell'elenco.
+// `conflict` ({ removed, fields }, vedi `productConflict.js`): un altro utente ha cambiato o eliminato il prodotto mentre lo si modifica.
 // `courses`, `modifierGroups`, `takeawayEnabled`, `portionsEnabled` (modulo magazzino) e `vatEnabled` (modalità «magazzino») accendono i campi che esistono solo in certi locali.
-const ProductFormModal = ({ form, setForm, products, editing, courses, modifierGroups, takeawayEnabled, portionsEnabled, vatEnabled, submitDisabled, onField, onChange, onSubmit, onClose }) => {
+const ProductFormModal = ({ noun = 'prodotto', conflict = null, onUseLatest, form, setForm, products, editing, courses, modifierGroups, takeawayEnabled, portionsEnabled, vatEnabled, submitDisabled, onField, onChange, onSubmit, onClose }) => {
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
   const patch = (changes) => setForm(prev => ({ ...prev, ...changes }));
   const toggleModifierGroup = (id) => setForm(prev => {
@@ -36,12 +38,20 @@ const ProductFormModal = ({ form, setForm, products, editing, courses, modifierG
   });
 
   return (
-    <Modal title={editing ? 'Modifica prodotto' : 'Nuovo prodotto'} size="max-w-2xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={onSubmit}
+    <Modal title={`${editing ? 'Modifica' : 'Nuovo'} ${noun}`} size="max-w-2xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={onSubmit}
       footer={
         <ModalActions onCancel={onClose}>
-          <button type="submit" disabled={submitDisabled} className={btnPrimary}>{editing ? 'Salva modifiche' : 'Aggiungi prodotto'}</button>
+          <button type="submit" disabled={submitDisabled} className={btnPrimary}>{editing ? 'Salva modifiche' : `Aggiungi ${noun}`}</button>
         </ModalActions>}>
       <div className="space-y-5">
+        {conflict && (
+          <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm text-[var(--text-main)]">
+            <span className="flex-1 min-w-0">
+              {conflict.removed ? `Un altro utente ha eliminato questo ${noun}: non si può più salvare.` : `Un altro utente ha cambiato questo ${noun} (${conflict.fields.join(', ')}). Ciò che vedi qui sotto potrebbe non essere aggiornato.`}
+            </span>
+            {!conflict.removed && <button type="button" className={btn} onClick={onUseLatest}>Usa i valori aggiornati</button>}
+          </div>
+        )}
         <div className="grid sm:grid-cols-2 gap-x-4 gap-y-4">
           <Field title="Categoria"><Combobox name="category" value={form.category} onChange={(v) => onField('category', v)} options={categories} placeholder="Es. Pizze, Bevande" /></Field>
           <Field title="Prezzo (€)" htmlFor="price">
