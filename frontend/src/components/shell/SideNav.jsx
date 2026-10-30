@@ -20,7 +20,7 @@ const NavItem = ({ view, icons, badge }) => {
 };
 
 const SideNav = ({ views, icons, brand, badges = {} }) => (
-  <aside className={`${views.length > 1 ? 'hidden md:flex' : 'hidden'} flex-col shrink-0 w-20 xl:w-60 bg-[var(--bg-card)] border-r border-[var(--border)] py-5 px-3 gap-6 overflow-y-auto no-scrollbar [@media(max-height:520px)]:py-2 [@media(max-height:520px)]:gap-2`}>
+  <aside className={`${views.length > 1 ? 'hidden md:flex' : 'hidden'} flex-col shrink-0 w-[4.5rem] xl:w-56 bg-[var(--bg-card)] border-r border-[var(--border)] py-5 px-3 gap-6 overflow-y-auto no-scrollbar [@media(max-height:520px)]:py-2 [@media(max-height:520px)]:gap-2`}>
     <div className="flex items-center justify-center xl:justify-start gap-3 xl:px-1">
       <div className="w-9 h-9 shrink-0 bg-[var(--accent)] rounded-lg flex items-center justify-center text-white font-semibold text-lg select-none">S</div>
       <span className="hidden xl:inline font-semibold text-base tracking-tight text-[var(--text-main)]">{brand}</span>

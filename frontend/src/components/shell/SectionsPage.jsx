@@ -20,7 +20,7 @@ const SectionsPage = ({ title = 'Impostazioni', sections, content }) => {
         <Segmented scroll label="Sezioni delle impostazioni" className="w-fit max-w-full" value={current.id} onChange={open}
           options={sections.map(s => ({ id: s.id, label: s.label }))} />
       )}
-      <div key={current.id} className="motion-panel min-w-0 w-full space-y-6">{content[current.id]()}</div>
+      <div key={current.id} className="motion-tab min-w-0 w-full space-y-6">{content[current.id]()}</div>
     </PageBody>
   );
 };

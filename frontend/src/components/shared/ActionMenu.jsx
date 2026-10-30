@@ -3,8 +3,9 @@ import { MoreVertical } from 'lucide-react';
 import { iconBtn } from '../../smarteats/floor/ui';
 
 // Menu «⋯» condiviso (conto in sala, carrello della cassa, prenotazioni): raccoglie le azioni secondarie così la schermata ne mostra solo le principali.
-// `items`: [{ label, icon, onClick, danger?, disabled?, hint? }]; le voci false si saltano.
-const ActionMenu = ({ items }) => {
+// `items`: [{ label, icon, onClick, danger?, disabled?, hint? }]; le voci false si saltano. `label`: il nome del pulsante ⋯ per chi usa lo
+// screen reader e per i test (in un elenco, «Altre azioni di <nome>»: ogni riga ha il suo).
+const ActionMenu = ({ items, label = 'Altre azioni' }) => {
   const [open, setOpen] = useState(false);
   const box = useRef(null);
 
@@ -22,13 +23,13 @@ const ActionMenu = ({ items }) => {
 
   return (
     <div ref={box} className="relative">
-      <button className={iconBtn} aria-label="Altre azioni" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}><MoreVertical size={20} /></button>
+      <button type="button" className={iconBtn} aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}><MoreVertical size={20} /></button>
       {open && (
         <div role="menu" className="absolute right-0 top-full mt-2 z-30 w-60 p-1.5 rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-2xl">
           {visible.map(({ label, icon, onClick, danger, disabled, hint }) => {
             const Icon = icon;
             return (
-              <button key={label} role="menuitem" disabled={disabled} title={disabled ? hint : undefined} onClick={() => { setOpen(false); onClick(); }}
+              <button key={label} type="button" role="menuitem" disabled={disabled} title={disabled ? hint : undefined} onClick={() => { setOpen(false); onClick(); }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs font-semibold transition-colors disabled:opacity-40 disabled:pointer-events-none ${danger ? 'text-red-500 hover:bg-red-500/10' : 'text-[var(--text-main)] hover:bg-[var(--bg-card-2)]'}`}>
                 <Icon size={16} className="shrink-0" />{label}
               </button>
