@@ -17,7 +17,7 @@ export function useTakeaway(date, event) {
   const reload = useCallback(async () => {
     const mine = ++latest.current;
     try {
-      const [orders, slots] = await Promise.all([fetchWithAuth(`/takeaway/orders?date=${date}`), fetchWithAuth(`/takeaway/slots?date=${date}&load=0`)]);
+      const [orders, slots] = await Promise.all([fetchWithAuth(`/takeaway/orders?date=${date}`), fetchWithAuth(`/takeaway/slots?date=${date}`)]);
       if (mine === latest.current) setDay({ date, orders, slots: slots.slots, capacity: slots.capacity });
     } catch (err) { showToast(err.message || 'Errore caricamento asporto', 'error'); }
   }, [date, showToast]);

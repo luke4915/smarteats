@@ -12,17 +12,17 @@ Per il processo completo di rilascio vedi `docs/rilasci.md`; per l'installazione
 | Regole di rete | Oracle → VCN → Security List | porte aperte: 22, 80, 443 |
 | Dominio | duckdns.org | il token serve a Traefik per il certificato: sta nel `.env` del server |
 | Stato del server | uptimerobot.com | controlla `/api/health/ready` ogni 5 minuti e scrive per email |
-| Codice, PR, rilasci | GitHub → `luke4915/stand-manager` | Actions = CI e rilasci; Packages = immagine |
+| Codice, PR, rilasci | GitHub → `luke4915/smarteats` | Actions = CI e rilasci; Packages = immagine |
 | Chiave SSH | `~/oracle_smarteats.key` | **copia fuori dal Mac**: se si perde non si entra più |
 
 ## 2. Entrare nel server
 
 ```
 ssh -i ~/oracle_smarteats.key ubuntu@<IP riservato>
-cd stand-manager/deploy
+cd smarteats/deploy
 ```
 
-Tutti i comandi qui sotto si lanciano da `~/stand-manager/deploy`.
+Tutti i comandi qui sotto si lanciano da `~/smarteats/deploy`.
 
 ## 3. Comandi di tutti i giorni
 
@@ -32,16 +32,16 @@ Tutti i comandi qui sotto si lanciano da `~/stand-manager/deploy`.
 | Log dell'app, in diretta | `docker compose logs -f app` (esci con Ctrl+C) |
 | Ultimi 10 minuti di log | `docker compose logs --since 10m app` |
 | Riavviare solo l'app | `docker compose restart app` |
-| Aggiornare alla versione nuova | `docker compose pull app && docker compose up -d app` |
-| Tornare a una versione precedente | in `.env` `APP_IMAGE=ghcr.io/luke4915/stand-manager:0.2.0`, poi `docker compose up -d app` |
 | Quale versione gira | `docker compose images app` |
 | Spazio sul disco | `df -h /` e `docker system df` |
 | Memoria | `free -h` |
 
+Aggiornare, tornare a una versione precedente e i controlli dopo l'aggiornamento: `docs/rilasci.md`, §4 e §7.
+
 ## 4. Backup
 
 - Un dump automatico ogni notte alle 03:00 in `deploy/backups/`, tenuto 14 giorni.
-- **Prima di una migrazione**, a mano: `docker compose exec backup bash /backup.sh /backups 14`
+- Prima di una migrazione serve un backup a mano: `docs/rilasci.md`, §4.
 - I backup stanno sullo stesso disco del server: non bastano. Copiali fuori (guida in `docs/deployment.md`, «Backup e ripristino», dove c'è anche il ripristino).
 
 ## 5. Se qualcosa non va
@@ -50,7 +50,7 @@ Tutti i comandi qui sotto si lanciano da `~/stand-manager/deploy`.
 1. Apri l'indirizzo dal telefono, con la rete mobile: se funziona, era un problema momentaneo.
 2. Entra col SSH. Se non entra, il server è spento o irraggiungibile: controlla l'istanza su Oracle (stato «Running»?) e riavviala da lì.
 3. `docker compose ps`: se un servizio non è «Up», `docker compose up -d`.
-4. `docker compose logs --since 10m app`: cerca l'errore. Se è dopo un aggiornamento, torna alla versione precedente (sezione 3).
+4. `docker compose logs --since 10m app`: cerca l'errore. Se è dopo un aggiornamento, torna alla versione precedente (`docs/rilasci.md`, §7).
 
 **«Il sito non si apre» solo a me o a un locale**
 - Il sottodominio del locale esiste? Controlla da `/master` che il locale sia attivo e con la licenza valida.
@@ -65,12 +65,6 @@ Tutti i comandi qui sotto si lanciano da `~/stand-manager/deploy`.
 **Oracle ritira la macchina**
 - Oracle può recuperare le istanze gratuite rimaste inattive per giorni (CPU e rete sotto una soglia bassa): un monitor che la interroga **non** lo impedisce. Con clienti veri non succede; durante le prove senza traffico sì. Dopo il ritiro serve ricreare l'istanza e ripristinare un backup.
 
-## 6. Dopo ogni aggiornamento
-
-- [ ] `https://<nome>.duckdns.org/api/health/ready` risponde «ok»
-- [ ] entra in un locale vero, apri la Sala o la Cassa, fai un ordine di prova e stornalo
-- [ ] nei log non ci sono errori ripetuti
-
-## 7. Preferiti di Safari consigliati
+## 6. Preferiti di Safari consigliati
 
 Una cartella «SmartEats» con: console master, Oracle Cloud, DuckDNS, UptimeRobot, GitHub (repository, Actions, Packages). Gli accessi si salvano nel gestore di password, non nei preferiti.

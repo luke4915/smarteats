@@ -65,12 +65,29 @@ const TakeawaySettings = () => {
               <select id="tk-slot" className={`${input} mt-1`} value={s.slotMinutes} onChange={e => { setS(x => ({ ...x, slotMinutes: Number(e.target.value) })); save('takeaway_slot_minutes', e.target.value, 'Fasce aggiornate'); }}>
                 {SLOT_OPTIONS.map(m => <option key={m} value={m}>{m} minuti</option>)}
               </select></div>
-            <div><label className={label} htmlFor="tk-cap">Porzioni per fascia</label>
+            <div><label className={label} htmlFor="tk-cap">Minuti di lavoro per fascia</label>
               <input id="tk-cap" type="number" min="1" max="999" className={`${input} mt-1`} value={s.capacity}
                 onChange={e => setS(x => ({ ...x, capacity: e.target.value }))} onBlur={e => e.target.value && save('takeaway_slot_capacity', e.target.value, 'Capienza aggiornata')} /></div>
             <div><label className={label} htmlFor="tk-lead">Anticipo minimo (minuti)</label>
               <input id="tk-lead" type="number" min="0" max="240" step="5" className={`${input} mt-1`} value={s.minLeadMinutes}
                 onChange={e => setS(x => ({ ...x, minLeadMinutes: e.target.value }))} onBlur={e => e.target.value !== '' && save('takeaway_min_lead_minutes', e.target.value, 'Anticipo aggiornato')} /></div>
+          </div>
+          <p className="text-xs text-[var(--text-muted)] -mt-1">
+            Ogni ordine occupa tanti minuti di lavoro quanti ne servono a prepararlo: il tempo di ogni piatto si imposta nella Carta (le bevande valgono 0).
+            {Number(s.capacity) > 0 && <> Con {s.capacity} minuti per fascia ci stanno circa {Math.floor(Number(s.capacity) / 5)} piatti da 5 minuti.</>}
+          </p>
+          <div>
+            <label className={label} htmlFor="tk-pay">Pagamento con carta sul sito</label>
+            {s.paymentsAvailable ? (
+              <>
+                <select id="tk-pay" className={`${input} mt-1`} value={s.paymentMode} onChange={e => { setS(x => ({ ...x, paymentMode: e.target.value })); save('takeaway_payment_mode', e.target.value, 'Pagamento aggiornato'); }}>
+                  <option value="off">Spento: si paga al ritiro</option>
+                  <option value="optional">Facoltativo: il cliente sceglie</option>
+                  <option value="required">Obbligatorio: si paga sempre online</option>
+                </select>
+                <p className="text-xs text-[var(--text-muted)] mt-1">Con la carta si paga subito, ma l'importo si addebita solo quando accetti l'ordine: se rifiuti non si paga nulla. Chi paga online non deve più fare niente al ritiro.</p>
+              </>
+            ) : <p className="text-xs text-[var(--text-muted)] mt-1">Non è attivo per il tuo locale. Per far pagare i clienti con la carta (a costi contenuti, solo per gli ordini pagati online) chiedi l'attivazione all'assistenza.</p>}
           </div>
           <div><label className={label} htmlFor="tk-phone">Telefono per gli ordini (mostrato ai clienti)</label>
             <input id="tk-phone" className={`${input} mt-1`} value={s.phone} maxLength={40} placeholder="Es. 0123 456789"

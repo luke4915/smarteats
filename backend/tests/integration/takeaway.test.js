@@ -1,4 +1,4 @@
-// Asporto (modulo `takeaway`): fasce e carico, ordini dal sito pubblico, approvazione, cucina, ritiro, isolamento.
+// Asporto (modulo `takeaway`): fasce e minuti di lavoro, ordini dal sito pubblico, approvazione, cucina, ritiro, isolamento.
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import bcrypt from 'bcrypt';
@@ -28,9 +28,9 @@ describe('asporto', () => {
     await adminDb.query(`INSERT INTO users (username, password_hash, role, tenant_id) VALUES ($1, $2, 'cashier', $3)`, [username, await bcrypt.hash(PASSWORD, 4), t.id]);
     cashier = apiClient(server.port, t.host); await cashier.login(username);
     // la bibita non occupa il forno
-    ({ rows: [{ id: drink }] } = await adminDb.query(`INSERT INTO products (name, price, category, takeaway_load, tenant_id) VALUES ('Acqua', 2, 'Bevande', 0, $1) RETURNING id`, [t.id]));
+    ({ rows: [{ id: drink }] } = await adminDb.query(`INSERT INTO products (name, price, category, prep_minutes, tenant_id) VALUES ('Acqua', 2, 'Bevande', 0, $1) RETURNING id`, [t.id]));
     await admin.put('/takeaway/hours', { hours: [0, 1, 2, 3, 4, 5, 6].map(weekday => ({ weekday, open_time: '12:00', close_time: '23:00' })) });
-    await setting('takeaway_slot_capacity', '6');
+    await setting('takeaway_slot_capacity', '30');   // 30 minuti di lavoro per fascia: sei pizze da 5 minuti
     await setting('takeaway_min_lead_minutes', '0');
   });
   after(async () => {
@@ -54,13 +54,13 @@ describe('asporto', () => {
 
   it('info, giorni e fasce: prodotti ordinabili e nessun numero di carico', async () => {
     const info = (await client.get('/public/takeaway/info')).body;
-    assert.deepEqual(Object.keys(info).sort(), ['categories', 'max_days', 'max_items', 'name', 'phone', 'products', 'today', 'welcome']);
+    assert.deepEqual(Object.keys(info).sort(), ['categories', 'max_days', 'max_items', 'name', 'payments', 'phone', 'products', 'today', 'welcome']);
     assert.deepEqual(Object.keys(info.products[0]).sort(), ['category', 'id', 'name', 'price']);
     assert.equal(info.phone, '+39 0123 456789');
     const days = (await client.get('/public/takeaway/days')).body.days;
     assert.equal(days.length, 8);
     assert.equal(days.find(d => d.date === tomorrow).available, true);
-    const slots = (await client.get(`/public/takeaway/slots?date=${tomorrow}&load=1`)).body;
+    const slots = (await client.get(`/public/takeaway/slots?date=${tomorrow}`)).body;
     assert.deepEqual(Object.keys(slots.slots[0]).sort(), ['available', 'time']);
     assert.ok(slots.slots.some(s => s.time === '19:00' && s.available));
     assert.equal(slots.slots.at(-1).time, '22:45', 'l\'ultima fascia comincia prima della chiusura');
@@ -76,7 +76,7 @@ describe('asporto', () => {
     staff.ws.close();
 
     const inbox = (await cashier.get('/takeaway/inbox')).body;
-    assert.deepEqual([inbox[0].kind, inbox[0].customer_name, inbox[0].start_time, inbox[0].load], ['takeaway_request', 'Marta', '19:00', 2]);
+    assert.deepEqual([inbox[0].kind, inbox[0].customer_name, inbox[0].start_time, inbox[0].work_minutes], ['takeaway_request', 'Marta', '19:00', 10]);
 
     const mine = (await client.get(`/public/takeaway/orders/${res.body.token}`)).body;
     assert.deepEqual([mine.status, mine.total, mine.can_cancel, mine.time], ['requested', 16, true, '19:00']);
@@ -85,11 +85,11 @@ describe('asporto', () => {
   });
 
   it('il carico della fascia: le bibite non contano; oltre la capienza la fascia è piena', async () => {
-    // 19:00 ha già 2; capienza 6 → ne restano 4
+    // 19:00 ha già 2 pizze (10 minuti); capienza 30 minuti → ne restano 4
     assert.equal((await post([pizza(4)], { time: '19:15' })).status, 201);
-    assert.equal((await post([pizza(5)], { time: '19:15' })).body.code, 'SLOT_FULL', '4 + 5 > 6');
+    assert.equal((await post([pizza(5)], { time: '19:15' })).body.code, 'SLOT_FULL', '20 + 25 minuti > 30');
     assert.equal((await post([{ id: drink, quantity: 20 }], { time: '19:15' })).status, 201, 'solo bibite: non occupano il forno');
-    const slots = (await client.get(`/public/takeaway/slots?date=${tomorrow}&load=3`)).body.slots;
+    const slots = (await client.get(`/public/takeaway/slots?date=${tomorrow}&cart=${t.productId}:3`)).body.slots;
     assert.equal(slots.find(s => s.time === '19:15').available, false);
     assert.equal(slots.find(s => s.time === '19:30').available, true);
   });
@@ -125,7 +125,8 @@ describe('asporto', () => {
     const ok = await cashier.post(`/takeaway/orders/${id}/accept`, {});
     assert.equal(ok.status, 200, JSON.stringify(ok.body));
     assert.deepEqual([ok.body.status, ok.body.time, ok.body.ready], ['accepted', '20:00', false]);
-    assert.match(ok.body.display_code, /^[A-Z]\d+$/);
+    assert.match(ok.body.display_code, /^\d+$/, 'il server numera col progressivo della serata, senza lettera');
+    assert.match(ok.body.pickup_code, /^[1-9]\d{2}$/, 'il codice di ritiro c\'è da quando il locale accetta');
     await sleep(120);
     const ev = kitchen.messages.find(m => m.type === 'order_created');
     assert.deepEqual([ev.order.is_takeaway, ev.order.pickup_name, ev.order.items[0].name], [true, 'Luca', 'Panino']);
@@ -203,7 +204,7 @@ describe('asporto', () => {
     assert.equal(listed.find(o => o.id === doomed.body.id).order_id, null, 'quello che non è partito resta in attesa');
     // l\'apertura azzera lo stock: l\'ordine nato dopo lo trova già «illimitato», quindi non c\'è nulla da scalare
     assert.equal((await adminDb.query('SELECT stock FROM products WHERE id = $1', [t.productId])).rows[0].stock, null);
-    await adminDb.query(`INSERT INTO products (name, price, category, takeaway_load, tenant_id) VALUES ('Acqua', 2, 'Bevande', 0, $1) RETURNING id`, [t.id])
+    await adminDb.query(`INSERT INTO products (name, price, category, prep_minutes, tenant_id) VALUES ('Acqua', 2, 'Bevande', 0, $1) RETURNING id`, [t.id])
       .then(({ rows: [{ id }] }) => { drink = id; });
     await adminDb.query(`INSERT INTO sessions (name, start_time, tenant_id) SELECT 'Ripristino', now(), $1 WHERE NOT EXISTS (SELECT 1 FROM sessions WHERE tenant_id = $1 AND end_time IS NULL)`, [t.id]);
   });
@@ -265,6 +266,30 @@ describe('asporto', () => {
     const forced = await cashier.post('/takeaway/orders', { date: tomorrow, time: '19:15', items: [pizza(3)], customer_name: 'Forzato', source: 'counter', ignore_capacity: true });
     assert.equal(forced.status, 201);
     assert.equal((await cashier.post('/takeaway/orders', { date: tomorrow, time: '19:10', items: [pizza()], customer_name: 'X' })).body.code, 'NOT_A_SLOT');
+  });
+
+  it('codice di ritiro: arriva all\'approvazione, è di tre cifre e non si ripete nello stesso giorno', async () => {
+    const day = addDays(today, 3);
+    const requested = await post([pizza()], { date: day, time: '12:00', customer_name: 'Attesa' });
+    const waiting = (await client.get(`/public/takeaway/orders/${requested.body.token}`)).body;
+    assert.equal(waiting.pickup_code, null, 'finché il locale non accetta non c\'è codice');
+
+    const codes = [];
+    for (let i = 0; i < 6; i += 1) {
+      const res = await cashier.post('/takeaway/orders', { date: day, time: '12:15', items: [{ id: drink, quantity: 1 }], customer_name: `Banco ${i}`, source: 'counter' });
+      assert.equal(res.status, 201, JSON.stringify(res.body));
+      assert.match(res.body.pickup_code, /^[1-9]\d{2}$/);
+      codes.push(res.body.pickup_code);
+    }
+    const id = (await cashier.get(`/takeaway/orders?date=${day}`)).body.find(o => o.customer_name === 'Attesa').id;
+    const accepted = await cashier.post(`/takeaway/orders/${id}/accept`, {});
+    assert.equal(accepted.status, 200, JSON.stringify(accepted.body));
+    codes.push(accepted.body.pickup_code);
+    assert.equal(new Set(codes).size, codes.length, 'nessun codice ripetuto tra gli ordini vivi dello stesso giorno');
+
+    const mine = (await client.get(`/public/takeaway/orders/${requested.body.token}`)).body;
+    assert.equal(mine.pickup_code, accepted.body.pickup_code, 'il cliente vede il suo codice nella pagina dell\'ordine');
+    assert.equal(Object.keys(mine).includes('work_minutes'), false, 'mai i minuti di lavoro nelle risposte pubbliche');
   });
 
   it('il cliente ritira una richiesta non ancora approvata; isolamento fra locali e ruoli', async () => {

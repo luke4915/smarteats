@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { slotsOn, slotWithinWindow, pickupIsDue, pickupIsStale, orderLoad, slotStates, isSlot, clock } from '../utils/takeaway.js';
+import { slotsOn, slotWithinWindow, pickupIsDue, pickupIsStale, orderWorkMinutes, newPickupCode, slotStates, isSlot, clock } from '../utils/takeaway.js';
 
 const HOURS = [
   { weekday: 5, open_time: '18:30:00', close_time: '20:00:00' },     // venerdì
@@ -48,22 +48,31 @@ test('un ritiro passato da più di due ore non va più in cucina da solo', () =>
   assert.equal(pickupIsStale('2026-10-24', '09:00', now), false, 'domani');
 });
 
-test('carico: quantità per carico del prodotto (le bibite non occupano il forno)', () => {
-  const load = { 1: 1, 2: 0, 3: 2 };
-  assert.equal(orderLoad([{ id: 1, quantity: 3 }, { id: 2, quantity: 4 }, { id: 3, quantity: 1 }], id => load[id]), 5);
-  assert.equal(orderLoad([{ id: 9, quantity: 2 }], () => undefined), 2, 'senza carico indicato vale 1');
+test('minuti di lavoro: quantità per minuti di preparazione del prodotto (le bibite non occupano la cucina)', () => {
+  const prep = { 1: 5, 2: 0, 3: 10 };
+  assert.equal(orderWorkMinutes([{ id: 1, quantity: 3 }, { id: 2, quantity: 4 }, { id: 3, quantity: 1 }], id => prep[id]), 25);
+  assert.equal(orderWorkMinutes([{ id: 9, quantity: 2 }], () => undefined), 10, 'senza minuti indicati vale 5 a pezzo');
 });
 
-test('stato delle fasce: piena quando il carico non ci sta, fuori finestra non disponibile', () => {
+test('codice di ritiro: tre cifre, mai uno già dato quel giorno', () => {
+  assert.equal(newPickupCode(new Set(), () => 0), '100');
+  assert.equal(newPickupCode(new Set(), () => 0.9999), '999');
+  assert.notEqual(newPickupCode(new Set(['100']), () => 0), '100', 'se la sorte pesca un codice preso, si cerca il primo libero');
+  const nearlyAll = new Set(Array.from({ length: 899 }, (_, i) => String(100 + i)));
+  assert.equal(newPickupCode(nearlyAll, () => 0), '999', 'l\'unico rimasto');
+  assert.equal(newPickupCode(new Set([...nearlyAll, '999'])), null, 'finiti tutti i codici');
+});
+
+test('stato delle fasce: piena quando i minuti non ci stanno, fuori finestra non disponibile', () => {
   const states = slotStates({
     date: '2026-10-23', hours: HOURS, slotMinutes: 30, capacity: 10,
-    loadByTime: new Map([['18:30', 8], ['19:00', 10]]), now: { date: '2026-10-23', minutes: 12 * 60 + 40 }, minLeadMinutes: 30, load: 3,
+    usedByTime: new Map([['18:30', 8], ['19:00', 10]]), now: { date: '2026-10-23', minutes: 12 * 60 + 40 }, minLeadMinutes: 30, minutes: 3,
   });
   const by = Object.fromEntries(states.map(s => [s.time, s]));
   assert.equal(by['12:00'].available, false, 'già passata');
   assert.deepEqual([by['12:00'].status, by['18:30'].status, by['19:30'].status], ['closed', 'full', 'open']);
   assert.equal(by['12:30'].available, false, 'meno di 30 minuti');
-  assert.deepEqual([by['18:30'].load, by['18:30'].available], [8, false], '8 + 3 supera 10');
+  assert.deepEqual([by['18:30'].used, by['18:30'].available], [8, false], '8 + 3 supera 10');
   assert.equal(by['19:00'].available, false, 'piena');
   assert.equal(by['19:30'].available, true);
 });

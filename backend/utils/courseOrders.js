@@ -3,7 +3,7 @@ import { lockCheck } from './payments.js';
 import { verifyOrderItems } from './orderLines.js';
 import { writeOrderItems } from './orderItemsWrite.js';
 import { sumQuantitiesByProduct, lockAndFindShortages, applyStockChange } from './stock.js';
-import { formatDisplayCode } from './displayCode.js';
+import { nextServerNumber } from './orderNumber.js';
 import { loadItems } from './orderItemsRead.js';
 import { withCheckInfo } from './orderCheck.js';
 import { assertIngredientsAvailable, sellIngredients } from './inventory/orderStock.js';
@@ -50,13 +50,12 @@ export async function createCourseOrders(db, { tenantId, userId, role, forceStoc
 
   const created = [];
   for (const g of ordered) {
-    const { rows: [{ order_counter: counter }] } = await db.query(
-      'UPDATE sessions SET order_counter = order_counter + 1 WHERE id = $1 RETURNING order_counter', [check.session_id]);
+    const { number, code } = await nextServerNumber(db, check.session_id);
     const fired = fireFirst && g.seq === firstSeq;
     const { rows: [order] } = await db.query(
-      `INSERT INTO orders (total, status, created_by, order_type, display_code, session_id, check_id, course_seq, course_name, fired_at, client_order_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, ${fired ? 'now()' : 'NULL'}, $10) RETURNING id`,
-      [g.total, fired ? 'pending' : 'scheduled', userId, g.orderType, formatDisplayCode(counter), check.session_id, checkId,
+      `INSERT INTO orders (total, status, created_by, order_type, display_code, number, session_id, check_id, course_seq, course_name, fired_at, client_order_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, ${fired ? 'now()' : 'NULL'}, $11) RETURNING id`,
+      [g.total, fired ? 'pending' : 'scheduled', userId, g.orderType, code, number, check.session_id, checkId,
         base + g.seq, courseName.get(g.course_id) ?? null, g.client_order_id ?? null]);
     await writeOrderItems(db, tenantId, order.id, g.items);
     await sellIngredients(db, { tenantId, orderId: order.id, items: g.items, sessionId: check.session_id, userId });

@@ -23,6 +23,7 @@ import inventoryMovementsRouter from './routes/inventoryMovements.js';
 import inventoryReportsRouter from './routes/inventoryReports.js';
 import inventoryRestockRouter from './routes/inventoryRestock.js';
 import reservedDataRouter from './routes/reservedData.js';
+import stripeWebhookRoutes from './routes/stripeWebhook.js';
 import { productRecipeRouter, modifierRecipeRouter } from './routes/recipes.js';
 import { inventoryRouter, productAvailabilityRouter } from './routes/inventoryAvailability.js';
 import bookingRoutes from './routes/bookings.js';
@@ -90,7 +91,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
     app.use('/api/orders', ordersLimiter);
     app.use('/api/devices', devicesLimiter);
     app.use('/api/exports', exportsLimiter);
-    app.use('/api/reserved-data/unlock', reservedUnlockLimiter);
+    app.use(['/api/reserved-data/unlock', '/api/reserved-data/disable'], reservedUnlockLimiter);
     app.use('/api/public/booking', (req, res, next) => (req.method === 'POST' ? publicBookingWriteLimiter : publicBookingReadLimiter)(req, res, next));
     app.use('/api/public/takeaway', (req, res, next) => (req.method === 'POST' ? publicBookingWriteLimiter : publicBookingReadLimiter)(req, res, next));
   }
@@ -100,8 +101,8 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/profile', profileRoutes);
   app.use('/api/products', productModifiersRouter); // PUT /:id/modifier-groups, prima delle route dei prodotti
   app.use('/api/products', productRecipeRouter);          // GET/PUT /:id/recipe (magazzino)
-  app.use('/api/products', productAvailabilityRouter);    // PUT /:id/availability (esaurito)
-  app.use('/api/products', productRoutes);
+  app.use('/api/products', productAvailabilityRouter(broadcast));    // PUT /:id/availability (esaurito)
+  app.use('/api/products', productRoutes(broadcast));
   app.use('/api/modifier-groups', modifierGroupsRouter);
   app.use('/api/modifiers', modifierRecipeRouter);        // GET/PUT /:id/recipe (magazzino)
   app.use('/api/ingredients', ingredientsRouter);
@@ -128,6 +129,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/feedback', feedbackRoutes);
   app.use('/api/whatsapp', whatsappRoutes);
   app.use('/api/webhooks/whatsapp', whatsappWebhookRoutes);
+  app.use('/api/webhooks/stripe', stripeWebhookRoutes(broadcast));
   app.use('/api/public/legal', legalRoutes);
   app.use('/api/public/takeaway', publicTakeawayRoutes(broadcast));
   app.use('/api/checks', checkRoutes(broadcast));

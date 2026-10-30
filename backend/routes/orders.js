@@ -14,6 +14,7 @@ import { toPublicOrder } from '../utils/publicOrder.js';
 import { sumQuantitiesByProduct, applyStockChange } from '../utils/stock.js';
 import { HttpError, sendHttpError } from '../utils/httpError.js';
 import { insertOrder, findOrderByClientId, duplicateResponse, UNIQUE_ORDER_CONSTRAINTS } from '../utils/createOrder.js';
+import { lateSyncAllowed } from '../utils/license.js';
 import { loadItems, withItems } from '../utils/orderItemsRead.js';
 import { requireModule, getTenantModules } from '../utils/tenantModules.js';
 import { setLineStatus } from '../utils/lineStatus.js';
@@ -92,6 +93,10 @@ export default function (broadcast) {
 
     const isLateSync = session_id !== undefined;
 
+    // Licenza scaduta: passa solo un ordine battuto offline entro le ore di tolleranza (utils/license.js), il resto è rifiutato come sempre
+    if (req.licenseExpiredAt && !lateSyncAllowed(req.licenseExpiredAt, client_created_at))
+      return res.status(402).json({ error: 'Licenza scaduta: questo ordine è stato battuto oltre le ore consentite senza rete', code: 'LICENSE_EXPIRED' });
+
     try {
       const { items: verifiedItems, total: verifiedTotal, orderType: order_type } = await verifyOrderItems(req.db, items, req.user.role);
       const { order, orderStatus, sessionOpen, stockUpdates } = await inTransaction(req.db, async (db) => {
@@ -127,6 +132,7 @@ export default function (broadcast) {
         if (check_id !== undefined) broadcast(req.user.tenantId, { type: 'check_updated', check: await getCheckSummary(req.db, check_id) });
       }
 
+      if (req.licenseExpiredAt) await logAudit(req.db, req.user.id, 'LATE_SYNC_AFTER_EXPIRY', { orderId: order.id, expiredAt: req.licenseExpiredAt });
       res.json({ success: true, orderId: order.id, displayCode: order.display_code, ...(check_id !== undefined && { checkId: check_id }) });
     } catch (err) {
       // Due invii contemporanei dello stesso ordine: il secondo trova un vincolo di unicità
@@ -135,7 +141,7 @@ export default function (broadcast) {
         const existing = await findOrderByClientId(req.db, client_order_id);
         if (existing) return res.json(duplicateResponse(existing));
       }
-      if (err.constraint === 'uniq_orders_device_seq') {
+      if (['uniq_orders_device_seq', 'uniq_orders_session_source_number'].includes(err.constraint)) {
         return res.status(409).json({ error: 'Numero ordine già usato da questo dispositivo', code: 'DEVICE_SEQ_CONFLICT' });
       }
       if (sendHttpError(res, err)) return;

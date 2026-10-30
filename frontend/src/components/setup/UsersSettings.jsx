@@ -3,8 +3,9 @@ import { Users } from 'lucide-react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useAuth } from '../../context/useAuth';
 import UsersPanel from '../shared/UsersPanel';
+import ProfileForm from '../shared/ProfileForm';
 
-// Utenti del proprio tenant (solo admin).
+// Utenti del proprio tenant (solo admin), con il proprio profilo nella riga «Tu».
 const UsersSettings = () => {
   const { user } = useAuth();
   const api = useMemo(() => ({
@@ -20,7 +21,7 @@ const UsersSettings = () => {
       <h2 className="text-base font-semibold text-[var(--text-main)] mb-4 flex items-center gap-2">
         <Users size={15} /> Utenti
       </h2>
-      <UsersPanel api={api} currentUserId={user.id} />
+      <UsersPanel api={api} currentUserId={user.id} renderProfile={(onSaved) => <ProfileForm onSaved={onSaved} />} />
     </div>
   );
 };

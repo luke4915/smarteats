@@ -37,7 +37,7 @@ const FloorPage = ({ user, service, event }) => {
   const [ordering, setOrdering] = useState(false);
   const [draftOpen, setDraftOpen] = useState(false);  // solo su schermo stretto: la comanda sopra la carta
   const [cart, setCart] = useState([]);
-  const products = useProducts(ordering);
+  const products = useProducts(ordering, event);
   const courses = useCourses();
   const modifiers = useModifiers();
   const reserve = usePanelReserve(!!(selection || walkIn) && !narrow);   // spazio che il pannello toglie all'area di lavoro

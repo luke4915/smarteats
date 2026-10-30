@@ -1,4 +1,4 @@
-// Logica pura della vista Asporto (date, gruppi della lista, carico delle fasce). Le regole vere (fasce, capienza,
+// Logica pura della vista Asporto (date, gruppi della lista, minuti di lavoro delle fasce). Le regole vere (fasce, capienza,
 // stati) le applica il server (backend/utils/takeaway.js): qui servono solo a mostrare.
 
 export const STATUS = {
@@ -26,10 +26,10 @@ export function groupOrders(orders) {
   ].filter(g => g.items.length);
 }
 
-// Carico per fascia degli ordini vivi (da approvare o accettati): Map «HH:MM» → carico.
-export function loadByTime(orders) {
+// Minuti di lavoro per fascia degli ordini vivi (da approvare o accettati): Map «HH:MM» → minuti.
+export function usedByTime(orders) {
   const map = new Map();
-  for (const o of orders) if (['requested', 'accepted'].includes(o.status)) map.set(o.time, (map.get(o.time) ?? 0) + o.load);
+  for (const o of orders) if (['requested', 'accepted'].includes(o.status)) map.set(o.time, (map.get(o.time) ?? 0) + o.work_minutes);
   return map;
 }
 
@@ -41,12 +41,13 @@ export function itemsSummary(items, max = 3) {
 
 export const cartCount = (cart) => cart.reduce((n, l) => n + l.quantity, 0);
 export const cartTotal = (cart) => cart.reduce((s, l) => s + Math.round(l.price * 100) * l.quantity, 0) / 100;
-export const cartLoad = (cart) => cart.reduce((n, l) => n + l.quantity * (l.takeaway_load ?? 1), 0);
+// Il carrello come lo vuole il server per dire quali fasce ci stanno: «id:quantità,id:quantità» (i minuti li calcola lui).
+export const cartParam = (cart) => cart.map(l => `${l.id}:${l.quantity}`).join(',');
 
 // Aggiunge un prodotto al carrello (stessa riga: si somma), o ne toglie uno.
 export function addToCart(cart, product, delta = 1) {
   const found = cart.find(l => l.id === product.id);
-  if (!found) return delta > 0 ? [...cart, { id: product.id, name: product.name, price: product.price, takeaway_load: product.takeaway_load ?? 1, quantity: delta, note: '' }] : cart;
+  if (!found) return delta > 0 ? [...cart, { id: product.id, name: product.name, price: product.price, quantity: delta, note: '' }] : cart;
   const quantity = found.quantity + delta;
   return quantity > 0 ? cart.map(l => (l === found ? { ...l, quantity } : l)) : cart.filter(l => l !== found);
 }

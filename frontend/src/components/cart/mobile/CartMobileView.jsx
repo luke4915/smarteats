@@ -1,9 +1,10 @@
 import React from 'react';
-import { ShoppingCart, Check, Printer, MessageSquare, QrCode, Trash2, ShoppingBag, ChevronLeft, Minus, Plus } from 'lucide-react';
+import { ShoppingCart, Check, Printer, MessageSquare, QrCode, Trash2, ShoppingBag, ChevronLeft, Minus, Plus, Undo2 } from 'lucide-react';
 import { getLineTotal, getAdjustmentLabel } from '../../../utils/pricing';
 import OrderDiscountPanel from '../OrderDiscountPanel';
 import ActionMenu from '../../shared/ActionMenu';
 import { formatEuro } from '../../../utils/format';
+import QuickCash from '../QuickCash';
 
 // Il carrello da telefono, a tutto schermo. Dall'alto: intestazione con «indietro» e le azioni, le righe (con più e
 // meno direttamente sulla riga; un tocco sul nome apre nota e sconto), poi in basso, alla portata del pollice: totale,
@@ -26,6 +27,7 @@ const CartMobileView = ({
     setIsQRScanModalOpen,
     setIsReprintModalOpen,
     setIsClearModalOpen,
+    setShowReversePopup,
     applyOrderDiscount,
     canDiscount,
     isAllGift,
@@ -33,18 +35,15 @@ const CartMobileView = ({
     isTakeaway,
     setIsTakeaway,
     addToCart,
-    removeLastItem,
-    children
+    removeLastItem
 }) => {
 
-    // Scorciatoie per i contanti ricevuti
-    const quickCashOptions = [5, 10, 20, 50];
     const pieces = cart.reduce((s, i) => s + i.quantity, 0);
 
     const iconBtn = 'h-11 w-11 shrink-0 flex items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-muted)] active:scale-95 transition disabled:opacity-40';
 
     return (
-        <div className="flex flex-col h-[100dvh] bg-[var(--bg-card)] text-[var(--text-main)] overflow-hidden">
+        <div className="flex flex-col h-full bg-[var(--bg-card)] text-[var(--text-main)] overflow-hidden">
 
             {/* ─── Intestazione ─── */}
             <div className="px-2 py-2 flex items-center gap-1 border-b border-[var(--border)] shrink-0">
@@ -67,6 +66,7 @@ const CartMobileView = ({
                         buttonClassName="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center" />
                 )}
                 <ActionMenu items={[
+                    { label: 'Storno ordini', icon: Undo2, onClick: () => setShowReversePopup(true), disabled: !sessionActive, hint: 'Serve una serata aperta' },
                     { label: 'Importa ordine da QR', icon: QrCode, onClick: () => setIsQRScanModalOpen(true) },
                     { label: 'Ristampa scontrini recenti', icon: Printer, onClick: () => setIsReprintModalOpen(true), disabled: !sessionActive, hint: 'Serve una serata aperta' },
                 ]} />
@@ -155,31 +155,17 @@ const CartMobileView = ({
                             : <span className={`text-lg font-semibold tabular-nums ${change < 0 ? 'text-red-500' : 'text-green-500'}`}>{change >= 0 ? formatEuro(change) : `mancano ${formatEuro(Math.abs(change))}`}</span>}
                     </div>
                 </div>
-                <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                    <button onClick={() => setAmountReceived(total.toFixed(2))} disabled={cart.length === 0}
-                        className="px-3.5 h-10 bg-[var(--bg-card)] border border-[var(--border)] text-sm font-medium rounded-lg shrink-0 active:bg-[var(--accent)] active:text-white disabled:opacity-40">Esatto</button>
-                    {quickCashOptions.map(amount => (
-                        <button key={amount} onClick={() => setAmountReceived(amount.toString())} disabled={cart.length === 0}
-                            className="px-4 h-10 bg-[var(--bg-card)] border border-[var(--border)] text-sm font-medium tabular-nums rounded-lg shrink-0 active:bg-[var(--accent)] active:text-white disabled:opacity-40">{amount} €</button>
-                    ))}
-                </div>
+                <QuickCash total={total} received={amountReceived} onChange={setAmountReceived} disabled={cart.length === 0} />
 
                 <button onClick={handleSendOrder} disabled={cart.length === 0 || !sessionActive || sending}
                     className="w-full h-14 bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:bg-[var(--bg-input)] disabled:text-[var(--text-muted)] text-white rounded-xl font-semibold text-base active:scale-[0.98] transition flex items-center justify-center gap-2.5">
                     <Check size={20} /> {sending ? 'Invio…' : 'Invia ordine'}
                 </button>
 
-                <div className="grid grid-cols-2 gap-2">
-                    <button onClick={() => cart.length > 0 && setIsClearModalOpen(true)} disabled={cart.length === 0}
-                        className="h-10 border border-red-500/30 text-red-500 rounded-lg text-sm font-medium transition disabled:opacity-30 flex items-center justify-center gap-1.5 active:bg-red-500/10">
-                        <Trash2 size={14} /> Svuota
-                    </button>
-                    {children && (
-                        <div className="[&>*]:w-full [&>*]:h-10 [&>*]:rounded-lg [&>*]:text-sm [&>*]:font-medium [&>*]:flex [&>*]:items-center [&>*]:justify-center [&>*]:gap-1.5 [&>*]:border [&>*]:border-[var(--border)] [&>*]:bg-[var(--bg-card)]">
-                            {children}
-                        </div>
-                    )}
-                </div>
+                <button onClick={() => cart.length > 0 && setIsClearModalOpen(true)} disabled={cart.length === 0}
+                    className="w-full h-10 border border-red-500/30 text-red-500 rounded-lg text-sm font-medium transition disabled:opacity-30 flex items-center justify-center gap-1.5 active:bg-red-500/10">
+                    <Trash2 size={14} /> Svuota
+                </button>
             </div>
 
         </div>

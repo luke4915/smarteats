@@ -19,7 +19,7 @@ const WIDTHS = {
 //             di uscire è «Annulla» o «Chiudi» lì dentro. Senza piede la X in alto a destra è l'unica uscita visibile.
 //   onSubmit  se c'è, corpo e piede formano un <form> (il pulsante `type="submit"` invia)
 //   size      larghezza massima dal tablet in su: classe Tailwind (default `max-w-sm`)
-// Regola dello stile (CLAUDE.md): le finestre servono per conferme e moduli lunghi; il resto sta nel pannello a destra.
+// Regola dello stile (docs/stile-interfaccia.md): le finestre servono per conferme e moduli lunghi; il resto sta nel pannello a destra.
 const SWIPE_CLOSE_PX = 110;      // di quanto si trascina la scheda verso il basso per chiuderla
 const PHONE = '(max-width: 639px)';
 
@@ -55,7 +55,7 @@ const Modal = ({ title, onClose, footer, onSubmit, size = 'max-w-sm', dismissOnB
 
   const Layout = onSubmit ? 'form' : 'div';
   return createPortal(
-    <div className="fixed inset-0 z-[2500] flex items-end sm:items-center justify-center sm:p-6 bg-black/40 backdrop-blur-md"
+    <div className="fixed inset-0 z-[2500] flex items-end sm:items-center justify-center sm:p-6 bg-black/40 backdrop-blur-xs"
       onMouseDown={dismissOnBackdrop ? (e) => { if (e.target === e.currentTarget) onClose(); } : undefined}>
       <div ref={sheet} role="dialog" aria-modal="true" aria-label={title}
         className={`modal-sheet w-full ${WIDTHS[size] ?? WIDTHS['max-w-sm']} max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] sm:max-h-[calc(100dvh-3rem)] flex flex-col overflow-hidden bg-[var(--bg-card)] rounded-t-3xl sm:rounded-2xl ring-1 ring-black/5 dark:ring-white/10 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.55)]`}>

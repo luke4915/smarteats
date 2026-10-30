@@ -2,7 +2,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import bcrypt from 'bcrypt';
-import { startServer, createTenant, deleteTenants, closePools, apiClient, adminDb, PASSWORD } from './helpers.js';
+import { startServer, createTenant, deleteTenants, closePools, apiClient, adminDb, connectWs, sleep, PASSWORD } from './helpers.js';
 
 describe('magazzino: ingredienti e ricette', () => {
   let server, t, portionsOnly, api, kitchen, cashier, portionsApi;
@@ -178,10 +178,28 @@ describe('magazzino: ingredienti e ricette', () => {
   it('la cucina segna un piatto esaurito e lo rimette in vendita; la cassa no', async () => {
     const out = await kitchen.request('PUT', `/products/${ids.pizza}/availability`, { available: false });
     assert.equal(out.status, 200);
-    assert.deepEqual([out.body.stock, out.body.stock_enabled, out.body.visible], [0, true, false]);
+    assert.deepEqual([out.body.stock, out.body.stock_enabled, out.body.visible], [0, true, true]);
     assert.equal((await cashier.request('PUT', `/products/${ids.pizza}/availability`, { available: true })).status, 403);
     const back = await kitchen.request('PUT', `/products/${ids.pizza}/availability`, { available: true });
     assert.deepEqual([back.body.stock, back.body.stock_enabled, back.body.visible], [null, false, true]);
+  });
+
+  it('esaurito e di nuovo disponibile arrivano a tutti i dispositivi, e due cambi insieme lasciano un solo stato coerente', async () => {
+    const staff = await connectWs(server.port, t.host, { cookie: api.cookie });
+    await kitchen.request('PUT', `/products/${ids.pizza}/availability`, { available: false });
+    await sleep(150);
+    const out = staff.messages.find(m => m.type === 'product_stock_updated' && m.product.id === ids.pizza);
+    assert.deepEqual([out.product.stock, out.product.stock_enabled, out.product.visible], [0, true, true], 'esaurito ma ancora in carta');
+    // la cucina e l'amministratore lo cambiano nello stesso momento: vince l'ultimo, ma lo stato resta coerente e l'ultimo avviso lo dice
+    const [a, b] = await Promise.all([kitchen.request('PUT', `/products/${ids.pizza}/availability`, { available: true }), api.request('PUT', `/products/${ids.pizza}/availability`, { available: false })]);
+    assert.deepEqual([a.status, b.status], [200, 200]);
+    await sleep(150);
+    const last = staff.messages.filter(m => m.type === 'product_stock_updated' && m.product.id === ids.pizza).at(-1).product;
+    const { rows: [row] } = await adminDb.query('SELECT stock, stock_enabled, visible FROM products WHERE id = $1', [ids.pizza]);
+    assert.deepEqual({ stock: last.stock, stock_enabled: last.stock_enabled, visible: last.visible }, row, 'l\'ultimo avviso coincide con ciò che c\'è nel database');
+    assert.ok((row.stock_enabled && row.stock === 0) || (!row.stock_enabled && row.stock === null), 'o esaurito o illimitato, mai a metà');
+    staff.ws.close();
+    await kitchen.request('PUT', `/products/${ids.pizza}/availability`, { available: true });
   });
 
   it('anche le comande dei tavoli per portata scalano gli ingredienti, e il giro si rifiuta se non bastano', async () => {

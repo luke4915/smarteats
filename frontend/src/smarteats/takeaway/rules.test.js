@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupOrders, loadByTime, itemsSummary, addToCart, cartCount, cartTotal, cartLoad, shownStatus } from './rules.js';
+import { groupOrders, usedByTime, itemsSummary, addToCart, cartCount, cartTotal, cartParam, shownStatus } from './rules.js';
 
-const o = (id, status, time, load = 1, extra = {}) => ({ id, status, time, load, ...extra });
+const o = (id, status, time, work_minutes = 5, extra = {}) => ({ id, status, time, work_minutes, ...extra });
 
 test('lista della giornata: prima da approvare, poi in lavorazione per orario, poi il resto', () => {
   const groups = groupOrders([o(1, 'accepted', '20:00'), o(2, 'requested', '19:30'), o(3, 'picked_up', '19:00'), o(4, 'rejected', '19:00'), o(5, 'accepted', '19:15')]);
@@ -10,9 +10,9 @@ test('lista della giornata: prima da approvare, poi in lavorazione per orario, p
   assert.deepEqual(groupOrders([]), []);
 });
 
-test('carico per fascia: contano solo gli ordini vivi', () => {
-  const map = loadByTime([o(1, 'accepted', '19:00', 3), o(2, 'requested', '19:00', 2), o(3, 'picked_up', '19:00', 5), o(4, 'cancelled', '19:15', 4)]);
-  assert.equal(map.get('19:00'), 5);
+test('minuti di lavoro per fascia: contano solo gli ordini vivi', () => {
+  const map = usedByTime([o(1, 'accepted', '19:00', 15), o(2, 'requested', '19:00', 10), o(3, 'picked_up', '19:00', 25), o(4, 'cancelled', '19:15', 20)]);
+  assert.equal(map.get('19:00'), 25);
   assert.equal(map.has('19:15'), false);
 });
 
@@ -28,14 +28,14 @@ test('riepilogo delle righe', () => {
   assert.equal(itemsSummary(items.slice(0, 2)), '2× Margherita, 1× Acqua');
 });
 
-test('carrello: somma le stesse righe, toglie a zero, conta pezzi, totale e carico', () => {
-  const pizza = { id: 1, name: 'Margherita', price: 6.5, takeaway_load: 1 };
-  const water = { id: 2, name: 'Acqua', price: 1.5, takeaway_load: 0 };
+test('carrello: somma le stesse righe, toglie a zero, conta pezzi e totale, e si descrive per il server', () => {
+  const pizza = { id: 1, name: 'Margherita', price: 6.5 };
+  const water = { id: 2, name: 'Acqua', price: 1.5 };
   let cart = addToCart([], pizza);
   cart = addToCart(cart, pizza);
   cart = addToCart(cart, water, 3);
   assert.deepEqual(cart.map(l => [l.id, l.quantity]), [[1, 2], [2, 3]]);
-  assert.deepEqual([cartCount(cart), cartTotal(cart), cartLoad(cart)], [5, 17.5, 2]);
+  assert.deepEqual([cartCount(cart), cartTotal(cart), cartParam(cart)], [5, 17.5, '1:2,2:3']);
   assert.deepEqual(addToCart(cart, water, -3).map(l => l.id), [1]);
   assert.deepEqual(addToCart([], pizza, -1), []);
 });

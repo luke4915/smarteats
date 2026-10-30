@@ -35,6 +35,8 @@ execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyo
 const hash = await bcrypt.hash(PASSWORD, 4);
 // Avvisi WhatsApp: driver finto (non esce nulla), qualunque sia NODE_ENV
 process.env.WHATSAPP_DRIVER = 'mock';
+// Pagamenti con carta: Stripe finto (nessuna chiamata verso internet); il ristorante ha il modulo e un conto collegato di prova
+process.env.STRIPE_DRIVER = 'mock';
 // Console master: stessa password di prova (serve MASTER_JWT_SECRET, diverso da JWT_SECRET)
 process.env.MASTER_PASSWORD_HASH = hash;
 process.env.MASTER_JWT_SECRET ||= `${process.env.JWT_SECRET ?? 'e2e'}-master-console-prova-0123456789`;
@@ -63,7 +65,7 @@ await addProduct(risto, 'Spaghetti alle vongole', 14, 'Primi', { courseId: primi
 await addProduct(risto, 'Vino della casa', 18, 'Bevande', { destination: 'bar' });
 await addProduct(risto, 'Acqua', 2, 'Bevande', { destination: 'bar' });
 // Prenotazioni: modulo acceso e due turni fissi, tutti i giorni
-await adminDb.query(`UPDATE tenants SET modules = array_cat(modules, ARRAY['bookings', 'takeaway', 'whatsapp']) WHERE id = $1`, [risto.id]);
+await adminDb.query(`UPDATE tenants SET modules = array_cat(modules, ARRAY['bookings', 'takeaway', 'whatsapp', 'payments']), stripe_account_id = 'acct_e2e' WHERE id = $1`, [risto.id]);
 // Asporto: aperto tutti i giorni dalle 12:00 alle 23:30, fasce da 15 minuti, 12 porzioni per fascia
 for (let weekday = 0; weekday < 7; weekday += 1)
   await adminDb.query(`INSERT INTO takeaway_hours (weekday, open_time, close_time, tenant_id) VALUES ($1, '00:00', '23:45', $2)`, [weekday, risto.id]);
@@ -74,7 +76,7 @@ const ristoSeed = { host: `${risto.slug}.smarteats.local`, admin: risto.username
 const sagra = await createTenant({ businessType: 'street_food' });
 for (const [name, price, category] of [['Panino con salsiccia', 5, 'Panini'], ['Patatine', 3, 'Contorni'], ['Birra', 4, 'Bevande'], ['Acqua', 1, 'Bevande'], ['Tiramisù', 4, 'Dolci']])
   await addProduct(sagra, name, price, category);
-const sagraSeed = { host: `${sagra.slug}.smarteats.local`, admin: sagra.username, kitchen: await addUser(sagra, 'kitchen') };
+const sagraSeed = { host: `${sagra.slug}.smarteats.local`, admin: sagra.username, kitchen: await addUser(sagra, 'kitchen'), cashier: await addUser(sagra, 'cashier') };
 
 // ── Pizzeria di solo asporto: nessun tavolo, nessuna prenotazione ──
 const shop = await createTenant({ businessType: 'takeaway_shop' });

@@ -2,7 +2,6 @@ import SectionsPage from '../components/shell/SectionsPage';
 import PrintProfiles from '../components/setup/PrintProfiles';
 import MenuSettings from '../components/setup/MenuSettings';
 import AccountSection from '../components/setup/AccountSection';
-import FeedbackBox from '../components/shared/FeedbackBox';
 import TakeawaySettings from '../smarteats/takeaway/TakeawaySettings';
 import ReservedDataSettings from '../components/setup/ReservedDataSettings';
 import InventorySettings from '../inventory/InventorySettings';
@@ -18,10 +17,9 @@ const SetupPage = ({ user, ...device }) => {
     menu: () => <MenuSettings />,
     printing: () => <PrintProfiles />,
     reserved: () => <ReservedDataSettings />,
-    feedback: () => <FeedbackBox modules={['pos', 'kitchen', 'catalog', 'stats', 'settings']} />,
     account: () => <AccountSection user={user} />,
   };
-  return <SectionsPage title="Sistema" sections={festivalSections(user)} content={content} />;
+  return <SectionsPage title="Impostazioni" sections={festivalSections(user)} content={content} />;
 };
 
 export default SetupPage;

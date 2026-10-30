@@ -2,14 +2,13 @@ import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
 import Switch from '../shared/Switch';
 import Segmented from '../../smarteats/floor/Segmented';
-import { btnPrimary, input, label } from '../../smarteats/floor/ui';
+import { btn, btnPrimary, input, label } from '../../smarteats/floor/ui';
 import Combobox from './Combobox';
 import PortionsField from './PortionsField';
 import { categoryColors, namesForCategory } from './productForm';
 
 const PRINT_OPTIONS = [{ id: 'both', label: 'Bar e cucina' }, { id: 'bar', label: 'Solo bar' }, { id: 'kitchen', label: 'Solo cucina' }];
 const VAT_RATES = ['4', '5', '10', '22', '0'];
-const OVEN_LOAD = [[0, 'Niente (bibite, dolci già pronti…)'], [1, 'Una porzione (una pizza)'], [2, 'Due porzioni (pizza grande, teglia)'], [3, 'Tre porzioni']];
 
 // Un campo con la sua etichetta; `hint` è la spiegazione in piccolo.
 const Field = ({ title, htmlFor, hint, className = '', children }) => (
@@ -27,8 +26,10 @@ const SwitchRow = ({ title, checked, onChange }) => (
 
 // La finestra per aggiungere o modificare un prodotto. Non salva nulla da sola: mostra `form` e avvisa chi la usa
 // (`onField`, `onChange`, `onSubmit`). Sta sempre nello schermo: il corpo scorre, il pulsante resta fisso in basso.
+// `noun`: come si chiamano in questo locale («piatto» al ristorante, «prodotto» in sagra), stessa parola dell'elenco.
+// `conflict` ({ removed, fields }, vedi `productConflict.js`): un altro utente ha cambiato o eliminato il prodotto mentre lo si modifica.
 // `courses`, `modifierGroups`, `takeawayEnabled`, `portionsEnabled` (modulo magazzino) e `vatEnabled` (modalità «magazzino») accendono i campi che esistono solo in certi locali.
-const ProductFormModal = ({ form, setForm, products, editing, courses, modifierGroups, takeawayEnabled, portionsEnabled, vatEnabled, submitDisabled, onField, onChange, onSubmit, onClose }) => {
+const ProductFormModal = ({ noun = 'prodotto', conflict = null, onUseLatest, form, setForm, products, editing, courses, modifierGroups, takeawayEnabled, portionsEnabled, vatEnabled, submitDisabled, onField, onChange, onSubmit, onClose }) => {
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
   const patch = (changes) => setForm(prev => ({ ...prev, ...changes }));
   const toggleModifierGroup = (id) => setForm(prev => {
@@ -37,12 +38,20 @@ const ProductFormModal = ({ form, setForm, products, editing, courses, modifierG
   });
 
   return (
-    <Modal title={editing ? 'Modifica prodotto' : 'Nuovo prodotto'} size="max-w-2xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={onSubmit}
+    <Modal title={`${editing ? 'Modifica' : 'Nuovo'} ${noun}`} size="max-w-2xl" dismissOnBackdrop={false} onClose={onClose} onSubmit={onSubmit}
       footer={
         <ModalActions onCancel={onClose}>
-          <button type="submit" disabled={submitDisabled} className={btnPrimary}>{editing ? 'Salva modifiche' : 'Aggiungi prodotto'}</button>
+          <button type="submit" disabled={submitDisabled} className={btnPrimary}>{editing ? 'Salva modifiche' : `Aggiungi ${noun}`}</button>
         </ModalActions>}>
       <div className="space-y-5">
+        {conflict && (
+          <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm text-[var(--text-main)]">
+            <span className="flex-1 min-w-0">
+              {conflict.removed ? `Un altro utente ha eliminato questo ${noun}: non si può più salvare.` : `Un altro utente ha cambiato questo ${noun} (${conflict.fields.join(', ')}). Ciò che vedi qui sotto potrebbe non essere aggiornato.`}
+            </span>
+            {!conflict.removed && <button type="button" className={btn} onClick={onUseLatest}>Usa i valori aggiornati</button>}
+          </div>
+        )}
         <div className="grid sm:grid-cols-2 gap-x-4 gap-y-4">
           <Field title="Categoria"><Combobox name="category" value={form.category} onChange={(v) => onField('category', v)} options={categories} placeholder="Es. Pizze, Bevande" /></Field>
           <Field title="Prezzo (€)" htmlFor="price">
@@ -90,10 +99,9 @@ const ProductFormModal = ({ form, setForm, products, editing, courses, modifierG
               </Field>
             )}
             {takeawayEnabled && (
-              <Field title="Asporto: quanto impegna il forno" htmlFor="takeaway_load">
-                <select id="takeaway_load" value={form.takeaway_load ?? 1} onChange={e => patch({ takeaway_load: Number(e.target.value) })} className={input}>
-                  {OVEN_LOAD.map(([value, text]) => <option key={value} value={value}>{text}</option>)}
-                </select>
+              <Field title="Tempo di preparazione (minuti)" htmlFor="prep_minutes" hint="Serve all'asporto per sapere quanti ordini ci stanno in una fascia. 0 per bevande e cose già pronte.">
+                <input id="prep_minutes" type="number" inputMode="numeric" min="0" max="120" step="1" value={form.prep_minutes ?? 5}
+                  onChange={e => patch({ prep_minutes: e.target.value === '' ? 0 : Math.min(120, Math.max(0, Math.floor(Number(e.target.value)))) })} className={`${input} tabular-nums`} />
               </Field>
             )}
             {vatEnabled && (

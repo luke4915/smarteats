@@ -32,7 +32,7 @@ const TakeawayPage = ({ event }) => {
   const { settings, orders, slots, capacity, loading, reload } = useTakeaway(date, event);
   const [panel, setPanel] = useState(null);        // { kind: 'detail', id } | { kind: 'new' }
   const [cart, setCart] = useState([]);
-  const products = useProducts(panel?.kind === 'new');
+  const products = useProducts(panel?.kind === 'new', event);
 
   // Si arriva dalla campanella: si apre l'ordine da approvare
   useEffect(() => {
@@ -47,7 +47,7 @@ const TakeawayPage = ({ event }) => {
   const current = panel?.kind === 'detail' ? orders.find(o => o.id === panel.id) : null;
   const pending = orders.filter(o => o.status === 'requested').length;
   const go = (n) => { setDate(d => addDays(d, n)); setPanel(null); };
-  const busySlots = slots.filter(s => s.load > 0);
+  const busySlots = slots.filter(s => s.used > 0);
 
   const quickAccept = async (e, order) => {
     e.stopPropagation();
@@ -71,11 +71,11 @@ const TakeawayPage = ({ event }) => {
       </header>
 
       {busySlots.length > 0 && (
-        <ScrollRow className="flex gap-2 pb-3 shrink-0" aria-label="Carico delle fasce">
+        <ScrollRow className="flex gap-2 pb-3 shrink-0" aria-label="Lavoro già preso per fascia">
           {busySlots.map(s => {
-            const ratio = capacity ? s.load / capacity : 0;
+            const ratio = capacity ? s.used / capacity : 0;
             const tone = ratio >= 1 ? 'border-red-500/50 text-red-500' : ratio >= 0.75 ? 'border-amber-500/50 text-amber-500' : 'border-[var(--border)] text-[var(--text-muted)]';
-            return <span key={s.time} className={`shrink-0 px-2.5 py-1 rounded-lg border text-xs tabular-nums ${tone}`}><b className="text-[var(--text-main)]">{s.time}</b> · {s.load}/{capacity}</span>;
+            return <span key={s.time} className={`shrink-0 px-2.5 py-1 rounded-lg border text-xs tabular-nums ${tone}`}><b className="text-[var(--text-main)]">{s.time}</b> · {s.used}/{capacity} min</span>;
           })}
         </ScrollRow>
       )}
@@ -102,7 +102,7 @@ const TakeawayPage = ({ event }) => {
                       <span className="w-14 text-center text-lg font-semibold tabular-nums text-[var(--text-main)]">{o.time}</span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-medium text-[var(--text-main)] truncate">{o.customer_name}</span>
-                        <span className="block text-xs text-[var(--text-muted)] truncate">{[o.display_code && `#${o.display_code}`, SOURCE[o.source], itemsSummary(o.items)].filter(Boolean).join(' · ')}</span>
+                        <span className="block text-xs text-[var(--text-muted)] truncate">{[o.pickup_code && `Codice ${o.pickup_code}`, o.display_code && `#${o.display_code}`, SOURCE[o.source], itemsSummary(o.items)].filter(Boolean).join(' · ')}</span>
                       </span>
                       <span className="text-sm font-semibold tabular-nums text-[var(--text-main)] hidden sm:block">{formatEuro(o.total)}</span>
                       {o.status === 'requested'

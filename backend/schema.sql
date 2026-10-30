@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict iSBraL9bX4XEFkG5fbV3SMncaOVWneTRks7Kfj5veaAFVHfziR09ioucsadz5HI
+\restrict nVwRAEridK1WJ39OsJFanM4iRsjSkb9UhoQGKEnbK0TtnBSRvLrrE8zJyJmQA1U
 
 -- Dumped from database version 17.10 (Homebrew)
 -- Dumped by pg_dump version 17.10 (Homebrew)
@@ -856,9 +856,11 @@ CREATE TABLE public.orders (
     course_seq integer,
     course_name text,
     fired_at timestamp with time zone,
+    number integer,
     CONSTRAINT orders_course_seq_check CHECK ((course_seq >= 1)),
     CONSTRAINT orders_device_pair_check CHECK (((device_id IS NULL) = (device_seq IS NULL))),
     CONSTRAINT orders_device_seq_check CHECK ((device_seq > 0)),
+    CONSTRAINT orders_number_check CHECK (((number IS NULL) OR (number > 0))),
     CONSTRAINT orders_order_type_check CHECK (((order_type)::text = ANY ((ARRAY['sale'::character varying, 'gift'::character varying, 'discount'::character varying, 'cover'::character varying])::text[]))),
     CONSTRAINT orders_scheduled_on_check CHECK (((status <> 'scheduled'::text) OR ((check_id IS NOT NULL) AND (course_seq IS NOT NULL)))),
     CONSTRAINT orders_status_check CHECK ((status = ANY (ARRAY['scheduled'::text, 'pending'::text, 'preparing'::text, 'completed'::text, 'canceled'::text])))
@@ -1094,15 +1096,15 @@ CREATE TABLE public.products (
     stock_enabled boolean DEFAULT false NOT NULL,
     tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
     course_id integer,
-    takeaway_load integer DEFAULT 1 NOT NULL,
+    prep_minutes integer DEFAULT 5 NOT NULL,
     portions_reset_rule text DEFAULT 'unlimited'::text NOT NULL,
     portions_start integer,
     vat_rate numeric(5,2),
     CONSTRAINT products_portions_reset_rule_check CHECK ((portions_reset_rule = ANY (ARRAY['restart_each_service'::text, 'carry_over'::text, 'unlimited'::text]))),
     CONSTRAINT products_portions_start_check CHECK (((portions_start IS NULL) OR (portions_start > 0))),
+    CONSTRAINT products_prep_minutes_check CHECK (((prep_minutes >= 0) AND (prep_minutes <= 120))),
     CONSTRAINT products_print_destination_check CHECK (((print_destination)::text = ANY ((ARRAY['bar'::character varying, 'kitchen'::character varying, 'both'::character varying])::text[]))),
     CONSTRAINT products_restart_needs_start CHECK (((portions_reset_rule <> 'restart_each_service'::text) OR (portions_start IS NOT NULL))),
-    CONSTRAINT products_takeaway_load_check CHECK (((takeaway_load >= 0) AND (takeaway_load <= 20))),
     CONSTRAINT products_vat_rate_check CHECK (((vat_rate IS NULL) OR ((vat_rate >= (0)::numeric) AND (vat_rate <= (100)::numeric))))
 );
 
@@ -1673,7 +1675,7 @@ CREATE TABLE public.takeaway_orders (
     status text DEFAULT 'requested'::text NOT NULL,
     source text NOT NULL,
     pickup_at timestamp with time zone NOT NULL,
-    load integer DEFAULT 0 NOT NULL,
+    work_minutes integer DEFAULT 0 NOT NULL,
     customer_name text NOT NULL,
     phone text DEFAULT ''::text NOT NULL,
     email text DEFAULT ''::text NOT NULL,
@@ -1692,12 +1694,18 @@ CREATE TABLE public.takeaway_orders (
     consent_at timestamp with time zone,
     created_by integer,
     personal_data_purged_at timestamp with time zone,
+    pickup_code text,
+    payment_status text DEFAULT 'none'::text NOT NULL,
+    stripe_session_id text,
+    stripe_payment_intent_id text,
     CONSTRAINT takeaway_orders_customer_name_check CHECK ((length(btrim(customer_name)) > 0)),
-    CONSTRAINT takeaway_orders_load_check CHECK ((load >= 0)),
     CONSTRAINT takeaway_orders_paid_method_check CHECK ((paid_method = ANY (ARRAY['cash'::text, 'card'::text, 'other'::text]))),
     CONSTRAINT takeaway_orders_payment_mode_check CHECK ((payment_mode = ANY (ARRAY['on_pickup'::text, 'online'::text]))),
+    CONSTRAINT takeaway_orders_payment_status_check CHECK ((payment_status = ANY (ARRAY['none'::text, 'awaiting'::text, 'authorized'::text, 'paid'::text, 'canceled'::text, 'refunded'::text]))),
+    CONSTRAINT takeaway_orders_pickup_code_check CHECK (((pickup_code IS NULL) OR (pickup_code ~ '^[0-9]{3}$'::text))),
     CONSTRAINT takeaway_orders_source_check CHECK ((source = ANY (ARRAY['portal'::text, 'counter'::text, 'phone'::text]))),
-    CONSTRAINT takeaway_orders_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'accepted'::text, 'picked_up'::text, 'rejected'::text, 'cancelled'::text, 'expired'::text])))
+    CONSTRAINT takeaway_orders_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'accepted'::text, 'picked_up'::text, 'rejected'::text, 'cancelled'::text, 'expired'::text]))),
+    CONSTRAINT takeaway_orders_work_minutes_check CHECK ((work_minutes >= 0))
 );
 
 ALTER TABLE ONLY public.takeaway_orders FORCE ROW LEVEL SECURITY;
@@ -1744,9 +1752,11 @@ CREATE TABLE public.tenants (
     modules text[] DEFAULT ARRAY['kds'::text, 'stats'::text, 'qr_menu'::text] NOT NULL,
     inventory_mode text,
     inventory_depletion text DEFAULT 'recipes'::text NOT NULL,
+    stripe_account_id text,
     CONSTRAINT tenants_business_type_check CHECK ((business_type = ANY (ARRAY['street_food'::text, 'restaurant'::text, 'takeaway_shop'::text]))),
     CONSTRAINT tenants_inventory_depletion_check CHECK ((inventory_depletion = ANY (ARRAY['recipes'::text, 'simple'::text]))),
-    CONSTRAINT tenants_inventory_mode_check CHECK ((inventory_mode = ANY (ARRAY['portions'::text, 'warehouse'::text])))
+    CONSTRAINT tenants_inventory_mode_check CHECK ((inventory_mode = ANY (ARRAY['portions'::text, 'warehouse'::text]))),
+    CONSTRAINT tenants_stripe_account_id_check CHECK (((stripe_account_id IS NULL) OR (stripe_account_id ~ '^acct_[A-Za-z0-9]+$'::text)))
 );
 
 
@@ -2932,6 +2942,13 @@ CREATE INDEX idx_takeaway_hours_tenant ON public.takeaway_hours USING btree (ten
 
 
 --
+-- Name: idx_takeaway_orders_awaiting; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE INDEX idx_takeaway_orders_awaiting ON public.takeaway_orders USING btree (tenant_id, requested_at) WHERE (payment_status = 'awaiting'::text);
+
+
+--
 -- Name: idx_takeaway_orders_pending_phone; Type: INDEX; Schema: public; Owner: colettas
 --
 
@@ -3058,6 +3075,13 @@ CREATE UNIQUE INDEX uniq_orders_device_seq ON public.orders USING btree (tenant_
 
 
 --
+-- Name: uniq_orders_session_source_number; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_orders_session_source_number ON public.orders USING btree (tenant_id, session_id, COALESCE(device_id, 0), number) WHERE ((session_id IS NOT NULL) AND (number IS NOT NULL));
+
+
+--
 -- Name: uniq_payment_items_payment_item; Type: INDEX; Schema: public; Owner: colettas
 --
 
@@ -3111,6 +3135,20 @@ CREATE UNIQUE INDEX uniq_suppliers_name ON public.suppliers USING btree (tenant_
 --
 
 CREATE UNIQUE INDEX uniq_takeaway_orders_order ON public.takeaway_orders USING btree (order_id) WHERE (order_id IS NOT NULL);
+
+
+--
+-- Name: uniq_takeaway_orders_pickup_code; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_takeaway_orders_pickup_code ON public.takeaway_orders USING btree (tenant_id, (((pickup_at AT TIME ZONE 'Europe/Rome'::text))::date), pickup_code) WHERE ((pickup_code IS NOT NULL) AND (status = ANY (ARRAY['requested'::text, 'accepted'::text])));
+
+
+--
+-- Name: uniq_takeaway_orders_stripe_session; Type: INDEX; Schema: public; Owner: colettas
+--
+
+CREATE UNIQUE INDEX uniq_takeaway_orders_stripe_session ON public.takeaway_orders USING btree (stripe_session_id) WHERE (stripe_session_id IS NOT NULL);
 
 
 --
@@ -5095,5 +5133,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,
 -- PostgreSQL database dump complete
 --
 
-\unrestrict iSBraL9bX4XEFkG5fbV3SMncaOVWneTRks7Kfj5veaAFVHfziR09ioucsadz5HI
+\unrestrict nVwRAEridK1WJ39OsJFanM4iRsjSkb9UhoQGKEnbK0TtnBSRvLrrE8zJyJmQA1U
 

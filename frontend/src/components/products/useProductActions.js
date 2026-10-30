@@ -30,28 +30,37 @@ export function useProductActions({ setProducts, hasModifierGroups, onModifiersS
       }
 
       const product = { ...saved, price: parseFloat(saved.price) };
-      setProducts(prev => (editing ? prev.map(p => (p.id === product.id ? product : p)) : [...prev, product]));
+      // Il server avvisa anche chi ha creato il prodotto: se l'avviso è già arrivato, il prodotto c'è e va solo aggiornato (mai doppio)
+      setProducts(prev => (prev.some(p => p.id === product.id) ? prev.map(p => (p.id === product.id ? product : p)) : [...prev, product]));
       showToast(`Prodotto "${product.name}" ${editing ? 'modificato' : 'aggiunto'} con successo`, 'success');
       return true;
     } catch (err) { return fail(err, 'Impossibile salvare il prodotto'); }
   };
 
+  // Mostra o nasconde (più prodotti insieme, o uno solo con l'interruttore della riga). Passa sempre da `bulk-visibility`: cambia solo la
+  // visibilità, senza rimandare l'intero prodotto (che potrebbe sovrascrivere una modifica fatta nel frattempo da un'altra cassa).
+  const sendVisibility = async (ids, visible) => {
+    await fetchWithAuth('/products/bulk-visibility', { method: 'PATCH', body: { ids, visible } });
+    setProducts(prev => prev.map(p => (ids.includes(p.id) ? { ...p, visible } : p)));
+  };
+
+  // L'interruttore della riga: il cambio si vede subito e, se il server rifiuta, torna com'era con il motivo. Niente messaggio di successo:
+  // l'interruttore che si muove è già la conferma.
   const toggleVisibility = async (product) => {
-    const visible = !product.visible;
-    try {
-      await fetchWithAuth(`/products/${product.id}`, { method: 'PUT', body: { ...product, visible } });
-      setProducts(prev => prev.map(p => (p.id === product.id ? { ...p, visible } : p)));
-      showToast(`Visibilità "${product.name}" aggiornata`, 'success');
-      return true;
-    } catch (err) { return fail(err, 'Errore nel cambio visibilità'); }
+    const visible = product.visible === false;       // era nascosto → ora si mostra
+    setProducts(prev => prev.map(p => (p.id === product.id ? { ...p, visible } : p)));
+    try { await sendVisibility([product.id], visible); return true; }
+    catch (err) {
+      setProducts(prev => prev.map(p => (p.id === product.id ? { ...p, visible: !visible } : p)));
+      return fail(err, 'Errore nel cambio di visibilità');
+    }
   };
 
   const setManyVisible = async (ids, visible) => {
     if (ids.length === 0) return false;
     try {
-      await fetchWithAuth('/products/bulk-visibility', { method: 'PATCH', body: { ids, visible } });
-      setProducts(prev => prev.map(p => (ids.includes(p.id) ? { ...p, visible } : p)));
-      showToast(`Visibilità aggiornata per ${ids.length} prodotti`, 'success');
+      await sendVisibility(ids, visible);
+      showToast(`${ids.length === 1 ? '1 prodotto' : `${ids.length} prodotti`} ${visible ? 'visibili' : 'nascosti'}`, 'success');
       return true;
     } catch (err) { return fail(err, "Errore durante l'aggiornamento della visibilità"); }
   };

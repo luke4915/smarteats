@@ -45,7 +45,8 @@ test('salvando «continua dal servizio prima» non cambia nulla', () => {
 });
 
 test('un piatto esaurito: zero porzioni e nascosto; di nuovo disponibile riparte da N oppure illimitato', () => {
-  assert.deepEqual(portionsWhenSoldOut(), { stock: 0, stock_enabled: true, visible: false });
+  assert.deepEqual(portionsWhenSoldOut({ visible: true }), { stock: 0, stock_enabled: true, visible: true }, 'resta in carta, in grigio');
+  assert.deepEqual(portionsWhenSoldOut({ visible: false }), { stock: 0, stock_enabled: true, visible: false }, 'chi lo aveva nascosto a mano lo ritrova nascosto');
   assert.deepEqual(portionsWhenBackInStock(dish({ portions_reset_rule: 'restart_each_service', portions_start: 30 })), { stock: 30, stock_enabled: true, visible: true });
   assert.deepEqual(portionsWhenBackInStock(dish({ portions_reset_rule: 'carry_over', stock: 0 })), { stock: null, stock_enabled: false, visible: true });
   assert.deepEqual(portionsWhenBackInStock(dish()), { stock: null, stock_enabled: false, visible: true });

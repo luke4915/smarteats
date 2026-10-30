@@ -3,10 +3,10 @@ import { renderCheckReceipt } from './templates.js';
 
 // Parte pura della stampa della ricevuta di un conto: quale stampante e come si costruisce il lavoro.
 
-// Impostazione di stampa da usare: la copia "Cliente" se ha una stampante, altrimenti la prima attiva con indirizzo.
+// Impostazione di stampa da usare: la stampante «Conto» del ristorante, poi la copia "Cliente" della cassa, altrimenti la prima attiva con indirizzo.
 export function pickReceiptPrinter(settings) {
   const usable = settings.filter(s => s.enabled !== false && s.printer_address);
-  return usable.find(s => s.copy_type === 'Cliente') ?? usable[0] ?? null;
+  return usable.find(s => s.copy_type === 'Conto') ?? usable.find(s => s.copy_type === 'Cliente') ?? usable[0] ?? null;
 }
 
 // Il lavoro di stampa, pronto per la coda (le immagini arrivano dal contesto, quindi si collauda senza browser).

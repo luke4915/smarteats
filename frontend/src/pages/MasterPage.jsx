@@ -84,7 +84,7 @@ const MasterPage = () => {
 
       {target && m.catalog && open.view !== 'receipt' && (
         <TenantManage tenant={target} catalog={m.catalog} onSaved={m.loadTenants} onClose={() => open.view === 'manage' && setOpen(null)}
-          on={{ extend: (days) => m.extend(target.id, days), toggle: () => m.setActive(target.id, !target.active), receipt: view('receipt'), remove: view('delete') }} />
+          on={{ rename: (name) => m.rename(target.id, name), extend: (days) => m.extend(target.id, days), toggle: () => m.setActive(target.id, !target.active), receipt: view('receipt'), remove: view('delete') }} />
       )}
       {target && open.view === 'receipt' && <TenantReceiptEditor tenant={target} onClose={view('manage')} />}
       {target && open.view === 'delete' && <DeleteTenantModal tenant={target} onClose={view('manage')} onConfirm={async () => { if (await m.deleteTenant(target)) setOpen(null); }} />}

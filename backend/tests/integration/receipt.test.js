@@ -41,7 +41,8 @@ describe('scontrini: impostazioni e ristampa', () => {
     const write = await api1.request('PUT', '/settings/receipt_org_name', { value: 'Altro nome' });
     assert.equal(write.status, 400);
     assert.equal((await api1.get('/settings/all')).body.receipt_org_name, 'Pro Loco Prova');
-    assert.equal((await api1.request('PUT', '/settings/welcome_message', { value: 'Benvenuti' })).status, 200);
+    assert.equal((await api1.request('PUT', '/settings/welcome_message', { value: 'Benvenuti' })).status, 400, 'il messaggio del menu pubblico è solo del master');
+    assert.equal((await api1.request('PUT', '/settings/cover_charge', { value: '2' })).status, 200);
   });
 
   it('/settings/all richiede il login e le chiavi sconosciute sono respinte', async () => {

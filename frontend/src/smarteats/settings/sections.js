@@ -1,5 +1,5 @@
 // Le sezioni delle Impostazioni di SmartEats e chi le vede: l'admin configura il locale; admin e responsabile hanno
-// l'Account (il proprio profilo e, per l'admin, gli utenti) e i Suggerimenti; le notifiche sono del dispositivo. Cassa, cameriere e cucina
+// l'Account (il proprio profilo e, per l'admin, gli utenti); le notifiche sono del dispositivo. Cassa, cameriere e cucina
 // non cambiano username e password da soli: se dimenticano la password l'admin ne dà una temporanea.
 // Logica pura (testata): la pagina disegna solo ciò che arriva da qui.
 const ALL = [
@@ -8,9 +8,9 @@ const ALL = [
   { id: 'inventory', label: 'Magazzino', hint: 'L\'IVA predefinita per calcolare i margini.', admin: true, warehouse: true },
   { id: 'bookings', label: 'Prenotazioni', hint: 'Turni, chiusure e prenotazioni dal sito.', admin: true, module: 'bookings' },
   { id: 'takeaway', label: 'Asporto', hint: 'Orari di ritiro, fasce e ordini dal sito.', admin: true, module: 'takeaway' },
+  { id: 'printing', label: 'Stampanti', hint: 'Dove escono le comande della cucina e del bar e il conto.', admin: true },
   { id: 'notifications', label: 'Notifiche', hint: 'Avvisi e suono su questo dispositivo.', anyModule: ['bookings', 'takeaway'], notFor: ['kitchen'] },
   { id: 'reserved', label: 'Dati riservati', hint: 'Nascondi costi, margini e statistiche: si sbloccano con la password di un amministratore.', admin: true },
-  { id: 'feedback', label: 'Suggerimenti', hint: 'Un\'idea o un problema: arriva a chi sviluppa SmartEats.', roles: ['admin', 'manager'] },
   { id: 'account', label: 'Account', hint: 'Il tuo profilo e chi può accedere al locale.', roles: ['admin', 'manager'] },
 ];
 

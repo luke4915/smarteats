@@ -23,7 +23,7 @@ test('sagra: batto un ordine con due prodotti, lo invio, lo storno non serve: il
 test('sagra: in modalità avanzata l\'ordine va in cucina e lo chef lo segna pronto', async ({ page }) => {
   const { festival } = seed();
   await login(page, festival.host, festival.admin);
-  await page.getByRole('link', { name: 'Sistema' }).click();
+  await page.getByRole('link', { name: 'Impostazioni' }).click();
   await page.getByRole('switch', { name: 'Ordini avanzati' }).click();
   await page.getByRole('link', { name: 'Cassa' }).click();
   await page.getByRole('button', { name: /^Panino con salsiccia/ }).click();
@@ -37,10 +37,10 @@ test('sagra: in modalità avanzata l\'ordine va in cucina e lo chef lo segna pro
   await expect(page.getByText('Tutto in pari')).toBeVisible({ timeout: 10_000 });
 });
 
-test('sagra: Sistema ha un menu di sezioni, una alla volta', async ({ page }) => {
+test('sagra: Impostazioni ha un menu di sezioni, una alla volta', async ({ page }) => {
   const { festival } = seed();
   await login(page, festival.host, festival.admin);
-  await page.getByRole('link', { name: 'Sistema' }).click();
+  await page.getByRole('link', { name: 'Impostazioni' }).click();
   await expect(page.getByRole('tablist', { name: 'Aspetto' })).toBeVisible();
   await shot(page, 'festival-05-sistema');
   const nav = page.getByRole('tablist', { name: 'Sezioni delle impostazioni' });

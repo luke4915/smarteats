@@ -2,6 +2,7 @@ import { PORTAL_TZ } from './bookingPortal.js';
 import { REQUEST_TTL_HOURS } from './bookings.js';
 import { TAKEAWAY_EXPIRE_MINUTES } from './whatsapp.js';
 import { enqueue } from './whatsapp/outbox.js';
+import { releasePayment } from './takeawayPayments.js';
 
 // Scadenza delle richieste non gestite, con l'avviso al cliente. Va chiamata con la connessione del locale, quando si
 // leggono le richieste e a intervalli dal lavoro in background.
@@ -20,10 +21,17 @@ export async function expireReservations(db) {
 
 // Un ordine da asporto non accettato scade a pochi minuti dal ritiro
 export async function expireTakeaway(db) {
+  // Chi non ha finito di pagare entro mezz'ora non ha mai fatto una richiesta: sparisce senza avvisi (e libera la fascia)
+  await db.query(
+    `UPDATE takeaway_orders SET status = 'cancelled', payment_status = 'canceled', decided_at = now()
+     WHERE status = 'requested' AND payment_status = 'awaiting' AND requested_at < now() - interval '30 minutes'`);
   const { rows } = await db.query(
     `UPDATE takeaway_orders SET status = 'expired', decided_at = now()
-     WHERE status = 'requested' AND pickup_at - make_interval(mins => $1) <= now() RETURNING id`, [TAKEAWAY_EXPIRE_MINUTES]);
-  for (const r of rows) await enqueue(db, 'takeaway', r.id, 'expired');
+     WHERE status = 'requested' AND payment_status <> 'awaiting' AND pickup_at - make_interval(mins => $1) <= now() RETURNING id, payment_status`, [TAKEAWAY_EXPIRE_MINUTES]);
+  for (const r of rows) {
+    await releasePayment(db, r);          // una carta già autorizzata torna libera: nessun addebito
+    await enqueue(db, 'takeaway', r.id, 'expired');
+  }
   return rows.length;
 }
 

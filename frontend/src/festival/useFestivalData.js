@@ -6,6 +6,7 @@ import { useCart } from '../hooks/useCart';
 import { useProducts } from '../hooks/useProducts';
 import { useWorkSession } from '../hooks/useWorkSession';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
+import { applyProductEvent } from '../utils/productEvents';
 import { useAuth } from '../context/useAuth';
 import { useDevicePairing } from '../offline/useDevicePairing';
 import { useInbox } from '../smarteats/notifications/useInbox';
@@ -33,12 +34,11 @@ export function useFestivalData(user) {
   const connected = useLiveUpdates((msg) => {
     setEvent(msg);
     switch (msg.type) {
-      case 'product_updated': setProducts(prev => prev.map(p => p.id === msg.product.id ? { ...msg.product, price: parseFloat(msg.product.price) } : p)); showToast(`"${msg.product.name}" aggiornato!`, 'success'); break;
-      case 'product_created': setProducts(prev => [...prev, { ...msg.product, price: parseFloat(msg.product.price) }]); showToast('Nuovo prodotto aggiunto!', 'success'); break;
-      case 'product_deleted': setProducts(prev => prev.filter(p => p.id !== msg.id)); showToast('Prodotto rimosso!', 'warning'); break;
-      case 'product_stock_updated':
-        setProducts(prev => prev.map(p => (p.id === msg.product.id ? { ...p, stock: msg.product.stock, visible: msg.product.visible } : p)));
-        break;
+      // chi ha fatto la modifica ha già il suo messaggio: gli altri dispositivi aggiornano l'elenco e lo dicono
+      case 'product_updated': setProducts(prev => applyProductEvent(prev, msg)); if (msg.by !== user?.id) showToast(`"${msg.product.name}" aggiornato!`, 'success'); break;
+      case 'product_created': setProducts(prev => applyProductEvent(prev, msg)); if (msg.by !== user?.id) showToast('Nuovo prodotto aggiunto!', 'success'); break;
+      case 'product_deleted': setProducts(prev => applyProductEvent(prev, msg)); if (msg.by !== user?.id) showToast('Prodotto rimosso!', 'warning'); break;
+      case 'product_stock_updated': setProducts(prev => applyProductEvent(prev, msg)); break;
       // L'apertura della serata azzera lo stock lato server: ricarichiamo il catalogo.
       case 'session_started': applySession({ id: msg.session.id, name: msg.session.name }); loadProducts(); break;
       case 'session_ended': applySession(null); break;

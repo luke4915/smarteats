@@ -15,13 +15,14 @@ import { whatsappConfigSchema, whatsappTestSchema } from '../schemas/whatsappSch
 import { EVENTS, EVENT_IDS, eventSettingKey, QUOTA_SETTING_KEY, renderBody, normalizeMobile, templateName } from '../utils/whatsapp.js';
 import { loadConfig, monthUsage } from '../utils/whatsapp/outbox.js';
 import { getDriver } from '../utils/whatsapp/driver.js';
-import { masterLoginSchema, createTenantSchema, extendLicenseSchema, tenantActiveSchema, deleteTenantSchema, receiptCustomizationSchema, tenantUserParamsSchema, tenantModulesSchema } from '../schemas/masterSchema.js';
+import { masterLoginSchema, createTenantSchema, extendLicenseSchema, renameTenantSchema, tenantActiveSchema, deleteTenantSchema, receiptCustomizationSchema, menuSettingsSchema, paymentsAccountSchema, tenantUserParamsSchema, tenantModulesSchema } from '../schemas/masterSchema.js';
 import { createUserSchema, resetPasswordSchema, updateUserSchema } from '../schemas/authSchema.js';
 import { catalog, normalizeModules, firstModuleNotAllowed, inventoryColumnsFor, BUSINESS_TYPES } from '../utils/modules.js';
 import { invalidateTenantModules } from '../utils/tenantModules.js';
 import { logAudit } from '../utils/auditLogger.js';
 import { sendHttpError } from '../utils/httpError.js';
 import { createUser, listUsers, updateUser, deleteUser, resetUserPassword } from '../utils/tenantUsers.js';
+import { paymentsDriver, feePercent } from '../utils/payments/driver.js';
 import { RECEIPT_SETTINGS_KEYS } from '../schemas/settingsSchema.js';
 
 const router = express.Router();
@@ -151,6 +152,21 @@ router.put('/tenants/:id/modules', authenticateMaster, validate({ params: idPara
   } catch (err) {
     logger.error({ err }, 'Errore PUT /api/master/tenants/:id/modules');
     res.status(500).json({ error: 'Errore salvataggio moduli' });
+  }
+});
+
+// RINOMINA — cambia solo il nome mostrato; l'indirizzo (sottodominio) resta lo stesso. Si registra nell'audit del locale.
+router.patch('/tenants/:id/name', authenticateMaster, validate({ params: idParamsSchema, body: renameTenantSchema }), async (req, res) => {
+  try {
+    const { rows: before } = await masterPool.query('SELECT name FROM tenants WHERE id = $1', [req.params.id]);
+    if (!before.length) return res.status(404).json({ error: 'Tenant non trovato' });
+    const { rows } = await masterPool.query('UPDATE tenants SET name = $1 WHERE id = $2 RETURNING *', [req.body.name, req.params.id]);
+    invalidateTenantSlug(rows[0].slug);
+    await withTenantClient(req.params.id, (db) => logAudit(db, null, 'MASTER_RENAME_TENANT', { previous: before[0].name, name: rows[0].name }), masterPool);
+    res.json(rows[0]);
+  } catch (err) {
+    logger.error({ err }, 'Errore PATCH /api/master/tenants/:id/name');
+    res.status(500).json({ error: 'Errore cambio nome' });
   }
 });
 
@@ -306,6 +322,86 @@ router.put('/tenants/:id/receipt', authenticateMaster, validate({ params: idPara
   } catch (err) {
     logger.error({ err }, 'Errore PUT /api/master/tenants/:id/receipt');
     res.status(500).json({ error: 'Errore salvataggio personalizzazione' });
+  }
+});
+
+// MENU PUBBLICO — il messaggio di benvenuto che i clienti leggono aprendo il QR. Lo scrive solo il master (non è tra le impostazioni
+// del locale): stessa strada della personalizzazione degli scontrini.
+router.get('/tenants/:id/menu', authenticateMaster, validate({ params: idParamsSchema }), async (req, res) => {
+  try {
+    if (!await tenantExists(req.params.id)) return res.status(404).json({ error: 'Tenant non trovato' });
+    const { rows } = await withTenantClient(req.params.id, (db) => db.query(`SELECT value FROM settings WHERE key = 'welcome_message'`), masterPool);
+    res.json({ welcome_message: rows[0]?.value ?? '' });
+  } catch (err) {
+    logger.error({ err }, 'Errore GET /api/master/tenants/:id/menu');
+    res.status(500).json({ error: 'Errore caricamento del menu pubblico' });
+  }
+});
+
+router.put('/tenants/:id/menu', authenticateMaster, validate({ params: idParamsSchema, body: menuSettingsSchema }), async (req, res) => {
+  try {
+    if (!await tenantExists(req.params.id)) return res.status(404).json({ error: 'Tenant non trovato' });
+    const text = req.body.welcome_message;
+    await withTenantClient(req.params.id, (db) => (text
+      ? db.query(`INSERT INTO settings (key, value) VALUES ('welcome_message', $1) ON CONFLICT (tenant_id, key) DO UPDATE SET value = $1`, [text])
+      : db.query(`DELETE FROM settings WHERE key = 'welcome_message'`)), masterPool);
+    logger.info({ tenantId: req.params.id }, 'Messaggio del menu pubblico aggiornato dal master');
+    res.json({ welcome_message: text });
+  } catch (err) {
+    logger.error({ err }, 'Errore PUT /api/master/tenants/:id/menu');
+    res.status(500).json({ error: 'Errore salvataggio del menu pubblico' });
+  }
+});
+
+// PAGAMENTI CON CARTA — il conto Stripe collegato del locale (Connect). Il master lo incolla (un conto creato dal pannello Stripe) oppure
+// genera il collegamento guidato da mandare al titolare. Le chiavi della piattaforma stanno nelle variabili d'ambiente, mai qui.
+const paymentsState = async (id) => {
+  const { rows: [t] } = await masterPool.query('SELECT stripe_account_id, modules FROM tenants WHERE id = $1', [id]);
+  const driver = paymentsDriver();
+  let account = null;
+  if (t.stripe_account_id && driver.kind !== 'off') account = await driver.accountStatus(t.stripe_account_id).catch(() => ({ error: true }));
+  return { driver: driver.kind, fee_percent: feePercent(), module_enabled: t.modules.includes('payments'), stripe_account_id: t.stripe_account_id, account };
+};
+
+router.get('/tenants/:id/payments', authenticateMaster, validate({ params: idParamsSchema }), async (req, res) => {
+  try {
+    if (!await tenantExists(req.params.id)) return res.status(404).json({ error: 'Tenant non trovato' });
+    res.json(await paymentsState(req.params.id));
+  } catch (err) {
+    logger.error({ err }, 'Errore GET /api/master/tenants/:id/payments');
+    res.status(500).json({ error: 'Errore caricamento dei pagamenti' });
+  }
+});
+
+router.put('/tenants/:id/payments', authenticateMaster, validate({ params: idParamsSchema, body: paymentsAccountSchema }), async (req, res) => {
+  try {
+    if (!await tenantExists(req.params.id)) return res.status(404).json({ error: 'Tenant non trovato' });
+    await masterPool.query('UPDATE tenants SET stripe_account_id = $2 WHERE id = $1', [req.params.id, req.body.stripe_account_id]);
+    logger.info({ tenantId: req.params.id, linked: !!req.body.stripe_account_id }, 'Conto Stripe del locale aggiornato dal master');
+    res.json(await paymentsState(req.params.id));
+  } catch (err) {
+    logger.error({ err }, 'Errore PUT /api/master/tenants/:id/payments');
+    res.status(500).json({ error: 'Errore salvataggio del conto' });
+  }
+});
+
+// Crea (se manca) un conto collegato Stripe per il locale e ne dà il collegamento guidato: il titolare inserisce i suoi dati direttamente su Stripe.
+router.post('/tenants/:id/payments/onboard', authenticateMaster, validate({ params: idParamsSchema }), async (req, res) => {
+  try {
+    const driver = paymentsDriver();
+    if (driver.kind === 'off') return res.status(409).json({ error: 'I pagamenti non sono attivi su questo server (STRIPE_SECRET_KEY)', code: 'PAYMENTS_OFF' });
+    const { rows: [t] } = await masterPool.query('SELECT name, stripe_account_id FROM tenants WHERE id = $1', [req.params.id]);
+    if (!t) return res.status(404).json({ error: 'Tenant non trovato' });
+    let accountId = t.stripe_account_id;
+    if (!accountId) {
+      accountId = (await driver.createAccount({ name: t.name })).id;
+      await masterPool.query('UPDATE tenants SET stripe_account_id = $2 WHERE id = $1', [req.params.id, accountId]);
+    }
+    const origin = req.get('origin') ?? `${req.protocol}://${req.get('host')}`;
+    res.json({ url: await driver.accountLink({ accountId, returnUrl: `${origin}/master`, refreshUrl: `${origin}/master` }), stripe_account_id: accountId });
+  } catch (err) {
+    logger.error({ err }, 'Errore POST /api/master/tenants/:id/payments/onboard');
+    res.status(500).json({ error: 'Non è stato possibile creare il collegamento con Stripe' });
   }
 });
 

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Check, FileText } from 'lucide-react';
 
-import { fetchWithAuth } from '../../utils/apiClient';
-import { useToast } from '../../context/useToast';
 import StatCard from './statistics/StatCard';
 import ChartCard from './statistics/ChartCard';
 import { HBars, Columns } from './charts';
@@ -12,9 +10,9 @@ import { exportStatsPdf } from './statistics/pdfExport';
 import { useAuth } from '../../context/useAuth';
 import { termsFor } from '../../utils/terms';
 import { PageHeader, PageBody } from './PageHeader';
-import Modal from './Modal';
+import ExportModal from './statistics/ExportModal';
 import Segmented from '../../smarteats/floor/Segmented';
-import { btn, iconBtn } from '../../smarteats/floor/ui';
+import { btn } from '../../smarteats/floor/ui';
 import ScrollRow from './ScrollRow';
 import Loading from './Loading';
 
@@ -23,7 +21,6 @@ const hourItems = (data, key) => activeHours(reorderHours(data), key).map(d => (
 const peakOf = (data, key) => activeHours(reorderHours(data), key).reduce((b, d) => (d[key] > (b?.[key] ?? 0) ? d : b), null)?.ora;
 
 const Statistics = () => {
-  const { showToast } = useToast();
   const { user } = useAuth();
   const terms = termsFor(user?.businessType);
   const {
@@ -35,24 +32,6 @@ const Statistics = () => {
   } = useStatistics(terms);
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-
-  const handleExportCSV = async (session) => {
-    try {
-      const res = await fetchWithAuth(`/exports/session/${session.id}/csv`, { raw: true });
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `report_${(session.name || `sessione_${session.id}`).replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      setIsExportModalOpen(false);
-    } catch (err) {
-      showToast(`Impossibile scaricare il CSV: ${err.message}`, 'error');
-    }
-  };
 
   if (loading) return (
     <div className="flex items-center justify-center h-64 text-[var(--text-muted)]">
@@ -66,18 +45,14 @@ const Statistics = () => {
     </div>
   );
 
-  const closedSessions = sessions.filter(s => !!s.end_time);
-
   return (
     <PageBody>
       <PageHeader title="Statistiche" subtitle={selectedSessionIds.length > 0 ? `${selectedSessionIds.length} ${selectedSessionIds.length === 1 ? 'sessione selezionata' : 'sessioni selezionate'}` : 'Tutte le sessioni'}>
-          <button onClick={() => setIsExportModalOpen(true)}
-            className={btn}>
-            <Download size={15} /> Esporta CSV
+          <button onClick={() => setIsExportModalOpen(true)} className={btn}>
+            <Download size={15} /> {`Esporta una ${terms.unit}`}
           </button>
-          <button onClick={() => exportStatsPdf(stats, sessions, selectedSessionIds, terms)}
-            className={btn}>
-            <FileText size={15} /> Esporta PDF
+          <button onClick={() => exportStatsPdf(stats, sessions, selectedSessionIds, terms)} className={btn}>
+            <FileText size={15} /> Esporta le statistiche
           </button>
       </PageHeader>
 
@@ -217,26 +192,7 @@ const Statistics = () => {
         </>
       )}
 
-      {isExportModalOpen && (
-        <Modal title="Esporta report CSV" size="max-w-md" onClose={() => setIsExportModalOpen(false)}>
-          <p className="text-xs text-[var(--text-muted)] mb-3">Solo sessioni concluse</p>
-          <div className="space-y-2">
-            {closedSessions.length === 0 ? (
-              <p className="text-sm text-center text-[var(--text-muted)] py-6">{terms.none}</p>
-            ) : closedSessions.map(s => (
-              <div key={s.id} className="flex items-center justify-between p-3 rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)]">
-                <div className="min-w-0 flex-1 pr-2">
-                  <p className="text-sm font-medium text-[var(--text-main)] truncate">{s.name || `${terms.column} ${s.id}`}</p>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    Chiusa il {new Date(s.end_time).toLocaleDateString('it-IT')} alle {new Date(s.end_time).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-                <button onClick={() => handleExportCSV(s)} aria-label={`Scarica ${s.name || s.id}`} className={`${iconBtn} shrink-0`}><Download size={16} /></button>
-              </div>
-            ))}
-          </div>
-        </Modal>
-      )}
+      {isExportModalOpen && <ExportModal sessions={sessions} terms={terms} onClose={() => setIsExportModalOpen(false)} />}
     </PageBody>
   );
 };

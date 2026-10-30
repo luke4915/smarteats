@@ -11,7 +11,13 @@ test('dati riservati: blocco acceso, sblocco con la password, blocco anticipato'
     await page.getByRole('tab', { name: 'Dati riservati' }).click();
     const toggle = page.getByRole('switch', { name: 'Blocca i dati riservati' });
     await expect(toggle).toBeEnabled();
-    if ((await toggle.getAttribute('aria-checked') === 'true') !== on) await toggle.click();
+    if ((await toggle.getAttribute('aria-checked') === 'true') !== on) {
+      await toggle.click();
+      if (!on) {                       // per togliere il blocco serve la password
+        await page.getByLabel('La tua password').fill(password);
+        await page.getByRole('button', { name: 'Togli il blocco' }).click();
+      }
+    }
     await expect(toggle).toHaveAttribute('aria-checked', String(on));
   };
 

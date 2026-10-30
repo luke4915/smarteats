@@ -1,50 +1,63 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { LONG_PRESS_MS, pressProgress, pressFired, pressSwallowsClick } from '../utils/longPress';
 
-const VISIBLE_AT = 10;   // % sotto cui non si disegna nulla: un tocco veloce non deve far lampeggiare la barra
-
-// Tenere premuto a lungo un elemento (di partenza 1,5 s) fa una cosa diversa dal tocco normale: nella cassa apre la modifica rapida
-// di un prodotto. Ritorna:
+// Tenere premuta una tessera (di partenza 1 secondo) fa una cosa diversa dal tocco normale: nella cassa apre la disponibilità del
+// prodotto. Con il mouse vale anche il tasto destro (subito). Le regole di tempo stanno in `utils/longPress.js`. Ritorna:
 //   progress(id)       da 0 a 100: serve a riempire la tessera mentre si tiene premuto
-//   bind(id, item)     i gestori da mettere sull'elemento (mouse, dito, menu del tasto destro)
-//   blocksClick(id)    da chiamare nel click: vero se il gesto era una pressione lunga, e il tocco normale non va eseguito
-export function useLongPress(onLongPress, delay = 1500) {
+//   bind(id, item)     i gestori da mettere sull'elemento (mouse, dito, tasto destro)
+//   blocksClick(id)    da chiamare nel click: vero se il gesto era una pressione lunga (o un ripensamento) e il tocco normale non va eseguito
+export function useLongPress(onLongPress, delay = LONG_PRESS_MS) {
   const [progressById, setProgressById] = useState({});
-  const timers = useRef({});   // { [id]: { raf, startTime, triggered, exceeded } }
+  const timers = useRef({});   // { [id]: { raf, startTime, triggered } }
+  const lastTouch = useRef(-Infinity);
 
   const clear = useCallback((id) => {
     const t = timers.current[id];
     if (t?.raf) cancelAnimationFrame(t.raf);
     delete timers.current[id];
-    setProgressById(prev => { const next = { ...prev }; delete next[id]; return next; });
+    setProgressById(prev => { if (!(id in prev)) return prev; const next = { ...prev }; delete next[id]; return next; });
   }, []);
+
+  const fire = useCallback((item) => {
+    try { navigator.vibrate?.(12); } catch { /* il telefono non vibra: pazienza */ }
+    onLongPress(item);
+  }, [onLongPress]);
 
   const start = useCallback((id, item) => {
     if (timers.current[id]) return;                          // già in corso
-    const state = { startTime: performance.now(), triggered: false, exceeded: false, raf: null };
+    const state = { startTime: performance.now(), triggered: false, raf: null };
     timers.current[id] = state;
     const tick = () => {
-      const percent = Math.min(100, ((performance.now() - state.startTime) / delay) * 100);
-      setProgressById(prev => ({ ...prev, [id]: percent }));
-      if (percent > VISIBLE_AT) state.exceeded = true;
-      if (percent >= 100) { state.triggered = true; onLongPress(item); clear(id); return; }
+      const elapsed = performance.now() - state.startTime;
+      if (pressFired(elapsed, delay)) { state.triggered = true; fire(item); clear(id); return; }
+      setProgressById(prev => ({ ...prev, [id]: pressProgress(elapsed, delay) }));
       state.raf = requestAnimationFrame(tick);
     };
     state.raf = requestAnimationFrame(tick);
-  }, [clear, delay, onLongPress]);
+  }, [clear, delay, fire]);
 
   useEffect(() => () => Object.values(timers.current).forEach(t => t.raf && cancelAnimationFrame(t.raf)), []);
 
   const blocksClick = useCallback((id) => {
     const t = timers.current[id];
-    const block = !!(t?.triggered || t?.exceeded);
+    const block = !!t && (t.triggered || pressSwallowsClick(performance.now() - t.startTime));
     clear(id);
     return block;
   }, [clear]);
 
   const bind = (id, item) => ({
-    onMouseDown: () => start(id, item), onMouseLeave: () => clear(id),
-    onTouchStart: () => start(id, item), onTouchCancel: () => clear(id),
-    onContextMenu: (e) => e.preventDefault(),
+    onMouseDown: (e) => { if (e.button === 0) start(id, item); },
+    onMouseLeave: () => clear(id),
+    onTouchStart: () => { lastTouch.current = performance.now(); start(id, item); },
+    onTouchCancel: () => clear(id),
+    // Il tasto destro del mouse (o il tasto «menu» della tastiera) apre subito. Sul telefono il sistema manda lo stesso evento dopo
+    // mezzo secondo: lo si ignora, perché vale il secondo intero.
+    onContextMenu: (e) => {
+      e.preventDefault();
+      if (performance.now() - lastTouch.current < 2000) return;
+      clear(id);
+      fire(item);
+    },
   });
-  return { progress: (id) => progressById[id] ?? 0, bind, blocksClick, visibleAt: VISIBLE_AT };
+  return { progress: (id) => progressById[id] ?? 0, bind, blocksClick };
 }

@@ -54,16 +54,21 @@ router.put('/:key', authenticate, authorizeAdmin, validate({ params: settingPara
     if (key === 'default_vat_rate') value = String(Number(value.trim().replace(',', '.')));
     if (key === 'reserved_data_lock' && !['0', '1'].includes(value))
         return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
+    // Spegnere il blocco vuole la password dell'amministratore: si fa da POST /reserved-data/disable, mai da qui
+    if (key === 'reserved_data_lock' && value === '0')
+        return res.status(403).json({ error: 'Per spegnere il blocco dei dati riservati serve la password dell\'amministratore', code: 'PASSWORD_REQUIRED' });
     if (key === 'booking_portal_enabled' && !['0', '1'].includes(value))
         return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
     if (key === 'booking_portal_phone' && value && !/^[+\d][\d\s./-]{4,38}$/.test(value.trim()))
         return res.status(400).json({ error: 'value: scrivi un numero di telefono (cifre, spazi, + . / -)' });
     if (key === 'takeaway_portal_enabled' && !['0', '1'].includes(value))
         return res.status(400).json({ error: 'value: usa 1 (acceso) o 0 (spento)' });
+    if (key === 'takeaway_payment_mode' && !['off', 'optional', 'required'].includes(value))
+        return res.status(400).json({ error: 'value: usa off, optional o required' });
     if (key === 'takeaway_slot_minutes' && !['10', '15', '20', '30', '60'].includes(String(value)))
         return res.status(400).json({ error: 'value: la fascia dura 10, 15, 20, 30 o 60 minuti' });
     if (key === 'takeaway_slot_capacity' && !(/^\d{1,3}$/.test(String(value)) && Number(value) >= 1))
-        return res.status(400).json({ error: 'value: indica quante pizze per fascia (da 1 a 999)' });
+        return res.status(400).json({ error: 'value: indica i minuti di lavoro per fascia (da 1 a 999)' });
     if (key === 'takeaway_min_lead_minutes' && !(/^\d{1,3}$/.test(String(value)) && Number(value) <= 240))
         return res.status(400).json({ error: 'value: l\'anticipo minimo va da 0 a 240 minuti' });
     if (key === 'takeaway_phone' && value && !/^[+\d][\d\s./-]{4,38}$/.test(value.trim()))

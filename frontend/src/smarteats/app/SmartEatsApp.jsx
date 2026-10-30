@@ -9,6 +9,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { usePageTitle } from '../../hooks/usePageTitle';
 import { useService } from './useService';
 import AppHeader from '../../components/shell/AppHeader';
+import PrintStatus from '../../components/shell/PrintStatus';
 import ServiceControl from '../../components/shell/ServiceControl';
 import SideNav from '../../components/shell/SideNav';
 import TabBar from '../../components/shell/TabBar';
@@ -70,7 +71,7 @@ const SmartEatsApp = () => {
       <SideNav views={views} icons={ICONS} brand="SmartEats Restaurant" badges={badges} />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <AppHeader user={user} title={views.find(v => pathname === `/${v.id}`)?.label} serviceControl={<ServiceControl service={service} canManage={canManageService} start={start} closingInfo={closingInfo} end={end} terms={termsFor(user.businessType)} />}
+        <AppHeader user={user} title={views.find(v => pathname === `/${v.id}`)?.label} serviceControl={<ServiceControl service={service} canManage={canManageService} start={start} closingInfo={closingInfo} end={end} terms={termsFor(user.businessType)} />} status={<PrintStatus />}
           inbox={hasInbox ? inbox : null} onOpenNotification={(i) => {
             if (i.kind === 'low_stock') navigate('/inventory');
             else if (i.kind === 'takeaway_request') navigate('/takeaway', { state: { orderId: i.id, date: i.date } });
@@ -85,7 +86,7 @@ const SmartEatsApp = () => {
               <Route path="/reservations" element={guard('reservations', <ReservationsPage event={event} />)} />
               <Route path="/takeaway" element={guard('takeaway', <TakeawayPage event={event} />)} />
               <Route path="/kitchen" element={guard('kitchen', <PageCard><KitchenPage event={event} /></PageCard>)} />
-              <Route path="/catalog" element={guard('catalog', <PageCard><CatalogPage /></PageCard>)} />
+              <Route path="/catalog" element={guard('catalog', <PageCard><CatalogPage event={event} /></PageCard>)} />
               <Route path="/inventory" element={guard('inventory', <PageCard><InventoryPage /></PageCard>)} />
               <Route path="/stats" element={guard('stats', <PageCard><ReservedGate what="Le statistiche"><StatsTabs>{user.modules?.includes('tables') ? <StatsPage /> : <CounterStats />}</StatsTabs></ReservedGate></PageCard>)} />
               <Route path="/settings" element={guard('settings', <PageCard><SettingsPage user={user} /></PageCard>)} />

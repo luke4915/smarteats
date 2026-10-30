@@ -1,5 +1,4 @@
 import AccountSection from '../../components/setup/AccountSection';
-import FeedbackBox from '../../components/shared/FeedbackBox';
 import RoomsSettings from '../../components/setup/RoomsSettings';
 import SectionsPage from '../../components/shell/SectionsPage';
 import CoverSettings from './CoverSettings';
@@ -9,6 +8,7 @@ import NotificationSettings from '../notifications/NotificationSettings';
 import TakeawaySettings from '../takeaway/TakeawaySettings';
 import InventorySettings from '../../inventory/InventorySettings';
 import ReservedDataSettings from '../../components/setup/ReservedDataSettings';
+import PrintersSettings from './PrintersSettings';
 import { settingsSections } from './sections';
 
 // Cosa mostra ogni sezione. Le sezioni disponibili (per ruolo e moduli) le decide `sections.js`.
@@ -18,9 +18,9 @@ const content = (user) => ({
   inventory: () => <InventorySettings />,
   bookings: () => <BookingSettings />,
   takeaway: () => <TakeawaySettings />,
+  printing: () => <PrintersSettings />,
   notifications: () => <NotificationSettings />,
   reserved: () => <ReservedDataSettings />,
-  feedback: () => <FeedbackBox />,
   account: () => <AccountSection user={user} />,
 });
 

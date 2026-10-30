@@ -32,9 +32,12 @@ ha una capacità), l'**approvazione** del locale, la coda in cucina ordinata per
 ## 3. Regole
 
 - **Fasce:** dagli orari impostati (per giorno della settimana, anche più finestre), ogni N minuti (10-60).
-- **Carico:** ogni prodotto occupa il forno per `takeaway_load` porzioni (pizza 1, bibita 0, teglia 2…). La fascia accetta
-  fino alla capienza impostata. Gli ordini **vivi** (da approvare o accettati) contano; gli altri no. Il personale può
-  superare la capienza di proposito.
+- **Minuti di lavoro:** ogni prodotto ha un tempo di preparazione (`prep_minutes`: pizza 5, teglia 10, bibita 0…). Una fascia
+  ha una capienza in minuti di lavoro (di partenza 60 = dodici pizze da 5 minuti) e accetta ordini finché la somma
+  quantità × minuti ci sta. Gli ordini **vivi** (da approvare o accettati) contano; gli altri no. Il personale può superare
+  la capienza di proposito. Il cliente non vede mai i minuti, solo se una fascia è libera per il suo carrello.
+- **Codice di ritiro:** all'accettazione ogni ordine riceve un codice di tre cifre (libero tra gli ordini vivi dello stesso
+  giorno), che il cliente vede nella pagina del suo ordine e dice al banco; lo vedono anche l'elenco, il dettaglio e la cucina.
 - **Anticipo:** minimo impostabile (30 minuti di partenza), massimo 7 giorni.
 - **Tetti:** al massimo 3 richieste in attesa per telefono; oltre 40 pezzi si telefona.
 - **Pagamento:** al ritiro. Il modello è pronto per il pagamento online (`payment_mode = 'online'`, non attivo).
@@ -46,7 +49,8 @@ ha una capacità), l'**approvazione** del locale, la coda in cucina ordinata per
 ## 4. Modello (migrazione 050)
 
 - `takeaway_hours` (finestre per giorno), `takeaway_orders` (richiesta e suo stato: `requested → accepted → picked_up`;
-  `rejected`, `cancelled`), `products.takeaway_load`. Tutte con RLS e in `TENANT_SCOPED_TABLES`.
+  `rejected`, `cancelled`), `products.prep_minutes` (ex `takeaway_load`, ×5 con la migrazione 057), `takeaway_orders.work_minutes`
+  (ex `load`) e `pickup_code`. Tutte con RLS e in `TENANT_SCOPED_TABLES`.
 - Impostazioni (`settings`): `takeaway_portal_enabled`, `takeaway_slot_minutes`, `takeaway_slot_capacity`,
   `takeaway_min_lead_minutes`, `takeaway_phone`, `takeaway_welcome`.
 - Endpoint: staff `/api/takeaway/*` (settings, hours, slots, orders, accept/reject/picked-up/cancel, inbox); pubblici

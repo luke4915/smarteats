@@ -16,7 +16,7 @@ Elenco verificato sul codice. Quando ne risolvi una, toglila da qui nello stesso
 
 **Dalla revisione del 4 ottobre 2026 (fase 4)**
 - Sicurezza: `/api/assets` serve solo `.mp3` (i loghi di altri marchi sono stati tolti dal repository ma restano nella cronologia git); gli ordini offline sincronizzati dopo la chiusura aggiornano il totale atteso ma non sono segnalati nel report di sessione.
-- Dati: `audit_logs` senza retention. Cassa e cucina scaricano ancora tutti gli ordini della sessione aperta (fino a 2000): se serve, filtrare per stato.
+- Dati: Cassa e cucina scaricano ancora tutti gli ordini della sessione aperta (fino a 2000): se serve, filtrare per stato.
 - Frontend: file ancora troppo grandi: `PrintProfiles.jsx` (stampa, si rifà con il test di stampa), `FloorEditor.jsx`.
 - Operatività: i log vanno su stdout, manca un raccoglitore (dipende dall'hosting); il backup è su disco locale, la copia fuori dal server è da configurare; nessun monitoraggio esterno dell'health check.
 - Asporto, ordini vecchi mai gestiti («Da chiudere»): un ritiro passato da più di due ore non va più in cucina da solo (`pickupIsStale`) e resta «accettato» nell'elenco del suo giorno, dove oggi si trova solo aprendo quella data. Manca una sezione **Da chiudere** in cima all'Asporto con questi ordini (giorni passati compresi) e due gesti: «Consegnato» o «Non ritirato» (annulla e, se c'era, rimette in dispensa). Caso raro (servizio lasciato aperto la notte, pranzo accettato e mai servito), per questo è rimandato.
@@ -29,3 +29,13 @@ Elenco verificato sul codice. Quando ne risolvi una, toglila da qui nello stesso
 - Produzione di una preparazione con scorta propria («ho fatto 40 panetti oggi»): oggi le preparazioni si espandono nelle ricette al momento della vendita; un semilavorato comprato da un fornitore si gestisce già come ingrediente.
 - Lettura automatica della bolla dalla foto (OCR) e importazione della fattura elettronica.
 - Matrice popolarità/margine dei piatti e suggerimento di riordino dai consumi; più sedi con magazzino condiviso.
+
+**Dal giro di fine ottobre 2026 (versione 0.4.0): da decidere e da fare**
+- **Licenza offline:** fatto in 0.4.0 con una tolleranza di 10 ore dopo la scadenza (`utils/license.js`, `offline/licenseLock.js`). Resta da fare l'avviso per chi lavora senza rete quando mancano poche ore allo stop (`minutesLeft` c'è già, manca la scritta) e un conteggio per il master degli ordini accettati dopo la scadenza (oggi sono nell'audit `LATE_SYNC_AFTER_EXPIRY`). Limite noto: la sincronizzazione dopo la scadenza funziona finché dura il token di sessione (8 ore).
+- **Pagamento dell'asporto con carta:** fatto in 0.4.0 (vedi `docs/design-pagamenti.md`), da provare con le chiavi di prova di Stripe (`sk_test_…`) e il webhook. Restano: prove con carte vere, regole sui rimborsi parziali, ricevuta del pagamento per il cliente, e il chiarimento sullo scontrino fiscale.
+- **Partenza della cucina per l'asporto.** Pagato online → l'ordine parte da solo in tempo per il ritiro (`pickup_at` meno i minuti di lavoro); da pagare al ritiro → parte quando il cliente arriva («È arrivato» al banco o «Sono qui» sul link). Oggi gli asporti di oggi arrivano in cucina tutti insieme e la cucina li ordina per orario.
+- **Stampa nel ristorante, passi rimasti:** stampa automatica della ricevuta all'incasso (scelta per dispositivo), «postazione cucina» che stampa da sola le comande che arrivano dal server (asporto accettato in anticipo), stampa della comanda di asporto all'accettazione. La prova sul campo con una stampante vera resta da fare.
+- **WhatsApp:** il codice di ritiro è nella pagina del cliente ma non ancora nel messaggio «accettato» (serve un modello nuovo `v2` registrato su Meta). Canale SMS come alternativa: costa a messaggio, va dopo.
+- **Riordino delle cartelle del frontend:** tipi di locale (`restaurant`, `stand`, `takeaway`) separati dalle funzioni opzionali (magazzino, WhatsApp, KDS, statistiche, menu QR); PR a parte, solo spostamenti, dopo questo rilascio.
+- **Prove su dispositivi veri:** iPhone e iPad (margini dello schermo, carrello, tasti rapidi dei contanti), cassa offline con due casse e rete spenta, report PDF su carta.
+- **Esportazioni:** invio automatico del report di chiusura al commercialista (email), e il PDF di più serate insieme.

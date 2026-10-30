@@ -38,7 +38,7 @@ Regola d'oro: **la schermata è una funzione dei dati** (props + state). Non si 
 6. `frontend/src/smarteats/floor/FloorView.jsx`: una schermata vera.
 7. `frontend/src/smarteats/floor/FloorPage.jsx`: come più componenti si parlano (stato in alto, props in basso).
 8. Lato server: `backend/routes/rooms.js` (una route), poi `backend/utils/occupancy.js` (logica pura) e i suoi test.
-Le regole del progetto sono in `CLAUDE.md`; la mappa delle cartelle in `docs/guida-al-codice.md`.
+Le regole del progetto e la mappa delle cartelle sono in `CLAUDE.md` (§2 e seguenti).
 
 ## 5. Esercizi (piccoli e sicuri: se sbagli, `git restore` rimette tutto)
 1. Cambia un testo (per esempio «Walk-in») e guarda la schermata aggiornarsi.
@@ -51,7 +51,7 @@ Le regole del progetto sono in `CLAUDE.md`; la mappa delle cartelle in `docs/gui
 - **React Developer Tools** (estensione di Chrome): mostra l'albero dei componenti con props e state in tempo reale. È il modo migliore per «vedere» React.
 - **Console e Rete del browser** (tasto destro → Ispeziona): la console mostra gli errori, la scheda Rete le chiamate al server con la risposta.
 - **`git log -p -- percorso/del/file`**: la storia di un file, con ogni modifica. Si vede *come* è stata costruita una funzione, passo per passo.
-- **`./scripts/check.sh`**: dopo ogni tua prova ti dice se hai rotto qualcosa.
+- **`./scripts/check.sh`**: dopo ogni tua prova ti dice se hai rotto qualcosa (vedi `docs/guida-al-codice.md`, §1).
 
 ## 7. Dove studiare (gratis e in italiano o ben fatto)
 - React, la guida ufficiale (interattiva): <https://react.dev/learn>

@@ -2,191 +2,95 @@ import { useEffect, useState, useMemo } from 'react';
 import { ChefHat, Wifi, WifiOff } from 'lucide-react';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
 import { apiFetch } from '../utils/apiClient';
+import TicketCard from '../components/kds/TicketCard';
+import ToPrepare from '../components/kds/ToPrepare';
+import { boardOrders, headline } from '../components/kds/board';
+import Loading from '../components/shared/Loading';
 
+// Lo schermo della cucina (`/kds`, senza login): un tabellone da appendere, solo lettura. A sinistra tutto ciò che c'è da preparare
+// sommato per piatto, a destra le comande dalla più vecchia con la testata che cambia colore (verde, ambra, rossa) man mano che
+// aspettano. Sempre scuro (si legge da lontano e non abbaglia), niente prezzi né dati dei clienti: arrivano solo dal server pubblico.
 const mergeOrders = (existing, incoming) => {
-    const map = new Map();
-    for (const o of existing) map.set(o.id, o);
-    for (const o of incoming) map.set(o.id, o);
-    return Array.from(map.values()).sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const map = new Map();
+  for (const o of existing) map.set(o.id, o);
+  for (const o of incoming) map.set(o.id, o);
+  return Array.from(map.values());
 };
 
-// ─── Cumulativo (solo lettura) ─────────────────────────────────
-const CumulativeQueue = ({ orders }) => {
-    const queue = useMemo(() => {
-        const map = {};
-        orders.forEach(o => o.items?.forEach(item => {
-            const key = `${item.name}__${item.note || ''}`;
-            if (!map[key]) map[key] = { name: item.name, note: item.note || '', quantity: 0 };
-            map[key].quantity += Number(item.quantity || 0);
-        }));
-        return Object.values(map).sort((a, b) => b.quantity - a.quantity);
-    }, [orders]);
-
-    if (!queue.length) return (
-        <div className="flex flex-col items-center justify-center h-48 gap-3 text-white/30">
-            <ChefHat size={40} />
-            <p className="text-xs font-semibold">Tutto pronto!</p>
-        </div>
-    );
-
-    return (
-        <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-            {queue.map(item => (
-                <div key={`${item.name}__${item.note}`}
-                    className="flex flex-col gap-2 p-4 rounded-2xl bg-white/5 border border-white/10">
-                    <p className="font-semibold text-base tracking-tight text-white leading-tight">{item.name}</p>
-                    {item.note && <p className="text-xs font-semibold text-yellow-400">⚠ {item.note}</p>}
-                    <span className="text-5xl font-semibold tabular-nums text-[var(--accent)] leading-none">{item.quantity}</span>
-                </div>
-            ))}
-        </div>
-    );
-};
-
-// ─── Card ordine (solo lettura) ────────────────────────────────
-const OrderCard = ({ order }) => {
-    const age = Math.floor((Date.now() - new Date(order.created_at)) / 60000);
-    const urgent = age >= 10;
-    const orderCode = order.display_code || order.id;
-
-    return (
-        <div className={`rounded-2xl p-4 border transition-all ${urgent ? 'bg-red-500/10 border-red-500/40' : 'bg-white/5 border-white/10'}`}>
-            <div className="flex justify-between items-center mb-3">
-                <span className="font-semibold text-xl text-white">#{orderCode}</span>
-                {order.table_name && (
-                    <span className="px-2 py-0.5 bg-white/10 border border-white/30 text-white rounded-full text-[11px] font-semibold">
-                        {order.table_name}{order.covers > 0 && ` · ${order.covers} cop.`}
-                    </span>
-                )}
-                {order.is_takeaway && (
-                    <span className="px-2 py-0.5 bg-green-500/10 border border-green-500/30 text-green-500 rounded-full text-[11px] font-semibold">Asporto</span>
-                )}
-                <span className={`text-xs font-semibold tabular-nums ${urgent ? 'text-red-400' : 'text-white/40'}`}>
-                    {new Date(order.created_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
-                    {urgent && ' ⚠'}
-                </span>
-            </div>
-            <ul className="space-y-1.5">
-                {order.items?.map((item, idx) => (
-                    <li key={idx}>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-[var(--accent)] font-semibold">×{item.quantity}</span>
-                            <span className="font-semibold text-sm text-white">{item.name}</span>
-                        </div>
-                        {item.note && (
-                            <div className="ml-5 mt-0.5 px-2 py-0.5 bg-yellow-500/10 border-l-2 border-yellow-400 text-xs text-yellow-400 font-semibold">
-                                {item.note}
-                            </div>
-                        )}
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
-};
-
-// ─── Pagina KDS ────────────────────────────────────────────────
 export default function KDS() {
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [disabled, setDisabled] = useState(false); // modulo KDS spento per questo locale
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [disabled, setDisabled] = useState(false);   // modulo KDS spento per questo locale
+  const [now, setNow] = useState(() => Date.now());
 
-    // Schermo pubblico, senza login: riceve dal server solo gli eventi della cucina, senza prezzi.
-    // Se il modulo KDS è spento il collegamento si chiude e non riparte.
-    const wsConnected = useLiveUpdates((msg) => {
-        if (msg.type === 'order_created' || msg.type === 'new_order') {
-            if (msg.order.status === 'pending' || msg.order.status === 'preparing')
-                setOrders(prev => mergeOrders(prev, [msg.order]));
-        } else if (msg.type === 'order_updated') {
-            if (msg.order.status === 'completed' || msg.order.status === 'canceled')
-                setOrders(prev => prev.filter(o => o.id !== msg.order.id));
-            else
-                setOrders(prev => prev.map(o => o.id === msg.order.id ? msg.order : o));
-        } else if (msg.type === 'session_ended') {
-            setOrders([]);
-        }
-    }, { publicKds: true, enabled: !disabled });
+  // L'attesa e l'ora si aggiornano da sole ogni 15 secondi
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 15000); return () => clearInterval(t); }, []);
 
-    useEffect(() => {
-        apiFetch('/orders/kds')
-            .then(data => setOrders(prev => mergeOrders(prev, data)))
-            .catch(err => {
-                if (err.code === 'MODULE_DISABLED') return setDisabled(true);
-                console.warn('KDS: caricamento ordini non riuscito, si attendono gli aggiornamenti in tempo reale', err);
-            })
-            .finally(() => setLoading(false));
-    }, []);
+  // Schermo pubblico, senza login: riceve dal server solo gli eventi della cucina, senza prezzi.
+  // Se il modulo KDS è spento il collegamento si chiude e non riparte.
+  const live = useLiveUpdates((msg) => {
+    if (msg.type === 'order_created' || msg.type === 'new_order') {
+      if (['pending', 'preparing'].includes(msg.order.status)) setOrders(prev => mergeOrders(prev, [msg.order]));
+    } else if (msg.type === 'order_updated') {
+      if (['completed', 'canceled'].includes(msg.order.status)) setOrders(prev => prev.filter(o => o.id !== msg.order.id));
+      else setOrders(prev => mergeOrders(prev, [msg.order]));
+    } else if (msg.type === 'session_ended') {
+      setOrders([]);
+    }
+  }, { publicKds: true, enabled: !disabled });
 
-    const pending = useMemo(() => {
-        return orders.filter(o => o.status === 'pending' || o.status === 'preparing');
-    }, [orders]);
+  useEffect(() => {
+    apiFetch('/orders/kds')
+      .then(data => setOrders(prev => mergeOrders(prev, data)))
+      .catch(err => { if (err.code === 'MODULE_DISABLED') setDisabled(true); })
+      .finally(() => setLoading(false));
+  }, []);
 
-    if (disabled) return (
-        <div className="min-h-dvh bg-[var(--bg-main)] text-white flex items-center justify-center p-6">
-            <p className="text-sm font-semibold text-white/50 text-center">Schermo cucina non attivo per questo locale</p>
+  const active = useMemo(() => boardOrders(orders), [orders]);
+  const { tickets, pieces, oldest } = headline(orders, now);
+
+  if (disabled) return (
+    <div className="min-h-dvh bg-neutral-950 text-white flex items-center justify-center p-6">
+      <p className="text-base text-neutral-400 text-center">Lo schermo cucina non è attivo per questo locale.</p>
+    </div>
+  );
+
+  return (
+    <div className="h-dvh bg-neutral-950 text-white flex flex-col overflow-hidden">
+      <header className="flex items-center justify-between gap-4 px-6 py-3.5 border-b border-white/10 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="w-9 h-9 rounded-xl bg-[var(--accent)] flex items-center justify-center text-lg font-semibold select-none">S</span>
+          <h1 className="text-xl font-semibold tracking-tight">Cucina</h1>
         </div>
-    );
+        <dl className="hidden sm:flex items-center gap-6 text-neutral-400">
+          <div className="flex items-baseline gap-1.5"><dd className="text-2xl font-semibold tabular-nums text-white">{tickets}</dd><dt className="text-sm">{tickets === 1 ? 'comanda' : 'comande'}</dt></div>
+          <div className="flex items-baseline gap-1.5"><dd className="text-2xl font-semibold tabular-nums text-white">{pieces}</dd><dt className="text-sm">{pieces === 1 ? 'pezzo' : 'pezzi'}</dt></div>
+          <div className="flex items-baseline gap-1.5"><dd className={`text-2xl font-semibold tabular-nums ${oldest >= 20 ? 'text-red-400' : oldest >= 10 ? 'text-amber-400' : 'text-white'}`}>{oldest}</dd><dt className="text-sm">min la più vecchia</dt></div>
+        </dl>
+        <div className="flex items-center gap-4 shrink-0">
+          <span className="text-2xl font-semibold tabular-nums text-neutral-300" aria-label="Ora">{new Date(now).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}</span>
+          <span className={`flex items-center gap-1.5 text-sm font-medium ${live ? 'text-emerald-400' : 'text-red-400'}`}>{live ? <Wifi size={16} /> : <WifiOff size={16} />}{live ? 'In diretta' : 'Senza collegamento'}</span>
+        </div>
+      </header>
 
-    return (
-        <div className="min-h-dvh bg-[var(--bg-main)] text-white flex flex-col">
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center font-semibold text-white text-lg">S</div>
-                    <div>
-                        <p className="font-semibold text-lg tracking-tight leading-none">KDS — Cucina</p>
-                        <p className="text-xs text-white/40 font-semibold mt-0.5">{pending.length} ordini in attesa</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    {wsConnected
-                        ? <><Wifi size={18} className="text-green-400" /><span className="text-xs font-semibold text-green-400">Live</span></>
-                        : <><WifiOff size={18} className="text-red-400" /><span className="text-xs font-semibold text-red-400">Offline</span></>
-                    }
-                </div>
-            </div>
-
-            {loading ? (
-                <div className="flex-1 flex items-center justify-center text-white/30">
-                    <p className="text-sm font-semibold">Caricamento...</p>
-                </div>
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center"><Loading /></div>
+      ) : (
+        <div className="flex-1 min-h-0 flex flex-col lg:flex-row">
+          <aside className="lg:w-[340px] xl:w-[400px] max-h-[34dvh] lg:max-h-none flex flex-col min-h-0 border-b lg:border-b-0 lg:border-r border-white/10">
+            <ToPrepare orders={active} />
+          </aside>
+          <main className="flex-1 min-h-0 overflow-y-auto no-scrollbar p-4">
+            {active.length === 0 ? (
+              <div className="h-full min-h-48 flex flex-col items-center justify-center gap-3 text-neutral-600"><ChefHat size={48} /><p className="text-xl">Nessuna comanda in attesa</p></div>
             ) : (
-                <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-
-                    {/* Cumulativo */}
-                    <div className="lg:w-[420px] xl:w-[480px] flex flex-col border-b lg:border-b-0 lg:border-r border-white/10">
-                        <div className="px-5 py-3 border-b border-white/10 shrink-0">
-                            <p className="text-[10px] font-semibold text-white/40">Coda cumulativa</p>
-                            <p className="text-xs text-white/30 mt-0.5">Totale da preparare</p>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
-                            <CumulativeQueue orders={pending} />
-                        </div>
-                    </div>
-
-                    {/* Ordini */}
-                    <div className="flex-1 flex flex-col overflow-hidden">
-                        <div className="px-5 py-3 border-b border-white/10 shrink-0">
-                            <p className="text-[10px] font-semibold text-white/40">Ordini in coda</p>
-                            <p className="text-xs text-white/30 mt-0.5">Dal più vecchio</p>
-                        </div>
-                        <div className="flex-1 overflow-y-auto p-4 no-scrollbar">
-                            {pending.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-48 gap-3 text-white/30">
-                                    <ChefHat size={40} />
-                                    <p className="text-xs font-semibold">Nessun ordine in attesa</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                                    {pending.map(order => <OrderCard key={order.id} order={order} />)}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                </div>
+              <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(300px,1fr))] items-start">
+                {active.map(order => <TicketCard key={order.id} order={order} now={now} />)}
+              </div>
             )}
+          </main>
         </div>
-    );
+      )}
+    </div>
+  );
 }

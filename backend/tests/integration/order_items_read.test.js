@@ -96,7 +96,7 @@ describe('order_items: letture', () => {
     const ids = res.body.map(o => o.id).sort();
     assert.deepEqual(ids, orders.filter(o => o.id !== orders[2].id).map(o => o.id).sort(), 'l\'ordine completato non c\'è');
     const first = res.body.find(o => o.id === orders[0].id);
-    assert.deepEqual(first.items, [{ id: 1, name: 'Panino', quantity: 2, note: '', category: null }, { id: 2, name: 'Birra', quantity: 1, note: 'fredda', category: null }]);
+    assert.deepEqual(first.items, [{ id: 1, name: 'Panino', quantity: 2, note: '', category: null, modifiers: [] }, { id: 2, name: 'Birra', quantity: 1, note: 'fredda', category: null, modifiers: [] }]);
     assert.equal(JSON.stringify(res.body).includes('price'), false);
     assert.equal(JSON.stringify(res.body).includes('line_total'), false);
   });
@@ -126,9 +126,9 @@ describe('order_items: letture', () => {
     assert.equal(lines.length - 1, orders.reduce((n, o) => n + o.json.length, 0));
     const calzone = lines.find(l => l.includes('Calzone'));
     assert.match(calzone, /"Calzoni"/);
-    assert.match(calzone, /;1;2,50;2,50;/);
+    assert.match(calzone, /;1;2,50;Sconto;2,50;2,50;/, 'sconto del 50%: 2,50 non incassati');
     const combo = lines.find(l => l.includes('Combo'));
-    assert.match(combo, /;3;1,67;5,00;/);
+    assert.match(combo, /;3;1,67;Vendita;0,00;5,00;/);
     const old = lines.find(l => l.includes('Prodotto vecchio'));
     assert.match(old, /"Generico"/);
   });

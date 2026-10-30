@@ -1,3 +1,5 @@
+import { Check } from 'lucide-react';
+
 // Le pagine che aprono i clienti (prenotazioni, ordini da asporto): niente menu né login, pensate per il telefono.
 // Il body dell'app è bloccato (`overflow: hidden`): la pagina scorre dentro un proprio contenitore (CLAUDE.md §7).
 // Il tema del dispositivo lo applica `useSystemTheme` (hooks/useSystemTheme.js).
@@ -27,10 +29,11 @@ export const PublicShell = ({ info, kicker, children, footer = null }) => (
   </div>
 );
 
-export const StepSection = ({ n, title, children }) => (
-  <section className="space-y-3">
+// Una sezione numerata del modulo. `id` la rende raggiungibile dai pallini di `StepProgress`; `done` cambia il numero in una spunta.
+export const StepSection = ({ id, n, title, done = false, children }) => (
+  <section id={id ? `step-${id}` : undefined} className="space-y-3 scroll-mt-16">
     <h2 className="text-base font-semibold flex items-center gap-2">
-      <span className="w-6 h-6 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] text-sm flex items-center justify-center tabular-nums">{n}</span>{title}
+      <span className={`w-6 h-6 rounded-full text-sm flex items-center justify-center tabular-nums transition-colors ${done ? 'bg-[var(--accent)] text-white' : 'bg-[var(--accent)]/15 text-[var(--accent)]'}`}>{done ? <Check size={14} strokeWidth={3} /> : n}</span>{title}
     </h2>
     {children}
   </section>

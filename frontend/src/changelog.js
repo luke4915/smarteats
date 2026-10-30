@@ -3,6 +3,37 @@
 // La prima voce deve avere lo stesso numero di `version` in frontend/package.json (lo controlla changelog.test.js).
 export const CHANGELOG = [
   {
+    version: '0.4.0',
+    date: '2026-10-29',
+    items: [
+      'Cassa da telefono: il tasto «Storno ordini» e «Svuota» ora si vedono sempre in fondo al carrello, anche su iPhone con la barra in basso.',
+      'Contanti ricevuti: i tasti rapidi si sommano (20 e poi 5 fanno 25) e una X azzera l\'importo se sbagli. Ci sono anche sul tablet.',
+      'Pagine dei clienti: se la prenotazione o l\'ordine da asporto non va a buon fine compare una X rossa al posto della spunta; mentre si aspetta la risposta del locale, un orologio.',
+      'Cucina: testi più piccoli e ordinati; per l\'asporto l\'orario di ritiro è in evidenza, con quanto manca.',
+      'Impostazioni: la voce «Sistema» si chiama ora «Impostazioni». Il tuo profilo (nome e password) si apre dalla tua riga nell\'elenco utenti. I Suggerimenti si scrivono dal menu del tuo account, in alto a destra.',
+      'Dati riservati: per togliere il blocco serve la tua password, non basta più l\'interruttore.',
+      'SmartEats Restaurant: nuova sezione Impostazioni → Stampanti (cucina, bar, conto) con la prova di stampa. Le stampe in attesa compaiono in testata e si riprovano da sole.',
+      'Numero degli ordini uguale per tutti: la sagra tiene la lettera di ogni cassa (A13), ristorante e asporto usano un numero semplice (23) che riparte a ogni servizio.',
+      'Asporto: appena accetti un ordine il cliente ha un codice di ritiro di tre cifre, nella pagina del suo ordine; lo vedi anche nell\'elenco, nel dettaglio e in cucina.',
+      'Asporto: le fasce si riempiono in base al tempo di preparazione di ogni piatto (in minuti, nel modulo del prodotto) e non più al numero di pezzi: le bevande non occupano la cucina. I valori di prima sono stati convertiti.',
+      'Menu pubblico con il QR (sagre): si scarica il QR da stampare, si copia il link e i clienti possono cercare un prodotto. Il messaggio di benvenuto lo imposta ora l\'assistenza.',
+      'Piatti esauriti: restano in carta, in grigio e con «Esaurito», non spariscono più; quando la cucina o un responsabile cambia la disponibilità, tutte le casse e la sala si aggiornano subito.',
+      'Cassa da telefono: lo Storno ordini è nel menu ⋯ come su tablet e PC, e i tasti rapidi dei contanti occupano tutta la larghezza.',
+      'Schermo cucina (KDS) rifatto: tabellone scuro con le comande dalla più vecchia, testata verde, ambra o rossa secondo l\'attesa, codice grande, riepilogo «Da preparare» e ora.',
+      'Licenza e lavoro senza rete: se la licenza scade mentre la cassa è senza rete si può lavorare ancora per 10 ore, poi compare una schermata che chiede di collegarsi a internet. Gli ordini battuti in quelle ore si inviano al ritorno della rete.',
+      'Asporto con pagamento online (su richiesta): il cliente può pagare subito con la carta; l\'importo si addebita solo quando accetti l\'ordine, se rifiuti non paga nulla. Chi ha pagato online non deve più pagare al ritiro e non conta nei contanti del cassetto.',
+      'Pannello master: ora si può cambiare il nome di un locale (scheda Generale, la matita accanto al nome) e la finestra del locale non salta più cambiando scheda. Anche il cambio di scheda nelle Impostazioni è più morbido.',
+      'Cassa delle sagre: tenendo premuta una tessera per un secondo si apre la disponibilità del prodotto (Disponibile, Porzioni, Esaurito) e il cambio arriva subito a tutte le casse; ora lo può fare anche chi ha il ruolo cassa, e un prodotto esaurito si rimette in vendita dalla stessa tessera.',
+      'Ordine da asporto e prenotazione dei clienti: in cima c\'è una barra con un pallino per passo (ordine, ritiro, dati, pagamento / persone, giorno, ora, dati) che si riempie man mano che si completano; toccando un pallino si va alla sua sezione. Sistemato anche il link «Modifica l\'ordine», che finiva sopra il titolo.',
+      'Menu e Carta rifatti: un\'unica lista a colonne (prodotto, prezzo, disponibilità, visibile; la categoria è il filtro in alto); la disponibilità si cambia dalla riga, con un filtro per vedere solo gli esauriti o i nascosti. Se un altro amministratore cambia il piatto che stai modificando compare un avviso con «Usa i valori aggiornati», e la Carta segue le sue modifiche senza ricaricare.',
+      'Prodotti: quando si crea, modifica o elimina un prodotto, le altre casse e la sala lo vedono subito, senza ricaricare. Il Menu della sagra ha la stessa pagina della carta del ristorante.',
+      'Menu: ogni prodotto ha l\'interruttore «Visibile» e il cestino per eliminarlo (con conferma); i prodotti nascosti restano in elenco, in grigio, con un filtro per vederli da soli. «Seleziona» ha una barra in fondo con Tutti, Mostra e Nascondi.',
+      'Aspetto: le categorie sopra la carta si distribuiscono su tutta la larghezza (e scorrono se sono troppe), il menu laterale è un po\' più stretto e le barre di ricerca hanno gli stessi angoli degli altri campi.',
+      'Asporto: il codice di ritiro e il tempo di preparazione dei piatti sono nel locale demo, per provare la capienza delle fasce.',
+      'Esporta una serata: report PDF completo (incasso, cassa con differenza, pagamenti, prodotti, andamento per ora), CSV delle righe con cassa o tavolo, omaggi e sconti, e CSV dei prodotti. Gli orari sono ora quelli del locale.',
+    ],
+  },
+  {
     version: '0.3.0',
     date: '2026-10-25',
     items: [

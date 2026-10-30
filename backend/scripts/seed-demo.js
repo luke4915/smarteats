@@ -105,9 +105,9 @@ async function recreateTenant() {
     await admin.query('DELETE FROM tenants WHERE id = $1', [old.id]);
     console.log('Locale demo precedente eliminato.');
   }
-  const modules = [...BUSINESS_TYPES.restaurant.modules, 'bookings', 'takeaway', 'whatsapp', 'inventory'];
+  const modules = [...BUSINESS_TYPES.restaurant.modules, 'bookings', 'takeaway', 'whatsapp', 'payments', 'inventory'];
   const { rows: [tenant] } = await admin.query(
-    `INSERT INTO tenants (slug, name, plan, business_type, modules, inventory_mode, inventory_depletion) VALUES ($1, $2, 'demo', 'restaurant', $3, 'warehouse', 'recipes') RETURNING id`, [SLUG, NAME, modules]);
+    `INSERT INTO tenants (slug, name, plan, business_type, modules, inventory_mode, inventory_depletion, stripe_account_id) VALUES ($1, $2, 'demo', 'restaurant', $3, 'warehouse', 'recipes', 'acct_demo') RETURNING id`, [SLUG, NAME, modules]);   // conto Stripe di prova: col driver finto non si muove nulla
   const hash = await bcrypt.hash(PASSWORD, 12);
   for (const [username, role] of [['demo', 'admin'], ['marta', 'manager'], ['luca', 'cashier'], ['giulia', 'waiter'], ['paolo', 'waiter'], ['chef', 'kitchen']])
     await admin.query('INSERT INTO users (username, password_hash, role, tenant_id, must_change_password) VALUES ($1, $2, $3, $4, false)', [username, hash, role, tenant.id]);
@@ -117,7 +117,7 @@ async function recreateTenant() {
 // ── Carta ──
 const COLORS = { Antipasti: '#f59e0b', Pizze: '#ef4444', Primi: '#f97316', Secondi: '#b45309', Contorni: '#16a34a', Dolci: '#ec4899', Bevande: '#3b82f6', Caffè: '#78350f' };
 const MENU = [
-  // [nome, prezzo, categoria, portata, destinazione, carico forno]
+  // [nome, prezzo, categoria, portata, destinazione, pezzi per volta in forno (1 = una pizza, 5 minuti)]
   ['Bruschetta al pomodoro', 6, 'Antipasti', 'Antipasti', 'kitchen'],
   ['Tagliere di salumi e formaggi', 14, 'Antipasti', 'Antipasti', 'kitchen'],
   ['Carpaccio di manzo', 13, 'Antipasti', 'Antipasti', 'kitchen'],
@@ -152,8 +152,8 @@ const MENU = [
 
 async function configure(api) {
   const s = (key, value) => api.put(`/settings/${key}`, { value });
-  await s('welcome_message', 'Benvenuti alla Trattoria SmartEats');
   await s('cover_charge', '2');
+  await s('takeaway_payment_mode', 'optional');        // asporto: il cliente può pagare subito con carta (Stripe finto in sviluppo)
   await s('booking_portal_enabled', '1');
   await s('booking_portal_phone', '+39 06 1234 5678');
   await s('booking_portal_welcome', 'Prenota il tuo tavolo: ti rispondiamo entro poche ore.');
@@ -196,7 +196,7 @@ async function configure(api) {
   for (const [name, price, category, course, destination, load] of MENU) {
     const p = await api.post('/products', {
       name, price, category, color: COLORS[category], print_destination: destination,
-      course_id: course ? courses[course] : null, ...(load && { takeaway_load: load }),
+      course_id: course ? courses[course] : null, ...(['Bevande', 'Caffè'].includes(category) ? { prep_minutes: 0 } : load ? { prep_minutes: load * 6 } : {}),
     });
     products[name] = p.id;
   }
@@ -548,6 +548,8 @@ async function main() {
     void waiter;
 
     const ctx = await configure(api);
+    // il messaggio del menu pubblico non è una impostazione del locale: lo scrive il master, qui direttamente nel database
+    await admin.query(`INSERT INTO settings (key, value, tenant_id) VALUES ('welcome_message', 'Benvenuti alla Trattoria SmartEats', $1) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value`, [tenantId]);
     const groups = await api.get('/modifier-groups');
     ctx.cooking = Object.fromEntries(groups.find(g => g.name === 'Cottura').options.map(o => [o.name, o.id]));
     ctx.extras = Object.fromEntries(groups.find(g => g.name === 'Aggiunte').options.map(o => [o.name, o.id]));

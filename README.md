@@ -5,7 +5,7 @@ Gestionale SaaS per sagre, eventi e ristorazione, in due prodotti sulla stessa p
 - `backend/`: Node.js, Express 5, PostgreSQL, WebSocket
 - `frontend/`: React 19, Vite, Tailwind v4, PWA con funzionamento offline
 
-Regole, convenzioni e struttura nel dettaglio: [`CLAUDE.md`](CLAUDE.md). **Se non sei uno sviluppatore** e vuoi capire dove sta cosa o fare una modifica piccola: [`docs/guida-al-codice.md`](docs/guida-al-codice.md).
+Regole, convenzioni, comandi e struttura delle cartelle: [`CLAUDE.md`](CLAUDE.md). **Se non sei uno sviluppatore** e vuoi fare una modifica piccola: [`docs/guida-al-codice.md`](docs/guida-al-codice.md).
 
 ## Requisiti
 
@@ -47,22 +47,8 @@ Ogni tenant si apre dal suo sottodominio (es. `default.smarteats.local`): i nomi
 
 ## Test
 
-Il modo più semplice: `./scripts/check.sh` (veloce) o `./scripts/check.sh --all` (anche database e browser). Nel dettaglio:
-
-```bash
-cd backend
-npm test                      # unitari, senza database
-npm run test:integration      # integrazione su PostgreSQL locale (configura backend/.env.test)
-cd ../frontend && npm run lint && npm test
-```
-
-La CI (`.github/workflows/ci.yml`) esegue lint, test, build e `npm audit` a ogni push e pull request, con un PostgreSQL vero per i test di integrazione.
+`./scripts/check.sh` (veloce) o `./scripts/check.sh --all` (anche database e browser). I singoli comandi di test sono nella tabella di [`CLAUDE.md`](CLAUDE.md) §2. La CI (`.github/workflows/ci.yml`) esegue lint, test, build e `npm audit` a ogni push e pull request, con un PostgreSQL vero per i test di integrazione.
 
 ## Produzione
 
-- `npm run build` nel frontend; il backend con `NODE_ENV=production` serve API, WebSocket e frontend compilato sulla stessa porta HTTPS.
-- `APP_DOMAIN` è il dominio dell'app: servono un DNS e un certificato wildcard per `*.APP_DOMAIN`, indicato con `HTTPS_KEY_PATH` e `HTTPS_CERT_PATH`.
-- L'app si connette al database con due utenti: quello applicativo (`PG_USER`, soggetto a RLS, può solo leggere i tenant) e quello del pannello master (`PG_MASTER_USER`, l'unico che crea, modifica ed elimina tenant). I due ruoli vanno creati prima di caricare `schema.sql` o di applicare la migrazione 025. Le migrazioni (`npm run migrate`) usano `MIGRATION_DATABASE_URL`.
-- Avvio con un gestore di processi (systemd o PM2). Un eventuale reverse proxy deve inoltrare anche l'upgrade WebSocket.
-- `GET /api/health` (processo) e `/api/health/ready` (database) per il monitoraggio; `backend/scripts/backup.sh` per i backup.
-- Lista di controllo prima di andare online, rilascio, backup e log: [`docs/deployment.md`](docs/deployment.md).
+Installazione, variabili d'ambiente, utenti del database, certificati, backup e monitoraggio: [`docs/deployment.md`](docs/deployment.md). Rilascio di una versione: [`docs/rilasci.md`](docs/rilasci.md). Gestione quotidiana del server: [`docs/promemoria-operativo.md`](docs/promemoria-operativo.md).

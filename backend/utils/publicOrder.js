@@ -13,12 +13,17 @@ export function toPublicOrder(order) {
     covers: order.covers ?? null,
     // Asporto: solo l'orario di ritiro (il nome del cliente non esce dal personale)
     pickup_at: order.pickup_at ?? null,
+    // Portata e orario di uscita (per i tavoli): servono a contare l'attesa da quando la comanda è davvero partita
+    course_name: order.course_name ?? null,
+    fired_at: order.fired_at ?? null,
     items: items.map(i => ({
       id: i.id,
       name: i.name,
       quantity: i.quantity,
       note: i.note || '',
       category: i.category ?? null,
+      // Solo i nomi delle opzioni (cottura, aggiunte…), mai i supplementi
+      modifiers: (i.modifiers ?? []).map(m => m.name).filter(Boolean),
     })),
   };
 }

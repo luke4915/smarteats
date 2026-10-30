@@ -36,6 +36,7 @@ const OrderPanel = ({ order, slots, onBack, onChanged }) => {
   };
 
   const status = STATUS[shownStatus(order)];
+  const paid = order.payment_status === 'paid';
   const open = ['requested', 'accepted'].includes(order.status);
   const telHref = order.phone ? `tel:${order.phone.replace(/[^\d+]/g, '')}` : null;
 
@@ -75,25 +76,36 @@ const OrderPanel = ({ order, slots, onBack, onChanged }) => {
       </div>
     ) : mode === 'cancel' ? (
       <div className="space-y-2">
-        <p className="text-sm text-[var(--text-main)]">Annullare l'ordine? Va tolto dalla cucina e i prodotti tornano disponibili.</p>
+        <p className="text-sm text-[var(--text-main)]">Annullare l'ordine? Va tolto dalla cucina e i prodotti tornano disponibili.{paid && ' L\'importo pagato con carta viene restituito al cliente.'}</p>
         <div className="grid grid-cols-2 gap-2"><button className={btn} onClick={() => setMode(null)}>No</button><button className={btnDanger} disabled={busy} onClick={() => act('cancel', {}, 'Ordine annullato')}>Sì, annulla</button></div>
       </div>
     ) : (
       <div className="grid grid-cols-[auto_1fr] gap-2">
         <button className={btn} disabled={busy} onClick={() => setMode('cancel')}>Annulla</button>
-        <button className={btnPrimary} disabled={busy} onClick={() => setMode('pay')}>Consegna e incassa · {formatEuro(order.total)}</button>
+        {paid
+          ? <button className={btnPrimary} disabled={busy} onClick={() => act('picked-up', {}, 'Consegnato')}>Consegna · già pagato con carta</button>
+          : <button className={btnPrimary} disabled={busy} onClick={() => setMode('pay')}>Consegna e incassa · {formatEuro(order.total)}</button>}
       </div>
     )
   ) : null;
 
   return (
-    <PanelFrame title={order.customer_name} subtitle={`${formatDay(order.date, { short: true })} · ritiro ${order.time}${order.display_code ? ` · ${order.display_code}` : ''}`} onBack={onBack} footer={footer}>
+    <PanelFrame title={order.customer_name} subtitle={`${formatDay(order.date, { short: true })} · ritiro ${order.time}${order.display_code ? ` · #${order.display_code}` : ''}`} onBack={onBack} footer={footer}>
       <div className="px-1 space-y-4 pb-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className={`inline-flex items-center h-6 px-2.5 rounded-full text-xs font-medium ${TONES[status.tone]}`}>{status.label}</span>
           <span className="text-sm text-[var(--text-muted)]">{SOURCE[order.source] ?? order.source}</span>
           {order.paid_method && <span className="text-sm text-[var(--text-muted)]">· pagato {({ cash: 'in contanti', card: 'con carta', other: 'altro' })[order.paid_method]}</span>}
         </div>
+
+        {order.payment_status === 'authorized' && <p className="rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] px-3 py-2.5 text-sm text-[var(--text-muted)]">Carta del cliente autorizzata: l'importo si addebita quando accetti; se rifiuti non paga nulla.</p>}
+        {paid && <p className="rounded-lg border border-green-500/40 bg-green-500/5 px-3 py-2.5 text-sm text-[var(--text-main)]">Pagato online con carta: {formatEuro(order.total)}. Alla consegna non si incassa nulla.</p>}
+        {order.pickup_code && (
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] px-3 py-2.5 flex items-center justify-between gap-3">
+            <span className="text-sm text-[var(--text-muted)]">Codice di ritiro</span>
+            <span className="text-2xl font-semibold tabular-nums tracking-[0.08em] text-[var(--text-main)]" aria-label={`Codice di ritiro ${order.pickup_code}`}>{order.pickup_code}</span>
+          </div>
+        )}
 
         <ul className="rounded-lg border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden">
           {order.items.map((i, n) => (

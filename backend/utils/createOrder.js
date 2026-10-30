@@ -1,5 +1,5 @@
 import { HttpError } from './httpError.js';
-import { formatDisplayCode, formatDeviceCode } from './displayCode.js';
+import { orderNumber } from './orderNumber.js';
 import { sumQuantitiesByProduct, lockAndFindShortages, applyStockChange } from './stock.js';
 import { computeExpectedCash, clampToSession } from './session.js';
 import { writeOrderItems } from './orderItemsWrite.js';
@@ -30,16 +30,16 @@ async function findOrderSession(db, sessionId, useCounter) {
     : new HttpError(409, "La sessione dell'ordine non esiste o è chiusa da più di 24 ore", 'SESSION_CLOSED');
 }
 
-export const UNIQUE_ORDER_CONSTRAINTS = ['uniq_orders_client_order_id', 'uniq_orders_device_seq'];
+export const UNIQUE_ORDER_CONSTRAINTS = ['uniq_orders_client_order_id', 'uniq_orders_device_seq', 'uniq_orders_session_source_number'];
 
-// Codice ordine: se la cassa ha inviato dispositivo e numero (battuto e stampato in locale)
-// il server ricompone lettera + numero, senza fidarsi del formato del client. Senza dispositivo
-// (ordini accodati prima dell'aggiornamento) vale ancora il progressivo di sessione.
-async function resolveDisplayCode(db, session, deviceId, deviceSeq) {
-  if (deviceId === undefined) return formatDisplayCode(session.order_counter);
+// Numero e codice dell'ordine: se la cassa ha inviato dispositivo e progressivo (battuto e stampato in locale) il server ricompone
+// lettera + numero, senza fidarsi del formato del client. Senza dispositivo (sala, ordini accodati prima dell'aggiornamento)
+// vale il progressivo di serata, già incrementato da `findOrderSession`. Un solo modo per tutti: utils/orderNumber.js.
+async function resolveOrderNumber(db, session, deviceId, deviceSeq) {
+  if (deviceId === undefined) return orderNumber({ counter: session.order_counter });
   const { rows } = await db.query('SELECT letter FROM devices WHERE id = $1', [deviceId]);
   if (!rows.length) throw new HttpError(400, 'Dispositivo non valido', 'INVALID_DEVICE');
-  return formatDeviceCode(rows[0].letter, deviceSeq);
+  return orderNumber({ letter: rows[0].letter, deviceSeq });
 }
 
 export async function findOrderByClientId(db, clientOrderId) {
@@ -56,7 +56,7 @@ export async function insertOrder(db, { tenantId, userId, role, forceStock, veri
   const isLateSync = session_id !== undefined;
   const session = await findOrderSession(db, session_id, device_id === undefined);
   const sessionOpen = !session.end_time;
-  const displayCode = await resolveDisplayCode(db, session, device_id, device_seq);
+  const { number, code: displayCode } = await resolveOrderNumber(db, session, device_id, device_seq);
 
   // Comanda su un conto: deve essere aperto e della sessione in corso. Il lock condiviso lascia entrare più
   // comande insieme ma impedisce di annullare o chiudere il conto mentre se ne scrive una.
@@ -83,10 +83,10 @@ export async function insertOrder(db, { tenantId, userId, role, forceStock, veri
   const createdAt = isLateSync ? clampToSession(client_created_at, session) : null;
 
   const { rows } = await db.query(
-    `INSERT INTO orders (total, status, created_by, order_type, is_takeaway, display_code, session_id, client_order_id, created_at, device_id, device_seq, check_id)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, now()), $10, $11, $12) RETURNING id, created_at, display_code`,
+    `INSERT INTO orders (total, status, created_by, order_type, is_takeaway, display_code, number, session_id, client_order_id, created_at, device_id, device_seq, check_id)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, now()), $11, $12, $13) RETURNING id, created_at, display_code`,
     [verifiedTotal, orderStatus, userId, order_type, !!is_takeaway,
-      displayCode, session.id, client_order_id ?? null, createdAt, device_id ?? null, device_seq ?? null, check_id ?? null]
+      displayCode, number, session.id, client_order_id ?? null, createdAt, device_id ?? null, device_seq ?? null, check_id ?? null]
   );
   // Le righe sono parte dell'ordine: se non si scrivono, l'ordine non nasce (la transazione si annulla).
   await writeOrderItems(db, tenantId, rows[0].id, verifiedItems);
