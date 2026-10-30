@@ -8,7 +8,8 @@ export function createMockDriver() {
     kind: 'mock',
     calls,
     async createCheckout(args) { n += 1; log('createCheckout', args); // l'indirizzo di ritorno sta nella pagina finta, come il pulsante «torna al sito» di una pagina di pagamento vera (utile ai test nel browser)
-      return { id: `cs_mock_${n}`, url: `https://checkout.mock/pay/cs_mock_${n}?return=${encodeURIComponent(args.successUrl)}` }; },
+      const extra = new URLSearchParams({ cancel: args.cancelUrl ?? '', tenant: args.metadata?.tenant_id ?? '', order: args.metadata?.takeaway_id ?? '', amount: String(args.amountCents ?? '') });
+      return { id: `cs_mock_${n}`, url: `https://checkout.mock/pay/cs_mock_${n}?return=${encodeURIComponent(args.successUrl)}&${extra}` }; },
     async capture(paymentIntentId) { log('capture', { paymentIntentId }); if (String(paymentIntentId).endsWith('_fail')) throw new Error('La carta non può essere addebitata'); return { ok: true }; },
     async cancel(paymentIntentId) { log('cancel', { paymentIntentId }); return { ok: true }; },
     async refund(paymentIntentId) { log('refund', { paymentIntentId }); return { ok: true }; },

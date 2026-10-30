@@ -5,6 +5,7 @@ import { apiFetch } from '../utils/apiClient';
 import { formatDay } from '../smarteats/reservations/rules';
 import { btnPrimary, btn, input } from '../smarteats/floor/ui';
 import { PublicShell, StepSection } from '../components/public/PublicShell';
+import StepProgress from '../components/public/StepProgress';
 import { useSystemTheme } from '../hooks/useSystemTheme';
 import Loading from '../components/shared/Loading';
 
@@ -106,6 +107,7 @@ const BookingPage = () => {
   const [info, setInfo] = useState(null);
   const [error, setError] = useState('');
   const [party, setParty] = useState(2);
+  const [partyTouched, setPartyTouched] = useState(false);   // 2 persone è solo il valore di partenza: il passo si completa quando lo si conferma o si va avanti
   const [days, setDays] = useState(null);
   const [date, setDate] = useState('');
   const [shifts, setShifts] = useState(null);
@@ -139,7 +141,15 @@ const BookingPage = () => {
   useEffect(() => { if (date && days && !days.find(d => d.date === date)?.available) { setDate(''); } }, [days, date]);
 
   const shift = shifts?.find(s => s.id === shiftId);
-  const valid = shift && form.customer_name.trim() && form.phone.replace(/\D/g, '').length >= 6 && form.consent;
+  const detailsDone = !!form.customer_name.trim() && form.phone.replace(/\D/g, '').length >= 6 && form.consent;
+  const valid = shift && detailsDone;
+  // I pallini in cima si riempiono mentre si compila
+  const steps = [
+    { id: 'party', label: 'Quanti siete?', done: partyTouched || !!date },
+    { id: 'day', label: 'Che giorno?', done: !!date },
+    { id: 'time', label: 'A che ora?', done: !!shiftId },
+    { id: 'details', label: 'I vostri dati', done: !!shiftId && detailsDone },
+  ];
   const setField = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
 
   const send = async (e) => {
@@ -163,19 +173,20 @@ const BookingPage = () => {
 
   return (
     <Shell info={info}>
+      <StepProgress steps={steps} />
       <form className="space-y-7 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-x-10 sm:items-start" onSubmit={send} noValidate>
         <div className="space-y-7">
-        <Section n={1} title="Quanti siete?">
+        <Section id="party" n={1} title="Quanti siete?" done={steps[0].done}>
           <div className="flex items-center gap-4">
-            <button type="button" className={`${btn} !w-12 !px-0`} aria-label="Una persona in meno" disabled={party <= 1} onClick={() => setParty(p => p - 1)}><Minus size={18} /></button>
+            <button type="button" className={`${btn} !w-12 !px-0`} aria-label="Una persona in meno" disabled={party <= 1} onClick={() => { setParty(p => p - 1); setPartyTouched(true); }}><Minus size={18} /></button>
             <span className="text-3xl font-semibold tabular-nums w-12 text-center" aria-live="polite">{party}</span>
-            <button type="button" className={`${btn} !w-12 !px-0`} aria-label="Una persona in più" disabled={party >= info.max_party} onClick={() => setParty(p => p + 1)}><Plus size={18} /></button>
+            <button type="button" className={`${btn} !w-12 !px-0`} aria-label="Una persona in più" disabled={party >= info.max_party} onClick={() => { setParty(p => p + 1); setPartyTouched(true); }}><Plus size={18} /></button>
             <span className="text-sm text-[var(--text-muted)]"><Users size={14} className="inline mr-1" />{party === 1 ? 'persona' : 'persone'}</span>
           </div>
           {party >= info.max_party && <p className="text-sm text-[var(--text-muted)]">Per gruppi più grandi di {info.max_party} persone chiamateci{info.phone ? `: ${info.phone}` : ''}.</p>}
         </Section>
 
-        <Section n={2} title="Che giorno?">
+        <Section id="day" n={2} title="Che giorno?" done={steps[1].done}>
           {!days ? <Loading /> : (
             <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Giorno">
               {weekdays.map(d => (
@@ -191,7 +202,7 @@ const BookingPage = () => {
         </Section>
 
         {date && (
-          <Section n={3} title="A che ora?">
+          <Section id="time" n={3} title="A che ora?" done={steps[2].done}>
             {!shifts ? <Loading /> : (
               <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Turno">
                 {shifts.map(s => (
@@ -211,7 +222,7 @@ const BookingPage = () => {
         <div className="mt-7 sm:mt-0 space-y-7">
         {!shiftId && <p className="hidden sm:block text-sm text-[var(--text-muted)] rounded-xl border border-dashed border-[var(--border)] p-5">Scegliete giorno e ora: qui compaiono i campi per i vostri dati.</p>}
         {shiftId && (
-          <Section n={4} title="I vostri dati">
+          <Section id="details" n={4} title="I vostri dati" done={steps[3].done}>
             <div className="space-y-3">
               <label className="block"><span className="text-sm font-medium">Nome</span>
                 <input className={`${input} !text-base !h-12 mt-1`} autoComplete="name" value={form.customer_name} onChange={setField('customer_name')} maxLength={80} required /></label>

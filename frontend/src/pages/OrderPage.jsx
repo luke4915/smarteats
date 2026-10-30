@@ -9,6 +9,8 @@ import { formatDay } from '../smarteats/reservations/rules';
 import { btnPrimary, btn, input } from '../smarteats/floor/ui';
 import { formatEuro } from '../utils/format';
 import { PublicShell, StepSection } from '../components/public/PublicShell';
+import StepProgress from '../components/public/StepProgress';
+import { checkoutTarget } from '../utils/checkoutUrl';
 import { useSystemTheme } from '../hooks/useSystemTheme';
 import { CategoryChips, ProductRows } from '../components/public/MenuList';
 import Loading from '../components/shared/Loading';
@@ -48,7 +50,7 @@ const Status = ({ token, info }) => {
   // Ha chiuso la pagina di pagamento: se ne apre una nuova
   const pay = async () => {
     setBusy(true); setError('');
-    try { window.location.assign((await apiFetch(`/public/takeaway/orders/${token}/pay`, { method: 'POST', body: {} })).checkout_url); }
+    try { window.location.assign(checkoutTarget((await apiFetch(`/public/takeaway/orders/${token}/pay`, { method: 'POST', body: {} })).checkout_url)); }
     catch (err) { setError(err.message); setBusy(false); }
   };
 
@@ -150,13 +152,23 @@ const OrderPage = () => {
   const valid = payMode !== 'unavailable' && lines.length > 0 && date && time && form.customer_name.trim() && form.phone.replace(/\D/g, '').length >= 6 && form.consent;
   const setField = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
 
+  // I pallini in cima: ogni passo si completa da solo mentre si compila. «Come paghi?» ha già una scelta di partenza: è a posto quando i passi prima lo sono.
+  const detailsDone = !!form.customer_name.trim() && form.phone.replace(/\D/g, '').length >= 6 && form.consent;
+  const beforePayment = count > 0 && !!date && !!time && detailsDone;
+  const steps = [
+    { id: 'order', label: 'Il tuo ordine', done: count > 0 },
+    { id: 'pickup', label: 'Quando ritiri?', done: !!date && !!time },
+    { id: 'details', label: 'I tuoi dati', done: detailsDone },
+    ...(payMode !== 'off' ? [{ id: 'payment', label: 'Come paghi?', done: beforePayment && payMode !== 'unavailable' }] : []),
+  ];
+
   const send = async (e) => {
     e.preventDefault();
     if (!valid || sending) return;
     setSending(true); setError('');
     try {
       const res = await apiFetch('/public/takeaway/orders', { method: 'POST', body: { date, time, items: lines.map(l => ({ id: l.id, quantity: l.quantity })), ...form, pay_online: payNow, opened_at: openedAt.current } });
-      window.location.assign(res.checkout_url ?? `/order/${res.token}`);       // con la carta si passa dalla pagina di pagamento
+      window.location.assign(res.checkout_url ? checkoutTarget(res.checkout_url) : `/order/${res.token}`);       // con la carta si passa dalla pagina di pagamento
     } catch (err) {
       setError(err.message);
       if (err.code === 'SLOT_FULL') { setTime(''); apiFetch(`/public/takeaway/slots?date=${date}&cart=${cartParam}`).then(r => setSlots(r.slots)).catch(() => {}); }
@@ -180,6 +192,7 @@ const OrderPage = () => {
 
   return (
     <PublicShell info={info} kicker="Ordina da asporto" footer={bar}>
+      <StepProgress steps={steps} />
       {step === 'menu' && (
         <>
           <CategoryChips categories={info.categories} value={category} onChange={setCategory} />
@@ -189,10 +202,10 @@ const OrderPage = () => {
       )}
 
       {step === 'checkout' && (
-        <form className="space-y-7" onSubmit={send} noValidate>
-          <button type="button" className="flex items-center gap-1 text-sm text-[var(--accent)] font-medium cursor-pointer -mb-3" onClick={() => setStep('menu')}><ChevronLeft size={18} /> Modifica l'ordine</button>
+        <form className="flex flex-col gap-7" onSubmit={send} noValidate>
+          <button type="button" className="flex items-center gap-1 text-sm text-[var(--accent)] font-medium cursor-pointer self-start" onClick={() => setStep('menu')}><ChevronLeft size={18} /> Modifica l'ordine</button>
 
-          <StepSection n={1} title="Il tuo ordine">
+          <StepSection id="order" n={1} title="Il tuo ordine" done={steps[0].done}>
             <ul className="rounded-xl border border-[var(--border)] divide-y divide-[var(--border)] overflow-hidden bg-[var(--bg-card)]">
               {lines.map(l => (
                 <li key={l.id} className="flex items-center gap-3 px-4 py-2.5">
@@ -208,7 +221,7 @@ const OrderPage = () => {
             {lines.length === 0 && <button type="button" className={`${btn} w-full`} onClick={() => setStep('menu')}>Scegli i prodotti</button>}
           </StepSection>
 
-          <StepSection n={2} title="Quando ritiri?">
+          <StepSection id="pickup" n={2} title="Quando ritiri?" done={steps[1].done}>
             {!days ? <Loading /> : (
               <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Giorno">
                 {days.map(d => {
@@ -234,7 +247,7 @@ const OrderPage = () => {
             )}
           </StepSection>
 
-          <StepSection n={3} title="I tuoi dati">
+          <StepSection id="details" n={3} title="I tuoi dati" done={steps[2].done}>
             <div className="space-y-3">
               <label className="block"><span className="text-sm font-medium">Nome</span>
                 <input className={`${input} !text-base !h-12 mt-1`} autoComplete="name" value={form.customer_name} onChange={setField('customer_name')} maxLength={80} required /></label>
@@ -252,7 +265,7 @@ const OrderPage = () => {
             </div>
           </StepSection>
 
-          {payMode !== 'off' && <StepSection n={4} title="Come paghi?"><PaymentChoice mode={payMode} value={payNow ? 'online' : 'on_pickup'} onChange={setPayChoice} /></StepSection>}
+          {payMode !== 'off' && <StepSection id="payment" n={4} title="Come paghi?" done={steps[3].done}><PaymentChoice mode={payMode} value={payNow ? 'online' : 'on_pickup'} onChange={setPayChoice} /></StepSection>}
 
           {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
           <div className="sticky bottom-0 -mx-4 px-4 pt-3 bg-[var(--bg-main)] border-t border-[var(--border)] space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>

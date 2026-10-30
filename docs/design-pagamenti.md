@@ -2,6 +2,10 @@
 
 Migrazione 058, `utils/takeawayPayments.js`, `utils/payments/`, `routes/stripeWebhook.js`. Costi e scelte in breve.
 
+## Pagina di prova (driver finto)
+
+In sviluppo e nel locale demo (`STRIPE_DRIVER=mock`) la pagina di pagamento di Stripe è sostituita da `/mock-checkout/<sessione>` (`pages/MockCheckoutPage.jsx`): nessuna carta, due pulsanti. «Pagamento riuscito» manda lo stesso avviso firmato che manderebbe Stripe (`POST /api/webhooks/stripe`, firma `mock-valid`) e riporta alla pagina dell'ordine; con il driver vero la pagina non fa nulla (il server rifiuta l'avviso). L'indirizzo `checkout.mock` del driver finto lo traduce `utils/checkoutUrl.js`; i parametri `tenant`, `order` e `amount` nell'indirizzo servono solo a questa pagina.
+
 ## Come funziona
 1. Il locale ha un **conto Stripe collegato** (Connect, tipo Express): lo crea il master dal pannello (collegamento guidato o incolla `acct_…`).
    Il master accende anche il modulo `payments`. Il locale sceglie in Impostazioni → Asporto: **spento**, **facoltativo** o **obbligatorio**.

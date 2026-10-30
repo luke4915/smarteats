@@ -19,23 +19,28 @@ test('portale: lo accendo, il cliente invia una richiesta dal telefono e la annu
 
   // Anche chi è già dentro (il titolare che prova la pagina) la vede, non viene rimandato alla Sala
   await page.goto(`${urlOf(r.host)}/book`);
-  await expect(page.getByText('Quanti siete?')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Quanti siete?' })).toBeVisible();
 
   // Il cliente: telefono, nessun accesso
   const phone = await (await browser.newContext({ viewport: { width: 390, height: 844 }, ignoreHTTPSErrors: true })).newPage();
   await phone.goto(`${urlOf(r.host)}/book`);
   await expect(phone.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(phone.getByText('Il giovedì siamo chiusi.')).toBeVisible();
+  await expect(phone.getByRole('list', { name: 'Passo 1 di 4: Quanti siete?' })).toBeVisible();   // il 2 di partenza non conta come scelta
   await phone.getByRole('button', { name: 'Una persona in più' }).click();           // 3 persone
+  await expect(phone.getByRole('list', { name: 'Passo 2 di 4: Che giorno?' })).toBeVisible();
   await expect(phone.getByText('3', { exact: true }).first()).toBeVisible();
   await phone.getByRole('radio', { name: /./ }).and(phone.locator('[aria-checked]')).first().waitFor();
   await phone.locator('[role=radiogroup][aria-label=Giorno] [role=radio]:not([disabled])').nth(2).click();   // fra tre giorni: non oggi
+  await expect(phone.getByRole('list', { name: 'Passo 3 di 4: A che ora?' })).toBeVisible();
   await phone.locator('[role=radiogroup][aria-label=Turno] [role=radio]:not([disabled])').first().click();
+  await expect(phone.getByRole('list', { name: 'Passo 4 di 4: I vostri dati' })).toBeVisible();
   await phone.getByLabel('Nome', { exact: true }).fill('Famiglia Bianchi');
   await phone.getByLabel('Telefono', { exact: true }).fill('333 9876543');
   await phone.getByLabel('Note', { exact: false }).fill('Un seggiolone');
   await expect(phone.getByRole('button', { name: 'Invia richiesta' })).toBeDisabled();   // manca il consenso
   await phone.getByRole('checkbox').first().check();     // il consenso al trattamento; la casella di fidelizzazione è facoltativa
+  await expect(phone.getByRole('list', { name: 'Tutti i passi completati (4 di 4)' })).toBeVisible();
   await phone.waitForTimeout(3200);                                                       // il modulo non si invia in un lampo
   await shot(phone, 'booking-portal-02-modulo');
   await phone.getByRole('button', { name: 'Invia richiesta' }).click();

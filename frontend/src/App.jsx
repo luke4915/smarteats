@@ -14,6 +14,7 @@ const MenuPage = lazy(() => import('./pages/MenuPage'));
 const MasterPage = lazy(() => import('./pages/MasterPage'));
 const BookingPage = lazy(() => import('./pages/BookingPage'));
 const OrderPage = lazy(() => import('./pages/OrderPage'));
+const MockCheckoutPage = lazy(() => import('./pages/MockCheckoutPage'));
 const LegalPage = lazy(() => import('./pages/LegalPage'));
 const ShortLink = lazy(() => import('./pages/ShortLink'));
 
@@ -31,6 +32,7 @@ const App = () => {
   // Pagine dei clienti: pubbliche anche per chi ha una sessione aperta in questo browser
   if (/^\/book(\/|$)/.test(path)) return <Suspense fallback={<PageLoading />}><BookingPage /></Suspense>;
   if (/^\/order(\/|$)/.test(path)) return <Suspense fallback={<PageLoading />}><OrderPage /></Suspense>;
+  if (/^\/mock-checkout\//.test(path)) return <Suspense fallback={<PageLoading />}><MockCheckoutPage /></Suspense>;   // pagamento di prova (driver finto)
   if (path === '/privacy' || path === '/terms') return <Suspense fallback={<PageLoading />}><LegalPage kind={path.slice(1)} /></Suspense>;
   if (/^\/s\//.test(path)) return <Suspense fallback={<PageLoading />}><ShortLink /></Suspense>;
 
