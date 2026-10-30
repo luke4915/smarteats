@@ -102,7 +102,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/products', productModifiersRouter); // PUT /:id/modifier-groups, prima delle route dei prodotti
   app.use('/api/products', productRecipeRouter);          // GET/PUT /:id/recipe (magazzino)
   app.use('/api/products', productAvailabilityRouter(broadcast));    // PUT /:id/availability (esaurito)
-  app.use('/api/products', productRoutes);
+  app.use('/api/products', productRoutes(broadcast));
   app.use('/api/modifier-groups', modifierGroupsRouter);
   app.use('/api/modifiers', modifierRecipeRouter);        // GET/PUT /:id/recipe (magazzino)
   app.use('/api/ingredients', ingredientsRouter);
