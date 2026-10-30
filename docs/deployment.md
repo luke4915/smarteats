@@ -15,19 +15,16 @@ Guida per portare SmartEats in produzione e tenerlo in vita. Le regole di svilup
 - [ ] `npm audit` pulito; la CI (`.github/workflows/ci.yml`) è verde sul commit che si rilascia.
 - [ ] Il master panel (`/master`) non è esposto a tutti, se possibile limitato per IP dal reverse proxy.
 
-## Rilascio di una nuova versione
+## Rilascio di una nuova versione (senza Docker)
+
+Qui i passi per un server con systemd o PM2. Con Docker, il flusso, le regole sulle migrazioni (additive, in due rilasci se si toglie qualcosa) e il ritorno indietro sono in `docs/rilasci.md`.
 
 1. Backup (`backend/scripts/backup.sh`) **prima** di toccare il database.
 2. `git pull`, `npm ci` in `backend/` e `frontend/`, `npm run build` nel frontend.
 3. `npm run migrate` in `backend/` (usa `MIGRATION_DATABASE_URL`).
 4. Riavvio del processo (systemd/PM2). Il server chiude in modo ordinato su SIGTERM.
 
-**Ordine tra codice e migrazione.** Dipende dalla migrazione, e lo dice il commento in testa al file `.sql`:
-- migrazione che *aggiunge* (colonna con default, indice, tabella): prima la migrazione, poi il codice nuovo;
-- migrazione che *restringe* (CHECK, NOT NULL, colonna tolta): prima il codice nuovo (che già rispetta il vincolo), poi la migrazione.
-Con una sola istanza e pochi secondi di fermo il problema non si pone; conta quando si aggiorna senza fermare il servizio.
-
-Le migrazioni non si modificano una volta applicate: per correggerne una se ne scrive una nuova. Non c'è un "down": il rimedio a una migrazione sbagliata è il backup preso al punto 1.
+Non c'è un «down»: il rimedio a una migrazione sbagliata è il backup preso al punto 1.
 
 ## Backup e ripristino
 
@@ -58,7 +55,7 @@ Dopo un ripristino su un database nuovo vanno ricreati i ruoli e i permessi dell
 - In produzione l'app scrive JSON su stdout (pino). Una riga per richiesta API: metodo, percorso, stato, durata in ms, utente e tenant. Mai cookie, intestazioni o corpo delle richieste.
 - Livelli: 5xx = `error`, 4xx e richieste oltre 1 s = `warn`, il resto `info`. `LOG_LEVEL` regola la verbosità.
 - Con systemd i log sono in `journalctl -u smarteats`; con PM2 in `pm2 logs`. Per tenerli oltre qualche giorno e cercarci dentro serve un raccoglitore (Loki, Papertrail, CloudWatch…): da decidere con l'hosting scelto.
-- Conservazione di `audit_logs` nel database: non c'è ancora una scadenza (vedi `docs/backlog.md`).
+- Conservazione di `audit_logs`: le righe più vecchie di 60 giorni si cancellano da sole (all'avvio e poi ogni giorno, `utils/auditRetention.js`). Il numero si cambia con `AUDIT_RETENTION_DAYS` (da 7 a 3650); l'app non può cancellare i registri, lo fa solo questa pulizia con il ruolo del master. Un cliente che chiede più storia: alza il valore o esporta prima.
 
 ## Esempio systemd
 
@@ -120,8 +117,7 @@ Costo zero per cominciare, adatto a pochi clienti. Tutto sta in `deploy/` (`dock
 Il processo completo (numero di versione, changelog, etichetta, aggiornamento del server, ritorno indietro) è in `docs/rilasci.md`.
 
 ### 5. Backup e ripristino
-- Il servizio `backup` fa un dump ogni notte alle 03:00 in `deploy/backups/` (14 giorni). **Sullo stesso disco non basta**: copiali fuori, es. `rclone copy deploy/backups r2:nome-bucket` con un cron (Cloudflare R2 o Backblaze B2 hanno un piano gratuito).
-- Ripristino provato: `docker compose exec -T db pg_restore -U postgres -d smarteats --clean --if-exists < backups/smarteats-AAAAMMGG-HHMMSS.dump`. Fallo una volta su un database di prova prima di averne bisogno.
+Il servizio `backup` fa un dump ogni notte alle 03:00 in `deploy/backups/` (14 giorni). Le regole (copia fuori dal server, prova del ripristino) sono nella sezione «Backup e ripristino» più su. **Sullo stesso disco non basta**: copiali fuori, es. `rclone copy deploy/backups r2:nome-bucket` con un cron (Cloudflare R2 o Backblaze B2 hanno un piano gratuito). Ripristino da Docker: `docker compose exec -T db pg_restore -U postgres -d smarteats --clean --if-exists < backups/smarteats-AAAAMMGG-HHMMSS.dump`.
 
 ### 6. Monitoraggio
 Crea un monitor gratuito su https://uptimerobot.com che interroga `https://<nome>.duckdns.org/api/health/ready` ogni 5 minuti: ti avvisa se l'app o il database sono giù. Non impedisce a Oracle di ritirare una macchina inattiva (conta l'uso reale di CPU e rete). Promemoria dei comandi: `docs/promemoria-operativo.md`.

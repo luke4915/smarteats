@@ -14,3 +14,6 @@ Thumbs.db
 # Certificati SSL locali (mkcert)
 certs/
 *.pemdeploy/backups/
+
+# Grafo di conoscenza generato da graphify (si ricrea con /graphify)
+graphify-out/
