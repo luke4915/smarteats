@@ -11,6 +11,7 @@ import { pool } from './db.js';
 import logger from './logger.js';
 import { checkSecrets } from './utils/jwtConfig.js';
 import { purgeAllTenants } from './utils/bookingRetention.js';
+import { purgeAuditLogs } from './utils/auditRetention.js';
 import { runAllTenants } from './utils/whatsapp/outbox.js';
 import { expireAll } from './utils/caseExpiry.js';
 import { fireDueTakeawayAllTenants } from './utils/takeawayJob.js';
@@ -73,8 +74,11 @@ server.listen(PORT, '0.0.0.0', () => logger.info(`API e WebSocket in ascolto su 
 
 // Conservazione dei dati dei clienti: una pulizia all'avvio e poi una al giorno
 purgeAllTenants().catch(err => logger.error({ err }, 'Pulizia dati prenotazioni non riuscita'));
+// Registro di audit: si tengono 60 giorni (AUDIT_RETENTION_DAYS); una pulizia all'avvio e una al giorno
+purgeAuditLogs().catch(err => logger.error({ err }, 'Pulizia registro di audit non riuscita'));
 // Avvisi WhatsApp: ogni 20 secondi scadenze e invii dei locali con il modulo acceso
 setInterval(() => runAllTenants({ expire: expireAll }).catch(err => logger.error({ err }, 'Giro avvisi WhatsApp non riuscito')), 20_000).unref();
 // Asporti accettati in anticipo: ogni minuto arrivano in cucina quelli il cui ritiro è per oggi
 setInterval(() => fireDueTakeawayAllTenants(hub.broadcast).catch(err => logger.error({ err }, 'Giro asporti in anticipo non riuscito')), 60_000).unref();
 setInterval(() => purgeAllTenants().catch(err => logger.error({ err }, 'Pulizia dati prenotazioni non riuscita')), 24 * 60 * 60 * 1000).unref();
+setInterval(() => purgeAuditLogs().catch(err => logger.error({ err }, 'Pulizia registro di audit non riuscita')), 24 * 60 * 60 * 1000).unref();

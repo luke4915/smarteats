@@ -16,7 +16,7 @@ Elenco verificato sul codice. Quando ne risolvi una, toglila da qui nello stesso
 
 **Dalla revisione del 4 ottobre 2026 (fase 4)**
 - Sicurezza: `/api/assets` serve solo `.mp3` (i loghi di altri marchi sono stati tolti dal repository ma restano nella cronologia git); gli ordini offline sincronizzati dopo la chiusura aggiornano il totale atteso ma non sono segnalati nel report di sessione.
-- Dati: `audit_logs` senza retention. Cassa e cucina scaricano ancora tutti gli ordini della sessione aperta (fino a 2000): se serve, filtrare per stato.
+- Dati: Cassa e cucina scaricano ancora tutti gli ordini della sessione aperta (fino a 2000): se serve, filtrare per stato.
 - Frontend: file ancora troppo grandi: `PrintProfiles.jsx` (stampa, si rifà con il test di stampa), `FloorEditor.jsx`.
 - Operatività: i log vanno su stdout, manca un raccoglitore (dipende dall'hosting); il backup è su disco locale, la copia fuori dal server è da configurare; nessun monitoraggio esterno dell'health check.
 - Asporto, ordini vecchi mai gestiti («Da chiudere»): un ritiro passato da più di due ore non va più in cucina da solo (`pickupIsStale`) e resta «accettato» nell'elenco del suo giorno, dove oggi si trova solo aprendo quella data. Manca una sezione **Da chiudere** in cima all'Asporto con questi ordini (giorni passati compresi) e due gesti: «Consegnato» o «Non ritirato» (annulla e, se c'era, rimette in dispensa). Caso raro (servizio lasciato aperto la notte, pranzo accettato e mai servito), per questo è rimandato.
