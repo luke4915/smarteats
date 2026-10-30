@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import jwt from 'jsonwebtoken';
 import { startServer, createTenant, deleteTenants, closePools, apiClient, adminDb } from './helpers.js';
 import { pool as appPool } from '../../db.js';
+import { purgeAuditLogsOf } from '../../utils/auditRetention.js';
 
 process.env.STRIPE_DRIVER ||= 'mock';
 process.env.MASTER_JWT_SECRET ||= 'segreto-master-di-prova-lungo-almeno-32-caratteri';
@@ -108,6 +109,41 @@ describe('pannello master', () => {
       assert.equal((await pub.get('/products/menu')).status, 200);
     } finally {
       await deleteTenants(t);
+    }
+  });
+
+  it('rinominare un locale: cambia il nome, non l\'indirizzo, e lascia traccia nell\'audit del locale', async () => {
+    const t = await createTenant();
+    try {
+      const before = (await master.request('GET', '/master/tenants', undefined, masterCookie)).body.find(x => x.id === t.id);
+      const res = await master.request('PATCH', `/master/tenants/${t.id}/name`, { name: '  Sagra del Calzone ' }, masterCookie);
+      assert.equal(res.status, 200, JSON.stringify(res.body));
+      assert.equal(res.body.name, 'Sagra del Calzone', 'il nome si salva senza spazi ai lati');
+      assert.equal(res.body.slug, before.slug, 'l\'indirizzo non cambia');
+      assert.equal((await master.request('PATCH', `/master/tenants/${t.id}/name`, { name: '   ' }, masterCookie)).status, 400);
+      assert.equal((await master.request('PATCH', '/master/tenants/999999999/name', { name: 'X' }, masterCookie)).status, 404);
+      const { rows } = await adminDb.query(`SELECT details FROM audit_logs WHERE tenant_id = $1 AND action = 'MASTER_RENAME_TENANT'`, [t.id]);
+      assert.equal(rows.length, 1);
+      assert.equal(rows[0].details.name, 'Sagra del Calzone');
+    } finally {
+      await deleteTenants(t);
+    }
+  });
+
+  it('registro di audit: le righe oltre i 30 giorni si cancellano (solo di quel locale), le recenti restano; l\'app non può cancellarle da sola', async () => {
+    const [t, other] = [await createTenant(), await createTenant()];
+    try {
+      const put = (tenant, action, days) => adminDb.query(`INSERT INTO audit_logs (tenant_id, action, details, created_at) VALUES ($1, $2, '{}', now() - make_interval(days => $3))`, [tenant.id, action, days]);
+      await put(t, 'VECCHIA', 45); await put(t, 'DI_UN_MESE', 31); await put(t, 'RECENTE', 29); await put(t, 'OGGI', 0);
+      await put(other, 'ALTRO_LOCALE_VECCHIA', 45);
+      assert.equal(await purgeAuditLogsOf(t.id, 30), 2, 'cancellate solo le due oltre i 30 giorni');
+      const left = async (tenant) => (await adminDb.query('SELECT action FROM audit_logs WHERE tenant_id = $1 AND action NOT IN (\'CREATE_PRODUCT\') ORDER BY action', [tenant.id])).rows.map(r => r.action);
+      assert.deepEqual((await left(t)).filter(a => ['VECCHIA', 'DI_UN_MESE', 'RECENTE', 'OGGI'].includes(a)), ['OGGI', 'RECENTE']);
+      assert.ok((await left(other)).includes('ALTRO_LOCALE_VECCHIA'), 'un altro locale non si tocca: ogni pulizia è sul suo locale');
+      assert.equal(await purgeAuditLogsOf(t.id, 30), 0, 'rilanciarla non fa niente');
+      await assert.rejects(appPool.query('DELETE FROM audit_logs'), /permission denied|permesso negato/i);
+    } finally {
+      await deleteTenants(t, other);
     }
   });
 

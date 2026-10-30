@@ -27,6 +27,11 @@ test('master: creo un locale, lo trovo, allungo la licenza e lo elimino', async 
   await expect(page.getByRole('dialog', { name: `Locale ${slug}` })).toBeVisible();
   await shot(page, 'master-03-locale');
   await page.getByRole('button', { name: '+30 giorni' }).click();
+  // Il nome si cambia dalla matita accanto al nome; l'indirizzo resta quello di prima
+  await page.getByRole('button', { name: 'Cambia il nome' }).click();
+  await page.getByLabel('Nome del locale').fill(`Sagra ${slug}`);
+  await page.getByRole('button', { name: 'Salva', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: `Sagra ${slug}` })).toBeVisible();
   await page.getByRole('tab', { name: 'Moduli' }).click();
   await expect(page.getByRole('button', { name: 'Salva' })).toBeVisible();
   await shot(page, 'master-03b-moduli');
@@ -34,7 +39,7 @@ test('master: creo un locale, lo trovo, allungo la licenza e lo elimino', async 
   await page.getByRole('button', { name: 'Elimina il locale' }).click();
   await page.getByPlaceholder(`locale-${slug}`).fill(`locale-${slug}`);
   await page.getByRole('button', { name: 'Elimina', exact: true }).last().click();
-  await expect(page.getByRole('heading', { name: `Locale ${slug}` })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: `Sagra ${slug}` })).toHaveCount(0);
 });
 
 // Avvisi WhatsApp: si configurano solo dal Master (eventi, tetto, prova); il locale vede solo lo stato.

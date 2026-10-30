@@ -27,12 +27,15 @@ const TenantManage = ({ tenant, catalog, on, onSaved, onClose }) => {
     <Modal title={tenant.name} size="max-w-3xl" onClose={onClose}>
       <div className="space-y-5">
         <Segmented scroll label="Sezioni del locale" className="w-fit max-w-full" options={tabs} value={current} onChange={setTab} />
+        {/* Altezza minima uguale per tutte le schede: la finestra è centrata e, cambiando altezza, a ogni scheda saltava su e giù. */}
+        <div key={current} className="motion-tab min-h-[min(40rem,calc(100dvh-11.5rem))]">
         {current === 'general' && <TenantGeneral tenant={tenant} catalog={catalog} on={on} />}
         {current === 'modules' && <TenantModules tenant={tenant} catalog={catalog} onSaved={onSaved} />}
         {current === 'users' && <TenantUsers tenant={tenant} onChanged={onSaved} />}
         {current === 'payments' && <TenantPayments tenant={tenant} />}
         {current === 'menu' && <TenantMenu tenant={tenant} />}
         {current === 'whatsapp' && <TenantWhatsApp tenant={tenant} />}
+        </div>
       </div>
     </Modal>
   );

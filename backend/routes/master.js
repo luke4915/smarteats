@@ -15,7 +15,7 @@ import { whatsappConfigSchema, whatsappTestSchema } from '../schemas/whatsappSch
 import { EVENTS, EVENT_IDS, eventSettingKey, QUOTA_SETTING_KEY, renderBody, normalizeMobile, templateName } from '../utils/whatsapp.js';
 import { loadConfig, monthUsage } from '../utils/whatsapp/outbox.js';
 import { getDriver } from '../utils/whatsapp/driver.js';
-import { masterLoginSchema, createTenantSchema, extendLicenseSchema, tenantActiveSchema, deleteTenantSchema, receiptCustomizationSchema, menuSettingsSchema, paymentsAccountSchema, tenantUserParamsSchema, tenantModulesSchema } from '../schemas/masterSchema.js';
+import { masterLoginSchema, createTenantSchema, extendLicenseSchema, renameTenantSchema, tenantActiveSchema, deleteTenantSchema, receiptCustomizationSchema, menuSettingsSchema, paymentsAccountSchema, tenantUserParamsSchema, tenantModulesSchema } from '../schemas/masterSchema.js';
 import { createUserSchema, resetPasswordSchema, updateUserSchema } from '../schemas/authSchema.js';
 import { catalog, normalizeModules, firstModuleNotAllowed, inventoryColumnsFor, BUSINESS_TYPES } from '../utils/modules.js';
 import { invalidateTenantModules } from '../utils/tenantModules.js';
@@ -152,6 +152,21 @@ router.put('/tenants/:id/modules', authenticateMaster, validate({ params: idPara
   } catch (err) {
     logger.error({ err }, 'Errore PUT /api/master/tenants/:id/modules');
     res.status(500).json({ error: 'Errore salvataggio moduli' });
+  }
+});
+
+// RINOMINA — cambia solo il nome mostrato; l'indirizzo (sottodominio) resta lo stesso. Si registra nell'audit del locale.
+router.patch('/tenants/:id/name', authenticateMaster, validate({ params: idParamsSchema, body: renameTenantSchema }), async (req, res) => {
+  try {
+    const { rows: before } = await masterPool.query('SELECT name FROM tenants WHERE id = $1', [req.params.id]);
+    if (!before.length) return res.status(404).json({ error: 'Tenant non trovato' });
+    const { rows } = await masterPool.query('UPDATE tenants SET name = $1 WHERE id = $2 RETURNING *', [req.body.name, req.params.id]);
+    invalidateTenantSlug(rows[0].slug);
+    await withTenantClient(req.params.id, (db) => logAudit(db, null, 'MASTER_RENAME_TENANT', { previous: before[0].name, name: rows[0].name }), masterPool);
+    res.json(rows[0]);
+  } catch (err) {
+    logger.error({ err }, 'Errore PATCH /api/master/tenants/:id/name');
+    res.status(500).json({ error: 'Errore cambio nome' });
   }
 });
 

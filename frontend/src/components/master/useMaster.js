@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiFetch, ApiError } from '../../utils/apiClient';
 
 // Tutto ciò che la console master chiede al server: accesso, elenco dei locali, catalogo, feedback e le azioni sui locali
-// (crea, allunga la licenza, attiva/disattiva, elimina). La grafica (MasterPage) riceve stato e funzioni già pronti.
+// (crea, rinomina, allunga la licenza, attiva/disattiva, elimina). La grafica (MasterPage) riceve stato e funzioni già pronti.
 export function useMaster() {
   const [authed, setAuthed] = useState(false);
   const [busy, setBusy] = useState(false);          // accesso in corso
@@ -49,6 +49,7 @@ export function useMaster() {
     authed, busy, error, setError, tenants, catalog, feedback, loadTenants, login, logout, markFeedback,
     createTenant: (form) => run(() => apiFetch('/master/tenants', { method: 'POST', body: form })),
     extend: (id, days) => run(() => apiFetch(`/master/tenants/${id}/extend`, { method: 'PATCH', body: { days } })),
+    rename: (id, name) => run(() => apiFetch(`/master/tenants/${id}/name`, { method: 'PATCH', body: { name } })),
     setActive: (id, active) => run(() => apiFetch(`/master/tenants/${id}/active`, { method: 'PATCH', body: { active } })),
     deleteTenant: (t) => run(() => apiFetch(`/master/tenants/${t.id}`, { method: 'DELETE', body: { confirmSlug: t.slug } })),
   };

@@ -44,6 +44,12 @@ export const extendLicenseSchema = z.object({
   days: z.coerce.number().int().positive().max(3650),
 });
 
+// Il nome mostrato del locale (testata, elenco master): l'indirizzo (slug) non si cambia, perché è anche il sottodominio
+// e la chiave dei dati salvati sui dispositivi.
+export const renameTenantSchema = z.object({
+  name: z.string().trim().min(1, 'scrivi il nome del locale').max(100),
+});
+
 export const tenantActiveSchema = z.object({
   active: z.boolean(),
 });
