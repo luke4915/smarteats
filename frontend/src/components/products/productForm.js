@@ -2,7 +2,7 @@
 // Il server ricontrolla tutto (backend/schemas/productSchema.js): qui si evita solo di mandare dati evidentemente sbagliati.
 
 export const DEFAULT_COLOR = '#3b82f6';
-export const DEFAULT_PREP_MINUTES = 5;     // quanto lavoro richiede un pezzo, se non si dice altro (0 = bevande e cose già pronte)
+const DEFAULT_PREP_MINUTES = 5;     // quanto lavoro richiede un pezzo, se non si dice altro (0 = bevande e cose già pronte)
 
 // Il modulo di un prodotto nuovo. I campi in più dipendono dal locale: la portata e le opzioni solo nei ristoranti,
 // i minuti di preparazione solo con l'asporto, le porzioni (regola di azzeramento) solo col modulo magazzino (`portions`),
