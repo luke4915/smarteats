@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Pencil, KeyRound } from 'lucide-react';
+import { UserPlus, Pencil, KeyRound, Hash } from 'lucide-react';
 import { useToast } from '../../context/useToast';
 import { ROLE_OPTIONS, roleLabel } from './roles';
 import TempPasswordField from './TempPasswordField';
+import PinModal from './PinModal';
 
 // Elenco e gestione degli utenti di un locale: lo usano l'admin del locale (Impostazioni) e il master (pannello locale).
-// `api` nasconde da dove arrivano i dati: { list, create, update, remove, resetPassword }.
+// `api` nasconde da dove arrivano i dati: { list, create, update, remove, resetPassword, setPin?, clearPin? } (senza `setPin`, come nel master, il PIN non compare).
 // `currentUserId` (solo nel locale): la riga «Tu» non si modifica come le altre, ma apre il proprio profilo (`renderProfile(onSaved)`,
 // username e password) nella stessa riga. Senza `canManage` (responsabile) l'elenco ha solo la riga «Tu», senza «Nuovo utente».
 // Una riga = un utente e un solo pulsante, «Modifica»: dentro ci sono nome, ruolo, password temporanea ed eliminazione.
@@ -29,6 +30,7 @@ const UsersPanel = ({ api, currentUserId = null, renderProfile = null, canManage
   const [newUser, setNewUser] = useState(EMPTY_NEW);
   const [editing, setEditing] = useState(null);       // { id, username, role, password, askDelete }
   const [profileOpen, setProfileOpen] = useState(false);
+  const [pinFor, setPinFor] = useState(null);         // l'utente di cui si sta scegliendo il PIN
 
   const load = useCallback(async () => {
     try { setUsers(await api.list()); setError(''); }
@@ -62,6 +64,9 @@ const UsersPanel = ({ api, currentUserId = null, renderProfile = null, canManage
     }, password ? 'Salvato: l\'utente dovrà cambiare la password al prossimo accesso' : 'Utente aggiornato', () => setEditing(null));
   };
 
+  const savePin = (pin) => run(() => api.setPin(pinFor.id, pin), `PIN di «${pinFor.username}» salvato`, () => setPinFor(null));
+  const removePin = () => run(() => api.clearPin(pinFor.id), `PIN di «${pinFor.username}» tolto`, () => setPinFor(null));
+
   const remove = () => run(() => api.remove(editing.id), 'Utente eliminato', () => setEditing(null));
 
   if (!users) return <p className="text-sm text-[var(--text-muted)]">{error || 'Caricamento utenti…'}</p>;
@@ -86,7 +91,11 @@ const UsersPanel = ({ api, currentUserId = null, renderProfile = null, canManage
                   {isSelf && <Chip>Tu</Chip>}
                   {!u.has_password && <Chip tone="warn">senza password</Chip>}
                   {u.has_password && u.must_change_password && <Chip tone="warn">password temporanea</Chip>}
+                  {api.setPin && u.has_pin && <Chip>PIN</Chip>}
                 </div>
+                {api.setPin && canManage && !isEditing && (
+                  <button className={btn} disabled={busy} onClick={() => setPinFor(u)}><Hash size={14} /> {u.has_pin ? 'Cambia PIN' : 'Imposta PIN'}</button>
+                )}
                 {!isSelf && !isEditing && canManage && (
                   <button className={btn} disabled={busy} onClick={() => setEditing({ id: u.id, username: u.username, role: u.role, password: '', askDelete: false })}><Pencil size={14} /> Modifica</button>
                 )}
@@ -155,6 +164,7 @@ const UsersPanel = ({ api, currentUserId = null, renderProfile = null, canManage
       ) : (
         <button className={btn} onClick={() => setCreating(true)}><UserPlus size={14} /> Nuovo utente</button>
       )}
+      {pinFor && <PinModal user={pinFor} onSave={savePin} onRemove={removePin} onClose={() => setPinFor(null)} />}
     </div>
   );
 };

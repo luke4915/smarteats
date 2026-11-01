@@ -3,6 +3,13 @@
 // La prima voce deve avere lo stesso numero di `version` in frontend/package.json (lo controlla changelog.test.js).
 export const CHANGELOG = [
   {
+    version: '0.4.1',
+    date: '2026-11-01',
+    items: [
+      'PIN personale: l\'amministratore imposta un PIN (4-6 cifre) a ogni utente da Impostazioni → Account. Dal menu dell\'account si blocca lo schermo e lo si riapre con il PIN (anche senza rete) o con la password; in cassa, sala e cucina un collega si dà il cambio con il suo PIN senza uscire. Il blocco automatico si sceglie su ogni dispositivo. Per amministratore e responsabile il PIN è di 6 cifre.',
+    ],
+  },
+  {
     version: '0.4.0',
     date: '2026-10-29',
     items: [

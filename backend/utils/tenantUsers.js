@@ -10,7 +10,7 @@ import { invalidateUserStatus } from './userStatus.js';
 // di isolamento, una SELECT non sarebbe limitata al tenant. Ogni query qui filtra quindi esplicitamente sul tenant corrente.
 const IN_TENANT = "tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::int";
 
-const USER_COLUMNS = 'id, username, role, must_change_password, (password_hash IS NOT NULL) AS has_password';
+const USER_COLUMNS = 'id, username, role, must_change_password, (password_hash IS NOT NULL) AS has_password, (pin_hash IS NOT NULL) AS has_pin, pin_length';
 
 export async function listUsers(db) {
   const { rows } = await db.query(`SELECT ${USER_COLUMNS} FROM users WHERE ${IN_TENANT} ORDER BY username`);

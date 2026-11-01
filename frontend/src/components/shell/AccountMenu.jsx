@@ -1,17 +1,21 @@
 import { useState } from 'react';
-import { LogOut, MessageSquarePlus } from 'lucide-react';
+import { LogOut, MessageSquarePlus, LockKeyhole } from 'lucide-react';
 import { usePopover } from '../../hooks/usePopover';
 import { roleLabel } from '../shared/roles';
 import ThemeChoice from './ThemeChoice';
 import FeedbackModal from '../shared/FeedbackModal';
+import Segmented from '../shared/Segmented';
+import { useLock } from '../../context/useLock';
+import { AUTO_LOCK_CHOICES, autoLockLabel } from '../../utils/idleLock';
 import { label, popover } from '../shared/styles';
 
 // L'account in testata: un solo pulsante (le iniziali) che apre chi è collegato, la scelta dell'aspetto, i suggerimenti (per chi gestisce
-// il locale: admin e responsabile) e l'uscita. Profilo e utenti si gestiscono da Impostazioni → Account, non da qui.
+// il locale: admin e responsabile), «Blocca schermo» (per chi ha un PIN, con il blocco automatico di questo dispositivo) e l'uscita. Profilo e utenti si gestiscono da Impostazioni → Account, non da qui.
 const CAN_SUGGEST = ['admin', 'manager'];
 const AccountMenu = ({ user, theme, onThemeChange, onLogout }) => {
   const { open, ref, toggle, close } = usePopover();
   const [feedback, setFeedback] = useState(false);
+  const { canLock, lock, autoLockMinutes, setAutoLockMinutes } = useLock();
   return (
     <div ref={ref} className="relative">
       <button onClick={toggle} aria-label={`Account: ${user.username}`} aria-haspopup="true" aria-expanded={open}
@@ -29,7 +33,18 @@ const AccountMenu = ({ user, theme, onThemeChange, onLogout }) => {
             <p className={label}>Aspetto</p>
             <ThemeChoice value={theme} onChange={onThemeChange} />
           </div>
+          {canLock && (
+            <div className="px-4 pb-3.5 space-y-1.5">
+              <p className={label}>Blocco automatico</p>
+              <Segmented label="Blocco automatico" value={autoLockMinutes} onChange={setAutoLockMinutes} options={AUTO_LOCK_CHOICES.map(m => ({ id: m, label: autoLockLabel(m) }))} />
+            </div>
+          )}
           <div className="border-t border-[var(--border)] p-1.5">
+            {canLock && (
+              <button onClick={() => { close(); lock(); }} className="w-full flex items-center gap-3 px-3 py-2.5 coarse:py-3 rounded-lg text-sm font-medium text-[var(--text-main)] hover:bg-[var(--bg-card-2)] transition cursor-pointer">
+                <LockKeyhole size={16} className="shrink-0 text-[var(--text-muted)]" /> Blocca schermo
+              </button>
+            )}
             {CAN_SUGGEST.includes(user.role) && (
               <button onClick={() => { close(); setFeedback(true); }} className="w-full flex items-center gap-3 px-3 py-2.5 coarse:py-3 rounded-lg text-sm font-medium text-[var(--text-main)] hover:bg-[var(--bg-card-2)] transition cursor-pointer">
                 <MessageSquarePlus size={16} className="shrink-0 text-[var(--text-muted)]" /> Suggerimenti

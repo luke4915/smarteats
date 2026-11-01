@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict nVwRAEridK1WJ39OsJFanM4iRsjSkb9UhoQGKEnbK0TtnBSRvLrrE8zJyJmQA1U
+\restrict M3WhddVJZ0i4U568R7VL9LBDQVlMxMmopvnN3ZxeHH1eEYCHkApQdYtT1nuyf3w
 
 -- Dumped from database version 17.10 (Homebrew)
 -- Dumped by pg_dump version 17.10 (Homebrew)
@@ -1795,6 +1795,13 @@ CREATE TABLE public.users (
     role character varying(20) NOT NULL,
     tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
     must_change_password boolean DEFAULT false NOT NULL,
+    pin_hash text,
+    pin_set_at timestamp with time zone,
+    pin_failed integer DEFAULT 0 NOT NULL,
+    pin_locked_until timestamp with time zone,
+    pin_length smallint,
+    CONSTRAINT users_pin_failed_check CHECK ((pin_failed >= 0)),
+    CONSTRAINT users_pin_length_check CHECK (((pin_length >= 4) AND (pin_length <= 6))),
     CONSTRAINT users_role_check CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'manager'::character varying, 'cashier'::character varying, 'waiter'::character varying, 'kitchen'::character varying])::text[])))
 );
 
@@ -5133,5 +5140,5 @@ ALTER DEFAULT PRIVILEGES FOR ROLE colettas IN SCHEMA public GRANT SELECT,INSERT,
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nVwRAEridK1WJ39OsJFanM4iRsjSkb9UhoQGKEnbK0TtnBSRvLrrE8zJyJmQA1U
+\unrestrict M3WhddVJZ0i4U568R7VL9LBDQVlMxMmopvnN3ZxeHH1eEYCHkApQdYtT1nuyf3w
 
