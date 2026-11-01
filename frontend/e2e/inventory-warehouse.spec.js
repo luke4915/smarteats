@@ -75,7 +75,7 @@ test('magazzino: ingredienti e ricetta di un piatto; la cucina può segnare esau
   await shot(admin, 'inventory-04-ricetta');
   await recipe.getByRole('button', { name: 'Salva', exact: true }).click();
   await expect(admin.getByText(/Bruschetta/).first()).toBeVisible();
-  await expect(admin.getByText('1 ingrediente')).toBeVisible();
+  await expect(admin.getByRole('listitem').filter({ hasText: 'Bruschetta' }).getByText('1 ingrediente')).toBeVisible({ timeout: 15_000 });   // la ricetta si rilegge dal server: sulla CI, più lenta, può servire più dei 5 secondi di partenza
   await shot(admin, 'inventory-04c-carta-con-ricetta');
   await admin.locator('a[href="/inventory"]').first().click();
 
