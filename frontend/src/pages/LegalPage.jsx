@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiFetch } from '../utils/apiClient';
 import { PublicShell } from '../components/public/PublicShell';
-import { useSystemTheme } from '../hooks/useSystemTheme';
 import Loading from '../components/shared/Loading';
 
 // Informativa privacy e condizioni d'uso (`/privacy`, `/terms`): pagine pubbliche, uguali per tutti i locali. Chi fornisce
@@ -141,7 +140,6 @@ const Terms = ({ legal }) => (
 );
 
 const LegalPage = ({ kind }) => {
-  useSystemTheme();
   const [legal, setLegal] = useState(null);
   useEffect(() => { apiFetch('/public/legal').then(setLegal).catch(() => setLegal({})); }, []);
   useEffect(() => { document.title = kind === 'terms' ? "Condizioni d'uso · SmartEats" : 'Privacy · SmartEats'; }, [kind]);

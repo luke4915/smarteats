@@ -6,7 +6,6 @@ import { formatDay } from '../modules/bookings/rules';
 import { btnPrimary, btn, input } from '../components/shared/styles';
 import { PublicShell, StepSection } from '../components/public/PublicShell';
 import StepProgress from '../components/public/StepProgress';
-import { useSystemTheme } from '../hooks/useSystemTheme';
 import Loading from '../components/shared/Loading';
 
 // Pagina pubblica di prenotazione (`/book`): il cliente sceglie quanti siete, il giorno e il turno, lascia i suoi
@@ -102,7 +101,6 @@ const Status = ({ token, info }) => {
 };
 
 const BookingPage = () => {
-  useSystemTheme();
   const token = window.location.pathname.split('/').filter(Boolean)[1] ?? null;   // /book/<codice>
   const [info, setInfo] = useState(null);
   const [error, setError] = useState('');

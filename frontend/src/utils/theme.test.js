@@ -15,3 +15,10 @@ test('«auto» segue il sistema, le altre scelte no', () => {
   assert.equal(resolveTheme('light', true), 'light');
   assert.equal(resolveTheme('dark', false), 'dark');
 });
+
+test('un valore non valido vale la scelta di partenza, che per le pagine dei clienti è «auto»', async () => {
+  const { parseTheme } = await import('./theme.js');
+  assert.equal(parseTheme(null), 'dark');
+  assert.equal(parseTheme(null, 'auto'), 'auto');
+  assert.equal(parseTheme('light', 'auto'), 'light');
+});

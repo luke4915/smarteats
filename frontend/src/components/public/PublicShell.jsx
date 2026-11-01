@@ -1,10 +1,14 @@
 import { Check } from 'lucide-react';
+import { useSystemTheme } from '../../hooks/useSystemTheme';
+import ThemeChoice from '../shell/ThemeChoice';
 
 // Le pagine che aprono i clienti (prenotazioni, ordini da asporto): niente menu né login, pensate per il telefono.
 // Il body dell'app è bloccato (`overflow: hidden`): la pagina scorre dentro un proprio contenitore (CLAUDE.md §7).
 // Il tema del dispositivo lo applica `useSystemTheme` (hooks/useSystemTheme.js).
 
-export const PublicShell = ({ info, kicker, children, footer = null }) => (
+export const PublicShell = ({ info, kicker, children, footer = null }) => {
+  const [theme, setTheme] = useSystemTheme();
+  return (
   <div className="fixed inset-0 overflow-y-auto overscroll-contain bg-[var(--bg-main)] text-[var(--text-main)]" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
     <main className="max-w-md sm:max-w-3xl mx-auto px-4 pt-6 sm:pt-8 space-y-6" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
       {info && (
@@ -21,13 +25,15 @@ export const PublicShell = ({ info, kicker, children, footer = null }) => (
         </p>
       )}
       {footer}
+      <ThemeChoice className="w-fit mx-auto" value={theme} onChange={setTheme} />
       <p className="text-xs text-[var(--text-muted)] text-center pb-4">
         <a className="hover:underline" href="/privacy">Privacy</a> · <a className="hover:underline" href="/terms">Condizioni d'uso</a>
       </p>
       <div aria-hidden="true" style={{ height: 'env(safe-area-inset-bottom)' }} />
     </main>
   </div>
-);
+  );
+};
 
 // Una sezione numerata del modulo. `id` la rende raggiungibile dai pallini di `StepProgress`; `done` cambia il numero in una spunta.
 export const StepSection = ({ id, n, title, done = false, children }) => (
