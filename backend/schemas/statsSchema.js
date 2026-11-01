@@ -20,16 +20,12 @@ export const sessionExportQuerySchema = z.object({
 });
 export const sessionReportQuerySchema = z.object({ tz: timeZone.default('Europe/Rome') });
 
-export const sharedProductsQuerySchema = z.object({
-  a: idSchema.optional(),
-  b: idSchema.optional(),
-});
+// Il confronto tra due serate diverse.
+export const compareQuerySchema = z.object({ a: idSchema, b: idSchema, tz: timeZone.default('Europe/Rome') })
+  .refine(({ a, b }) => a !== b, { message: 'scegli due serate diverse', path: ['b'] });
 
-export const headToHeadQuerySchema = z.object({
-  a: idSchema,
-  b: idSchema,
-  product: idSchema,
-});
+// La matrice del menu: le serate scelte (assente = tutte).
+export const matrixQuerySchema = z.object({ sessions: sessionIds.optional() });
 
 // Elenco ordini: paginazione "keyset" (before = id dell'ultimo ricevuto) e filtro per stato.
 export const listOrdersQuerySchema = z.object({

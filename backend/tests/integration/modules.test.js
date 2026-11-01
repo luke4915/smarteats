@@ -53,7 +53,7 @@ describe('moduli per tenant', () => {
     const stats = await api1.get('/stats?tz=Europe/Rome');
     assert.equal(stats.status, 403);
     assert.equal(stats.body.code, 'MODULE_DISABLED');
-    assert.equal((await api1.get('/stats/shared-products')).body.code, 'MODULE_DISABLED');
+    assert.equal((await api1.get('/stats/menu-matrix')).body.code, 'MODULE_DISABLED');
     const kds = await anon1.get('/orders/kds');
     assert.equal(kds.status, 403);
     assert.equal(kds.body.code, 'MODULE_DISABLED');

@@ -48,7 +48,7 @@ test('il CSV delle righe ha una riga per riga d\'ordine e le colonne dichiarate'
   assert.equal(lines[0].split(';').length, LINE_HEADERS.length);
   assert.equal(lines.length, 3);
   assert.equal(lines[1], '7;"A3";27/10/2026;20:35;"Cassa A";No;"Panino";"Panini";"Senza cipolla";2;4,00;Vendita;0,00;8,00;"";9,00');
-  assert.match(lines[2], /;Sconto;3,00;1,00;"ghiacciata";9,00$/);
+  assert.match(lines[2], /;Sconto;3,00;1,00;"ghiacciata";$/, 'il totale dell\'ordine è solo sulla prima riga: sommando la colonna non si conta due volte');
 });
 
 test('il riepilogo per prodotto parte dal più venduto e calcola il prezzo medio', () => {
