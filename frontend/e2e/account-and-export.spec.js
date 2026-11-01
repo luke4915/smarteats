@@ -86,32 +86,24 @@ test('sagra: menu pubblico con il QR e esportazione di una serata in PDF e CSV',
   expect(csv.suggestedFilename()).toMatch(/_righe\.csv$/);
 });
 
-// Menu pubblico: l'ordine delle categorie si sceglie da Impostazioni → Menu pubblico e i clienti lo vedono; un suggerimento discreto (una riga,
-// scartabile) propone un prodotto a chi ne sceglie un altro.
-test('sagra: ordine delle categorie e suggerimento nel menu pubblico', async ({ page }) => {
+// Menu pubblico: un suggerimento discreto (una riga, scartabile) propone un prodotto a chi ne sceglie un altro.
+test('sagra: suggerimento nel menu pubblico', async ({ page }) => {
   const { festival } = seed();
   await login(page, festival.host, festival.admin);
   await page.getByRole('link', { name: 'Impostazioni' }).first().click();
   await page.getByRole('tablist', { name: 'Sezioni delle impostazioni' }).getByRole('tab', { name: 'Menu pubblico' }).click();
-
-  await page.getByRole('button', { name: 'Riordina' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Ordine delle categorie' });
-  await dialog.getByRole('button', { name: 'Trascina per riordinare' }).last().focus();           // «Panini» in fondo: sale in cima
-  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowUp');
-  await dialog.getByRole('button', { name: 'Salva' }).click();
-  await expect(page.getByText('Ordine delle categorie salvato')).toBeVisible();
 
   await page.getByLabel('Quando sceglie').selectOption({ label: 'Panini' });
   await page.getByLabel('Proponi').selectOption({ label: 'Birra' });
   await page.getByRole('button', { name: 'Aggiungi', exact: true }).click();
   await page.getByRole('button', { name: 'Salva suggerimenti' }).click();
   await expect(page.getByText('Suggerimenti salvati')).toBeVisible();
-  await shot(page, 'festival-09-menu-ordine-suggerimenti');
+  await shot(page, 'festival-09-menu-suggerimenti');
 
   const client = await page.context().newPage();                                                  // un cliente, dal QR
   await client.goto(`${urlOf(festival.host)}/menu`);
-  await expect(client.getByRole('tablist', { name: 'Categoria' }).getByRole('tab').first()).toHaveText('Panini');
   await expect(client.getByRole('note')).toHaveCount(0);                                            // a carrello vuoto nessun suggerimento
+  await client.getByRole('tab', { name: 'Panini' }).click();
   await client.getByRole('button', { name: 'Aggiungi Panino con salsiccia' }).click();
   const nudge = client.getByRole('note');
   await expect(nudge).toContainText('Ci sta bene anche: Birra');
@@ -124,7 +116,29 @@ test('sagra: ordine delle categorie e suggerimento nel menu pubblico', async ({ 
   // si rimette a posto il locale di prova
   await page.evaluate(async () => {
     const call = (path, body) => fetch(`/api${path}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    await call('/products/category-order', { order: [] });
     await call('/menu-suggestions', { rules: [] });
   });
+});
+
+// Il menu dei clienti si usa dal telefono (iPhone e Android), in verticale e in orizzontale, senza accedere: niente scorrimento orizzontale,
+// il pulsante dell'ordine sempre raggiungibile e il QR che si apre.
+test('menu pubblico da telefono: senza accesso, scorre, il pulsante dell\'ordine si raggiunge e il QR si apre', async ({ page }) => {
+  const { festival } = seed();
+  for (const [width, height] of [[390, 664], [740, 360]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(`${urlOf(festival.host)}/menu/`);                                                // anche con la barra finale, senza passare dal login
+    await expect(page).toHaveURL(/\/menu\/?$/);
+    await page.getByRole('tab', { name: 'Panini' }).click();
+    await page.getByRole('button', { name: 'Aggiungi Panino con salsiccia' }).click();
+    const order = page.getByRole('button', { name: /Mostra il QR/ });
+    await expect(order).toBeInViewport();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    const scroller = page.locator('div.fixed.inset-0').first();
+    await scroller.evaluate(el => el.scrollTo(0, el.scrollHeight));
+    await expect(page.getByRole('link', { name: 'Privacy' })).toBeInViewport();                     // fino in fondo si arriva
+    await shot(page, `festival-11-menu-telefono-${width}`);
+    await order.click();
+    await expect(page.getByRole('dialog', { name: 'Il tuo ordine' }).locator('canvas')).toBeVisible();
+    await page.keyboard.press('Escape');
+  }
 });

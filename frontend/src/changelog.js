@@ -8,7 +8,7 @@ export const CHANGELOG = [
     items: [
       'PIN personale: l\'amministratore imposta un PIN (4-6 cifre) a ogni utente da Impostazioni → Account. Dal menu dell\'account si blocca lo schermo e lo si riapre con il PIN (anche senza rete) o con la password; in cassa, sala e cucina un collega si dà il cambio con il suo PIN senza uscire. Il blocco automatico si sceglie su ogni dispositivo. Per amministratore e responsabile il PIN è di 6 cifre.',
       'Menu con il QR (sagre): il QR dell\'ordine è ora molto più semplice e si legge anche con 40 o 60 prodotti nel carrello (prima diventava troppo fitto). I QR già salvati si leggono ancora in cassa.',
-      'Menu con il QR (sagre): da Impostazioni → Menu pubblico scegli l\'ordine delle categorie che vedono i clienti e, se vuoi, dei suggerimenti discreti (a chi sceglie un panino propone una birra): una riga sola, che il cliente può nascondere.',
+      'Menu con il QR (sagre): da Impostazioni → Menu pubblico puoi aggiungere dei suggerimenti discreti (a chi sceglie un panino propone una birra): una riga sola, che il cliente può nascondere.',
       'Informativa sulla privacy e condizioni d\'uso delle pagine dei clienti riscritte in forma più formale e aggiornate al pagamento online.',
     ],
   },

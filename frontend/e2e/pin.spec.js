@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { seed, login, shot } from './support.js';
+import { seed, login, shot, urlOf } from './support.js';
 
 // PIN personale: l'amministratore lo imposta dall'elenco utenti; chi è collegato blocca lo schermo e lo sblocca con il PIN (o la password),
 // i puntini sono tanti quanti le cifre del PIN (e all'ultima cifra si conferma da soli), i tentativi sbagliati si contano fino al blocco, e un collega di cassa si dà il cambio con il suo PIN sulla stessa cassa.
@@ -106,9 +106,17 @@ test('telefono: la schermata di blocco sta nello schermo, in verticale e in oriz
     await lock.getByRole('button', { name: '0', exact: true }).scrollIntoViewIfNeeded();
     await expect(lock.getByRole('button', { name: '0', exact: true })).toBeInViewport();
   }
+  // Le pagine dei clienti non sono bloccate, anche se il browser ha uno schermo bloccato (e il blocco torna dove serve)
+  await page.goto(`${urlOf(r.host)}/menu`);
+  await expect(page.getByText('Menu non disponibile')).toBeVisible();                       // il ristorante non ha il menu QR: la pagina c'è, senza blocco
+  await expect(lock).toBeHidden();
+  await page.goto(`${urlOf(r.host)}/`);
+  await expect(lock).toBeVisible();
   await page.setViewportSize({ width: 1280, height: 800 });
   await tap(page, ADMIN_PIN);
   await expect(lock).toBeHidden();
+  await page.getByRole('link', { name: 'Impostazioni' }).first().click();
+  await page.getByRole('tablist', { name: 'Sezioni delle impostazioni' }).getByRole('tab', { name: 'Account' }).click();
   await rowOf(page, r.admin).getByRole('button', { name: 'Cambia PIN' }).click();
   await page.getByRole('button', { name: 'Togli PIN' }).click();
   await expect(rowOf(page, r.admin).getByText('PIN', { exact: true })).toHaveCount(0);
