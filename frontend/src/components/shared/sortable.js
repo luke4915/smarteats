@@ -12,6 +12,11 @@ export const reorder = (list, from, to) => {
 export const nearestIndex = (centers, y) =>
   centers.reduce((best, c, i) => (Math.abs(c - y) < Math.abs(centers[best] - y) ? i : best), 0);
 
+// La transizione di una riga. Si anima solo durante il trascinamento (le altre righe che si scostano e quella che scivola al suo posto);
+// a riposo no. Se restasse, al rilascio l'ordine cambierebbe e gli scostamenti tornerebbero a zero nello stesso istante: le righe, già nel
+// posto giusto, animerebbero «all'indietro» dal vecchio scostamento e si vedrebbe un salto.
+export const rowTransition = (drag, isDragging) => (!drag || (isDragging && !drag.settling) ? 'none' : 'transform 180ms ease');
+
 // Quanto si sposta (in pixel, `step` = altezza della riga trascinata più lo spazio tra le righe) la riga `index` mentre
 // quella `from` viene portata sopra `to`: lascia posto a chi sta in mezzo.
 export function shiftFor(index, from, to, step) {

@@ -18,7 +18,7 @@ export const ingredientSchema = z.object({
 });
 
 // Una riga di ricetta usa un ingrediente O un'altra preparazione, mai tutti e due.
-export const recipeLineSchema = z.object({
+const recipeLineSchema = z.object({
   ingredient_id: idSchema.nullable().default(null),
   component_preparation_id: idSchema.nullable().default(null),
   quantity,

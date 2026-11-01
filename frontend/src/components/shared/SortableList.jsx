@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { reorder, nearestIndex, shiftFor } from './sortable';
+import { reorder, nearestIndex, shiftFor, rowTransition } from './sortable';
 
 // Elenco riordinabile per trascinamento, uguale in tutta l'app (portate, stampe…): una maniglia per riga, le altre righe
 // si scostano per far posto e la riga scivola al suo posto quando la si lascia. Funziona con mouse e dito; da tastiera
@@ -62,7 +62,7 @@ const SortableList = ({ items, getId, onReorder, renderItem, disabled = false, c
         return (
           <li key={id} ref={el => { if (el) refs.current.set(id, el); else refs.current.delete(id); }}
             style={{ position: 'relative', zIndex: isDragging ? 10 : undefined, transform: y ? `translateY(${y}px)` : undefined,
-              transition: isDragging && !drag.settling ? 'none' : 'transform 180ms ease', opacity: isDragging && !drag.settling ? 0.95 : 1 }}>
+              transition: rowTransition(drag, isDragging), opacity: isDragging && !drag.settling ? 0.95 : 1 }}>
             {renderItem(item, {
               index, isDragging,
               handleProps: {

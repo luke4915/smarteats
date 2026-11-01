@@ -51,7 +51,7 @@ export function linesCsv(orders, tz) {
   return `﻿${lines.join('\n')}`;
 }
 
-export const PRODUCT_HEADERS = ['Prodotto', 'Categoria', 'Quantità', 'Di cui omaggi', 'Incasso', 'Prezzo medio'];
+const PRODUCT_HEADERS = ['Prodotto', 'Categoria', 'Quantità', 'Di cui omaggi', 'Incasso', 'Prezzo medio'];
 
 // Il riepilogo per prodotto: una riga per prodotto (non per nome), dal più venduto. `rows` arrivano da loadProductTotals.
 export function productsCsv(rows) {

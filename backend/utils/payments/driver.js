@@ -15,9 +15,6 @@ export function paymentsDriver(env = process.env) {
   return cached;
 }
 
-// Solo per i test: si ricomincia da zero (registro delle chiamate vuoto).
-export const resetPaymentsDriver = () => { cached = null; };
-
 // La nostra commissione sui pagamenti dei locali, in percentuale (0 di partenza). Copre le spese di Stripe e il margine.
 export const feePercent = (env = process.env) => {
   const n = Number(env.STRIPE_FEE_PERCENT ?? 0);

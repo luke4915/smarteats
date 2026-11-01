@@ -30,7 +30,7 @@ export const BUSINESS_TYPES = {
 // `simple` = senza ricette, a mano a fine servizio. Spento = il modulo non c'è. Le sceglie solo il master.
 export const INVENTORY_MODES = { portions: 'Porzioni', warehouse: 'Magazzino' };
 export const INVENTORY_DEPLETIONS = { recipes: 'Dalle ricette', simple: 'Consumo semplificato' };
-export const DEFAULT_INVENTORY = { mode: 'portions', depletion: 'recipes' };
+const DEFAULT_INVENTORY = { mode: 'portions', depletion: 'recipes' };
 
 export const MODULE_IDS = Object.keys(MODULES);
 export const BUSINESS_TYPE_IDS = Object.keys(BUSINESS_TYPES);

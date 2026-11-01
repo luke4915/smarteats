@@ -3,7 +3,7 @@
 import { minutesSince, urgency } from '../../smarteats/kitchen/board.js';
 
 // Minuti dall'uscita della comanda (per i tavoli) o dalla creazione.
-export const waitOf = (order, now = Date.now()) => minutesSince(order, now);
+const waitOf = (order, now = Date.now()) => minutesSince(order, now);
 
 // Le comande da mostrare: quelle ancora da fare, dalla più vecchia. Una portata non ancora mandata non c'è (non è pubblica).
 export function boardOrders(orders) {

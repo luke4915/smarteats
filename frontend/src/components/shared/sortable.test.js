@@ -24,3 +24,11 @@ test('le righe in mezzo si scostano per far posto, le altre restano ferme', () =
   assert.deepEqual([0, 1, 2, 3].map(i => shiftFor(i, 3, 1, 40)), [0, 40, 40, 0]);
   assert.deepEqual([0, 1, 2].map(i => shiftFor(i, 1, 1, 40)), [0, 0, 0]);
 });
+
+test('la transizione è solo durante il trascinamento: a riposo no, altrimenti al rilascio le righe saltano', async () => {
+  const { rowTransition } = await import('./sortable.js');
+  assert.equal(rowTransition(null, false), 'none', 'a riposo: nessuna animazione');
+  assert.equal(rowTransition({ settling: false }, true), 'none', 'la riga che si trascina segue il dito senza ritardo');
+  assert.equal(rowTransition({ settling: false }, false), 'transform 180ms ease', 'le altre righe si scostano con dolcezza');
+  assert.equal(rowTransition({ settling: true }, true), 'transform 180ms ease', 'la riga lasciata scivola nel suo posto');
+});
