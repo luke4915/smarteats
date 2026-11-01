@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyProductEvent, isSoldOut } from './productEvents.js';
+import { upsertProduct, productNotice, applyProductEvent, isSoldOut } from './productEvents.js';
 
 const list = () => [{ id: 1, name: 'Panino', price: 5, stock: 3, stock_enabled: true, visible: true }, { id: 2, name: 'Birra', price: 4, stock: null, stock_enabled: false, visible: true }];
 
@@ -45,3 +45,21 @@ test('il nuovo ordine delle categorie riordina l\'elenco senza perdere né dupli
   assert.equal(applyProductEvent(p, { type: 'category_order_updated' }).length, 3);
 });
 
+
+test('aggiungere due volte lo stesso prodotto non lo raddoppia: la seconda notizia lo aggiorna (con il prezzo come numero)', () => {
+  const once = upsertProduct(list(), { id: 3, name: 'Gelato', price: '3.50' });
+  assert.deepEqual(once.map(p => p.id), [1, 2, 3]);
+  const twice = upsertProduct(once, { id: 3, name: 'Gelato artigianale', price: '4.00', stock: 9 });
+  assert.equal(twice.length, 3);
+  assert.deepEqual([twice[2].name, twice[2].price, twice[2].stock], ['Gelato artigianale', 4, 9]);
+  assert.equal(applyProductEvent(once, { type: 'product_created', product: { id: 3, name: 'Gelato', price: '3.50' } }).length, 3, 'anche se arriva l\'avviso dopo');
+});
+
+test('il messaggio per le modifiche degli altri: nome del prodotto, anche per l\'eliminazione; nulla per scorta e ordine delle categorie', () => {
+  assert.deepEqual(productNotice({ type: 'product_created', product: { id: 3, name: 'Gelato' } }, list()), { text: 'Aggiunto «Gelato»', tone: 'success' });
+  assert.deepEqual(productNotice({ type: 'product_updated', product: { id: 1, name: 'Panino' } }, list()), { text: '«Panino» aggiornato', tone: 'success' });
+  assert.deepEqual(productNotice({ type: 'product_deleted', id: 2 }, list()), { text: '«Birra» rimosso', tone: 'warning' });
+  assert.equal(productNotice({ type: 'product_deleted', id: 99 }, list()).text, 'Un prodotto è stato rimosso');
+  assert.equal(productNotice({ type: 'product_stock_updated', product: { id: 1 } }, list()), null);
+  assert.equal(productNotice({ type: 'category_order_updated', order: [] }, list()), null);
+});

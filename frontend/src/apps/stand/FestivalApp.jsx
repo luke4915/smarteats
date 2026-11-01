@@ -75,7 +75,7 @@ const FestivalApp = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <AppHeader user={user} title={views.find(v => pathname === `/${v.id}`)?.label} serviceControl={serviceControl} status={<SyncStatus connected={data.connected} />}
           inbox={data.inbox} onOpenNotification={(i) => (i.kind === 'low_stock' ? navigate('/inventory') : navigate('/takeaway', { state: { orderId: i.id, date: i.date } }))}
-          theme={data.theme} onThemeChange={data.setTheme} onLogout={() => setShowLogoutConfirm(true)} />
+          dark={data.resolvedTheme === 'dark'} onThemeChange={data.setTheme} onLogout={() => setShowLogoutConfirm(true)} />
 
         <div className="flex-1 min-h-0 flex gap-4 px-4 pt-1 pb-3 md:p-4">
           <PageCard key={pathname} className="motion-page">

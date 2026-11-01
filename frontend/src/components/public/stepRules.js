@@ -1,3 +1,5 @@
+import { textIn } from '../../i18n/useLanguage.js';
+
 // L'avanzamento dei passi di un ordine o di una prenotazione, senza grafica (provato in stepRules.test.js).
 // `steps`: [{ id, label, done }] nell'ordine in cui si compilano. Il passo «di adesso» è il primo non ancora completato.
 export function progressOf(steps) {
@@ -9,8 +11,8 @@ export function progressOf(steps) {
 // Lo stato di un singolo pallino: completato, di adesso o ancora da fare.
 export const dotState = (steps, index) => (steps[index].done ? 'done' : index === progressOf(steps).currentIndex ? 'current' : 'todo');
 
-// La frase per chi usa lo screen reader e per il testo accanto ai pallini.
-export function progressText(steps) {
+// La frase per chi usa lo screen reader e per il testo accanto ai pallini. `t`: la traduzione (di partenza l'italiano).
+export function progressText(steps, t = (key, params) => textIn('it', key, params)) {
   const p = progressOf(steps);
-  return p.complete ? `Tutti i passi completati (${p.total} di ${p.total})` : `Passo ${p.currentIndex + 1} di ${p.total}: ${p.currentLabel}`;
+  return p.complete ? t('step.allDone', { total: p.total }) : t('step.current', { n: p.currentIndex + 1, total: p.total, label: p.currentLabel });
 }

@@ -26,6 +26,13 @@ test('una frase che manca in una lingua si legge in italiano; una chiave sconosc
   assert.equal(translate(messages, 'en', 'hello'), 'Hello {name}', 'un segnaposto senza valore non sparisce');
 });
 
+test('dove manca una frase si legge l\'inglese, poi l\'italiano', () => {
+  const m = { it: { a: 'Ciao', b: 'Solo italiano' }, en: { a: 'Hello' }, de: { }, fr: { a: 'Salut' } };
+  assert.equal(translate(m, 'de', 'a'), 'Hello');
+  assert.equal(translate(m, 'fr', 'a'), 'Salut');
+  assert.equal(translate(m, 'de', 'b'), 'Solo italiano');
+});
+
 test('sono cinque lingue, con l\'italiano per primo', () => {
   assert.deepEqual(LANGUAGES.map(l => l.id), ['it', 'en', 'de', 'fr', 'es']);
 });

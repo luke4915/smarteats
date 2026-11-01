@@ -1,7 +1,10 @@
-// Italiano: la lingua di partenza. Pagine dei clienti (menu con il QR) e allergeni.
+// Italiano: la lingua di partenza. Pagine dei clienti (menu con il QR, prenotazioni, ordine) e allergeni.
+import { it as orders } from './orders.js';
+
 export default {
+  ...orders,
   'shell.privacy': 'Privacy', 'shell.terms': 'Condizioni d\'uso', 'shell.theme': 'Aspetto', 'shell.language': 'Lingua',
-  'theme.auto': 'Auto', 'theme.light': 'Chiaro', 'theme.dark': 'Scuro',
+  'theme.auto': 'Auto', 'theme.light': 'Chiaro', 'theme.dark': 'Scuro', 'theme.toLight': 'Passa all\'aspetto chiaro', 'theme.toDark': 'Passa all\'aspetto scuro',
   'menu.title': 'Menu', 'menu.unavailable': 'Menu non disponibile al momento.', 'menu.search': 'Cerca un prodotto',
   'menu.noMatch': 'Nessun prodotto con «{query}».', 'menu.empty': 'Al momento non ci sono prodotti da scegliere.', 'menu.category': 'Categoria',
   'menu.add': 'Aggiungi', 'menu.addNamed': 'Aggiungi {name}', 'menu.less': 'Una in meno: {name}', 'menu.more': 'Una in più: {name}',

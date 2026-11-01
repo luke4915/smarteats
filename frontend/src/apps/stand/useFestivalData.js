@@ -6,7 +6,7 @@ import { useCart } from '../../hooks/useCart';
 import { useProducts } from '../../hooks/useProducts';
 import { useWorkSession } from '../../hooks/useWorkSession';
 import { useLiveUpdates } from '../../hooks/useLiveUpdates';
-import { applyProductEvent } from '../../utils/productEvents';
+import { applyProductEvent, productNotice } from '../../utils/productEvents';
 import { useAuth } from '../../context/useAuth';
 import { useDevicePairing } from '../../offline/useDevicePairing';
 import { useInbox } from '../../modules/notifications/useInbox';
@@ -18,7 +18,7 @@ export function useFestivalData(user) {
   const { refreshSession } = useAuth();
 
   // Preferenze del dispositivo
-  const [theme, setTheme] = useTheme();
+  const [theme, setTheme, resolvedTheme] = useTheme();
   const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [orderMode, setOrderMode] = useState('simple');
   const playSound = useSound(isSoundEnabled);
@@ -35,11 +35,12 @@ export function useFestivalData(user) {
     setEvent(msg);
     switch (msg.type) {
       // chi ha fatto la modifica ha già il suo messaggio: gli altri dispositivi aggiornano l'elenco e lo dicono
-      case 'product_updated': setProducts(prev => applyProductEvent(prev, msg)); if (msg.by !== user?.id) showToast(`"${msg.product.name}" aggiornato!`, 'success'); break;
-      case 'product_created': setProducts(prev => applyProductEvent(prev, msg)); if (msg.by !== user?.id) showToast('Nuovo prodotto aggiunto!', 'success'); break;
-      case 'product_deleted': setProducts(prev => applyProductEvent(prev, msg)); if (msg.by !== user?.id) showToast('Prodotto rimosso!', 'warning'); break;
-      case 'category_order_updated':
-      case 'product_stock_updated': setProducts(prev => applyProductEvent(prev, msg)); break;
+      case 'product_created': case 'product_updated': case 'product_deleted': case 'category_order_updated': case 'product_stock_updated': {
+        const notice = msg.by !== user?.id ? productNotice(msg, products) : null;
+        if (notice) showToast(notice.text, notice.tone);
+        setProducts(prev => applyProductEvent(prev, msg));
+        break;
+      }
       // L'apertura della serata azzera lo stock lato server: ricarichiamo il catalogo.
       case 'session_started': applySession({ id: msg.session.id, name: msg.session.name }); loadProducts(); break;
       case 'session_ended': applySession(null); break;
@@ -53,7 +54,7 @@ export function useFestivalData(user) {
   const inbox = useInbox({ bookings: false, takeaway: hasTakeaway, inventory: hasInventory, event });
 
   return {
-    theme, setTheme, isSoundEnabled, setIsSoundEnabled, orderMode, setOrderMode, playSound,
+    theme, setTheme, resolvedTheme, isSoundEnabled, setIsSoundEnabled, orderMode, setOrderMode, playSound,
     products, setProducts, activeSession, startSession, endSession, cartState,
     event, connected, inbox: hasTakeaway || hasInventory ? inbox : null,
   };

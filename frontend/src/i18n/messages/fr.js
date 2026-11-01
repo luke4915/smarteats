@@ -1,6 +1,6 @@
 export default {
   'shell.privacy': 'Confidentialité', 'shell.terms': 'Conditions d\'utilisation', 'shell.theme': 'Apparence', 'shell.language': 'Langue',
-  'theme.auto': 'Auto', 'theme.light': 'Clair', 'theme.dark': 'Sombre',
+  'theme.auto': 'Auto', 'theme.light': 'Clair', 'theme.dark': 'Sombre', 'theme.toLight': 'Passer au mode clair', 'theme.toDark': 'Passer au mode sombre',
   'menu.title': 'Menu', 'menu.unavailable': 'Le menu n\'est pas disponible pour le moment.', 'menu.search': 'Rechercher un plat',
   'menu.noMatch': 'Aucun résultat pour « {query} ».', 'menu.empty': 'Il n\'y a rien à choisir pour le moment.', 'menu.category': 'Catégorie',
   'menu.add': 'Ajouter', 'menu.addNamed': 'Ajouter {name}', 'menu.less': 'Un de moins : {name}', 'menu.more': 'Un de plus : {name}',

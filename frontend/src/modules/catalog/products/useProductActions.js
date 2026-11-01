@@ -2,6 +2,7 @@ import { fetchWithAuth } from '../../../utils/apiClient';
 import { useToast } from '../../../context/useToast';
 import { buildPayload, stockProblem, stockUpdateOf } from './productForm';
 import { sortByCategoryOrder } from '../../../utils/categoryOrder';
+import { upsertProduct } from '../../../utils/productEvents';
 
 // Le azioni sui prodotti che parlano col server (salva, mostra/nascondi, elimina). Ognuna aggiorna l'elenco `products`
 // in memoria e avvisa con un messaggio; ritorna `true` se è andata a buon fine.
@@ -30,10 +31,9 @@ export function useProductActions({ setProducts, hasModifierGroups, onModifiersS
         } catch (err) { showToast(`Prodotto salvato, ma errore nelle opzioni: ${err.message}`, 'error'); }
       }
 
-      const product = { ...saved, price: parseFloat(saved.price) };
-      // Il server avvisa anche chi ha creato il prodotto: se l'avviso è già arrivato, il prodotto c'è e va solo aggiornato (mai doppio)
-      setProducts(prev => (prev.some(p => p.id === product.id) ? prev.map(p => (p.id === product.id ? product : p)) : [...prev, product]));
-      showToast(`Prodotto "${product.name}" ${editing ? 'modificato' : 'aggiunto'} con successo`, 'success');
+      // Il server avvisa anche chi ha salvato: `upsertProduct` non raddoppia il prodotto, comunque arrivino le due notizie
+      setProducts(prev => upsertProduct(prev, saved));
+      showToast(`«${saved.name}» ${editing ? 'modificato' : 'aggiunto'}`, 'success');
       return true;
     } catch (err) { return fail(err, 'Impossibile salvare il prodotto'); }
   };

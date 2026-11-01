@@ -19,9 +19,12 @@ export function pickLanguage(stored, preferred = []) {
 
 const fill = (text, params) => text.replace(/\{(\w+)\}/g, (whole, name) => (params[name] === undefined ? whole : String(params[name])));
 
+// Dove una lingua non ha una frase si legge l'inglese e poi l'italiano (le pagine di prenotazione e ordine sono tradotte solo in inglese).
+const FALLBACKS = ['en', DEFAULT_LANGUAGE];
+
 // Il testo di una chiave nella lingua scelta. `{nome}` si riempie con `params`; con `params.count` si sceglie `chiave.one` (1) o `chiave.other`.
 export function translate(messages, lang, key, params = {}) {
   const plural = params.count === undefined ? null : `${key}.${params.count === 1 ? 'one' : 'other'}`;
-  const text = [plural, key].filter(Boolean).map(k => messages[lang]?.[k] ?? messages[DEFAULT_LANGUAGE]?.[k]).find(v => v !== undefined);
+  const text = [plural, key].filter(Boolean).map(k => [lang, ...FALLBACKS].map(l => messages[l]?.[k]).find(v => v !== undefined)).find(v => v !== undefined);
   return fill(text ?? key, params);
 }

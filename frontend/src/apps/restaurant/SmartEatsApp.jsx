@@ -43,7 +43,7 @@ const SmartEatsApp = () => {
   const { pathname } = useLocation();
   const { service, start, closingInfo, end, onEvent } = useService();
   const [event, setEvent] = useState(null);
-  const [theme, setTheme] = useTheme();
+  const [, setTheme, resolvedTheme] = useTheme();
 
   const handleMessage = useCallback((msg) => { onEvent(msg); setEvent(msg); }, [onEvent]);
   useLiveUpdates(handleMessage, { enabled: !!user, onUnauthorized: refreshSession });
@@ -77,7 +77,7 @@ const SmartEatsApp = () => {
             else if (i.kind === 'takeaway_request') navigate('/takeaway', { state: { orderId: i.id, date: i.date } });
             else navigate('/reservations', { state: { reservationId: i.id, date: i.date } });
           }}
-          theme={theme} onThemeChange={setTheme} onLogout={doLogout} />
+          dark={resolvedTheme === 'dark'} onThemeChange={setTheme} onLogout={doLogout} />
 
         <div key={pathname} className="motion-page flex-1 min-h-0 flex gap-4 px-4 pt-1 pb-3 md:p-4">
           <Suspense fallback={<PageCard><Loading /></PageCard>}>
