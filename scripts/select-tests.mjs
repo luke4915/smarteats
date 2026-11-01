@@ -38,6 +38,8 @@ export const E2E_RULES = [
   ['frontend/src/pages/LegalPage', ['legal']],
   ['frontend/src/components/cart/', ['festival', 'festival.phone']],
   ['frontend/src/components/layout/Lock', ['pin']],
+  ['frontend/src/components/public/', ['account-and-export', 'booking-portal', 'takeaway']],
+  ['frontend/src/pages/MenuPage', ['account-and-export']],
   ['frontend/src/components/shared/Pin', ['pin']],
   ['frontend/src/components/setup/', ['festival', 'tables-range', 'floorplan', 'reserved-data', 'account-and-export', 'pin']],
   ['frontend/src/context/', ['reserved-data', 'restaurant', 'pin']],

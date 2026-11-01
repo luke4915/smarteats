@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { seed, login, shot } from './support.js';
+import { seed, login, shot, urlOf } from './support.js';
 
 // Impostazioni e uscite dei dati: nel ristorante le stampanti, il profilo dentro l'elenco utenti, i suggerimenti dal menu dell'account e il
 // blocco dei dati riservati (si spegne solo con la password); nella sagra il menu pubblico con il QR e l'esportazione di una serata.
@@ -84,4 +84,47 @@ test('sagra: menu pubblico con il QR e esportazione di una serata in PDF e CSV',
   await page.getByRole('tab', { name: 'CSV righe' }).click();
   const [csv] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /^Scarica / }).first().click()]);
   expect(csv.suggestedFilename()).toMatch(/_righe\.csv$/);
+});
+
+// Menu pubblico: l'ordine delle categorie si sceglie da Impostazioni → Menu pubblico e i clienti lo vedono; un suggerimento discreto (una riga,
+// scartabile) propone un prodotto a chi ne sceglie un altro.
+test('sagra: ordine delle categorie e suggerimento nel menu pubblico', async ({ page }) => {
+  const { festival } = seed();
+  await login(page, festival.host, festival.admin);
+  await page.getByRole('link', { name: 'Impostazioni' }).first().click();
+  await page.getByRole('tablist', { name: 'Sezioni delle impostazioni' }).getByRole('tab', { name: 'Menu pubblico' }).click();
+
+  await page.getByRole('button', { name: 'Riordina' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Ordine delle categorie' });
+  await dialog.getByRole('button', { name: 'Trascina per riordinare' }).last().focus();           // «Panini» in fondo: sale in cima
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowUp');
+  await dialog.getByRole('button', { name: 'Salva' }).click();
+  await expect(page.getByText('Ordine delle categorie salvato')).toBeVisible();
+
+  await page.getByLabel('Quando sceglie').selectOption({ label: 'Panini' });
+  await page.getByLabel('Proponi').selectOption({ label: 'Birra' });
+  await page.getByRole('button', { name: 'Aggiungi', exact: true }).click();
+  await page.getByRole('button', { name: 'Salva suggerimenti' }).click();
+  await expect(page.getByText('Suggerimenti salvati')).toBeVisible();
+  await shot(page, 'festival-09-menu-ordine-suggerimenti');
+
+  const client = await page.context().newPage();                                                  // un cliente, dal QR
+  await client.goto(`${urlOf(festival.host)}/menu`);
+  await expect(client.getByRole('tablist', { name: 'Categoria' }).getByRole('tab').first()).toHaveText('Panini');
+  await expect(client.getByRole('note')).toHaveCount(0);                                            // a carrello vuoto nessun suggerimento
+  await client.getByRole('button', { name: 'Aggiungi Panino con salsiccia' }).click();
+  const nudge = client.getByRole('note');
+  await expect(nudge).toContainText('Ci sta bene anche: Birra');
+  await shot(client, 'festival-10-menu-suggerimento');
+  await nudge.getByRole('button', { name: 'Nascondi il suggerimento' }).click();
+  await expect(nudge).toHaveCount(0);                                                               // scartato: non torna
+  await client.getByRole('button', { name: 'Una in più: Panino con salsiccia' }).click();
+  await expect(nudge).toHaveCount(0);
+
+  // si rimette a posto il locale di prova
+  await page.evaluate(async () => {
+    const call = (path, body) => fetch(`/api${path}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    await call('/products/category-order', { order: [] });
+    await call('/menu-suggestions', { rules: [] });
+  });
 });

@@ -43,6 +43,7 @@ import printSettingsRoutes from './routes/printSettings.js';
 import settingsRoutes from './routes/settings.js';
 import masterRoutes from './routes/master.js';
 import pinRoutes from './routes/pin.js';
+import menuSuggestionsRoutes from './routes/menuSuggestions.js';
 import { loginLimiter, pinLimiter, apiLimiter, ordersLimiter, devicesLimiter, exportsLimiter, reservedUnlockLimiter, publicBookingReadLimiter, publicBookingWriteLimiter } from './middleware/rateLimiter.js';
 import { isAllowedOrigin } from './utils/origins.js';
 import logger from './logger.js';
@@ -102,6 +103,7 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   app.use('/api/reserved-data', reservedDataRouter);
   app.use('/api/profile', profileRoutes);
   app.use('/api/pin', pinRoutes);
+  app.use('/api/menu-suggestions', menuSuggestionsRoutes);
   app.use('/api/products', productModifiersRouter); // PUT /:id/modifier-groups, prima delle route dei prodotti
   app.use('/api/products', productRecipeRouter);          // GET/PUT /:id/recipe (magazzino)
   app.use('/api/products', productAvailabilityRouter(broadcast));    // PUT /:id/availability (esaurito)
