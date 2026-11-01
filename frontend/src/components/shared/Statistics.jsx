@@ -27,9 +27,7 @@ const Statistics = () => {
     sessions, loading, error,
     selectedSessionIds, toggleSession, setSelectedSessionIds,
     stats, sortedTopProdotti, topProductsMetric, setTopProductsMetric,
-    h2hProduct, setH2hProduct, h2hSessionA, setH2hSessionA, h2hSessionB, setH2hSessionB,
-    availableProducts, h2hData, sessionAName, sessionBName,
-  } = useStatistics(terms);
+  } = useStatistics();
 
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
@@ -148,33 +146,6 @@ const Statistics = () => {
           <ChartCard title="Andamento dell'incasso nella serata">
             <Columns ariaLabel="Incasso cumulato per ora" items={hourItems(stats.andamentoFatturato, 'totale')} format={formatEuro} />
           </ChartCard>
-
-          {sessions.length > 1 && (
-            <ChartCard title={terms.h2h}>
-              <div className="flex flex-wrap gap-2 mb-4">
-                {[[h2hSessionA, setH2hSessionA, terms.pickA], [h2hSessionB, setH2hSessionB, terms.pickB]].map(([value, set, placeholder], n) => (
-                  <select key={n} value={value} onChange={e => set(e.target.value)} className="h-10 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] text-sm text-[var(--text-main)]">
-                    <option value="">{placeholder}</option>
-                    {sessions.map(s => <option key={s.id} value={s.id}>{s.name || new Date(s.start_time).toLocaleDateString('it-IT')}</option>)}
-                  </select>
-                ))}
-                <select value={h2hProduct} onChange={e => setH2hProduct(e.target.value)} className="h-10 px-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] text-sm text-[var(--text-main)]">
-                  <option value="">Seleziona prodotto…</option>
-                  {availableProducts.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
-                </select>
-              </div>
-              {h2hData ? (
-                <table className="w-full text-sm">
-                  <thead><tr className="text-left text-xs text-[var(--text-muted)]"><th className="py-1.5 font-medium" /><th className="font-medium text-right">{sessionAName}</th><th className="font-medium text-right">{sessionBName}</th></tr></thead>
-                  <tbody className="tabular-nums text-[var(--text-main)]">
-                    {h2hData.map(r => <tr key={r.metric} className="border-t border-[var(--border)]"><td className="py-2">{r.metric}</td><td className="text-right">{r.A}</td><td className="text-right">{r.B}</td></tr>)}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="text-sm text-[var(--text-muted)] py-4">{terms.selectTwo}</p>
-              )}
-            </ChartCard>
-          )}
 
           {stats.topGiftProducts.length > 0 && (
             <ChartCard title="Mancato incasso per omaggi">

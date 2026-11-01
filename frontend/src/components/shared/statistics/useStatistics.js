@@ -23,18 +23,13 @@ const empty = {
 };
 
 // Le statistiche le calcola il server (GET /stats): al browser arrivano solo i totali, mai gli ordini.
-export function useStatistics(terms) {
+export function useStatistics() {
   const [sessions, setSessions] = useState([]);
   const [stats, setStats] = useState(empty);
   const [selectedSessionIds, setSelectedSessionIds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [topProductsMetric, setTopProductsMetric] = useState('count');
-  const [h2hProduct, setH2hProduct] = useState('');
-  const [h2hSessionA, setH2hSessionA] = useState('');
-  const [h2hSessionB, setH2hSessionB] = useState('');
-  const [availableProducts, setAvailableProducts] = useState([]);
-  const [h2hData, setH2hData] = useState(null);
 
   useEffect(() => {
     fetchWithAuth('/sessions')
@@ -60,33 +55,6 @@ export function useStatistics(terms) {
     setSelectedSessionIds(prev => prev.includes(sid) ? prev.filter(s => s !== sid) : [...prev, sid]);
   };
 
-  // Prodotti confrontabili: quelli venduti in entrambe le serate scelte (o tutti, finché non se ne scelgono due)
-  useEffect(() => {
-    let cancelled = false;
-    const query = new URLSearchParams({ ...(h2hSessionA && { a: h2hSessionA }), ...(h2hSessionB && { b: h2hSessionB }) });
-    fetchWithAuth(`/stats/shared-products?${query}`)
-      .then(data => { if (!cancelled) setAvailableProducts(data); })
-      .catch(() => { if (!cancelled) setAvailableProducts([]); });
-    return () => { cancelled = true; };
-  }, [h2hSessionA, h2hSessionB]);
-
-  useEffect(() => {
-    if (h2hProduct && !availableProducts.some(p => String(p.id) === h2hProduct)) setH2hProduct('');
-  }, [availableProducts, h2hProduct]);
-
-  useEffect(() => {
-    if (!h2hProduct || !h2hSessionA || !h2hSessionB) { setH2hData(null); return; }
-    let cancelled = false;
-    const query = new URLSearchParams({ a: h2hSessionA, b: h2hSessionB, product: h2hProduct });
-    fetchWithAuth(`/stats/head-to-head?${query}`)
-      .then(data => { if (!cancelled) setH2hData(data); })
-      .catch(() => { if (!cancelled) setH2hData(null); });
-    return () => { cancelled = true; };
-  }, [h2hProduct, h2hSessionA, h2hSessionB]);
-
-  const sessionAName = sessions.find(s => String(s.id) === String(h2hSessionA))?.name || (terms?.defaultA ?? 'Serata A');
-  const sessionBName = sessions.find(s => String(s.id) === String(h2hSessionB))?.name || (terms?.defaultB ?? 'Serata B');
-
   const sortedTopProdotti = useMemo(() => (
     [...stats.topProdotti].sort((a, b) => b[topProductsMetric] - a[topProductsMetric]).slice(0, 10)
   ), [stats.topProdotti, topProductsMetric]);
@@ -95,7 +63,5 @@ export function useStatistics(terms) {
     sessions, loading, error,
     selectedSessionIds, toggleSession, setSelectedSessionIds,
     stats, sortedTopProdotti, topProductsMetric, setTopProductsMetric,
-    h2hProduct, setH2hProduct, h2hSessionA, setH2hSessionA, h2hSessionB, setH2hSessionB,
-    availableProducts, h2hData, sessionAName, sessionBName,
   };
 }

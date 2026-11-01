@@ -4,16 +4,21 @@ import tailwindcss from '@tailwindcss/vite'
 import mkcert from 'vite-plugin-mkcert'
 import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'node:fs'
+import process from 'node:process'
 
 // Il numero di versione dell'app (lo stesso dell'etichetta del rilascio) arriva in `__APP_VERSION__`: vedi utils/appVersion.js.
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
+
+// Per provare l'app dal telefono sulla rete di casa: `scripts/iphone.sh` stampa il dominio da usare (es. 192-168-1-20.sslip.io, che punta al Mac)
+// e lo si passa qui con VITE_DEV_DOMAIN. Senza, non cambia nulla.
+const devDomain = process.env.VITE_DEV_DOMAIN
 
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
   plugins: [
     react(),
     tailwindcss(),
-    mkcert({ hosts: ['localhost', '127.0.0.1', '*.smarteats.local'] }),
+    mkcert({ hosts: ['localhost', '127.0.0.1', '*.smarteats.local', ...(devDomain ? [devDomain, `*.${devDomain}`] : [])] }),
     VitePWA({
       // `prompt`: il service worker scarica la versione nuova ma non ricarica la pagina da solo; decide hooks/useAppUpdate.js.
       registerType: 'prompt',
@@ -44,6 +49,6 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     // Il punto iniziale ammette tutti i sottodomini: ogni tenant ha il suo.
-    allowedHosts: ['.smarteats.local'],
+    allowedHosts: ['.smarteats.local', ...(devDomain ? [`.${devDomain}`] : [])],
   },
 })

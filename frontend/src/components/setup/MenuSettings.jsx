@@ -4,7 +4,6 @@ import { Copy, ExternalLink, Download } from 'lucide-react';
 import { useToast } from '../../context/useToast';
 import { apiFetch } from '../../utils/apiClient';
 import { btn } from '../shared/styles';
-import MenuCategoryOrder from './MenuCategoryOrder';
 import MenuSuggestions from './MenuSuggestions';
 
 // Il menu pubblico con il QR (sagre e paninari): il QR da stampare e mettere sul banco, il link da condividere e il messaggio di benvenuto
@@ -55,7 +54,6 @@ const MenuSettings = () => {
         </div>
       </div>
     </div>
-    <MenuCategoryOrder />
     <MenuSuggestions />
     </div>
   );

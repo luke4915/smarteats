@@ -28,6 +28,8 @@ cd frontend && npm run dev         # l'interfaccia
 
 L'app si apre su `https://<nome-locale>.smarteats.local:5173` (per esempio `default.smarteats.local`).
 
+**Da iPhone o iPad (rete di casa).** Il telefono non sa risolvere i nomi `.local` del Mac, quindi si usa un nome che punta da solo all'IP del Mac (`sagra.192-168-1-20.sslip.io`). Lo prepara `./scripts/iphone.sh`: genera il certificato e stampa i tre passi (fidarsi del certificato mkcert sul telefono una volta, avviare backend e frontend con `APP_DOMAIN` e `VITE_DEV_DOMAIN`, aprire l'indirizzo). Il menu dei clienti si prova allo stesso modo su `/menu`.
+
 **Servono due locali di prova**, creati dal pannello master (`/master`, con la password master):
 
 1. un locale di tipo **ristorante** (es. `trattoria`), con i moduli Cucina (KDS), Statistiche e Tavoli accesi;

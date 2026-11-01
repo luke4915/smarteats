@@ -5,6 +5,7 @@ import { useToast } from './useToast';
 import { recall, remember } from '../offline/lastKnown';
 import { hasVerifier } from '../offline/pinVerifier';
 import { isAutoLockChoice, shouldAutoLock } from '../utils/idleLock';
+import { isPublicPath } from '../utils/publicPaths';
 import LockScreen from '../components/layout/LockScreen';
 
 // Il blocco dello schermo di chi è collegato. L'app resta montata sotto (ordini in coda, stampe e avvisi continuano a funzionare): la
@@ -20,8 +21,10 @@ export const LockProvider = ({ children }) => {
   const [autoLockMinutes, setAutoLock] = useState(() => (isAutoLockChoice(recall('autolock')) ? recall('autolock') : 0));
   const lastActivity = useRef(Date.now());
 
-  const locked = !!user && lockedFor === user.id;
-  const canLock = !!user && !!user.hasPin && !user.needsPassword;
+  // Sulle pagine pubbliche (menu, prenotazioni…) il blocco non si vede né scatta: sono per i clienti, non per chi è collegato
+  const publicPage = isPublicPath(window.location.pathname);
+  const locked = !!user && lockedFor === user.id && !publicPage;
+  const canLock = !!user && !!user.hasPin && !user.needsPassword && !publicPage;
 
   // Chi esce dal locale non lascia un blocco in sospeso (ma durante il caricamento l'utente non c'è ancora: il blocco va tenuto)
   useEffect(() => {

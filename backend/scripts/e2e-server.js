@@ -15,6 +15,8 @@ import bcrypt from 'bcrypt';
 const { createTenant, deleteTenants, adminDb, closePools, PASSWORD } = await import('../tests/integration/helpers.js');
 const { createApp } = await import('../app.js');
 const { createWebSocketHub } = await import('../ws.js');
+const { toOrderItemRows } = await import('../utils/orderItems.js');
+const { insertOrderItemRows } = await import('../utils/orderItemsWrite.js');
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const dist = path.resolve(here, '..', '..', 'frontend', 'dist');
@@ -78,6 +80,29 @@ for (const [name, price, category] of [['Panino con salsiccia', 5, 'Panini'], ['
   await addProduct(sagra, name, price, category);
 const sagraSeed = { host: `${sagra.slug}.smarteats.local`, admin: sagra.username, kitchen: await addUser(sagra, 'kitchen'), cashier: await addUser(sagra, 'cashier') };
 
+// ── Sagra con due serate già concluse e qualche ordine, per le statistiche (confronto e matrice del menu) ──
+const stats = await createTenant({ businessType: 'street_food', openSession: false });
+const statsProducts = {};
+for (const [name, price, category] of [['Panino con salsiccia', 5, 'Panini'], ['Hamburger', 6, 'Panini'], ['Birra', 4, 'Bevande'], ['Acqua', 1, 'Bevande'], ['Tiramisù', 4, 'Dolci']])
+  statsProducts[name] = await addProduct(stats, name, price, category);
+const statsSession = async (name, start, end) => (await adminDb.query(`INSERT INTO sessions (name, start_time, end_time, tenant_id) VALUES ($1, $2, $3, $4) RETURNING id`, [name, start, end, stats.id])).rows[0].id;
+const friday = await statsSession('Venerdì', '2026-10-02T15:00:00Z', '2026-10-02T22:00:00Z');
+const saturday = await statsSession('Sabato', '2026-10-03T15:00:00Z', '2026-10-03T22:00:00Z');
+const statsOrder = async (session, at, lines) => {
+  const total = lines.reduce((sum, [, , qty, price]) => sum + qty * price, 0);
+  const { rows: [o] } = await adminDb.query(
+    `INSERT INTO orders (total, status, session_id, created_at, completed_at, tenant_id, order_type) VALUES ($1, 'completed', $2, $3, $3::timestamptz + interval '5 minutes', $4, 'sale') RETURNING id`, [total, session, at, stats.id]);
+  const items = lines.map(([id, name, quantity, price, category]) => ({ id, name, quantity, price, line_total: quantity * price, category }));
+  await insertOrderItemRows(adminDb, stats.id, toOrderItemRows(items).rows.map(r => ({ ...r, order_id: o.id })));
+};
+const P = statsProducts;
+await statsOrder(friday, '2026-10-02T17:30:00Z', [[P['Panino con salsiccia'], 'Panino con salsiccia', 10, 5, 'Panini'], [P.Birra, 'Birra', 8, 4, 'Bevande']]);
+await statsOrder(friday, '2026-10-02T18:30:00Z', [[P.Hamburger, 'Hamburger', 5, 6, 'Panini'], [P.Acqua, 'Acqua', 12, 1, 'Bevande']]);
+await statsOrder(friday, '2026-10-02T19:10:00Z', [[P['Tiramisù'], 'Tiramisù', 3, 4, 'Dolci']]);
+await statsOrder(saturday, '2026-10-03T17:30:00Z', [[P['Panino con salsiccia'], 'Panino con salsiccia', 25, 5, 'Panini'], [P.Birra, 'Birra', 20, 4, 'Bevande']]);
+await statsOrder(saturday, '2026-10-03T19:00:00Z', [[P.Hamburger, 'Hamburger', 4, 6, 'Panini'], [P.Acqua, 'Acqua', 15, 1, 'Bevande'], [P['Tiramisù'], 'Tiramisù', 9, 4, 'Dolci']]);
+const statsSeed = { host: `${stats.slug}.smarteats.local`, admin: stats.username };
+
 // ── Pizzeria di solo asporto: nessun tavolo, nessuna prenotazione ──
 const shop = await createTenant({ businessType: 'takeaway_shop' });
 for (const [name, price, category] of [['Margherita', 6, 'Pizze'], ['Diavola', 8, 'Pizze'], ['Acqua', 1.5, 'Bevande']])
@@ -87,7 +112,7 @@ for (let weekday = 0; weekday < 7; weekday += 1)
 const shopSeed = { host: `${shop.slug}.smarteats.local`, admin: shop.username, kitchen: await addUser(shop, 'kitchen') };
 
 fs.mkdirSync(path.dirname(seedFile), { recursive: true });
-fs.writeFileSync(seedFile, JSON.stringify({ port, password: PASSWORD, restaurant: ristoSeed, festival: sagraSeed, shop: shopSeed }, null, 2));
+fs.writeFileSync(seedFile, JSON.stringify({ port, password: PASSWORD, restaurant: ristoSeed, festival: sagraSeed, shop: shopSeed, stats: statsSeed }, null, 2));
 
 const hub = createWebSocketHub();
 const inner = createApp({ broadcast: hub.broadcast, rateLimit: false });
@@ -104,7 +129,7 @@ async function shutdown() {
   closing = true;
   hub.close();
   server.close();
-  try { await deleteTenants(risto, sagra); } catch (err) { console.error('Pulizia dei locali di prova non riuscita', err.message); }
+  try { await deleteTenants(risto, sagra, shop, stats); } catch (err) { console.error('Pulizia dei locali di prova non riuscita', err.message); }
   await closePools();
   fs.rmSync(certDir, { recursive: true, force: true });
   process.exit(0);

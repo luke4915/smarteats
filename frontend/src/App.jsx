@@ -36,6 +36,9 @@ const App = () => {
   if (path === '/privacy' || path === '/terms') return <Suspense fallback={<PageLoading />}><LegalPage kind={path.slice(1)} /></Suspense>;
   if (/^\/s\//.test(path)) return <Suspense fallback={<PageLoading />}><ShortLink /></Suspense>;
 
+  // Il menu dei clienti è pubblico: non aspetta il controllo della sessione e non lo ferma nulla (licenza, password temporanea, blocco)
+  if (/^\/menu\/?$/.test(path)) return <Suspense fallback={<PageLoading />}><MenuPage /></Suspense>;
+
   if (loading) return <div className="h-dvh flex items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">Caricamento...</div>;
 
   if (path === '/kds') return <Suspense fallback={<PageLoading />}><KDS /></Suspense>;
@@ -44,7 +47,6 @@ const App = () => {
     <Suspense fallback={<PageLoading />}>
       <Routes>
         <Route path="/login" element={<Login onLogin={login} />} />
-        <Route path="/menu" element={<MenuPage />} />
         <Route path="/master" element={<MasterPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
@@ -56,7 +58,6 @@ const App = () => {
 
   // Password temporanea: il server blocca tutto il resto finché non la si cambia
   if (user.needsPassword) return <ChangePassword onPasswordChanged={() => login({ ...user, needsPassword: false })} />;
-  if (path === '/menu') return <Suspense fallback={<PageLoading />}><MenuPage /></Suspense>;
   if (path === '/master') return <Suspense fallback={<PageLoading />}><MasterPage /></Suspense>;
 
   return <FestivalApp />;

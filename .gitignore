@@ -17,3 +17,4 @@ certs/
 
 # Grafo di conoscenza generato da graphify (si ricrea con /graphify)
 graphify-out/
+backend/iphone*.pem
