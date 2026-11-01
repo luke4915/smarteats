@@ -1,6 +1,19 @@
 import { test, expect } from '@playwright/test';
 import { seed, login, shot, urlOf } from './support.js';
 
+// Il prezzo di un prodotto si guarda nella sua riga: lo stesso importo può comparire su più prodotti (es. due piatti da 14,00 €).
+const rowOf = (page, name) => page.getByRole('listitem').filter({ hasText: name });
+
+// Un tentativo fallito a metà lascia il prodotto di prova in carta: il tentativo dopo (retry) si fermerebbe su «già esistente» e nasconderebbe
+// l'errore vero. Quindi, se c'è, lo si elimina prima di cominciare.
+async function removeLeftover(page, name) {
+  const trash = page.getByRole('button', { name: `Elimina ${name}` });
+  if (await trash.count() === 0) return;
+  await trash.click();
+  await page.getByRole('button', { name: 'Elimina', exact: true }).click();
+  await expect(trash).toHaveCount(0);
+}
+
 // L'editor dei prodotti nelle due versioni: la carta del ristorante (elenco compatto, portata, opzioni) e il listino
 // della sagra (elenco per categoria). Stesso modulo e stesse regole: nome unico, quantità valida.
 test('carta del ristorante: aggiungo un piatto con portata, provo un doppione, lo modifico, lo nascondo, lo elimino', async ({ page }) => {
@@ -8,6 +21,7 @@ test('carta del ristorante: aggiungo un piatto con portata, provo un doppione, l
   await login(page, r.host, r.admin);
   await page.getByRole('link', { name: 'Carta' }).click();
   await expect(page.getByText('Spaghetti alle vongole')).toBeVisible();
+  await removeLeftover(page, 'Risotto di prova');
 
   await page.getByRole('button', { name: 'Nuovo piatto' }).click();
   await page.locator('input[name="category"]').fill('Primi');
@@ -17,7 +31,7 @@ test('carta del ristorante: aggiungo un piatto con portata, provo un doppione, l
   await shot(page, 'catalog-01-modulo');
   await page.getByRole('button', { name: 'Aggiungi piatto' }).click();
   await expect(page.getByRole('button', { name: 'Modifica Risotto di prova' })).toBeVisible();
-  await expect(page.getByText('12,50 €')).toBeVisible();
+  await expect(rowOf(page, 'Risotto di prova').getByText('12,50 €')).toBeVisible();
 
   // Lo stesso nome nella stessa categoria non si può creare
   await page.getByRole('button', { name: 'Nuovo piatto' }).click();
@@ -33,7 +47,7 @@ test('carta del ristorante: aggiungo un piatto con portata, provo un doppione, l
   await page.getByRole('button', { name: 'Modifica Risotto di prova' }).click();
   await page.locator('input[name="price"]').fill('14');
   await page.getByRole('button', { name: 'Salva modifiche' }).click();
-  await expect(page.getByText('14,00 €')).toBeVisible();
+  await expect(rowOf(page, 'Risotto di prova').getByText('14,00 €')).toBeVisible();
 
   // L'interruttore «Visibile» nasconde dalla cassa, ma il piatto resta in elenco (in grigio, «Nascosto») e il filtro lo trova
   const visible = page.getByRole('switch', { name: 'Visibile: Risotto di prova' });
@@ -60,6 +74,7 @@ test('listino della sagra: aggiungo un prodotto con disponibilità limitata e lo
   await login(page, festival.host, festival.admin);
   await page.goto(`${page.url().split('/').slice(0, 3).join('/')}/config`);
   await expect(page.getByText('Panino con salsiccia')).toBeVisible();
+  await removeLeftover(page, 'Panino di prova');
   await shot(page, 'catalog-02-listino-sagra');
 
   // Un'altra cassa già aperta: vede nascere e sparire il prodotto senza ricaricare

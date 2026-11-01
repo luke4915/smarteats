@@ -196,4 +196,5 @@ jobs:
         with:
           name: schermate-e-risultati
           path: frontend/e2e/.run
+          include-hidden-files: true      # la cartella .run è nascosta: senza, l'allegato resta vuoto
           retention-days: 7

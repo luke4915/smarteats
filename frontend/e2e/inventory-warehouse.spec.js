@@ -73,9 +73,17 @@ test('magazzino: ingredienti e ricetta di un piatto; la cucina può segnare esau
   await recipe.getByLabel('Ingrediente').selectOption({ label: 'Farina 00' });
   await recipe.getByLabel('Quantità', { exact: true }).fill('200');
   await shot(admin, 'inventory-04-ricetta');
+  // Un avviso in tempo reale (qui: un altro cambia la visibilità di un piatto) mentre si scrive non deve cancellare ciò che si è scritto
+  await admin.evaluate(async () => {                                   // dalla pagina stessa (stessa origine e stessa sessione)
+    const dishes = await (await fetch('/api/products', { credentials: 'include' })).json();
+    await fetch('/api/products/bulk-visibility', { method: 'PATCH', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: [dishes.find(d => d.name === 'Bruschetta').id], visible: true }) });
+  });
+  await admin.waitForTimeout(1500);
+  await expect(recipe.getByLabel('Quantità', { exact: true })).toHaveValue('200');
   await recipe.getByRole('button', { name: 'Salva', exact: true }).click();
   await expect(admin.getByText(/Bruschetta/).first()).toBeVisible();
-  await expect(admin.getByText('1 ingrediente')).toBeVisible();
+  await expect(admin.getByRole('listitem').filter({ hasText: 'Bruschetta' }).getByText('1 ingrediente')).toBeVisible({ timeout: 15_000 });   // la ricetta si rilegge dal server: sulla CI, più lenta, può servire più dei 5 secondi di partenza
   await shot(admin, 'inventory-04c-carta-con-ricetta');
   await admin.locator('a[href="/inventory"]').first().click();
 
