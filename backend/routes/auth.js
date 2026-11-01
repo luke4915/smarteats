@@ -16,8 +16,8 @@ import { hashPassword, DUMMY_HASH } from '../utils/password.js';
 import { sendHttpError } from '../utils/httpError.js';
 import { invalidateUserStatus } from '../utils/userStatus.js';
 import { getTenantModules } from '../utils/tenantModules.js';
-import { inventoryOf } from '../utils/modules.js';
 import { licenseInfo } from '../utils/license.js';
+import { sessionPayload } from '../utils/sessionPayload.js';
 import { createUser, listUsers, updateUser, deleteUser, resetUserPassword } from '../utils/tenantUsers.js';
 
 const INVALID_CREDENTIALS = 'Credenziali non valide';
@@ -55,7 +55,7 @@ router.post('/login', validate({ body: loginSchema }), resolveTenantFromHost, as
     user.tenant_name = tenant.name;
     setCookie(res, signToken(user));
 
-    res.json({ id: user.id, username: user.username, role: user.role, needsPassword: user.must_change_password, tenantName: user.tenant_name, businessType: tenant.business_type, modules: tenant.modules, inventory: inventoryOf(tenant), license: licenseInfo(tenant.expires_at) });
+    res.json(sessionPayload(user, tenant));
     } catch (err) {
     logger.error({ err }, 'Errore server')
     res.status(500).json({ error: 'Errore server' });
@@ -221,7 +221,10 @@ router.get('/me', authenticateAllowingPasswordChange, async (req, res) => {
   try {
     const tenant = await getTenantModules(req.user.tenantId);
     const { rows: [lic] } = await pool.query('SELECT expires_at FROM tenants WHERE id = $1', [req.user.tenantId]);
+    const pin = await withTenantClient(req.user.tenantId, async (db) => (await db.query('SELECT pin_hash IS NOT NULL AS has_pin, pin_length FROM users WHERE id = $1', [req.user.id])).rows[0]);
     res.json({
+      hasPin: pin?.has_pin ?? false,
+      pinLength: pin?.pin_length ?? null,
       id: req.user.id,
       username: req.user.username,
       role: req.user.role,

@@ -37,9 +37,13 @@ export const E2E_RULES = [
   ['frontend/src/pages/OrderPage', ['takeaway']],
   ['frontend/src/pages/LegalPage', ['legal']],
   ['frontend/src/components/cart/', ['festival', 'festival.phone']],
-  ['frontend/src/components/setup/', ['festival', 'tables-range', 'floorplan', 'reserved-data', 'account-and-export']],
-  ['frontend/src/context/', ['reserved-data', 'restaurant']],
-  ['frontend/src/components/shell/', ['tablet', 'restaurant', 'festival']],
+  ['frontend/src/components/layout/Lock', ['pin']],
+  ['frontend/src/components/public/', ['account-and-export', 'booking-portal', 'takeaway']],
+  ['frontend/src/pages/MenuPage', ['account-and-export']],
+  ['frontend/src/components/shared/Pin', ['pin']],
+  ['frontend/src/components/setup/', ['festival', 'tables-range', 'floorplan', 'reserved-data', 'account-and-export', 'pin']],
+  ['frontend/src/context/', ['reserved-data', 'restaurant', 'pin']],
+  ['frontend/src/components/shell/', ['tablet', 'restaurant', 'festival', 'pin']],
 ];
 
 // Cartelle del backend che reggono tutto: se cambiano, si provano tutti i test col database e nel browser.

@@ -13,6 +13,8 @@ Elenco verificato sul codice. Quando ne risolvi una, toglila da qui nello stesso
 - Gli ordini rimasti in coda da prima dell'aggiornamento non hanno `client_order_id` né `session_id`, quindi vanno nella sessione aperta al momento della sincronizzazione.
 
 **Evoluzione (priorità 2)**
+- Turni e presenze del personale (e, per le sagre, dei volontari), con il costo del lavoro sull'incasso: non cruciale, da fare dopo allergeni e multilingua.
+- Fiscale italiano (registratore telematico, documento commerciale): studio in `docs/design-fiscale.md`, da chiudere con fonti ufficiali e un consulente prima di scrivere codice.
 
 **Dalla revisione del 4 ottobre 2026 (fase 4)**
 - Sicurezza: `/api/assets` serve solo `.mp3` (i loghi di altri marchi sono stati tolti dal repository ma restano nella cronologia git); gli ordini offline sincronizzati dopo la chiusura aggiornano il totale atteso ma non sono segnalati nel report di sessione.

@@ -4,6 +4,8 @@ import { Copy, ExternalLink, Download } from 'lucide-react';
 import { useToast } from '../../context/useToast';
 import { apiFetch } from '../../utils/apiClient';
 import { btn } from '../shared/styles';
+import MenuCategoryOrder from './MenuCategoryOrder';
+import MenuSuggestions from './MenuSuggestions';
 
 // Il menu pubblico con il QR (sagre e paninari): il QR da stampare e mettere sul banco, il link da condividere e il messaggio di benvenuto
 // che i clienti leggono. Il messaggio non si scrive qui: è una funzione che imposta l'assistenza (pannello master), qui si vede soltanto.
@@ -28,6 +30,7 @@ const MenuSettings = () => {
   };
 
   return (
+    <div className="space-y-4">
     <div className="bg-[var(--bg-card)] p-5 rounded-xl border border-[var(--border)]">
       <div className="grid sm:grid-cols-[auto_1fr] gap-6 items-start max-w-3xl">
         <div className="flex flex-col items-center gap-3">
@@ -51,6 +54,9 @@ const MenuSettings = () => {
           </div>
         </div>
       </div>
+    </div>
+    <MenuCategoryOrder />
+    <MenuSuggestions />
     </div>
   );
 };

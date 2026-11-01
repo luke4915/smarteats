@@ -9,6 +9,7 @@ import { logAudit } from '../utils/auditLogger.js';
 import { idParamsSchema } from '../schemas/common.js';
 import { productSchema, bulkVisibilitySchema, stockSchema, categoryOrderSchema } from '../schemas/productSchema.js';
 import { CATEGORY_ORDER_KEY, loadCategoryOrder, sortByCategoryOrder } from '../utils/categoryOrder.js';
+import { loadRules, publicRules } from '../utils/menuSuggestions.js';
 import { savePortionsRule } from '../utils/inventory/portionsDb.js';
 
 // I prodotti. La route è una factory: ogni cambio parte come avviso a tutti i dispositivi del locale, così una cassa non resta con una
@@ -24,14 +25,15 @@ export default function productRoutes(broadcast) {
   router.get('/menu', resolveTenantFromHost, requireModule('qr_menu'), async (req, res) => {
     try {
       const data = await withTenantClient(req.tenantId, async (db) => {
-        const [{ rows: found }, { rows: sessions }, { rows: [tenant] }, order] = await Promise.all([
+        const [{ rows: found }, { rows: sessions }, { rows: [tenant] }, order, rules] = await Promise.all([
           db.query('SELECT id, name, price, category, color FROM products WHERE visible = true ORDER BY category, name'),
           db.query('SELECT name FROM sessions WHERE end_time IS NULL ORDER BY start_time DESC LIMIT 1'),
           db.query('SELECT name FROM tenants WHERE id = $1', [req.tenantId]),
           loadCategoryOrder(db),
+          loadRules(db),
         ]);
         const products = sortByCategoryOrder(found, order);
-        return { tenantName: tenant?.name ?? null, sessionName: sessions[0]?.name || null, products };
+        return { tenantName: tenant?.name ?? null, sessionName: sessions[0]?.name || null, products, suggestions: publicRules(rules, products) };
       });
       res.json(data);
     } catch (err) {

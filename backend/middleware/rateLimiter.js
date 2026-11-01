@@ -57,6 +57,16 @@ export const reservedUnlockLimiter = limiter({
   message: { error: 'Troppi tentativi di sblocco. Riprova tra 15 minuti.', code: 'TOO_MANY_ATTEMPTS' },
 });
 
+// PIN (sblocco dello schermo e cambio utente): è un segreto corto, quindi pochi errori ogni 15 minuti per sessione. In più ogni utente si blocca da
+// solo dopo 5 PIN sbagliati (utils/pinRules.js).
+export const pinLimiter = limiter({
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+  skipSuccessfulRequests: true,
+  keyGenerator: userOrIpKey,
+  message: { error: 'Troppi tentativi con il PIN. Riprova tra 15 minuti.', code: 'TOO_MANY_ATTEMPTS' },
+});
+
 // API generali: max 300 richieste al minuto per utente (o per IP senza sessione)
 export const apiLimiter = limiter({
   windowMs: 60 * 1000,

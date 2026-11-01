@@ -7,6 +7,7 @@ import ErrorBoundary from './components/layout/ErrorBoundary';
 import { AuthProvider } from './context/AuthProvider';
 import { ToastProvider } from './context/ToastProvider';
 import { ReservedDataProvider } from './context/ReservedDataProvider';
+import { LockProvider } from './context/LockProvider';
 import UpdateBanner from './components/shell/UpdateBanner';
 import WhatsNew from './components/shell/WhatsNew';
 
@@ -18,9 +19,11 @@ root.render(
                 <ToastProvider>
                     <ReservedDataProvider>
                         <ErrorBoundary>
-                            <AppRouter />
-                            <WhatsNew />
-                            <UpdateBanner />
+                            <LockProvider>
+                                <AppRouter />
+                                <WhatsNew />
+                                <UpdateBanner />
+                            </LockProvider>
                         </ErrorBoundary>
                     </ReservedDataProvider>
                 </ToastProvider>
