@@ -37,3 +37,11 @@ test('un evento che non riguarda i prodotti lascia l\'elenco com\'è', () => {
   assert.equal(applyProductEvent(l, { type: 'order_created' }), l);
   assert.equal(applyProductEvent(l, undefined), l);
 });
+
+test('il nuovo ordine delle categorie riordina l\'elenco senza perdere né duplicare prodotti', () => {
+  const p = [{ id: 1, category: 'Bevande', price: 1 }, { id: 2, category: 'Antipasti', price: 2 }, { id: 3, category: 'Bevande', price: 3 }];
+  const next = applyProductEvent(p, { type: 'category_order_updated', order: ['Antipasti', 'Bevande'] });
+  assert.deepEqual(next.map(x => x.id), [2, 1, 3]);
+  assert.equal(applyProductEvent(p, { type: 'category_order_updated' }).length, 3);
+});
+

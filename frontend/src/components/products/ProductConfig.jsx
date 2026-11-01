@@ -63,7 +63,7 @@ const ProductConfig = ({ products, setProducts, courses = null, modifierGroups =
   return (
     <div className="space-y-5 relative">
       <CompactCatalog products={products} courses={courses} noun={noun} recipes={kitchen.data && { summaryOf: kitchen.data.summaryOf, onOpen: setRecipeOf }} onAdd={openNew} onEdit={openEdit} onDelete={setToDelete}
-        onToggleVisible={actions.toggleVisibility} onAvailability={setAvailabilityOf} onSetManyVisible={actions.setManyVisible} />
+        onToggleVisible={actions.toggleVisibility} onAvailability={setAvailabilityOf} onReorderCategories={actions.saveCategoryOrder} onSetManyVisible={actions.setManyVisible} />
 
       {form && (
         <ProductFormModal noun={noun} form={form} setForm={setForm} products={products} editing={editing} courses={courses} modifierGroups={modifierGroups} takeawayEnabled={takeawayEnabled} portionsEnabled={portionsEnabled} vatEnabled={vatEnabled}

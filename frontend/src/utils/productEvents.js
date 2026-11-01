@@ -1,6 +1,9 @@
 // Come un elenco di prodotti segue gli avvisi in tempo reale del server (WebSocket): lo usano la cassa delle sagre e la sala/asporto del
 // ristorante, così una tessera non resta mai con la disponibilità vecchia. Logica pura (provata in productEvents.test.js).
-// Gli eventi: product_created / product_updated (riga intera), product_deleted (id), product_stock_updated (solo scorta e visibilità).
+// Gli eventi: product_created / product_updated (riga intera), product_deleted (id), product_stock_updated (solo scorta e visibilità),
+// category_order_updated (il nuovo ordine delle categorie: l'elenco si riordina).
+
+import { sortByCategoryOrder } from './categoryOrder.js';
 
 const withNumberPrice = (product) => ({ ...product, price: parseFloat(product.price) });
 
@@ -9,6 +12,7 @@ export function applyProductEvent(products, msg) {
   switch (msg?.type) {
     case 'product_created': return products.some(p => p.id === msg.product.id) ? products : [...products, withNumberPrice(msg.product)];
     case 'product_updated': return products.map(p => (p.id === msg.product.id ? withNumberPrice(msg.product) : p));
+    case 'category_order_updated': return sortByCategoryOrder(products, msg.order ?? []);
     case 'product_deleted': return products.filter(p => p.id !== msg.id);
     case 'product_stock_updated': {
       const { id, stock, stock_enabled: stockEnabled, visible } = msg.product;

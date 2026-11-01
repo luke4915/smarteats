@@ -25,6 +25,11 @@ export const productSchema = z.object({
 }).refine(p => p.portions_reset_rule !== 'restart_each_service' || p.portions_start != null,
   { message: 'Con «riparti da N» serve il numero di porzioni di partenza', path: ['portions_start'] });
 
+// L'ordine delle categorie: nomi unici (senza distinguere le maiuscole), al massimo 100.
+export const categoryOrderSchema = z.object({
+  order: z.array(z.string().trim().min(1, 'nome vuoto').max(60)).max(100),
+}).refine(({ order }) => new Set(order.map(c => c.toLowerCase())).size === order.length, { message: 'ci sono categorie ripetute', path: ['order'] });
+
 export const bulkVisibilitySchema = z.object({
   ids: z.array(z.number().int().positive()).min(1),
   visible: z.boolean(),
