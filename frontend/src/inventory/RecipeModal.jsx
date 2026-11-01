@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Modal from '../components/shared/Modal';
 import ModalActions from '../components/shared/ModalActions';
 import RecipeLinesEditor from './RecipeLinesEditor';
@@ -16,11 +16,18 @@ const RecipeModal = ({ product, dish, showCosts, ingredients, preparations, onCl
   const [summary, setSummary] = useState(null);
   const [busy, setBusy] = useState(false);
 
+  // La ricetta si carica **una volta** per piatto. Prima l'effetto dipendeva da `onClose` e dagli elenchi, che cambiano a ogni ridisegno della
+  // pagina: bastava un avviso in tempo reale (un ordine, un prodotto cambiato da un altro) mentre si scriveva per ricaricarla dal server e
+  // cancellare le righe appena inserite. I valori più recenti si leggono da un riferimento, senza far ripartire il caricamento.
+  const latest = useRef(null);
+  latest.current = { ingredients, preparations, showToast, onClose };
   useEffect(() => {
+    let cancelled = false;
     fetchWithAuth(`/products/${product.id}/recipe`)
-      .then(recipe => { setRows(rowsFromLines(recipe.lines, ingredients, preparations)); setSummary(recipe); })
-      .catch(err => { showToast(err.message, 'error'); onClose(); });
-  }, [product.id, ingredients, preparations, showToast, onClose]);
+      .then(recipe => { if (!cancelled) { setRows(rowsFromLines(recipe.lines, latest.current.ingredients, latest.current.preparations)); setSummary(recipe); } })
+      .catch(err => { if (!cancelled) { latest.current.showToast(err.message, 'error'); latest.current.onClose(); } });
+    return () => { cancelled = true; };
+  }, [product.id]);
 
   const problem = rows ? recipeProblem(rows, ingredients, preparations) : 'Caricamento…';
   const save = async () => {
