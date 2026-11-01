@@ -7,7 +7,8 @@ import logger from '../logger.js';
 import { requireModule } from '../utils/tenantModules.js';
 import { logAudit } from '../utils/auditLogger.js';
 import { idParamsSchema } from '../schemas/common.js';
-import { productSchema, bulkVisibilitySchema, stockSchema } from '../schemas/productSchema.js';
+import { productSchema, bulkVisibilitySchema, stockSchema, categoryOrderSchema } from '../schemas/productSchema.js';
+import { CATEGORY_ORDER_KEY, loadCategoryOrder, sortByCategoryOrder } from '../utils/categoryOrder.js';
 import { savePortionsRule } from '../utils/inventory/portionsDb.js';
 
 // I prodotti. La route è una factory: ogni cambio parte come avviso a tutti i dispositivi del locale, così una cassa non resta con una
@@ -23,11 +24,13 @@ export default function productRoutes(broadcast) {
   router.get('/menu', resolveTenantFromHost, requireModule('qr_menu'), async (req, res) => {
     try {
       const data = await withTenantClient(req.tenantId, async (db) => {
-        const [{ rows: products }, { rows: sessions }, { rows: [tenant] }] = await Promise.all([
+        const [{ rows: found }, { rows: sessions }, { rows: [tenant] }, order] = await Promise.all([
           db.query('SELECT id, name, price, category, color FROM products WHERE visible = true ORDER BY category, name'),
           db.query('SELECT name FROM sessions WHERE end_time IS NULL ORDER BY start_time DESC LIMIT 1'),
           db.query('SELECT name FROM tenants WHERE id = $1', [req.tenantId]),
+          loadCategoryOrder(db),
         ]);
+        const products = sortByCategoryOrder(found, order);
         return { tenantName: tenant?.name ?? null, sessionName: sessions[0]?.name || null, products };
       });
       res.json(data);
@@ -41,10 +44,25 @@ export default function productRoutes(broadcast) {
   router.get('/', authenticate, tenantScope, async (req, res) => {
     try {
       const { rows } = await req.db.query('SELECT * FROM products ORDER BY category, name');
-      res.json(rows);
+      res.json(sortByCategoryOrder(rows, await loadCategoryOrder(req.db)));      // nell'ordine delle categorie scelto dal locale
     } catch (err) {
       logger.error({ err }, 'Errore caricamento prodotti');
       res.status(500).json({ error: 'Errore caricamento prodotti' });
+    }
+  });
+
+  // PUT /api/products/category-order — l'ordine delle categorie (barra dei filtri, gruppi del Menu, menu QR), scelto dall'amministratore.
+  // Prima di `/:id`, che altrimenti lo prenderebbe per un id. Arriva a tutti i dispositivi, che riordinano l'elenco senza ricaricare.
+  router.put('/category-order', authenticate, authorizeAdmin, validate({ body: categoryOrderSchema }), tenantScope, async (req, res) => {
+    const { order } = req.body;
+    try {
+      await req.db.query('INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (tenant_id, key) DO UPDATE SET value = $2', [CATEGORY_ORDER_KEY, JSON.stringify(order)]);
+      await logAudit(req.db, req.user.id, 'UPDATE_CATEGORY_ORDER', { categories: order.length });
+      broadcast?.(req.user.tenantId, { type: 'category_order_updated', order, by: req.user.id });
+      res.json({ order });
+    } catch (err) {
+      logger.error({ err }, 'Errore PUT category-order');
+      res.status(500).json({ error: 'Errore salvataggio ordine delle categorie' });
     }
   });
 

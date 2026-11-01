@@ -3,7 +3,7 @@ import { modeOf } from './availability.js';
 // Cosa mostra l'elenco dei prodotti, senza grafica (provato in catalogView.test.js): i gruppi per categoria con i filtri, i conti dei
 // nascosti e la selezione di più prodotti.
 export const isHidden = (product) => product.visible === false;
-const categoryOf = (product) => product.category || 'Generico';   // come nella carta della cassa
+export const categoryOf = (product) => product.category || 'Generico';   // come nella carta della cassa
 
 export const isSoldOut = (product) => modeOf(product) === 'soldout';
 

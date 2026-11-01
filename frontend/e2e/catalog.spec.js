@@ -181,3 +181,38 @@ test('listino della sagra: «Seleziona» nasconde e mostra una categoria intera'
   await expect(page.getByRole('tab', { name: /^Nascosti/ })).toHaveCount(0);           // niente più nascosti: il filtro sparisce
   await expect(page.getByRole('switch', { name: 'Visibile: Birra' })).toHaveAttribute('aria-checked', 'true');
 });
+
+// L'ordine delle categorie lo sceglie il locale: si riordinano dal Menu e le tessere dei filtri in cassa (anche su un altro dispositivo) lo seguono.
+test('listino della sagra: si riordinano le categorie e la cassa le segue', async ({ page }) => {
+  const { festival } = seed();
+  await login(page, festival.host, festival.admin);
+  const other = await page.context().newPage();                                                       // un'altra cassa, già aperta
+  await other.goto(`${urlOf(festival.host)}/`);
+  const cassaTabs = other.getByRole('tablist', { name: 'Categoria' }).getByRole('tab');
+  await expect(cassaTabs.nth(1)).toHaveText('Bevande');                                               // di partenza: alfabetico
+
+  await page.goto(`${page.url().split('/').slice(0, 3).join('/')}/config`);
+  const menuTabs = page.getByRole('tablist', { name: 'Categorie' }).getByRole('tab');
+  await expect(menuTabs.nth(1)).toHaveText('Bevande');
+  await page.getByRole('button', { name: 'Riordina le categorie' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Ordine delle categorie' });
+  await expect(dialog.getByRole('button', { name: 'Salva' })).toBeDisabled();                         // finché non cambia niente
+  const handles = dialog.getByRole('button', { name: 'Trascina per riordinare' });
+  await handles.last().focus();                                                                       // «Panini» in fondo: con le frecce sale in cima
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowUp');
+  await shot(page, 'catalog-07-ordine-categorie');
+  await dialog.getByRole('button', { name: 'Salva' }).click();
+  await expect(page.getByText('Ordine delle categorie salvato')).toBeVisible();
+
+  await expect(menuTabs.nth(1)).toHaveText('Panini');                                                 // il Menu
+  await expect(cassaTabs.nth(1)).toHaveText('Panini', { timeout: 10_000 });                           // la cassa, senza ricaricare
+
+  // si rimette com'era
+  await page.getByRole('button', { name: 'Riordina le categorie' }).click();
+  await page.getByRole('dialog', { name: 'Ordine delle categorie' }).getByRole('button', { name: 'Trascina per riordinare' }).first().focus();
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
+  await page.getByRole('dialog', { name: 'Ordine delle categorie' }).getByRole('button', { name: 'Salva' }).click();
+  await expect(menuTabs.nth(1)).toHaveText('Bevande');
+  await expect(cassaTabs.nth(1)).toHaveText('Bevande', { timeout: 10_000 });
+});
+

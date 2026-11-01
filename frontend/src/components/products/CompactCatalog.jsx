@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { Plus, ListChecks, UtensilsCrossed } from 'lucide-react';
+import { Plus, ListChecks, UtensilsCrossed, ArrowUpDown } from 'lucide-react';
 import Segmented from '../../smarteats/floor/Segmented';
 import SearchField from '../shared/SearchField';
-import { btn, btnPrimary } from '../../smarteats/floor/ui';
+import { btn, btnPrimary, iconBtnField } from '../../smarteats/floor/ui';
 import CatalogRow from './CatalogRow';
 import SelectionBar from './SelectionBar';
+import CategoryOrderModal from './CategoryOrderModal';
 import { COLUMNS, COLUMNS_WITH_RECIPE } from './columns';
-import { buildGroups, categoriesOf, viewOptions, effectiveView, toggleMany, allSelected, plural } from './catalogView';
+import { categoryOf, buildGroups, categoriesOf, viewOptions, effectiveView, toggleMany, allSelected, plural } from './catalogView';
 
 // L'elenco dei prodotti, uguale nella sagra e nel ristorante: cerca, categorie, filtro per stato e un prodotto per riga (le regole di cosa
 // mostrare sono in `catalogView.js`, la riga in `CatalogRow.jsx`). Nessun prodotto sparisce: i nascosti restano in elenco, in grigio e con
@@ -14,13 +15,14 @@ import { buildGroups, categoriesOf, viewOptions, effectiveView, toggleMany, allS
 // insieme (a inizio serata) c'è «Seleziona»: si spuntano le righe (o «Tutti» quelle in elenco: scelta prima una categoria, è la categoria intera) e la barra in fondo mostra o nasconde.
 // `noun`: come si chiamano in questo locale («piatto» al ristorante, «prodotto» in sagra). `recipes` ({ summaryOf, onOpen }, solo nei locali
 // con le ricette): ogni riga ha il pulsante «Ricetta» e dice se la ricetta c'è.
-const CompactCatalog = ({ products, courses, recipes, noun = 'prodotto', onAdd, onEdit, onDelete, onToggleVisible, onAvailability, onSetManyVisible }) => {
+const CompactCatalog = ({ products, courses, recipes, noun = 'prodotto', onAdd, onEdit, onDelete, onToggleVisible, onAvailability, onSetManyVisible, onReorderCategories }) => {
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [chosenView, setChosenView] = useState('all');
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [ordering, setOrdering] = useState(false);          // la finestra per riordinare le categorie
 
   const courseName = new Map((courses ?? []).map(c => [c.id, c.name]));
   const categories = categoriesOf(products);
@@ -59,7 +61,10 @@ const CompactCatalog = ({ products, courses, recipes, noun = 'prodotto', onAdd, 
       </div>
 
       {categories.length > 1 && (
-        <Segmented scroll label="Categorie" value={category} onChange={setCategory} options={[{ id: 'all', label: 'Tutte' }, ...categories.map(c => ({ id: c, label: c }))]} />
+        <div className="flex items-center gap-2">
+          <Segmented scroll label="Categorie" className="flex-1 min-w-0" value={category} onChange={setCategory} options={[{ id: 'all', label: 'Tutte' }, ...categories.map(c => ({ id: c, label: c }))]} />
+          {onReorderCategories && <button type="button" onClick={() => setOrdering(true)} className={iconBtnField} aria-label="Riordina le categorie" title="Riordina le categorie"><ArrowUpDown size={18} /></button>}
+        </div>
       )}
       {options.length > 0 && (
         <Segmented scroll label={`Quali ${plural(noun)} mostrare`} className="w-fit max-w-full" value={view} onChange={setChosenView} options={options} />
@@ -84,6 +89,9 @@ const CompactCatalog = ({ products, courses, recipes, noun = 'prodotto', onAdd, 
         </div>
       )}
 
+      {ordering && (
+        <CategoryOrderModal categories={categories} counts={Object.fromEntries(categories.map(c => [c, products.filter(p => categoryOf(p) === c).length]))} onSave={onReorderCategories} onClose={() => setOrdering(false)} />
+      )}
       {selecting && (
         <SelectionBar count={selected.length} noun={noun} busy={busy} everySelected={allSelected(selected, shownIds)}
           onToggleAll={() => setSelected(prev => toggleMany(prev, shownIds))} onShow={() => apply(true)} onHide={() => apply(false)} onDone={startOrStop} />

@@ -74,4 +74,28 @@ describe('prodotti: scorta e visibilità arrivano a tutti i dispositivi', () => 
     assert.equal(seen[2].id, id);
     assert.ok(seen.every(m => m.by === t.userId), 'ogni avviso dice chi l\'ha fatto');
   });
+
+  it('l\'ordine delle categorie lo sceglie l\'amministratore, vale per tutti gli elenchi e arriva a tutti i dispositivi', async () => {
+    await adminDb.query(`INSERT INTO products (tenant_id, name, price, category, color, print_destination) VALUES ($1, 'Birra', 4, 'Bevande', '#00f', 'bar'), ($1, 'Tiramisù', 4, 'Dolci', '#f0f', 'kitchen')`, [t.id]);
+    const order = async (client) => [...new Set((await client.get('/products')).body.map(p => p.category))];
+    const before = await order(admin);
+    assert.deepEqual(before, [...before].sort((a, b) => a.localeCompare(b)), 'senza ordine scelto: alfabetico, come sempre');
+
+    const mark = staff.messages.length;
+    const wanted = ['Dolci', 'Bevande', ...before.filter(c => !['Dolci', 'Bevande'].includes(c))];
+    assert.equal((await cashier.request('PUT', '/products/category-order', { order: wanted })).status, 403, 'solo l\'amministratore');
+    assert.equal((await admin.request('PUT', '/products/category-order', { order: ['A', 'a'] })).status, 400, 'categorie ripetute');
+    const saved = await admin.request('PUT', '/products/category-order', { order: wanted });
+    assert.equal(saved.status, 200, JSON.stringify(saved.body));
+    assert.deepEqual((await order(cashier)).slice(0, 2), ['Dolci', 'Bevande'], 'lo vede anche la cassa');
+    const menu = await apiClient(server.port, t.host).get('/products/menu').catch(() => null);
+    if (menu?.status === 200) assert.deepEqual([...new Set(menu.body.products.map(p => p.category))].slice(0, 2), ['Dolci', 'Bevande']);
+    await sleep(150);
+    const ev = staff.messages.slice(mark).find(m => m.type === 'category_order_updated');
+    assert.deepEqual(ev.order, wanted);
+    assert.equal(ev.by, t.userId);
+    await admin.request('PUT', '/products/category-order', { order: [] });                        // si rimette com'era
+    assert.deepEqual(await order(admin), before);
+  });
 });
+

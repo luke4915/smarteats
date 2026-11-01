@@ -1,6 +1,7 @@
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { buildPayload, stockProblem, stockUpdateOf } from './productForm';
+import { sortByCategoryOrder } from '../../utils/categoryOrder';
 
 // Le azioni sui prodotti che parlano col server (salva, mostra/nascondi, elimina). Ognuna aggiorna l'elenco `products`
 // in memoria e avvisa con un messaggio; ritorna `true` se è andata a buon fine.
@@ -65,6 +66,16 @@ export function useProductActions({ setProducts, hasModifierGroups, onModifiersS
     } catch (err) { return fail(err, "Errore durante l'aggiornamento della visibilità"); }
   };
 
+  // L'ordine delle categorie (barra dei filtri in cassa e in sala, gruppi del Menu): il server lo salva e lo manda a tutti i dispositivi.
+  const saveCategoryOrder = async (order) => {
+    try {
+      await fetchWithAuth('/products/category-order', { method: 'PUT', body: { order } });
+      setProducts(prev => sortByCategoryOrder(prev, order));
+      showToast('Ordine delle categorie salvato', 'success');
+      return true;
+    } catch (err) { return fail(err, "Impossibile salvare l'ordine delle categorie"); }
+  };
+
   const remove = async (product) => {
     try {
       await fetchWithAuth(`/products/${product.id}`, { method: 'DELETE' });
@@ -74,5 +85,5 @@ export function useProductActions({ setProducts, hasModifierGroups, onModifiersS
     } catch (err) { return fail(err, 'Impossibile eliminare il prodotto'); }
   };
 
-  return { save, toggleVisibility, setManyVisible, remove };
+  return { save, toggleVisibility, setManyVisible, saveCategoryOrder, remove };
 }

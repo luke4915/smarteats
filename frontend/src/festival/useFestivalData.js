@@ -38,6 +38,7 @@ export function useFestivalData(user) {
       case 'product_updated': setProducts(prev => applyProductEvent(prev, msg)); if (msg.by !== user?.id) showToast(`"${msg.product.name}" aggiornato!`, 'success'); break;
       case 'product_created': setProducts(prev => applyProductEvent(prev, msg)); if (msg.by !== user?.id) showToast('Nuovo prodotto aggiunto!', 'success'); break;
       case 'product_deleted': setProducts(prev => applyProductEvent(prev, msg)); if (msg.by !== user?.id) showToast('Prodotto rimosso!', 'warning'); break;
+      case 'category_order_updated':
       case 'product_stock_updated': setProducts(prev => applyProductEvent(prev, msg)); break;
       // L'apertura della serata azzera lo stock lato server: ricarichiamo il catalogo.
       case 'session_started': applySession({ id: msg.session.id, name: msg.session.name }); loadProducts(); break;
