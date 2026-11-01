@@ -216,3 +216,27 @@ test('listino della sagra: si riordinano le categorie e la cassa le segue', asyn
   await expect(cassaTabs.nth(1)).toHaveText('Bevande', { timeout: 10_000 });
 });
 
+// Il trascinamento: al rilascio la riga resta dove la si lascia, senza saltare (a riposo le righe non hanno transizioni).
+test('listino della sagra: trascinando una categoria, al rilascio non c\'è nessun salto', async ({ page }) => {
+  const { festival } = seed();
+  await login(page, festival.host, festival.admin);
+  await page.goto(`${page.url().split('/').slice(0, 3).join('/')}/config`);
+  await page.getByRole('button', { name: 'Riordina le categorie' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Ordine delle categorie' });
+  const names = () => dialog.getByRole('listitem').allInnerTexts().then(l => l.map(t => t.split('\n').find(x => x.trim() && !/^\d+$/.test(x.trim()))?.trim()));
+  const before = await names();
+  const handle = await dialog.getByRole('button', { name: 'Trascina per riordinare' }).first().boundingBox();
+  const rows = await dialog.getByRole('listitem').first().boundingBox();
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + (rows.height + 8) * 2, { steps: 12 });
+  await page.mouse.up();
+  await page.waitForTimeout(400);
+  const after = await names();
+  expect(after).toEqual([before[1], before[2], before[0], ...before.slice(3)]);                      // la prima è scesa di due posti
+  // a riposo nessuna riga ha transizioni né scostamenti: niente animazione «all'indietro» dopo il rilascio
+  const resting = await dialog.getByRole('listitem').evaluateAll(els => els.map(el => [getComputedStyle(el).transitionDuration, el.style.transform]));
+  expect(resting.every(([duration, transform]) => duration === '0s' && !transform)).toBe(true);
+  await dialog.getByRole('button', { name: 'Annulla' }).click();
+});
+
