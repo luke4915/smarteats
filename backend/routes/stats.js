@@ -3,7 +3,7 @@ import { authenticate, authorizeRoles } from '../middleware/authenticate.js';
 import { validate } from '../middleware/validate.js';
 import { tenantScope } from '../middleware/tenantScope.js';
 import logger from '../logger.js';
-import { statsQuerySchema, sharedProductsQuerySchema, headToHeadQuerySchema } from '../schemas/statsSchema.js';
+import { statsQuerySchema, compareQuerySchema, matrixQuerySchema } from '../schemas/statsSchema.js';
 import { requireModule } from '../utils/tenantModules.js';
 import { COMPLETED_ITEMS, LINE_REVENUE } from '../utils/statsSql.js';
 import { isRevenue, isKitchenOrder } from '../utils/revenue.js';
@@ -11,6 +11,8 @@ import { buildStats } from '../utils/stats.js';
 import { buildRestaurantStats } from '../utils/restaurantStats.js';
 import { buildOccupancy, buildBookingStats } from '../utils/occupancy.js';
 import { requireUnlocked } from '../utils/reservedData.js';
+import { loadComparison } from '../utils/sessionComparisonDb.js';
+import { loadMenuMatrix } from '../utils/menuMatrixDb.js';
 
 const router = express.Router();
 
@@ -129,46 +131,26 @@ router.get('/restaurant', authenticate, requireModule('stats'), requireModule('t
   }
 });
 
-// GET /api/stats/shared-products?a=1&b=2 — prodotti venduti in entrambe le serate (o in tutte, se non se ne scelgono due)
-router.get('/shared-products', authenticate, requireModule('stats'), authorizeStats, validate({ query: sharedProductsQuerySchema }), tenantScope, requireUnlocked, async (req, res) => {
-  const { a, b } = req.validQuery;
+// GET /api/stats/compare?a=1&b=2&tz=Europe/Rome — il confronto tra due serate: numeri di ciascuna, ogni prodotto affiancato e le ore.
+router.get('/compare', authenticate, requireModule('stats'), authorizeStats, validate({ query: compareQuerySchema }), tenantScope, requireUnlocked, async (req, res) => {
+  const { a, b, tz } = req.validQuery;
   try {
-    const { rows } = await req.db.query(
-      `SELECT i.product_id AS id, COALESCE(p.name, MAX(i.name)) AS name
-       ${COMPLETED_ITEMS}
-         AND ($1::int IS NULL OR $2::int IS NULL OR o.session_id IN ($1, $2))
-       GROUP BY i.product_id, p.name
-       HAVING $1::int IS NULL OR $2::int IS NULL
-          OR (COUNT(DISTINCT o.session_id) FILTER (WHERE o.session_id = $1) > 0
-          AND COUNT(DISTINCT o.session_id) FILTER (WHERE o.session_id = $2) > 0)
-       ORDER BY 2`, [a ?? null, b ?? null]);
-    res.json(rows.map((r) => ({ id: Number(r.id), name: r.name }))); // bigint arriva come stringa
+    const result = await loadComparison(req.db, a, b, tz);
+    if (!result) return res.status(404).json({ error: 'Una delle due serate non esiste' });
+    res.json(result);
   } catch (err) {
-    logger.error({ err }, 'Errore GET /api/stats/shared-products');
-    res.status(500).json({ error: 'Errore nel caricamento dei prodotti' });
+    logger.error({ err }, 'Errore GET /api/stats/compare');
+    res.status(500).json({ error: 'Errore nel confronto' });
   }
 });
 
-// GET /api/stats/head-to-head?a=1&b=2&product=7 — quantità e incasso di un prodotto in due serate
-router.get('/head-to-head', authenticate, requireModule('stats'), authorizeStats, validate({ query: headToHeadQuerySchema }), tenantScope, requireUnlocked, async (req, res) => {
-  const { a, b, product } = req.validQuery;
+// GET /api/stats/menu-matrix?sessions=1,2 — la matrice del menu: ogni prodotto per popolarità e rendimento (margine, o prezzo senza ricette).
+router.get('/menu-matrix', authenticate, requireModule('stats'), authorizeStats, validate({ query: matrixQuerySchema }), tenantScope, requireUnlocked, async (req, res) => {
   try {
-    const { rows } = await req.db.query(
-      `SELECT o.session_id, SUM(i.quantity) AS quantity, SUM(${LINE_REVENUE}) AS revenue
-       ${COMPLETED_ITEMS} AND o.session_id IN ($1, $2) AND i.product_id = $3
-       GROUP BY o.session_id`, [a, b, product]);
-    const of = (id) => {
-      const row = rows.find((r) => r.session_id === id);
-      return { qty: Number(row?.quantity ?? 0), revenue: parseFloat(Number(row?.revenue ?? 0).toFixed(2)) };
-    };
-    const A = of(a), B = of(b);
-    res.json([
-      { metric: 'Quantità venduta', A: A.qty, B: B.qty },
-      { metric: 'Incasso (€)', A: A.revenue, B: B.revenue },
-    ]);
+    res.json(await loadMenuMatrix(req.db, req.validQuery.sessions?.length ? req.validQuery.sessions : null));
   } catch (err) {
-    logger.error({ err }, 'Errore GET /api/stats/head-to-head');
-    res.status(500).json({ error: 'Errore nel confronto' });
+    logger.error({ err }, 'Errore GET /api/stats/menu-matrix');
+    res.status(500).json({ error: 'Errore nel calcolo della matrice del menu' });
   }
 });
 

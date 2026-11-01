@@ -90,13 +90,25 @@ describe('statistiche e paginazione', () => {
     assert.ok(!('confrontoSerate' in s), 'il confronto tra serate non si calcola più');
   });
 
-  it('confronto tra due serate', async () => {
-    const shared = (await admin.get(`/stats/shared-products?a=${s1}&b=${s2}`)).body;
-    assert.deepEqual(shared.map(p => p.id), [t.productId]); // la birra è venduta solo venerdì
-    const all = (await admin.get('/stats/shared-products')).body;
-    assert.equal(all.length, 3);
-    const h2h = (await admin.get(`/stats/head-to-head?a=${s1}&b=${s2}&product=${t.productId}`)).body;
-    assert.deepEqual(h2h, [{ metric: 'Quantità venduta', A: 3, B: 3 }, { metric: 'Incasso (€)', A: 10, B: 15 }]);
+  it('confronto tra due serate: numeri, prodotti affiancati (anche chi c\'era solo in una) e ore', async () => {
+    const r = (await admin.get(`/stats/compare?a=${s1}&b=${s2}&tz=Europe/Rome`)).body;
+    assert.deepEqual([r.a.id, r.b.id], [s1, s2]);
+    assert.ok(r.a.orders > 0 && r.a.revenue > 0);
+    const panino = r.products.find(p => p.id === t.productId);
+    assert.deepEqual([panino.a.qty, panino.b.qty, panino.a.revenue, panino.b.revenue, panino.status], [3, 3, 10, 15, 'both']);
+    assert.ok(r.products.some(p => p.status === 'gone'), 'la birra è venduta solo venerdì');
+    assert.ok(r.hours.length > 0 && r.hours.every(h => 'a' in h && 'b' in h));
+    const swapped = (await admin.get(`/stats/compare?a=${s2}&b=${s1}`)).body;
+    assert.equal(swapped.products.find(p => p.id === t.productId).a.revenue, 15, 'scambiando A e B si scambiano i lati');
+  });
+
+  it('matrice del menu: ogni prodotto per vendite e rendimento, sulle serate scelte o su tutte', async () => {
+    const m = (await admin.get('/stats/menu-matrix')).body;
+    assert.ok(['price', 'margin'].includes(m.mode));
+    assert.equal(typeof m.enough, 'boolean');
+    const one = (await admin.get(`/stats/menu-matrix?sessions=${s1}`)).body;
+    assert.equal(one.enough, false, 'con pochi prodotti non si classifica nulla');
+    assert.equal((await admin.get('/stats/menu-matrix?sessions=abc')).status, 400);
   });
 
   it('righe vecchie e irregolari (senza line_total, id fuori catalogo o enorme) non rompono le statistiche', async () => {
@@ -113,7 +125,7 @@ describe('statistiche e paginazione', () => {
     const storico = res.body.topProdotti.find(p => p.prodotto === 'Prodotto storico');
     assert.ok(storico, 'la riga con id non numerico c\'è');
     assert.equal(storico.count, 2);
-    assert.equal((await admin.get('/stats/shared-products')).status, 200);
+    assert.equal((await admin.get('/stats/menu-matrix')).status, 200);
     // l'ordine di prova non deve alterare gli altri test
     await adminDb.query('DELETE FROM order_items WHERE order_id = $1', [oddId]);
     await adminDb.query('DELETE FROM orders WHERE id = $1', [oddId]);
@@ -122,7 +134,11 @@ describe('statistiche e paginazione', () => {
   it('parametri non validi e permessi', async () => {
     assert.equal((await admin.get('/stats?sessions=abc')).status, 400);
     assert.equal((await admin.get('/stats?tz=Marte/Olimpo')).status, 400);
-    assert.equal((await admin.get(`/stats/head-to-head?a=${s1}`)).status, 400);
+    assert.equal((await admin.get(`/stats/compare?a=${s1}`)).status, 400);
+    assert.equal((await admin.get(`/stats/compare?a=${s1}&b=${s1}`)).status, 400, 'due serate diverse');
+    assert.equal((await admin.get(`/stats/compare?a=${s1}&b=999999999`)).status, 404);
+    assert.equal((await cashier.get(`/stats/compare?a=${s1}&b=${s2}`)).status, 403);
+    assert.equal((await cashier.get('/stats/menu-matrix')).status, 403);
     assert.equal((await cashier.get('/stats')).status, 403);
   });
 

@@ -38,13 +38,14 @@ export function linesCsv(orders, tz) {
   const lines = [LINE_HEADERS.join(';')];
   for (const order of orders) {
     const { date, time } = dateAndTime(order.created_at, tz);
-    for (const item of order.items) {
+    // Il totale dell'ordine compare solo sulla prima riga: ripetuto su ogni riga, sommare la colonna in Excel conterebbe più volte lo stesso ordine
+    for (const [index, item] of order.items.entries()) {
       const qty = Number(item.quantity || 0);
       lines.push([
         order.id, esc(order.display_code), date, time, esc(originOf(order)), order.is_takeaway ? 'Sì' : 'No',
         esc(item.name), esc(item.category || 'Generico'), esc((item.modifiers ?? []).map(m => m.name).join(' + ')), qty,
         fmt(item.price), KIND[item.type] ?? 'Vendita', fmt(givenAway(item)), fmt(item.line_total ?? qty * Number(item.price || 0)),
-        esc(item.note), fmt(order.total),
+        esc(item.note), index === 0 ? fmt(order.total) : '',
       ].join(';'));
     }
   }
