@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import Modal from './Modal';
-import { btn } from '../../smarteats/floor/ui';
+import { btn } from './styles';
 import { formatEuro } from '../../utils/format';
 import { useToast } from '../../context/useToast';
 import { listFailedOrders, retryFailedOrder, discardFailedOrder } from '../../offline/failedOrders';

@@ -1,4 +1,4 @@
-import { btn } from '../../smarteats/floor/ui';
+import { btn } from './styles';
 
 // I pulsanti in fondo a una finestra (il `footer` di `Modal`), uguali ovunque: «Annulla» e l'azione a destra (sul telefono in
 // due metà a tutta larghezza).

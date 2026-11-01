@@ -15,7 +15,7 @@ test('solo documenti: niente da provare', () => {
 });
 
 test('una schermata: solo i test nel browser che la attraversano, nessun test col database', () => {
-  const r = selectTests(['frontend/src/smarteats/floorplan/FloorEditor.jsx'], TESTS);
+  const r = selectTests(['frontend/src/modules/tables/floorplan/FloorEditor.jsx'], TESTS);
   assert.deepEqual([r.code, r.full, r.integration, r.e2e], [true, false, [], ['floorplan.spec.js']]);
 });
 
@@ -41,7 +41,7 @@ test('componenti condivisi o file sconosciuti del frontend: tutti i test nel bro
 });
 
 test('più file insieme: le scelte si sommano senza doppioni', () => {
-  const r = selectTests(['frontend/src/smarteats/takeaway/NewOrder.jsx', 'frontend/src/smarteats/catalog/CatalogPage.jsx', 'frontend/src/smarteats/takeaway/TakeawayPage.jsx'], TESTS);
+  const r = selectTests(['frontend/src/modules/takeaway/NewOrder.jsx', 'frontend/src/modules/catalog/CatalogPage.jsx', 'frontend/src/modules/takeaway/TakeawayPage.jsx'], TESTS);
   assert.deepEqual(r.e2e, ['catalog.spec.js', 'takeaway-shop.spec.js', 'takeaway.spec.js']);
 });
 

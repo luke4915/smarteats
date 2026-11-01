@@ -1,6 +1,6 @@
 import Modal from './Modal';
 import ModalActions from './ModalActions';
-import { btnPrimary } from '../../smarteats/floor/ui';
+import { btnPrimary } from './styles';
 
 // La domanda «Vendi comunque?» (vedi hooks/useForceSale.js): un ingrediente è finito o non basta, ma chi gestisce può decidere di vendere.
 const ForceSaleDialog = ({ message, onAnswer }) => (

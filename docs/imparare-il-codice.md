@@ -20,23 +20,23 @@ Tutti si vedono in file piccoli del progetto.
 | **Props** | I dati che un componente riceve dal genitore, come attributi: `<Switch checked={on} label="…" />`. | `Switch.jsx`, `ActionMenu.jsx` |
 | **State** (`useState`) | Un valore che il componente ricorda; quando cambia, la schermata si ridisegna. | `hooks/useTheme.js`, `floor/FloorView.jsx` (la sala scelta) |
 | **Effetto** (`useEffect`) | Codice che gira *dopo* che la schermata è comparsa o quando un valore cambia (caricare dati, ascoltare eventi). | `hooks/usePageTitle.js` |
-| **Hook personalizzato** | Una funzione `useXxx` che raccoglie state ed effetti per riusarli. | `smarteats/reservations/useBookings.js`, `festival/useFestivalData.js` |
+| **Hook personalizzato** | Una funzione `useXxx` che raccoglie state ed effetti per riusarli. | `modules/bookings/useBookings.js`, `apps/stand/useFestivalData.js` |
 | **Liste** | `.map()` per disegnare un elemento per ogni dato, con `key`. | `components/master/TenantCard.jsx` nell'elenco di `MasterPage.jsx` |
 | **Rendering condizionale** | `{cond && <X />}` o `cond ? <A /> : <B />`. | ovunque |
-| **Routing** | Un indirizzo = una pagina (`react-router-dom`). | `smarteats/app/SmartEatsApp.jsx` |
+| **Routing** | Un indirizzo = una pagina (`react-router-dom`). | `apps/restaurant/SmartEatsApp.jsx` |
 Regola d'oro: **la schermata è una funzione dei dati** (props + state). Non si «modifica» la pagina: si cambia un dato e React la ridisegna.
 
 ## 3. I concetti di JavaScript che servono davvero
 `const`/`let`, funzioni e funzioni freccia `(x) => x + 1`, oggetti e array, **destrutturazione** (`const { a, b } = obj`), **spread** (`{ ...obj, a: 1 }`), `map`/`filter`/`find`/`reduce`, `async`/`await` e le Promise, `try`/`catch`, i moduli (`import`/`export`). Quasi tutto il codice del progetto usa solo questo.
 
 ## 4. Un percorso di lettura (dal più facile)
-1. `frontend/src/smarteats/floor/seats.js` e `seats.test.js`: funzioni **pure** (nessuna grafica), con i test che spiegano ogni caso. Leggi prima il test.
+1. `frontend/src/modules/tables/floor/seats.js` e `seats.test.js`: funzioni **pure** (nessuna grafica), con i test che spiegano ogni caso. Leggi prima il test.
 2. `frontend/src/components/shared/Switch.jsx`: il componente più piccolo.
 3. `frontend/src/hooks/usePageTitle.js` e `useTheme.js`: i primi hook.
 4. `frontend/src/components/shell/SectionsPage.jsx`: un componente con state e liste.
-5. `frontend/src/smarteats/reservations/useBookings.js`: come si caricano i dati dal server.
-6. `frontend/src/smarteats/floor/FloorView.jsx`: una schermata vera.
-7. `frontend/src/smarteats/floor/FloorPage.jsx`: come più componenti si parlano (stato in alto, props in basso).
+5. `frontend/src/modules/bookings/useBookings.js`: come si caricano i dati dal server.
+6. `frontend/src/modules/tables/floor/FloorView.jsx`: una schermata vera.
+7. `frontend/src/modules/tables/floor/FloorPage.jsx`: come più componenti si parlano (stato in alto, props in basso).
 8. Lato server: `backend/routes/rooms.js` (una route), poi `backend/utils/occupancy.js` (logica pura) e i suoi test.
 Le regole del progetto e la mappa delle cartelle sono in `CLAUDE.md` (§2 e seguenti).
 

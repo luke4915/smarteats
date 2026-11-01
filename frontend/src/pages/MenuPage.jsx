@@ -8,7 +8,7 @@ import { CategoryChips, ProductRows } from '../components/public/MenuList';
 import Modal from '../components/shared/Modal';
 import ModalActions from '../components/shared/ModalActions';
 import { useSystemTheme } from '../hooks/useSystemTheme';
-import { btn, btnPrimary, btnDanger } from '../smarteats/floor/ui';
+import { btn, btnPrimary, btnDanger } from '../components/shared/styles';
 import { formatEuro } from '../utils/format';
 import Loading from '../components/shared/Loading';
 import SearchField from '../components/shared/SearchField';

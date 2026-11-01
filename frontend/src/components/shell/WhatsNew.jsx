@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/useAuth';
 import Modal from '../shared/Modal';
-import { btnPrimary } from '../../smarteats/floor/ui';
+import { btnPrimary } from '../shared/styles';
 import { CHANGELOG } from '../../changelog';
 import { APP_VERSION } from '../../utils/appVersion';
 import { entriesToShow } from '../../utils/whatsNew';

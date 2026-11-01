@@ -11,8 +11,8 @@ import { useAuth } from '../../context/useAuth';
 import { termsFor } from '../../utils/terms';
 import { PageHeader, PageBody } from './PageHeader';
 import ExportModal from './statistics/ExportModal';
-import Segmented from '../../smarteats/floor/Segmented';
-import { btn } from '../../smarteats/floor/ui';
+import Segmented from './Segmented';
+import { btn } from './styles';
 import ScrollRow from './ScrollRow';
 import Loading from './Loading';
 

@@ -3,9 +3,9 @@ import { Pencil, Check, X, Plus, Trash2, Power, ListPlus, LayoutTemplate } from 
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import TableRow from './TableRow';
-import FloorEditor from '../../smarteats/floorplan/FloorEditor';
+import FloorEditor from '../../modules/tables/floorplan/FloorEditor';
 import SeatsRange from './SeatsRange';
-import { rangeBody } from '../../smarteats/floor/seats';
+import { rangeBody } from '../../modules/tables/floor/seats';
 
 // Una sala con i suoi tavoli: rinomina, attiva/disattiva, elimina (se vuota), aggiunta di un tavolo o di più in serie.
 const inputClass = 'p-2.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] placeholder:text-[var(--text-muted)]';

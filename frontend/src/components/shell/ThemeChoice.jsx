@@ -1,4 +1,4 @@
-import Segmented from '../../smarteats/floor/Segmented';
+import Segmented from '../shared/Segmented';
 import { THEME_CHOICES } from '../../utils/theme';
 
 // La scelta dell'aspetto (Auto, Chiaro, Scuro), uguale nel menu dell'account e nelle impostazioni del dispositivo.

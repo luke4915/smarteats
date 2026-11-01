@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import ModulePicker from './ModulePicker';
 import TempPasswordField from '../shared/TempPasswordField';
-import Segmented from '../../smarteats/floor/Segmented';
-import { btnPrimary, input } from '../../smarteats/floor/ui';
+import Segmented from '../shared/Segmented';
+import { btnPrimary, input } from '../shared/styles';
 import { LICENSE_PRESETS, slugify, addressOf } from './licenseStatus';
 import Loading from '../shared/Loading';
 

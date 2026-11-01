@@ -1,7 +1,7 @@
 import { LockOpen } from 'lucide-react';
 import UnlockCard from './UnlockCard';
 import { unlockedUntilLabel } from './reservedLabels';
-import { btn } from '../../smarteats/floor/ui';
+import { btn } from './styles';
 import { useReservedData } from '../../context/useReservedData';
 import { useToast } from '../../context/useToast';
 import Loading from './Loading';

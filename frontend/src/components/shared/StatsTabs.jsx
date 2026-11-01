@@ -1,11 +1,11 @@
 import { useState, lazy, Suspense } from 'react';
-import Segmented from '../../smarteats/floor/Segmented';
+import Segmented from './Segmented';
 import { PageHeader, PageBody } from './PageHeader';
 import { useAuth } from '../../context/useAuth';
 import { canViewInventoryStats } from '../layout/viewRoles';
 import Loading from './Loading';
 
-const ReportPanel = lazy(() => import('../../inventory/ReportPanel'));
+const ReportPanel = lazy(() => import('../../modules/inventory/ReportPanel'));
 
 // Statistiche: le vendite (la pagina del locale) e, dove c'è il magazzino con gli ingredienti, la scheda «Magazzino» con costi,
 // margini, scarti e acquisti. Tutte le statistiche stanno qui; senza magazzino compare solo la pagina delle vendite, senza schede.

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Save } from 'lucide-react';
-import { btnPrimary } from '../../smarteats/floor/ui';
+import { btnPrimary } from '../shared/styles';
 import { apiFetch } from '../../utils/apiClient';
 import ModulePicker from './ModulePicker';
 

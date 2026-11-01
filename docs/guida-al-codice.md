@@ -8,7 +8,7 @@ Questa guida serve a ritrovarti nel progetto e a fare modifiche piccole **senza 
 - Mettere online, rilasciare, gestire il server: [`docs/rilasci.md`](rilasci.md), [`docs/deployment.md`](deployment.md), [`docs/promemoria-operativo.md`](promemoria-operativo.md).
 - Imparare React e JavaScript sul codice vero: [`docs/imparare-il-codice.md`](imparare-il-codice.md).
 
-**Un trucco per orientarsi:** dentro una cartella di `smarteats/` i file con la `P` maiuscola (`ReservationsPage.jsx`) sono **schermate/componenti**; quelli in minuscolo (`rules.js`, `timeline.js`, `calendar.js`) sono **logica pura** (calcoli senza grafica) e hanno quasi sempre accanto un file `.test.js` che ne spiega il comportamento con degli esempi: leggi i test per capire cosa fa una funzione.
+**Un trucco per orientarsi:** dentro una cartella di `modules/` i file con la `P` maiuscola (`ReservationsPage.jsx`) sono **schermate/componenti**; quelli in minuscolo (`rules.js`, `timeline.js`, `calendar.js`) sono **logica pura** (calcoli senza grafica) e hanno quasi sempre accanto un file `.test.js` che ne spiega il comportamento con degli esempi: leggi i test per capire cosa fa una funzione.
 
 ## 1. Prima di salvare: il controllo
 
@@ -27,10 +27,10 @@ Per cercare codice che non serve più: `node scripts/find-dead-code.mjs` (elenca
 Cerca il testo in tutto il progetto (il metodo è in `docs/imparare-il-codice.md`, §1), per esempio `Nuovo piatto`: sta tra virgolette in un file `.jsx`. Cambialo e salva. Se il testo compare in più file, cambia quello giusto guardando il nome del file (es. `catalog/…`). **Non cambiare** i valori tecnici in inglese (`confirmed`, `cashier`…): quelli viaggiano tra server e database.
 
 ### Il nome di una voce del menu laterale o l'ordine delle voci
-`frontend/src/smarteats/app/views.js`: ogni riga è una pagina (`label` = nome mostrato, `roles` = chi la vede, `module` = serve quel modulo acceso). L'ordine delle righe è l'ordine del menu.
+`frontend/src/apps/restaurant/views.js`: ogni riga è una pagina (`label` = nome mostrato, `roles` = chi la vede, `module` = serve quel modulo acceso). L'ordine delle righe è l'ordine del menu.
 
 ### Un colore o lo stile generale
-I colori di tutta l'app sono in `frontend/src/index.css`, in cima (`--accent` è il blu principale, `--bg-card` lo sfondo delle schede; c'è la versione chiara e quella scura). Cambiando lì cambia ovunque. Per gli stili dei pulsanti e dei campi: `frontend/src/smarteats/floor/ui.js`.
+I colori di tutta l'app sono in `frontend/src/index.css`, in cima (`--accent` è il blu principale, `--bg-card` lo sfondo delle schede; c'è la versione chiara e quella scura). Cambiando lì cambia ovunque. Per gli stili dei pulsanti e dei campi: `frontend/src/components/shared/styles.js`.
 
 ### La durata o la capienza di qualcosa (turni, fasce)
 Non è nel codice: si cambia dall'app (Impostazioni → Prenotazioni / Asporto). Le soglie fisse del portale clienti (massimo 10 persone, anticipo da 1 ora…) sono in `backend/utils/bookingPortal.js` e `backend/utils/takeaway.js`, in cima al file, con un commento ciascuna.
@@ -40,17 +40,17 @@ Non è nel codice: si cambia dall'app (Impostazioni → Prenotazioni / Asporto).
 - Mostrato dal frontend (toast): cerca la frase in `frontend/src/`.
 
 ### Aggiungere una voce alle Impostazioni
-Le sezioni sono in `frontend/src/smarteats/settings/sections.js` (nome, chi la vede) e il loro contenuto in `SettingsPage.jsx` (tabella `CONTENT`). Per aggiungerne una: una riga in `sections.js`, un componente nuovo nella cartella giusta, una riga in `CONTENT`.
+Le sezioni sono in `frontend/src/modules/settings/sections.js` (nome, chi la vede) e il loro contenuto in `SettingsPage.jsx` (tabella `CONTENT`). Per aggiungerne una: una riga in `sections.js`, un componente nuovo nella cartella giusta, una riga in `CONTENT`.
 
 ### Aggiungere un campo a un prodotto (es. «allergeni»)
 Sono quattro posti, sempre gli stessi:
 1. **Database:** una nuova migrazione in `backend/migrations/` (numero successivo all'ultimo) e poi `backend/schema.sql`: le regole sono in `CLAUDE.md` §6.
 2. **Server:** `backend/schemas/productSchema.js` (il campo è ammesso) e `backend/routes/products.js` (lo salva).
-3. **Modulo:** `frontend/src/components/products/productForm.js` (valore iniziale) e `ProductFormModal.jsx` (il campo che si vede).
+3. **Modulo:** `frontend/src/modules/catalog/products/productForm.js` (valore iniziale) e `ProductFormModal.jsx` (il campo che si vede).
 4. **Test:** una riga in `productForm.test.js`.
 
 ### Una nuova pagina in SmartEats
-1. Crea la cartella e la pagina in `frontend/src/smarteats/<argomento>/<Nome>Page.jsx`.
+1. Crea la cartella e la pagina in `frontend/src/modules/<modulo>/<Nome>Page.jsx` (o, se è del solo ristorante, in `apps/restaurant/`).
 2. Aggiungi la voce in `app/views.js` e l'icona in `app/SideNav.jsx`.
 3. Aggiungi la `<Route>` in `app/SmartEatsApp.jsx`.
 4. Usa gli stessi componenti delle altre pagine (regola di stile in `CLAUDE.md`): `PageHeader`, `Segmented` per le viste, `PanelFrame` per i dettagli.

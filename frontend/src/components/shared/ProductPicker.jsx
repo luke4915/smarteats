@@ -1,14 +1,14 @@
 import { useState, useMemo } from 'react';
 import { Minus } from 'lucide-react';
-import Segmented from '../../smarteats/floor/Segmented';
+import Segmented from './Segmented';
 import SearchField from './SearchField';
 import { useAuth } from '../../context/useAuth';
 import { useAvailability } from '../../hooks/useAvailability';
 import { useLongPress } from '../../hooks/useLongPress';
 import { useOnceHint } from '../../hooks/useOnceHint';
 import Hint from './Hint';
-import { canForceSale, ingredientPortionsLeft, tighterLimit } from '../../inventory/availability';
-import { normalizeText } from '../../smarteats/floor/checkMath';
+import { canForceSale, ingredientPortionsLeft, tighterLimit } from '../../modules/inventory/availability';
+import { normalizeText } from '../../modules/tables/floor/checkMath';
 import { formatEuro } from '../../utils/format';
 import Loading from './Loading';
 

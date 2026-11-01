@@ -1,5 +1,5 @@
 import { Users, ExternalLink } from 'lucide-react';
-import { btn } from '../../smarteats/floor/ui';
+import { btn } from '../shared/styles';
 import { licenseStatus, addressOf } from './licenseStatus';
 
 // Un locale nell'elenco: una riga con stato della licenza, prodotto e un solo pulsante, «Gestisci», che apre la finestra

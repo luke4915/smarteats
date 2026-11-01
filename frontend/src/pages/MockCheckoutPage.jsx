@@ -3,7 +3,7 @@ import { CreditCard } from 'lucide-react';
 import { PublicShell } from '../components/public/PublicShell';
 import { apiFetch } from '../utils/apiClient';
 import { formatCents } from '../utils/format';
-import { btn, btnPrimary } from '../smarteats/floor/ui';
+import { btn, btnPrimary } from '../components/shared/styles';
 import { useSystemTheme } from '../hooks/useSystemTheme';
 
 // La pagina di pagamento di PROVA (sviluppo e demo, con il driver finto): al posto di quella di Stripe. Nessuna carta e nessun addebito.

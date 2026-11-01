@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Banknote, Coins, Check, Minus, Plus } from 'lucide-react';
 import Modal from './Modal';
 import ModalActions from './ModalActions';
-import { btnPrimary } from '../../smarteats/floor/ui';
+import { btnPrimary } from './styles';
 import { formatEuro } from '../../utils/format';
 
 const NOTES = [100, 50, 20, 10, 5];

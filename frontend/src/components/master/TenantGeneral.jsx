@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Users, Clock, Power, Trash2, Printer, ExternalLink, Pencil } from 'lucide-react';
-import { btn, btnDanger, btnPrimary, iconBtn, input, label } from '../../smarteats/floor/ui';
+import { btn, btnDanger, btnPrimary, iconBtn, input, label } from '../shared/styles';
 import { licenseStatus, addressOf } from './licenseStatus';
 
 // Scheda «Generale» della finestra di un locale: i dati in breve, la licenza, gli scontrini e l'eliminazione. Le azioni

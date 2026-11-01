@@ -9,8 +9,8 @@ import TenantCard from '../components/master/TenantCard';
 import DeleteTenantModal from '../components/master/DeleteTenantModal';
 import TenantReceiptEditor from '../components/master/TenantReceiptEditor';
 import TenantManage from '../components/master/TenantManage';
-import Segmented from '../smarteats/floor/Segmented';
-import { btn, btnPrimary } from '../smarteats/floor/ui';
+import Segmented from '../components/shared/Segmented';
+import { btn, btnPrimary } from '../components/shared/styles';
 import SearchField from '../components/shared/SearchField';
 
 const Kpi = ({ label, value, tone }) => (

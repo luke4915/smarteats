@@ -3,7 +3,7 @@ import { ShoppingCart, Printer, MessageSquare, QrCode, ShoppingBag, Undo2, Send,
 import { getLineTotal, getAdjustmentLabel } from '../../../utils/pricing';
 import OrderDiscountPanel from '../OrderDiscountPanel';
 import ActionMenu from '../../shared/ActionMenu';
-import { iconBtn, btnPrimary, btnDanger } from '../../../smarteats/floor/ui';
+import { iconBtn, btnPrimary, btnDanger } from '../../shared/styles';
 import { formatEuro } from '../../../utils/format';
 import QuickCash from '../QuickCash';
 

@@ -3,8 +3,8 @@ import { Download } from 'lucide-react';
 import { fetchWithAuth } from '../../../utils/apiClient';
 import { useToast } from '../../../context/useToast';
 import Modal from '../Modal';
-import Segmented from '../../../smarteats/floor/Segmented';
-import { iconBtn } from '../../../smarteats/floor/ui';
+import Segmented from '../Segmented';
+import { iconBtn } from '../styles';
 import { downloadSessionReport } from './sessionReportPdf';
 
 // «Esporta una serata»: si sceglie il formato (report PDF per leggere e stampare, CSV delle righe o dei prodotti per Excel) e si scarica

@@ -1,4 +1,4 @@
-import NotificationBell from '../../smarteats/notifications/NotificationBell';
+import NotificationBell from '../../modules/notifications/NotificationBell';
 import AccountMenu from './AccountMenu';
 
 // La testata di SmartEats e della cassa delle sagre. A sinistra: sul telefono il nome della pagina (come la barra di un'app di iPhone),

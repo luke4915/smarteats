@@ -4,7 +4,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import Modal from './Modal';
 import ModalActions from './ModalActions';
-import { btnPrimary, input, label } from '../../smarteats/floor/ui';
+import { btnPrimary, input, label } from './styles';
 
 // «Dicci cosa migliorare»: un suggerimento o una segnalazione, per modulo, che arriva a chi sviluppa l'app. Si apre dal menu
 // dell'account (non sono impostazioni). `modules`: gli argomenti da offrire (la cassa delle sagre ne ha meno del ristorante).

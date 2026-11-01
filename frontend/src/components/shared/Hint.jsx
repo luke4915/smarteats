@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { iconBtn } from '../../smarteats/floor/ui';
+import { iconBtn } from './styles';
 
 // Una riga di suggerimento discreta (un gesto che non si vede, per esempio), con la X per toglierla. Lo stato lo tiene `useOnceHint`.
 const Hint = ({ children, onDismiss }) => (

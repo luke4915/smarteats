@@ -1,0 +1,79 @@
+import { useState, useEffect } from 'react';
+import { fetchWithAuth } from '../../../utils/apiClient';
+import { useToast } from '../../../context/useToast';
+import PanelFrame from '../../../components/shared/PanelFrame';
+import { formatEuro } from '../../../utils/format';
+import { label, row } from '../../../components/shared/styles';
+import Segmented from '../../../components/shared/Segmented';
+import { seatsLabel } from './seats';
+import Loading from '../../../components/shared/Loading';
+
+// Cambio di posto: «Sposta» il conto su un tavolo libero, «Unisci» lo riunisce a quello di un altro tavolo
+// (comande, pagamenti e coperti confluiscono lì). Tutto nello stesso pannello del conto.
+const MoveView = ({ detail, canMerge, onBack, onMoved, onMerged }) => {
+  const { showToast } = useToast();
+  const [mode, setMode] = useState('move');
+  const [rooms, setRooms] = useState(null);
+  const [checks, setChecks] = useState([]);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    Promise.all([fetchWithAuth('/rooms'), fetchWithAuth('/checks?status=open')])
+      .then(([r, c]) => { setRooms(r); setChecks(c); })
+      .catch(err => showToast(err.message, 'error'));
+  }, [showToast]);
+
+  const busyTables = new Set(checks.map(c => c.table_id));
+  const others = checks.filter(c => c.id !== detail.id);
+
+  const run = async (path, body, done) => {
+    setBusy(true);
+    try { done(await fetchWithAuth(`/checks/${detail.id}/${path}`, { method: 'POST', body })); }
+    catch (err) { showToast(err.message, 'error'); }
+    finally { setBusy(false); }
+  };
+
+  return (
+    <PanelFrame title="Cambio di posto" subtitle={`Ora: ${detail.table_name}`} onBack={onBack}>
+      {canMerge && (
+        <Segmented label="Cosa fare" value={mode} onChange={setMode} options={[{ id: 'move', label: 'Sposta' }, { id: 'merge', label: 'Unisci' }]} />
+      )}
+
+      {!rooms && <Loading />}
+
+      {rooms && mode === 'move' && rooms.filter(r => r.active).map(room => {
+        const free = room.tables.filter(t => t.active && !busyTables.has(t.id));
+        return (
+          <section key={room.id} className="pt-1">
+            <p className={`${label} px-1 py-1.5`}>{room.name} · liberi</p>
+            {free.length === 0 && <p className="text-xs text-[var(--text-muted)] px-1">Nessun tavolo libero</p>}
+            <div className="grid grid-cols-3 gap-2">
+              {free.map(t => (
+                <button key={t.id} disabled={busy} onClick={() => run('move', { table_id: t.id }, onMoved)}
+                  className={`${row} text-center font-semibold text-sm text-[var(--text-main)] hover:!border-[var(--accent)] active:scale-95 transition-all disabled:opacity-50`}>
+                  {t.name}<span className="block text-xs font-bold text-[var(--text-muted)]">{seatsLabel(t)} posti</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        );
+      })}
+
+      {rooms && canMerge && mode === 'merge' && (
+        <section className="pt-1 space-y-1.5">
+          <p className={`${label} px-1 py-1.5`}>Unisci questo conto a…</p>
+          {others.length === 0 && <p className="text-xs text-[var(--text-muted)] px-1">Non ci sono altri tavoli aperti.</p>}
+          {others.map(c => (
+            <button key={c.id} disabled={busy} onClick={() => run('merge', { into: c.id }, (target) => onMerged(target))}
+              className={`${row} w-full flex items-center gap-2 text-left hover:!border-[var(--accent)] active:scale-[0.99] transition-all disabled:opacity-50`}>
+              <span className="flex-1 min-w-0 font-semibold text-sm text-[var(--text-main)] truncate">{c.table_name ?? 'Banco'}<span className="ml-2 text-xs font-bold normal-case text-[var(--text-muted)]">{c.covers} cop.</span></span>
+              <span className="font-semibold text-xs tabular-nums text-[var(--text-main)]">{formatEuro(c.total)}</span>
+            </button>
+          ))}
+        </section>
+      )}
+    </PanelFrame>
+  );
+};
+
+export default MoveView;

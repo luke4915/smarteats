@@ -1,6 +1,6 @@
 import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
-import { btnDanger } from '../../smarteats/floor/ui';
+import { btnDanger } from '../shared/styles';
 
 // Conferma prima di uscire dall'account.
 const LogoutConfirmModal = ({ onConfirm, onCancel }) => (

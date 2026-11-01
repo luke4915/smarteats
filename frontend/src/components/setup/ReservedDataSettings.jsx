@@ -5,7 +5,7 @@ import ModalActions from '../shared/ModalActions';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { useReservedData } from '../../context/useReservedData';
-import { btnPrimary, input, label } from '../../smarteats/floor/ui';
+import { btnPrimary, input, label } from '../shared/styles';
 
 // Il blocco dei dati riservati (solo amministratore): con l'interruttore acceso costi, margini, prezzi dei fornitori e statistiche
 // di incasso si vedono solo dopo aver digitato la password di un amministratore, e per 10 minuti. Vale sul server, non solo a schermo.

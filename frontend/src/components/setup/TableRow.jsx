@@ -3,8 +3,8 @@ import { Users, Pencil, Check, X, Power, Trash2 } from 'lucide-react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import SeatsRange from './SeatsRange';
-import { rangeBody } from '../../smarteats/floor/seats';
-import { seatsLabel } from '../../smarteats/floor/seats';
+import { rangeBody } from '../../modules/tables/floor/seats';
+import { seatsLabel } from '../../modules/tables/floor/seats';
 
 // Un tavolo nell'elenco di una sala: nome e posti modificabili, disattivabile, eliminabile (con conferma).
 const inputClass = 'p-2 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]';
