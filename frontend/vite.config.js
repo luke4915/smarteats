@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import mkcert from 'vite-plugin-mkcert'
 import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'node:fs'
+import process from 'node:process'
 
 // Il numero di versione dell'app (lo stesso dell'etichetta del rilascio) arriva in `__APP_VERSION__`: vedi utils/appVersion.js.
 const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'))
