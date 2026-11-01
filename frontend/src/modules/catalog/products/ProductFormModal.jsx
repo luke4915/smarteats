@@ -5,6 +5,8 @@ import Segmented from '../../../components/shared/Segmented';
 import { btn, btnPrimary, input, label } from '../../../components/shared/styles';
 import Combobox from './Combobox';
 import PortionsField from './PortionsField';
+import AllergenPicker from './AllergenPicker';
+import { TRANSLATION_FIELDS } from '../../../utils/localName';
 import { categoryColors, namesForCategory } from './productForm';
 
 const PRINT_OPTIONS = [{ id: 'both', label: 'Bar e cucina' }, { id: 'bar', label: 'Solo bar' }, { id: 'kitchen', label: 'Solo cucina' }];
@@ -59,6 +61,19 @@ const ProductFormModal = ({ noun = 'prodotto', conflict = null, onUseLatest, for
           </Field>
           <Field title="Nome" className="sm:col-span-2"><Combobox name="name" value={form.name} onChange={(v) => onField('name', v)} options={namesForCategory(products, form.category)} placeholder="Es. Margherita, Coca-Cola" /></Field>
         </div>
+
+        <Field title="Allergeni" hint="Quelli che contiene. I clienti li vedono nel menu e nell'ordine; senza nessuno scelto non compare nulla.">
+          <AllergenPicker value={form.allergens} onChange={(allergens) => setForm(prev => ({ ...prev, allergens }))} />
+        </Field>
+
+        <Field title="Il nome nelle altre lingue" hint="Facoltativo: i clienti che scelgono un'altra lingua leggono questo nome nel menu. Se lo lasci vuoto vedono quello italiano.">
+          <div className="grid sm:grid-cols-2 gap-2">
+            {TRANSLATION_FIELDS.map(l => (
+              <input key={l.id} className={input} maxLength={40} placeholder={l.label} aria-label={`Nome in ${l.label.toLowerCase()}`} value={form.translations?.[l.id] ?? ''}
+                onChange={e => setForm(prev => ({ ...prev, translations: { ...prev.translations, [l.id]: e.target.value } }))} />
+            ))}
+          </div>
+        </Field>
 
         <Field title="Colore in cassa" hint="Il colore della categoria aiuta a trovare il prodotto a colpo d'occhio.">
           <div className="flex flex-wrap items-center gap-2">

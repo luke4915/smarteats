@@ -1,0 +1,16 @@
+export default {
+  'shell.privacy': 'Datenschutz', 'shell.terms': 'Nutzungsbedingungen', 'shell.theme': 'Darstellung', 'shell.language': 'Sprache',
+  'theme.auto': 'Auto', 'theme.light': 'Hell', 'theme.dark': 'Dunkel',
+  'menu.title': 'Speisekarte', 'menu.unavailable': 'Die Speisekarte ist im Moment nicht verfügbar.', 'menu.search': 'Gericht suchen',
+  'menu.noMatch': 'Keine Treffer für „{query}“.', 'menu.empty': 'Im Moment gibt es nichts zur Auswahl.', 'menu.category': 'Kategorie',
+  'menu.add': 'Hinzufügen', 'menu.addNamed': '{name} hinzufügen', 'menu.less': 'Eins weniger: {name}', 'menu.more': 'Eins mehr: {name}',
+  'menu.items.one': '{count} Artikel', 'menu.items.other': '{count} Artikel', 'menu.showQr': 'QR-Code anzeigen', 'menu.yourOrder': 'Deine Bestellung',
+  'menu.total': 'Gesamt', 'menu.clear': 'Leeren', 'menu.clearConfirm': 'Ja, leeren', 'menu.close': 'Schließen', 'menu.back': 'Zurück',
+  'menu.showAtCashier': 'Zeige diesen QR-Code an der Kasse', 'menu.showDirectly': 'Zeige ihn direkt an der Kasse.', 'menu.enlarge': 'Vergrößern', 'menu.enlargeAria': 'QR-Code vergrößern', 'menu.save': 'Speichern',
+  'nudge.also': 'Passt dazu:', 'nudge.hide': 'Vorschlag ausblenden',
+  'allergens.title': 'Allergene', 'allergens.contains': 'Enthält: {list}', 'allergens.warn': 'Enthält {list}', 'allergens.filter': 'Allergien', 'allergens.filterActive.one': 'Allergien: {count}', 'allergens.filterActive.other': 'Allergien: {count}',
+  'allergens.filterTitle': 'Was musst du meiden?', 'allergens.filterHint': 'Wähle die Allergene aus, die du meiden musst: Gerichte, die sie enthalten, werden markiert.', 'allergens.clear': 'Zurücksetzen', 'allergens.done': 'Fertig',
+  'allergens.disclaimer': 'Die Angaben zu Allergenen stammen vom Lokal. Bei Allergien oder Unverträglichkeiten frage bitte immer das Personal.',
+  'allergen.gluten': 'Glutenhaltiges Getreide', 'allergen.crustaceans': 'Krebstiere', 'allergen.eggs': 'Eier', 'allergen.fish': 'Fisch', 'allergen.peanuts': 'Erdnüsse', 'allergen.soybeans': 'Soja', 'allergen.milk': 'Milch',
+  'allergen.tree_nuts': 'Schalenfrüchte', 'allergen.celery': 'Sellerie', 'allergen.mustard': 'Senf', 'allergen.sesame': 'Sesamsamen', 'allergen.sulphites': 'Schwefeldioxid und Sulfite', 'allergen.lupin': 'Lupinen', 'allergen.molluscs': 'Weichtiere',
+};

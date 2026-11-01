@@ -4,13 +4,11 @@ import { PublicShell } from '../components/public/PublicShell';
 import { apiFetch } from '../utils/apiClient';
 import { formatCents } from '../utils/format';
 import { btn, btnPrimary } from '../components/shared/styles';
-import { useSystemTheme } from '../hooks/useSystemTheme';
 
 // La pagina di pagamento di PROVA (sviluppo e demo, con il driver finto): al posto di quella di Stripe. Nessuna carta e nessun addebito.
 // «Pagamento riuscito» manda al server lo stesso avviso firmato che manderebbe Stripe (`/api/webhooks/stripe`, firma `mock-valid`) e
 // riporta alla pagina dell'ordine; con il driver vero questa pagina non fa nulla (il server rifiuta l'avviso).
 const MockCheckoutPage = () => {
-  useSystemTheme();
   const sessionId = window.location.pathname.split('/').filter(Boolean)[1] ?? '';
   const q = new URLSearchParams(window.location.search);
   const [busy, setBusy] = useState(false);

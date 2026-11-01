@@ -1,13 +1,5 @@
-import { useEffect } from 'react';
+import { useTheme } from './useTheme';
 
-// Il tema della pagina segue quello del dispositivo (chiaro o scuro): per le pagine dei clienti, che non hanno un
-// selettore del tema.
-export function useSystemTheme() {
-  useEffect(() => {
-    const media = window.matchMedia?.('(prefers-color-scheme: dark)');
-    const apply = () => document.documentElement.classList.toggle('dark', !!media?.matches);
-    apply();
-    media?.addEventListener?.('change', apply);
-    return () => media?.removeEventListener?.('change', apply);
-  }, []);
-}
+// Il tema delle pagine dei clienti (menu, prenotazioni, ordine, privacy): segue il dispositivo (chiaro o scuro) finché il cliente non sceglie
+// «Chiaro» o «Scuro» dal selettore in fondo alla pagina (`PublicShell`); la scelta si ricorda su quel telefono. Ritorna [scelta, cambia].
+export const useSystemTheme = () => useTheme('auto');

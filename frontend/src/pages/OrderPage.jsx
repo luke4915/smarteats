@@ -11,7 +11,6 @@ import { formatEuro } from '../utils/format';
 import { PublicShell, StepSection } from '../components/public/PublicShell';
 import StepProgress from '../components/public/StepProgress';
 import { checkoutTarget } from '../utils/checkoutUrl';
-import { useSystemTheme } from '../hooks/useSystemTheme';
 import { CategoryChips, ProductRows } from '../components/public/MenuList';
 import Loading from '../components/shared/Loading';
 
@@ -108,7 +107,6 @@ const Status = ({ token, info }) => {
 };
 
 const OrderPage = () => {
-  useSystemTheme();
   const token = window.location.pathname.split('/').filter(Boolean)[1] ?? null;   // /order/<codice>
   const [info, setInfo] = useState(null);
   const [error, setError] = useState('');

@@ -4,7 +4,7 @@ export const THEME_CHOICES = [{ id: 'auto', label: 'Auto' }, { id: 'light', labe
 export const DEFAULT_THEME = 'dark';
 
 // Il valore salvato (anche vecchio o strano) → una scelta valida.
-export const parseTheme = (stored) => (['auto', 'light', 'dark'].includes(stored) ? stored : DEFAULT_THEME);
+export const parseTheme = (stored, fallback = DEFAULT_THEME) => (['auto', 'light', 'dark'].includes(stored) ? stored : fallback);
 
 // La scelta → il tema da disegnare adesso. `systemDark` = il sistema è in modalità scura.
 export const resolveTheme = (choice, systemDark) => (choice === 'auto' ? (systemDark ? 'dark' : 'light') : choice);

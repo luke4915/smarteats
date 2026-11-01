@@ -1,0 +1,16 @@
+export default {
+  'shell.privacy': 'Confidentialité', 'shell.terms': 'Conditions d\'utilisation', 'shell.theme': 'Apparence', 'shell.language': 'Langue',
+  'theme.auto': 'Auto', 'theme.light': 'Clair', 'theme.dark': 'Sombre',
+  'menu.title': 'Menu', 'menu.unavailable': 'Le menu n\'est pas disponible pour le moment.', 'menu.search': 'Rechercher un plat',
+  'menu.noMatch': 'Aucun résultat pour « {query} ».', 'menu.empty': 'Il n\'y a rien à choisir pour le moment.', 'menu.category': 'Catégorie',
+  'menu.add': 'Ajouter', 'menu.addNamed': 'Ajouter {name}', 'menu.less': 'Un de moins : {name}', 'menu.more': 'Un de plus : {name}',
+  'menu.items.one': '{count} article', 'menu.items.other': '{count} articles', 'menu.showQr': 'Afficher le QR code', 'menu.yourOrder': 'Votre commande',
+  'menu.total': 'Total', 'menu.clear': 'Vider', 'menu.clearConfirm': 'Oui, vider', 'menu.close': 'Fermer', 'menu.back': 'Retour',
+  'menu.showAtCashier': 'Présentez ce QR code à la caisse', 'menu.showDirectly': 'Présentez-le directement à la caisse.', 'menu.enlarge': 'Agrandir', 'menu.enlargeAria': 'Agrandir le QR code', 'menu.save': 'Enregistrer',
+  'nudge.also': 'S\'accorde bien avec :', 'nudge.hide': 'Masquer la suggestion',
+  'allergens.title': 'Allergènes', 'allergens.contains': 'Contient : {list}', 'allergens.warn': 'Contient {list}', 'allergens.filter': 'Allergies', 'allergens.filterActive.one': 'Allergies : {count}', 'allergens.filterActive.other': 'Allergies : {count}',
+  'allergens.filterTitle': 'Que devez-vous éviter ?', 'allergens.filterHint': 'Cochez les allergènes à éviter : les plats qui en contiennent seront signalés.', 'allergens.clear': 'Effacer', 'allergens.done': 'Terminé',
+  'allergens.disclaimer': 'Les informations sur les allergènes sont fournies par l\'établissement. En cas d\'allergie ou d\'intolérance, demandez toujours au personnel.',
+  'allergen.gluten': 'Céréales contenant du gluten', 'allergen.crustaceans': 'Crustacés', 'allergen.eggs': 'Œufs', 'allergen.fish': 'Poissons', 'allergen.peanuts': 'Arachides', 'allergen.soybeans': 'Soja', 'allergen.milk': 'Lait',
+  'allergen.tree_nuts': 'Fruits à coque', 'allergen.celery': 'Céleri', 'allergen.mustard': 'Moutarde', 'allergen.sesame': 'Graines de sésame', 'allergen.sulphites': 'Anhydride sulfureux et sulfites', 'allergen.lupin': 'Lupin', 'allergen.molluscs': 'Mollusques',
+};

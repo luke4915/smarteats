@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { PORTIONS_RULES } from '../utils/inventory/portions.js';
+import { ALLERGEN_IDS, normalizeAllergens } from '../utils/allergens.js';
+import { normalizeTranslations, MAX_NAME } from '../utils/translations.js';
 
 const DEFAULT_COLOR = '#3b82f6';
 
@@ -12,6 +14,10 @@ export const productSchema = z.object({
   color: z.string().regex(/^#[0-9a-fA-F]{6}$/).nullish().transform(c => c || DEFAULT_COLOR),
   visible: z.boolean().default(true),
   print_destination: z.enum(['bar', 'kitchen', 'both']).default('both'),
+  // Allergeni dichiarati (Reg. UE 1169/2011). Assente = non si cambia; elenco vuoto = nessuno dichiarato.
+  allergens: z.array(z.enum(ALLERGEN_IDS, { message: 'allergene non valido' })).max(ALLERGEN_IDS.length).transform(normalizeAllergens).optional(),
+  // Il nome nelle altre lingue (en, de, fr, es). Assente = non si cambia; oggetto vuoto = nessuna traduzione.
+  translations: z.record(z.string(), z.string().max(MAX_NAME)).transform(normalizeTranslations).optional(),
   // Portata (modulo tavoli). Assente = non si cambia; null = nessuna portata.
   course_id: z.number().int().positive().nullable().optional(),
   // Carico sul forno (modulo asporto): quante unità di capienza occupa una porzione. Assente = non si cambia.
