@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
+import { encodeCart } from '../utils/qrCart';
 import { ChefHat, Download, QrCode, Maximize2 } from 'lucide-react';
 
 import { apiFetch } from '../utils/apiClient';
@@ -56,7 +57,7 @@ export default function MenuPage() {
   const total = lines.reduce((sum, l) => sum + parseFloat(l.price) * l.quantity, 0);
   const count = lines.reduce((sum, l) => sum + l.quantity, 0);
   // Solo id e quantità: la cassa legge il resto dal proprio catalogo
-  const qrData = useMemo(() => (lines.length ? btoa(JSON.stringify(lines.map(l => ({ id: l.id, quantity: l.quantity })))) : ''), [lines]);
+  const qrData = useMemo(() => encodeCart(lines), [lines]);
 
   const change = (id, delta) => setCart(prev => {
     const quantity = (prev[id] ?? 0) + delta;
@@ -107,7 +108,7 @@ export default function MenuPage() {
           <div className="space-y-5">
             <Summary lines={lines} total={total} />
             <div className="flex flex-col items-center gap-3">
-              <button onClick={() => setSheet('big')} className="p-4 bg-white rounded-xl cursor-pointer" aria-label="Ingrandisci il codice QR"><QRCodeCanvas id="qr-canvas" value={qrData} size={200} /></button>
+              <button onClick={() => setSheet('big')} className="p-4 bg-white rounded-xl cursor-pointer" aria-label="Ingrandisci il codice QR"><QRCodeCanvas id="qr-canvas" value={qrData} size={240} level="M" /></button>
               <p className="text-xs text-[var(--text-muted)] text-center">Mostra questo QR alla cassa</p>
               <div className="flex gap-2">
                 <button onClick={() => setSheet('big')} className={btn}><Maximize2 size={16} /> Ingrandisci</button>
@@ -121,7 +122,7 @@ export default function MenuPage() {
       {sheet === 'big' && (
         <Modal onClose={() => setSheet('qr')} footer={<ModalActions fill cancelLabel="Indietro" onCancel={() => setSheet('qr')} />}>
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="p-5 bg-white rounded-2xl"><QRCodeCanvas value={qrData} size={260} /></div>
+            <div className="p-5 bg-white rounded-2xl"><QRCodeCanvas value={qrData} size={300} level="M" /></div>
             <p className="text-sm text-[var(--text-muted)]">Mostralo direttamente in cassa.</p>
           </div>
         </Modal>

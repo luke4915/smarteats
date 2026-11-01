@@ -5,6 +5,7 @@ import ModalActions from '../../shared/ModalActions';
 import { btn, btnPrimary } from '../../shared/styles';
 import jsQR from 'jsqr';
 import { formatEuro } from '../../../utils/format';
+import { decodeCart } from '../../../utils/qrCart';
 
 // ─── Componente di supporto per iOS (Evita il lock hardware della fotocamera) ───
 const CameraStream = ({ videoRef }) => (
@@ -88,20 +89,18 @@ const QRScanModal = ({ currentCart, onMerge, onReplace, onClose }) => {
             ctx.drawImage(video, 0, 0);
 
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
 
             if (code) {
-                try {
-                    const items = JSON.parse(atob(code.data));
-                    if (Array.isArray(items) && items.length > 0) {
-                        stopScanner();
-                        setScanned(items);
-                        return;
-                    } else {
-                        setScannerError('Contenuto QR non valido.');
-                    }
-                } catch {
+                const items = decodeCart(code.data);
+                if (!items) {
                     setScannerError('Formato QR non riconosciuto.');
+                } else if (items.length > 0) {
+                    stopScanner();
+                    setScanned(items);
+                    return;
+                } else {
+                    setScannerError('Contenuto QR non valido.');
                 }
             }
         } catch (canvasErr) {
