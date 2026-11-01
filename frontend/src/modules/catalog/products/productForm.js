@@ -15,6 +15,7 @@ export function blankForm({ courses = null, takeawayEnabled = false, modifierGro
     ...(modifierGroups && { modifier_group_ids: [] }),
     ...(portions && { portions_reset_rule: 'unlimited', portions_start: '' }),
     ...(vat && { vat_rate: '' }),
+    allergens: [], translations: {},
     stock_enabled: false, stock: '',
   };
 }
@@ -33,6 +34,7 @@ export function formFromProduct(product, { courses = null, takeawayEnabled = fal
     ...(modifierGroups && { modifier_group_ids: modifierGroups.filter(g => g.product_ids.includes(product.id)).map(g => g.id) }),
     ...(portions && { portions_reset_rule: product.portions_reset_rule ?? 'unlimited', portions_start: product.portions_start != null ? String(product.portions_start) : '' }),
     ...(vat && { vat_rate: product.vat_rate != null ? String(Number(product.vat_rate)) : '' }),
+    allergens: product.allergens ?? [], translations: product.translations ?? {},
     stock_enabled: product.stock_enabled ?? false,
     stock: product.stock !== undefined && product.stock !== null ? String(product.stock) : '',
   };

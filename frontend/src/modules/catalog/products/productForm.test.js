@@ -9,7 +9,7 @@ const products = [
 ];
 
 test('un prodotto nuovo ha i campi del tipo di locale', () => {
-  assert.deepEqual(Object.keys(blankForm()).sort(), ['category', 'color', 'name', 'price', 'print_destination', 'stock', 'stock_enabled', 'visible']);
+  assert.deepEqual(Object.keys(blankForm()).sort(), ['allergens', 'category', 'color', 'name', 'price', 'print_destination', 'stock', 'stock_enabled', 'translations', 'visible']);
   const full = blankForm({ courses: [], takeawayEnabled: true, modifierGroups: [] });
   assert.equal(full.course_id, null);
   assert.equal(full.prep_minutes, 5);

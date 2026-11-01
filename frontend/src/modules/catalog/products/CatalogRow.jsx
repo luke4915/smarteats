@@ -5,6 +5,8 @@ import { formatEuro } from '../../../utils/format';
 import { modeOf, stateLabel } from './availability';
 import { isHidden } from './catalogView';
 import { COLUMNS, COLUMNS_WITH_RECIPE } from './columns';
+import { allergensOf, listText } from '../../../utils/allergens';
+import { textIn } from '../../../i18n/useLanguage';
 
 const DESTINATION = { bar: 'Bar', kitchen: 'Cucina' };
 const CHIP = {
@@ -23,7 +25,8 @@ const CHIP = {
 const CatalogRow = ({ product: p, courseName, showCategory, recipes, selecting, selected, onToggleSelected, onEdit, onDelete, onToggleVisible, onAvailability }) => {
   const hidden = isHidden(p);
   const mode = modeOf(p);
-  const detail = [showCategory ? p.category || 'Generico' : null, courseName && courseName !== p.category ? courseName : null, DESTINATION[p.print_destination]].filter(Boolean).join(' · ');
+  const detail = [showCategory ? p.category || 'Generico' : null, courseName && courseName !== p.category ? courseName : null, DESTINATION[p.print_destination],
+    allergensOf(p).length ? `Allergeni: ${listText(allergensOf(p), id => textIn('it', `allergen.${id}`).toLowerCase())}` : null].filter(Boolean).join(' · ');
   const recipe = recipes?.summaryOf.get(p.id);
   const dim = hidden ? 'opacity-55' : '';
   return (

@@ -26,7 +26,7 @@ export default function productRoutes(broadcast) {
     try {
       const data = await withTenantClient(req.tenantId, async (db) => {
         const [{ rows: found }, { rows: sessions }, { rows: [tenant] }, order, rules] = await Promise.all([
-          db.query('SELECT id, name, price, category, color FROM products WHERE visible = true ORDER BY category, name'),
+          db.query('SELECT id, name, price, category, color, allergens, translations FROM products WHERE visible = true ORDER BY category, name'),
           db.query('SELECT name FROM sessions WHERE end_time IS NULL ORDER BY start_time DESC LIMIT 1'),
           db.query('SELECT name FROM tenants WHERE id = $1', [req.tenantId]),
           loadCategoryOrder(db),
@@ -106,12 +106,12 @@ export default function productRoutes(broadcast) {
 
   // POST /api/products
   router.post('/', authenticate, authorizeAdmin, validate({ body: productSchema }), tenantScope, async (req, res) => {
-    const { name, price, category, color, visible, print_destination, course_id, prep_minutes, portions_reset_rule: rule, portions_start: start, vat_rate: vatRate } = req.body;
+    const { name, price, category, color, visible, print_destination, course_id, prep_minutes, portions_reset_rule: rule, portions_start: start, vat_rate: vatRate, allergens, translations } = req.body;
     try {
       if (await courseMissing(req.db, course_id)) return res.status(400).json({ error: 'Portata non valida', code: 'INVALID_COURSE' });
       let { rows } = await req.db.query(
-        'INSERT INTO products (name, price, category, color, visible, print_destination, course_id, prep_minutes, vat_rate) VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8, 5),$9) RETURNING *',
-        [name, price, category, color, visible, print_destination, course_id ?? null, prep_minutes ?? null, vatRate ?? null]
+        'INSERT INTO products (name, price, category, color, visible, print_destination, course_id, prep_minutes, vat_rate, allergens, translations) VALUES ($1,$2,$3,$4,$5,$6,$7,COALESCE($8, 5),$9,$10,$11) RETURNING *',
+        [name, price, category, color, visible, print_destination, course_id ?? null, prep_minutes ?? null, vatRate ?? null, allergens ?? [], translations ?? {}]
       );
       if (rule) rows = [await savePortionsRule(req.db, rows[0].id, { rule, start })];
       await logAudit(req.db, req.user.id, 'CREATE_PRODUCT', { productId: rows[0].id, name });
@@ -125,7 +125,7 @@ export default function productRoutes(broadcast) {
 
   // PUT /api/products/:id
   router.put('/:id', authenticate, authorizeAdmin, validate({ params: idParamsSchema, body: productSchema }), tenantScope, async (req, res) => {
-    const { name, price, category, color, visible, print_destination, course_id, prep_minutes, portions_reset_rule: rule, portions_start: start, vat_rate: vatRate } = req.body;
+    const { name, price, category, color, visible, print_destination, course_id, prep_minutes, portions_reset_rule: rule, portions_start: start, vat_rate: vatRate, allergens, translations } = req.body;
     try {
       if (await courseMissing(req.db, course_id)) return res.status(400).json({ error: 'Portata non valida', code: 'INVALID_COURSE' });
       // course_id assente = non si cambia (le sagre non lo mandano); null lo toglie
@@ -133,8 +133,10 @@ export default function productRoutes(broadcast) {
         `UPDATE products SET name=$1, price=$2, category=$3, color=$4, visible=$5, print_destination=$6,
            course_id = CASE WHEN $8::boolean THEN $9::int ELSE course_id END,
            prep_minutes = COALESCE($10::int, prep_minutes),
-           vat_rate = CASE WHEN $11::boolean THEN $12::numeric ELSE vat_rate END WHERE id=$7 RETURNING *`,
-        [name, price, category, color, visible, print_destination, req.params.id, course_id !== undefined, course_id ?? null, prep_minutes ?? null, vatRate !== undefined, vatRate ?? null]
+           vat_rate = CASE WHEN $11::boolean THEN $12::numeric ELSE vat_rate END,
+           allergens = COALESCE($13::text[], allergens),
+           translations = COALESCE($14::jsonb, translations) WHERE id=$7 RETURNING *`,
+        [name, price, category, color, visible, print_destination, req.params.id, course_id !== undefined, course_id ?? null, prep_minutes ?? null, vatRate !== undefined, vatRate ?? null, allergens ?? null, translations ? JSON.stringify(translations) : null]
       );
       if (!rows.length) return res.status(404).json({ error: 'Prodotto non trovato' });
       if (rule) rows = [await savePortionsRule(req.db, req.params.id, { rule, start })];

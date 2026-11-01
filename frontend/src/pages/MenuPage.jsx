@@ -3,6 +3,8 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { encodeCart } from '../utils/qrCart';
 import { pickSuggestion } from '../utils/suggestions';
 import SuggestionNudge from '../components/public/SuggestionNudge';
+import { useT, useEffectiveLanguage } from '../i18n/useLanguage';
+import { localName } from '../utils/localName';
 import { ChefHat, Download, QrCode, Maximize2 } from 'lucide-react';
 
 import { apiFetch } from '../utils/apiClient';
@@ -19,21 +21,26 @@ import SearchField from '../components/shared/SearchField';
 // ordine: la cassa lo legge e ricalcola prezzi e disponibilità dal proprio catalogo. Stessa grafica dell'ordine da asporto.
 
 // Le righe dell'ordine e il totale, nella finestra del QR.
-const Summary = ({ lines, total }) => (
+const Summary = ({ lines, total }) => {
+  const t = useT();
+  const lang = useEffectiveLanguage();
+  return (
   <div>
     <ul className="space-y-1.5">
       {lines.map(line => (
         <li key={line.id} className="flex justify-between text-sm">
-          <span className="font-medium">×{line.quantity} {line.name}</span>
+          <span className="font-medium">×{line.quantity} {localName(line, lang)}</span>
           <span className="text-[var(--text-muted)] tabular-nums">{formatEuro(parseFloat(line.price) * line.quantity)}</span>
         </li>
       ))}
     </ul>
-    <div className="flex justify-between font-semibold border-t border-[var(--border)] pt-3 mt-3"><span>Totale</span><span className="tabular-nums">{formatEuro(total)}</span></div>
+    <div className="flex justify-between font-semibold border-t border-[var(--border)] pt-3 mt-3"><span>{t('menu.total')}</span><span className="tabular-nums">{formatEuro(total)}</span></div>
   </div>
-);
+  );
+};
 
 export default function MenuPage() {
+  const t = useT();
   const [menu, setMenu] = useState(null);
   const [welcome, setWelcome] = useState('');
   const [error, setError] = useState('');
@@ -48,7 +55,7 @@ export default function MenuPage() {
     // Il messaggio di benvenuto è facoltativo: se non arriva il menu si mostra comunque.
     Promise.all([apiFetch('/products/menu'), apiFetch('/settings').catch(() => ({}))])
       .then(([data, settings]) => { setMenu(data); setWelcome(settings.welcome_message || ''); })
-      .catch(() => setError('Menu non disponibile al momento.'));
+      .catch(() => setError('unavailable'));
   }, []);
 
   const categories = useMemo(() => [...new Set((menu?.products ?? []).map(p => p.category))], [menu]);
@@ -77,45 +84,45 @@ export default function MenuPage() {
 
   if (error) {
     return (
-      <PublicShell>
-        <div className="flex flex-col items-center gap-4 py-20"><ChefHat size={48} className="text-[var(--text-muted)] opacity-30" /><p className="text-sm text-[var(--text-muted)] text-center" role="alert">{error}</p></div>
+      <PublicShell translated>
+        <div className="flex flex-col items-center gap-4 py-20"><ChefHat size={48} className="text-[var(--text-muted)] opacity-30" /><p className="text-sm text-[var(--text-muted)] text-center" role="alert">{t('menu.unavailable')}</p></div>
       </PublicShell>
     );
   }
-  if (!menu) return <PublicShell><Loading /></PublicShell>;
+  if (!menu) return <PublicShell translated><Loading /></PublicShell>;
 
   const suggestion = pickSuggestion(menu.suggestions, menu.products, cart, dismissed);
   const bar = count > 0 && (
     <div className="sticky bottom-0 -mx-4 px-4 pt-3 bg-[var(--bg-main)] border-t border-[var(--border)]" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
       {suggestion && <SuggestionNudge product={suggestion} onAdd={() => change(suggestion.id, 1)} onDismiss={() => setDismissed(d => [...d, suggestion.id])} />}
       <button className={`${btnPrimary} w-full !h-12 !text-base justify-between`} onClick={() => setSheet('qr')}>
-        <span className="flex items-center gap-2"><QrCode size={18} /> {count} {count === 1 ? 'articolo' : 'articoli'}</span><span>Mostra il QR · {formatEuro(total)}</span>
+        <span className="flex items-center gap-2"><QrCode size={18} /> {t('menu.items', { count })}</span><span>{t('menu.showQr')} · {formatEuro(total)}</span>
       </button>
     </div>
   );
 
   return (
-    <PublicShell info={{ name: menu.tenantName ?? 'Menu', welcome }} kicker={menu.sessionName ? `Menu · ${menu.sessionName}` : 'Menu'} footer={bar}>
-      {menu.products.length > 8 && <SearchField value={query} onChange={setQuery} placeholder="Cerca un prodotto" />}
+    <PublicShell translated info={{ name: menu.tenantName ?? t('menu.title'), welcome }} kicker={menu.sessionName ? `${t('menu.title')} · ${menu.sessionName}` : t('menu.title')} footer={bar}>
+      {menu.products.length > 8 && <SearchField value={query} onChange={setQuery} placeholder={t('menu.search')} />}
       {categories.length > 1 && !term && <CategoryChips categories={categories} value={shownCategory} onChange={setCategory} />}
       <ProductRows products={term ? menu.products.filter(p => p.name.toLowerCase().includes(term)) : menu.products.filter(p => categories.length < 2 || p.category === shownCategory)} quantities={cart} onChange={change} />
-      {term && !menu.products.some(p => p.name.toLowerCase().includes(term)) && <p className="text-sm text-[var(--text-muted)] text-center py-8">Nessun prodotto con «{query.trim()}».</p>}
-      {menu.products.length === 0 && <p className="text-sm text-[var(--text-muted)] text-center py-8">Al momento non ci sono prodotti da scegliere.</p>}
+      {term && !menu.products.some(p => p.name.toLowerCase().includes(term)) && <p className="text-sm text-[var(--text-muted)] text-center py-8">{t('menu.noMatch', { query: query.trim() })}</p>}
+      {menu.products.length === 0 && <p className="text-sm text-[var(--text-muted)] text-center py-8">{t('menu.empty')}</p>}
 
       {sheet === 'qr' && (
-        <Modal title="Il tuo ordine" onClose={closeSheet}
+        <Modal title={t('menu.yourOrder')} onClose={closeSheet}
           footer={(
-            <ModalActions cancelLabel="Chiudi" onCancel={closeSheet}
-              start={<button type="button" className={btnDanger} onClick={() => (clearing ? clear() : setClearing(true))}>{clearing ? 'Sì, svuota' : 'Svuota'}</button>} />
+            <ModalActions cancelLabel={t('menu.close')} onCancel={closeSheet}
+              start={<button type="button" className={btnDanger} onClick={() => (clearing ? clear() : setClearing(true))}>{clearing ? t('menu.clearConfirm') : t('menu.clear')}</button>} />
           )}>
           <div className="space-y-5">
             <Summary lines={lines} total={total} />
             <div className="flex flex-col items-center gap-3">
-              <button onClick={() => setSheet('big')} className="p-4 bg-white rounded-xl cursor-pointer" aria-label="Ingrandisci il codice QR"><QRCodeCanvas id="qr-canvas" value={qrData} size={240} level="M" /></button>
-              <p className="text-xs text-[var(--text-muted)] text-center">Mostra questo QR alla cassa</p>
+              <button onClick={() => setSheet('big')} className="p-4 bg-white rounded-xl cursor-pointer" aria-label={t('menu.enlargeAria')}><QRCodeCanvas id="qr-canvas" value={qrData} size={240} level="M" /></button>
+              <p className="text-xs text-[var(--text-muted)] text-center">{t('menu.showAtCashier')}</p>
               <div className="flex gap-2">
-                <button onClick={() => setSheet('big')} className={btn}><Maximize2 size={16} /> Ingrandisci</button>
-                <button onClick={downloadQr} className={btn}><Download size={16} /> Salva</button>
+                <button onClick={() => setSheet('big')} className={btn}><Maximize2 size={16} /> {t('menu.enlarge')}</button>
+                <button onClick={downloadQr} className={btn}><Download size={16} /> {t('menu.save')}</button>
               </div>
             </div>
           </div>
@@ -123,10 +130,10 @@ export default function MenuPage() {
       )}
 
       {sheet === 'big' && (
-        <Modal onClose={() => setSheet('qr')} footer={<ModalActions fill cancelLabel="Indietro" onCancel={() => setSheet('qr')} />}>
+        <Modal onClose={() => setSheet('qr')} footer={<ModalActions fill cancelLabel={t('menu.back')} onCancel={() => setSheet('qr')} />}>
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="p-5 bg-white rounded-2xl"><QRCodeCanvas value={qrData} size={300} level="M" /></div>
-            <p className="text-sm text-[var(--text-muted)]">Mostralo direttamente in cassa.</p>
+            <p className="text-sm text-[var(--text-muted)]">{t('menu.showDirectly')}</p>
           </div>
         </Modal>
       )}

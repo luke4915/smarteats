@@ -45,7 +45,7 @@ export default function (broadcast) {
   // GET /info — il necessario per disegnare la pagina: locale, messaggio, prodotti ordinabili
   router.get('/info', ...guard, inPortal(async (db, { req, settings, restaurant }) => {
     const { rows } = await db.query(
-      `SELECT id, name, price, category, color FROM products WHERE visible AND (NOT stock_enabled OR stock IS NULL OR stock > 0) ORDER BY category NULLS LAST, name`);
+      `SELECT id, name, price, category, color, allergens, translations FROM products WHERE visible AND (NOT stock_enabled OR stock IS NULL OR stock > 0) ORDER BY category NULLS LAST, name`);
     const categories = [...new Set(rows.map(r => r.category || 'Altro'))];
     return {
       name: restaurant.name, phone: restaurant.phone, welcome: settings.welcome, max_days: MAX_DAYS_AHEAD, today: localNow().date,
@@ -53,7 +53,7 @@ export default function (broadcast) {
       // Come si può pagare: spento, facoltativo o obbligatorio (spento se i pagamenti online non sono pronti per questo locale)
       // (se il locale pretende il pagamento online ma non è pronto, `unavailable`: il sito avvisa e non fa ordinare)
       payments: { mode: (await tenantPayments(req.tenantId)).available ? settings.paymentMode : settings.paymentMode === 'required' ? 'unavailable' : 'off' },
-      products: rows.map(r => ({ id: r.id, name: r.name, price: Number(r.price), category: r.category || 'Altro' })),
+      products: rows.map(r => ({ id: r.id, name: r.name, price: Number(r.price), category: r.category || 'Altro', allergens: r.allergens, translations: r.translations })),
     };
   }));
 

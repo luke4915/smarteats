@@ -1,13 +1,21 @@
 import { Check } from 'lucide-react';
 import { useSystemTheme } from '../../hooks/useSystemTheme';
 import ThemeChoice from '../shell/ThemeChoice';
+import LanguageChoice from './LanguageChoice';
+import { ForcedLanguage, useT } from '../../i18n/useLanguage';
 
 // Le pagine che aprono i clienti (prenotazioni, ordini da asporto): niente menu né login, pensate per il telefono.
 // Il body dell'app è bloccato (`overflow: hidden`): la pagina scorre dentro un proprio contenitore (CLAUDE.md §7).
-// Il tema del dispositivo lo applica `useSystemTheme` (hooks/useSystemTheme.js).
+// Il tema del dispositivo lo applica `useSystemTheme` (hooks/useSystemTheme.js). `translated`: la pagina è tradotta nelle lingue dell'app e in fondo c'è
+// la scelta della lingua; senza, tutto ciò che contiene resta in italiano (vedi `ForcedLanguage`).
 
-export const PublicShell = ({ info, kicker, children, footer = null }) => {
+export const PublicShell = ({ info, kicker, children, footer = null, translated = false }) => (
+  <ForcedLanguage.Provider value={translated ? null : 'it'}><ShellBody info={info} kicker={kicker} footer={footer} translated={translated}>{children}</ShellBody></ForcedLanguage.Provider>
+);
+
+const ShellBody = ({ info, kicker, children, footer, translated }) => {
   const [theme, setTheme] = useSystemTheme();
+  const t = useT();
   return (
   <div className="fixed inset-0 overflow-y-auto overscroll-contain bg-[var(--bg-main)] text-[var(--text-main)]" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
     <main className="max-w-md sm:max-w-3xl mx-auto px-4 pt-6 sm:pt-8 space-y-6" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
@@ -25,9 +33,12 @@ export const PublicShell = ({ info, kicker, children, footer = null }) => {
         </p>
       )}
       {footer}
-      <ThemeChoice className="w-fit mx-auto" value={theme} onChange={setTheme} />
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <ThemeChoice value={theme} onChange={setTheme} t={t} />
+        {translated && <LanguageChoice />}
+      </div>
       <p className="text-xs text-[var(--text-muted)] text-center pb-4">
-        <a className="hover:underline" href="/privacy">Privacy</a> · <a className="hover:underline" href="/terms">Condizioni d'uso</a>
+        <a className="hover:underline" href="/privacy">{t('shell.privacy')}</a> · <a className="hover:underline" href="/terms">{t('shell.terms')}</a>
       </p>
       <div aria-hidden="true" style={{ height: 'env(safe-area-inset-bottom)' }} />
     </main>
