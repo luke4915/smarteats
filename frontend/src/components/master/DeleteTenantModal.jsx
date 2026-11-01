@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
-import { btnDanger, input } from '../../smarteats/floor/ui';
+import { btnDanger, input } from '../shared/styles';
 
 // Conferma dell'eliminazione di un locale: si deve riscrivere il suo indirizzo, perché non si può annullare.
 const DeleteTenantModal = ({ tenant, onConfirm, onClose }) => {

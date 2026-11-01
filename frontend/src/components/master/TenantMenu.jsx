@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
-import { btnPrimary, input, label } from '../../smarteats/floor/ui';
+import { btnPrimary, input, label } from '../shared/styles';
 import { apiFetch } from '../../utils/apiClient';
 import Loading from '../shared/Loading';
 

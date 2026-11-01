@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { btnPrimary } from '../smarteats/floor/ui';
+import { btnPrimary } from '../components/shared/styles';
 import { apiFetch } from '../utils/apiClient';
 import { useToast } from '../context/useToast'; // Hook globale
 import CenteredScreen from '../components/layout/CenteredScreen';

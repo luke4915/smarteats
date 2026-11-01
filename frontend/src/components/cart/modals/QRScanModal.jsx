@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Check } from 'lucide-react';
 import Modal from '../../shared/Modal';
 import ModalActions from '../../shared/ModalActions';
-import { btn, btnPrimary } from '../../../smarteats/floor/ui';
+import { btn, btnPrimary } from '../../shared/styles';
 import jsQR from 'jsqr';
 import { formatEuro } from '../../../utils/format';
 

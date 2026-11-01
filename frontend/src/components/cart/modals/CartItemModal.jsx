@@ -3,8 +3,8 @@ import { Trash2, Plus, Minus, Check } from 'lucide-react';
 import { getLineTotal } from '../../../utils/pricing';
 import Modal from '../../shared/Modal';
 import ModalActions from '../../shared/ModalActions';
-import Segmented from '../../../smarteats/floor/Segmented';
-import { btnPrimary, btnDanger, btn, input, label } from '../../../smarteats/floor/ui';
+import Segmented from '../../shared/Segmented';
+import { btnPrimary, btnDanger, btn, input, label } from '../../shared/styles';
 import { formatEuro } from '../../../utils/format';
 
 const TYPES = [{ id: 'sale', label: 'Normale' }, { id: 'discount', label: 'Sconto' }, { id: 'gift', label: 'Omaggio' }];

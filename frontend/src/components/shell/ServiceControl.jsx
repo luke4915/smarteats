@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Power } from 'lucide-react';
 import { useToast } from '../../context/useToast';
-import Modal from '../../components/shared/Modal';
-import ModalActions from '../../components/shared/ModalActions';
-import EndSessionModal from '../../components/shared/EndSessionModal';
-import CashCountModal from '../../components/shared/CashCountModal';
-import { btnPrimary, input } from '../../smarteats/floor/ui';
+import Modal from '../shared/Modal';
+import ModalActions from '../shared/ModalActions';
+import EndSessionModal from '../shared/EndSessionModal';
+import CashCountModal from '../shared/CashCountModal';
+import { btnPrimary, input } from '../shared/styles';
 
 // Proposta di nome in base all'ora: pranzo fino alle 16, poi cena.
 const suggestedName = () => {

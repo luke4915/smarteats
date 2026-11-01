@@ -3,7 +3,7 @@
 // ruoli risponde subito false (vedranno il rifiuto del server). La finestra si disegna con ForceSaleDialog.
 import { useState, useRef, useCallback } from 'react';
 import { useAuth } from '../context/useAuth';
-import { canForceSale } from '../inventory/availability';
+import { canForceSale } from '../modules/inventory/availability';
 
 export const SHORTAGE_CODE = 'INGREDIENT_SHORTAGE';
 

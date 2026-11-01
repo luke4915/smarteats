@@ -3,7 +3,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { Copy, ExternalLink, Download } from 'lucide-react';
 import { useToast } from '../../context/useToast';
 import { apiFetch } from '../../utils/apiClient';
-import { btn } from '../../smarteats/floor/ui';
+import { btn } from '../shared/styles';
 
 // Il menu pubblico con il QR (sagre e paninari): il QR da stampare e mettere sul banco, il link da condividere e il messaggio di benvenuto
 // che i clienti leggono. Il messaggio non si scrive qui: è una funzione che imposta l'assistenza (pannello master), qui si vede soltanto.

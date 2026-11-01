@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Modal from '../shared/Modal';
-import Segmented from '../../smarteats/floor/Segmented';
+import Segmented from '../shared/Segmented';
 import TenantGeneral from './TenantGeneral';
 import TenantModules from './TenantModules';
 import TenantUsers from './TenantUsers';

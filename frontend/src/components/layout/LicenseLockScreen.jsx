@@ -1,6 +1,6 @@
 import { LockKeyhole } from 'lucide-react';
 import CenteredScreen from './CenteredScreen';
-import { btnPrimary } from '../../smarteats/floor/ui';
+import { btnPrimary } from '../shared/styles';
 
 // La cassa è senza rete da più di 10 ore dalla scadenza della licenza: tutto fermo finché non torna online e il server conferma o rinnova.
 // Gli ordini già battuti restano al sicuro sul dispositivo e partono al ritorno della rete (se rientrano nelle ore consentite).

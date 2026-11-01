@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/useAuth';
 import { fetchWithAuth } from '../utils/apiClient';
-import { toPortionsMap } from '../inventory/availability';
+import { toPortionsMap } from '../modules/inventory/availability';
 
 const REFRESH_MS = 20_000;
 

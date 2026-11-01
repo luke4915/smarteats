@@ -151,9 +151,9 @@ Ogni fase va in produzione da sola e si prova con la scaletta (`docs/prova-a-man
 ## 9. Impatto sul codice esistente
 
 - `backend/utils/modules.js`: nuovo modulo `bookings` (solo ristorante); catalogo e master panel lo mostrano.
-- Sala (`smarteats/floor/FloorView.jsx`): segno sul tavolo prenotato; `GET /checks` non cambia.
+- Sala (`modules/tables/floor/FloorView.jsx`): segno sul tavolo prenotato; `GET /checks` non cambia.
 - Nuove route: `routes/bookings.js` (staff), `routes/publicBooking.js` (pubbliche), schemi in `schemas/bookingSchema.js`.
-- Nuova vista in SmartEats: `smarteats/reservations/` (agenda, dettaglio, assegnazione sulla pianta, riuso di `floorplan/FloorCanvas`).
+- Nuova vista in SmartEats: `modules/bookings/` (agenda, dettaglio, assegnazione sulla pianta, riuso di `floorplan/FloorCanvas`).
 - Rete di sicurezza: un test nel browser per il giro (richiesta dal portale → conferma → assegna tavolo → arrivato → incasso).
 
 ## 10. Domande aperte

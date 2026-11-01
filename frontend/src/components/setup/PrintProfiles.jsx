@@ -7,7 +7,7 @@ import { refreshPrintConfig } from '../../print/config';
 import PrinterCheck from './PrinterCheck';
 import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
-import { btnPrimary, btnDanger, input, label as uiLabel } from '../../smarteats/floor/ui';
+import { btnPrimary, btnDanger, input, label as uiLabel } from '../shared/styles';
 import Loading from '../shared/Loading';
 const BACKEND_TEMPLATES = ['Cliente', 'Associazione', 'Cucina', 'Ritiro Bar', 'Ritiro Gastronomia', 'Numeretto'];
 

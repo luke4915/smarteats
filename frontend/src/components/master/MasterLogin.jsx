@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
-import { btnPrimary, input } from '../../smarteats/floor/ui';
+import { btnPrimary, input } from '../shared/styles';
 import CenteredScreen from '../layout/CenteredScreen';
 
 // L'accesso alla console del gestore: una sola password.

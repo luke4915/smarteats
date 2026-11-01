@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MessageSquare, Check } from 'lucide-react';
-import { btn } from '../../smarteats/floor/ui';
+import { btn } from '../shared/styles';
 
 // I suggerimenti che i locali lasciano dalle Impostazioni: un elenco da aprire, con «Letto» per toglierli dai nuovi.
 const FeedbackPanel = ({ feedback, onMark }) => {

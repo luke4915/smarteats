@@ -3,11 +3,11 @@ import { Eye, EyeOff, Check, Circle, UserRound, KeyRound } from 'lucide-react';
 import { useToast } from '../../context/useToast';
 import { useAuth } from '../../context/useAuth';
 import { fetchWithAuth } from '../../utils/apiClient';
-import { btnPrimary, input, label } from '../../smarteats/floor/ui';
+import { btnPrimary, input, label } from './styles';
 
 // Il profilo dell'utente collegato: username e password. Si apre dentro la riga «Tu» dell'elenco utenti (Impostazioni → Account).
 // Ogni parte si salva da sola, con i requisiti visibili mentre si scrive; `onSaved` avvisa l'elenco di rileggere i nomi.
-// Stile e componenti sono quelli delle altre schermate (floor/ui.js).
+// Stile e componenti sono quelli delle altre schermate (components/shared/styles.js).
 const MIN_PASSWORD = 8;
 
 const Card = ({ icon, title, children }) => {

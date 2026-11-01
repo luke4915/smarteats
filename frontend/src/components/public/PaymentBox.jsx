@@ -1,5 +1,5 @@
 import { CreditCard } from 'lucide-react';
-import { btnPrimary } from '../../smarteats/floor/ui';
+import { btnPrimary } from '../shared/styles';
 
 // La nota sul pagamento nella pagina dell'ordine da asporto (testi in paymentText.js): verde se pagato, rossa se restituito o liberato,
 // neutra mentre si aspetta. Se manca il pagamento c'è il pulsante per finirlo.

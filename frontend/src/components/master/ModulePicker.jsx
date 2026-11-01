@@ -2,7 +2,7 @@
 // sagra e ristorante sono due prodotti diversi, quindi ogni tipo mostra solo i moduli che esistono per lui.
 // Il tipo propone i moduli (preset), poi si possono accendere o spegnere. Il catalogo arriva dal server (GET /master/catalog).
 // Col modulo «Magazzino» acceso si sceglie anche la modalità (porzioni o magazzino) e, per il magazzino, come si scalano gli ingredienti.
-import Segmented from '../../smarteats/floor/Segmented';
+import Segmented from '../shared/Segmented';
 
 const labelClass = 'block text-sm font-medium text-[var(--text-main)] mb-1.5';
 const selectClass = 'w-full h-10 px-3 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm focus:ring-2 focus:ring-[var(--accent)] outline-none';

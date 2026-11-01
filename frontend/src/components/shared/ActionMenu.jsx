@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { MoreVertical } from 'lucide-react';
-import { iconBtn } from '../../smarteats/floor/ui';
+import { iconBtn } from './styles';
 
 // Menu «⋯» condiviso (conto in sala, carrello della cassa, prenotazioni): raccoglie le azioni secondarie così la schermata ne mostra solo le principali.
 // `items`: [{ label, icon, onClick, danger?, disabled?, hint? }]; le voci false si saltano. `label`: il nome del pulsante ⋯ per chi usa lo

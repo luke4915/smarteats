@@ -4,7 +4,7 @@ import { usePopover } from '../../hooks/usePopover';
 import { roleLabel } from '../shared/roles';
 import ThemeChoice from './ThemeChoice';
 import FeedbackModal from '../shared/FeedbackModal';
-import { label, popover } from '../../smarteats/floor/ui';
+import { label, popover } from '../shared/styles';
 
 // L'account in testata: un solo pulsante (le iniziali) che apre chi è collegato, la scelta dell'aspetto, i suggerimenti (per chi gestisce
 // il locale: admin e responsabile) e l'uscita. Profilo e utenti si gestiscono da Impostazioni → Account, non da qui.

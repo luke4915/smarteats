@@ -125,7 +125,7 @@ Una sola migrazione (056) e il codice in fasi, ognuna una PR con i suoi test mir
 
 **Struttura del codice** (leggibile e mantenibile): logica pura in file piccoli con test (`utils/inventory/`: `portions.js`, `recipeCost.js`, `availability.js`,
 `unitConversion.js`, `weightedAverageCost.js`), accesso ai dati separato (`utils/inventory/*Db.js`), una route per tema (`ingredients`, `suppliers`,
-`goodsReceipts`, `recipes`, `stockCounts`, `inventoryReports`), schemi `zod` in `schemas/inventorySchema.js`. Frontend in `frontend/src/inventory/` (usato da
+`goodsReceipts`, `recipes`, `stockCounts`, `inventoryReports`), schemi `zod` in `schemas/inventorySchema.js`. Frontend in `frontend/src/modules/inventory/` (usato da
 SmartEats Stand e Restaurant), una cartella per tema, nessun file oltre le 300 righe. Voce di menu **Magazzino** (admin e responsabile), con schede.
 
 ## 6. Glossario (nomi nel codice)

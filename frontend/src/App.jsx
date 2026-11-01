@@ -4,7 +4,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/useAuth';
 import ChangePassword from './components/shared/ChangePassword';
 import Login from './pages/LoginPage';
-import FestivalApp from './festival/FestivalApp';
+import FestivalApp from './apps/stand/FestivalApp';
 import LicenseLockScreen from './components/layout/LicenseLockScreen';
 import { useLicenseLock } from './hooks/useLicenseLock';
 
@@ -23,7 +23,7 @@ const PageLoading = () => (
 );
 
 // Il punto d'ingresso per tutto ciò che non è SmartEats: pagine pubbliche (prenotazione, ordine, menu, KDS, master),
-// accesso, cambio della password temporanea; poi la cassa delle sagre (festival/FestivalApp.jsx).
+// accesso, cambio della password temporanea; poi la cassa delle sagre (apps/stand/FestivalApp.jsx).
 const App = () => {
   const { user, loading, login } = useAuth();
   const { locked } = useLicenseLock();

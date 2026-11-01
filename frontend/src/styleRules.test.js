@@ -20,12 +20,12 @@ const rel = (f) => path.relative(root, f).split(path.sep).join('/');
 const text = (f) => fs.readFileSync(f, 'utf8');
 
 // File che superano il limite per scelta (nel backlog): non devono crescere. Stampa e pianta si riordinano a parte.
-const LONG_FILES_ALLOWED = { 'components/setup/PrintProfiles.jsx': 450, 'smarteats/floorplan/FloorEditor.jsx': 350, 'print/templates.js': 350 };
+const LONG_FILES_ALLOWED = { 'components/setup/PrintProfiles.jsx': 450, 'modules/tables/floorplan/FloorEditor.jsx': 350, 'print/templates.js': 350 };
 const MAX_LINES = 300;
 
 test(`un file, un compito: al massimo ${MAX_LINES} righe (salvo quelli in elenco, che non devono crescere)`, () => {
   const tooLong = sources.map(f => [rel(f), text(f).split('\n').length]).filter(([name, lines]) => lines > (LONG_FILES_ALLOWED[name] ?? MAX_LINES));
-  assert.deepEqual(tooLong, [], 'File troppo lunghi: dividili per responsabilità (esempio: components/products/)');
+  assert.deepEqual(tooLong, [], 'File troppo lunghi: dividili per responsabilità (esempio: modules/catalog/products/)');
 });
 
 // Le finestre sono tutte `components/shared/Modal.jsx`: Esc per chiudere, stile e animazione uguali ovunque.
@@ -34,9 +34,9 @@ test('nessuna finestra fatta a mano: si usa Modal', () => {
   assert.deepEqual(handmade, [], 'Usa <Modal> di components/shared/Modal.jsx invece di un fixed inset-0 con sfondo scuro');
 });
 
-test('niente maiuscolo spaziato né font-black: gerarchia con dimensione e peso (floor/ui.js)', () => {
+test('niente maiuscolo spaziato né font-black: gerarchia con dimensione e peso (components/shared/styles.js)', () => {
   const noisy = sources.filter(f => /tracking-widest|font-black/.test(text(f))).map(rel);
-  assert.deepEqual(noisy, [], 'Togli tracking-widest e font-black: vedi lo stile sobrio in smarteats/floor/ui.js');
+  assert.deepEqual(noisy, [], 'Togli tracking-widest e font-black: vedi lo stile sobrio in components/shared/styles.js');
 });
 
 test('niente alert(): i messaggi passano da useToast', () => {
@@ -62,7 +62,7 @@ test('nessun campo di ricerca fatto a mano: si usa SearchField', () => {
 // esagerati né testi minuscoli. Prima la cassa delle sagre li aveva e un blocco di CSS li toglieva nel ristorante: ora non esistono.
 test('niente maiuscolo, ombre colorate, angoli esagerati né testi sotto gli 11 px', () => {
   const heavy = sources.filter(f => !/shared\/Modal\.jsx$/.test(f) && /(^|["' `])uppercase(["' `]|$)|tracking-wider|tracking-tighter|font-extrabold|text-\[9px\]|accent-shadow|rounded-3xl/.test(text(f))).map(rel);
-  assert.deepEqual(heavy, [], 'Togli uppercase, tracking-wider/tighter, font-extrabold, text-[9px], le ombre colorate e rounded-3xl: vedi smarteats/floor/ui.js');
+  assert.deepEqual(heavy, [], 'Togli uppercase, tracking-wider/tighter, font-extrabold, text-[9px], le ombre colorate e rounded-3xl: vedi components/shared/styles.js');
 });
 
 // Gli importi si scrivono con `formatEuro` / `formatCents` (utils/format.js): «6,00 €», mai «6.00€».

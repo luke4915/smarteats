@@ -1,6 +1,6 @@
 import { Plus, Minus } from 'lucide-react';
 import ScrollRow from '../shared/ScrollRow';
-import { btn, btnPrimary } from '../../smarteats/floor/ui';
+import { btn, btnPrimary } from '../shared/styles';
 import { formatEuro } from '../../utils/format';
 
 // Le due parti del menu che vedono i clienti, uguali nell'ordine da asporto e nel menu QR della sagra: le categorie (pillole che

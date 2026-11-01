@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { PageHeader, PageBody } from '../shared/PageHeader';
-import Segmented from '../../smarteats/floor/Segmented';
+import Segmented from '../shared/Segmented';
 
 // La pagina delle Impostazioni di SmartEats e della cassa delle sagre: le sezioni sono tile in alto (le stesse delle sale e
 // delle altre viste, che scorrono se non ci stanno) e sotto c'è una sola sezione alla volta. La sezione è nell'indirizzo

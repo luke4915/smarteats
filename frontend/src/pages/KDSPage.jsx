@@ -2,9 +2,9 @@ import { useEffect, useState, useMemo } from 'react';
 import { ChefHat, Wifi, WifiOff } from 'lucide-react';
 import { useLiveUpdates } from '../hooks/useLiveUpdates';
 import { apiFetch } from '../utils/apiClient';
-import TicketCard from '../components/kds/TicketCard';
-import ToPrepare from '../components/kds/ToPrepare';
-import { boardOrders, headline } from '../components/kds/board';
+import TicketCard from '../modules/kitchen/kds/TicketCard';
+import ToPrepare from '../modules/kitchen/kds/ToPrepare';
+import { boardOrders, headline } from '../modules/kitchen/kds/board';
 import Loading from '../components/shared/Loading';
 
 // Lo schermo della cucina (`/kds`, senza login): un tabellone da appendere, solo lettura. A sinistra tutto ciò che c'è da preparare

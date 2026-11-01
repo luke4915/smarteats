@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
-import { btnPrimary, input, label } from '../../smarteats/floor/ui';
+import { btnPrimary, input, label } from './styles';
 import { useReservedData } from '../../context/useReservedData';
 
 // La scheda che prende il posto dei dati riservati: spiega cosa manca e chiede la password di un amministratore.

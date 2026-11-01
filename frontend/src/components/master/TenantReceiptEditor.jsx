@@ -8,7 +8,7 @@ import { DEFAULT_BRANDING } from '../../print/templates';
 import { toBlackWhiteDataUrl } from './blackWhiteImage';
 import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
-import { btnDanger } from '../../smarteats/floor/ui';
+import { btnDanger } from '../shared/styles';
 
 // Personalizzazione degli scontrini di un tenant (solo master): testi, logo, immagine laterale
 // e anteprima delle copie con gli stessi template che stampano davvero.

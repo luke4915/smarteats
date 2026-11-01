@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { AlertTriangle, Clock } from 'lucide-react';
 import Modal from './Modal';
-import { btnDanger } from '../../smarteats/floor/ui';
+import { btnDanger } from './styles';
 import { useToast } from '../../context/useToast';
 
 import { fetchWithAuth } from '../../utils/apiClient';

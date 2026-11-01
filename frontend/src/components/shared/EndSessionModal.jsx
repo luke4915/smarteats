@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Modal from './Modal';
 import ModalActions from './ModalActions';
-import { btnPrimary, label } from '../../smarteats/floor/ui';
+import { btnPrimary, label } from './styles';
 import { formatEuro } from '../../utils/format';
 
 // Conferma della chiusura serata o servizio. Se ci sono ordini ancora aperti (in attesa o in preparazione) chi chiude
