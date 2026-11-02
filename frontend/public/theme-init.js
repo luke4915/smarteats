@@ -5,4 +5,4 @@ try {
   var isPublic = /^\/(book|order|menu|privacy|terms|s)(\/|$)/.test(location.pathname);
   var dark = t === 'auto' ? system : t === 'light' ? false : t === 'dark' ? true : (isPublic ? system : true);
   if (dark) document.documentElement.classList.add('dark');
-} catch (e) { /* senza archivio locale: resta il chiaro */ }
+} catch { /* senza archivio locale: resta il chiaro */ }

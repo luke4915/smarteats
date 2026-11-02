@@ -5,6 +5,8 @@ import { brandingFromSettings, imagesFromSettings } from '../../print/branding';
 import { buildCopyPreviews } from '../../print/copyPreviews';
 import { createBrowserImages } from '../../print/raster';
 import { DEFAULT_BRANDING } from '../../print/templates';
+import { columnsForPaper, DEFAULT_PAPER_MM } from '../../print/paper';
+import PaperWidthChoice from '../setup/PaperWidthChoice';
 import { toBlackWhiteDataUrl } from './blackWhiteImage';
 import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
@@ -118,6 +120,7 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
       .catch(err => setError(err.message));
   }, [tenant.id]);
 
+  const [paperMm, setPaperMm] = useState(DEFAULT_PAPER_MM);   // solo per l'anteprima: la carta vera si sceglie per stampante, nel locale
   const dirty = values !== null && snapshotOf(values) !== initial;
   const set = (key, value) => { setValues(v => ({ ...v, [key]: value })); setJustSaved(false); };
 
@@ -125,11 +128,11 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
   useEffect(() => {
     if (!values) return;
     let cancelled = false;
-    buildCopyPreviews(brandingFromSettings(values), createBrowserImages(imagesFromSettings(values)))
+    buildCopyPreviews(brandingFromSettings(values), createBrowserImages(imagesFromSettings(values)), columnsForPaper(paperMm))
       .then(p => { if (!cancelled) setPreviews(p); })
       .catch(err => { if (!cancelled) setError(`Anteprima non disponibile: ${err.message}`); });
     return () => { cancelled = true; };
-  }, [values]);
+  }, [values, paperMm]);
 
   const handleImage = async (key, maxWidth, file) => {
     if (!file) return;
@@ -257,6 +260,7 @@ const TenantReceiptEditor = ({ tenant, onClose }) => {
                 <span className={labelClass}>Anteprima</span>
                 <span className="text-xs text-[var(--text-muted)]">Ordine di esempio</span>
               </div>
+              <div className="mb-3"><PaperWidthChoice value={paperMm} onChange={setPaperMm} label="Larghezza dell'anteprima" /></div>
               <div className="flex flex-wrap gap-1.5 mb-3" role="tablist">
                 {previews.map((p, i) => (
                   <button key={p.name} role="tab" aria-selected={i === activeCopy} onClick={() => setActiveCopy(i)}

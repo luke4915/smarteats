@@ -28,6 +28,15 @@ test('master: costruttore degli scontrini — anteprima in diretta, salvataggio,
   await expect(page.locator('pre').filter({ hasText: 'TOTALE' }).first()).toBeVisible();
   await shot(page, 'receipt-02-cliente');
 
+  // la carta stretta (58 mm): le righe si accorciano a 32 lettere, il testo non esce dalla scheda
+  await page.getByRole('tab', { name: '58 mm' }).click();
+  const slip = page.locator('pre').filter({ hasText: 'TOTALE' }).first();
+  await expect(slip).toContainText('-'.repeat(32));
+  await expect(slip).not.toContainText('-'.repeat(33));
+  await shot(page, 'receipt-03-58mm');
+  await page.getByRole('tab', { name: '80 mm' }).click();
+  await expect(page.locator('pre').filter({ hasText: 'TOTALE' }).first()).toContainText('-'.repeat(42));
+
   await page.getByRole('button', { name: 'Salva', exact: true }).click();
   await expect(page.getByText('Salvato')).toBeVisible();
 

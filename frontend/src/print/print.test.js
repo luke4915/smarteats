@@ -1,6 +1,7 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { EposBuilder, printable } from './eposBuilder.js';
+import { columnsForPaper, PAPER_OPTIONS } from './paper.js';
 import { TEMPLATES, DEFAULT_BRANDING, wrapText, encodeOrderId, filterItems, tableLabel, renderCheckReceipt } from './templates.js';
 import { brandingFromSettings, imagesFromSettings } from './branding.js';
 import { buildCopyPreviews } from './copyPreviews.js';
@@ -258,4 +259,94 @@ test('nomi lunghi: nei ritiri grandi vanno a capo senza perdere parole; opzioni 
   for (const word of ['PORCHETTA', 'ARICCIA', 'CARAMELLATA']) assert.ok(out.includes(word), `${word} non deve sparire dal ritiro`);
   const rows = [...out.matchAll(/<text [^>]*>([^<]*?)&#10;<\/text>/g)].map(m => m[1].replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'));
   assert.ok(rows.every(r => r.length <= 42), 'nessuna riga oltre la larghezza dello scontrino (nei caratteri grandi, metà)');
+});
+
+// Nessuna riga può uscire più larga della carta: ogni lettera conta quanto il suo ingrandimento (size 2 = due colonne).
+const textRows = (xml) => [...xml.matchAll(/<text ([^>]*)>([^<]*?)&#10;<\/text>/g)].map(([, attrs, body]) => ({
+  width: Number(attrs.match(/width="(\d)"/)[1]), text: body.replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'),
+}));
+const WIDE_ORDER = {
+  id: 7, display_code: 'A137', created_at: '2026-11-02T10:00:00Z', total: 48.5, is_takeaway: true, table_name: 'Terrazza 12', covers: 4, course_name: 'Secondo e contorno',
+  items: [
+    { name: 'Panino con porchetta di Ariccia e cipolla caramellata', quantity: 12, price: 6, line_total: 72, modifiers: [{ name: 'senza maionese' }, { name: 'salsa piccante extra forte' }], note: 'servire separato dal resto per favore', print_destination: 'kitchen' },
+    { name: 'Birra', quantity: 1, price: 4.5, line_total: 4.5, print_destination: 'bar' },
+  ],
+};
+
+test('ogni copia sta nella carta, da 58 mm (32 lettere) e da 80 mm (42)', async () => {
+  const branding = { ...DEFAULT_BRANDING, name: 'Associazione Culturale Amici della Sagra del Borgo', taxCode: 'C.F. 01234567890 - P.IVA 01234567890', legalText: 'Raccolta fondi occasionale ai sensi dell\'art. 7 D.Lgs. 117/17' };
+  const images = { logo: async () => null, numberBanner: async () => null };
+  for (const { mm } of PAPER_OPTIONS) {
+    const columns = columnsForPaper(mm);
+    for (const [name, template] of Object.entries(TEMPLATES)) {
+      const builder = new EposBuilder();
+      await template(builder, WIDE_ORDER, { branding, images, showLogo: true, columns });
+      for (const row of textRows(builder.buildXml())) assert.ok(row.text.length * row.width <= columns, `${name} a ${mm} mm: «${row.text}» è largo ${row.text.length * row.width} su ${columns}`);
+    }
+    const receipt = { check: { table_name: 'Terrazza 12', covers: 4, number: 31 }, lines: [{ name: 'Tagliata di manzo con rucola e grana', quantity: 2, amount: 38 }], payments: [{ method: 'card', amount: 10 }], total: 38, due: 28, scope: 'check' };
+    const builder = new EposBuilder();
+    await renderCheckReceipt(builder, receipt, { branding, images, showLogo: true, columns });
+    for (const row of textRows(builder.buildXml())) assert.ok(row.text.length * row.width <= columns, `ricevuta a ${mm} mm: «${row.text}» è larga ${row.text.length * row.width} su ${columns}`);
+  }
+});
+
+test('la carta: 80 mm è il valore di prima; una misura sconosciuta torna a 80 mm', () => {
+  assert.equal(columnsForPaper(80), 42);
+  assert.equal(columnsForPaper(58), 32);
+  assert.equal(columnsForPaper(undefined), 42);
+  assert.equal(columnsForPaper(72), 42);
+});
+
+test('più copie sulla stessa stampante: una sola carta, la più stretta', async () => {
+  const settings = [
+    { copy_type: 'Cliente', printer_address: '10.0.0.5', enabled: true, paper_mm: 80 },
+    { copy_type: 'Cucina', printer_address: '10.0.0.5', enabled: true, paper_mm: 58 },
+  ];
+  const [job] = await buildPrintJobs(settings, WIDE_ORDER, { branding: DEFAULT_BRANDING, images: { logo: async () => null, numberBanner: async () => null }, showLogo: false });
+  for (const row of textRows(job.builder.buildXml())) assert.ok(row.text.length * row.width <= 32, row.text);
+});
+
+// ── ESC/POS: gli stessi template, i byte per le stampanti che non parlano ePOS ──
+import { EscPosBuilder, encodeText } from './escposBuilder.js';
+
+test('ESC/POS: testo con € e accenti in CP858, riga a capo, allineamento e grassetto', () => {
+  assert.deepEqual(encodeText('€ 12,50'), [0xD5, 0x20, 0x31, 0x32, 0x2C, 0x35, 0x30]);
+  assert.deepEqual(encodeText('è così'), [0x8A, 0x20, 0x63, 0x6F, 0x73, 0x8D]);
+  assert.deepEqual(encodeText('日本'), [0x3F, 0x3F], 'quello che la stampante non ha diventa «?»');
+  const bytes = [...new EscPosBuilder().align('CT').style('B').text('Ciao').buildBytes()];
+  assert.deepEqual(bytes.slice(0, 5), [0x1B, 0x40, 0x1B, 0x74, 19], 'azzera e sceglie CP858');
+  assert.deepEqual(bytes.slice(5), [0x1B, 0x45, 1, 0x1B, 0x2D, 0, 0x1B, 0x61, 1, 0x43, 0x69, 0x61, 0x6F, 0x0A]);
+});
+
+test('ESC/POS: ingrandimento, banda inversa, avanzamento, taglio e QR', () => {
+  const b = new EscPosBuilder();
+  b.size(2, 3).reverse(true).feed(2).cut().qrcode('ABC');
+  const bytes = [...b.buildBytes()].slice(5);
+  assert.deepEqual(bytes.slice(0, 3), [0x1D, 0x21, 0x12], 'larghezza 2, altezza 3');
+  assert.deepEqual(bytes.slice(3, 6), [0x1D, 0x42, 1]);
+  assert.deepEqual(bytes.slice(6, 9), [0x1B, 0x64, 2]);
+  assert.deepEqual(bytes.slice(9, 13), [0x1D, 0x56, 66, 0]);
+  const qr = bytes.slice(13);
+  assert.ok(qr.join(',').includes('29,40,107,6,0,49,80,48,65,66,67'), 'dati del QR: lunghezza 3 + 3');
+  assert.deepEqual(qr.slice(-8), [0x1D, 0x28, 0x6B, 3, 0, 0x31, 0x51, 0x30], 'finisce con la stampa del QR');
+});
+
+test('ESC/POS: un\'immagine a 1 bit diventa un raster con le sue dimensioni', () => {
+  const b = new EscPosBuilder().image({ width: 10, height: 2, b64: btoa(String.fromCharCode(0xFF, 0xC0, 0x0F, 0x00)) }, { align: 'center' });
+  assert.deepEqual([...b.buildBytes()].slice(5), [0x1B, 0x61, 1, 0x1D, 0x76, 0x30, 0, 2, 0, 2, 0, 0xFF, 0xC0, 0x0F, 0x00]);
+});
+
+test('ESC/POS: i template sono gli stessi: una copia cucina esce con testo e taglio, a 58 e 80 mm', async () => {
+  const images = { logo: async () => null, numberBanner: async () => null };
+  for (const columns of [32, 42]) {
+    const builder = new EscPosBuilder();
+    await TEMPLATES.Cucina(builder, WIDE_ORDER, { branding: DEFAULT_BRANDING, images, showLogo: false, columns });
+    const bytes = builder.buildBytes();
+    assert.equal(builder.isEmpty, false);
+    assert.ok(Buffer.from(bytes).includes(Buffer.from('COPIA CUCINA')));
+    assert.deepEqual([...bytes.slice(-4)], [0x1D, 0x56, 66, 0], 'finisce con il taglio');
+  }
+  const bar = new EscPosBuilder();
+  await TEMPLATES['Ritiro Bar'](bar, { ...WIDE_ORDER, items: [{ name: 'Panino', quantity: 1, price: 5, print_destination: 'kitchen' }] }, { branding: DEFAULT_BRANDING, images, showLogo: false });
+  assert.equal(bar.isEmpty, true, 'una copia senza righe non stampa niente');
 });

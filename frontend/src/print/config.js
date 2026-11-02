@@ -15,7 +15,7 @@ export async function refreshPrintConfig() {
   const [rows, settings] = await Promise.all([fetchWithAuth('/print-settings'), fetchWithAuth('/settings/all')]);
   const config = {
     key: KEY,
-    settings: rows.map(r => ({ copy_type: r.copy_type_name, printer_address: r.printer_address, enabled: r.enabled })),
+    settings: rows.map(r => ({ copy_type: r.copy_type_name, printer_address: r.printer_address, enabled: r.enabled, paper_mm: r.paper_mm })),
     branding: brandingFromSettings(settings),
     images: imagesFromSettings(settings),
   };
