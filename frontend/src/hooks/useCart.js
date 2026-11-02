@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getDiscountedTotal } from '../utils/pricing';
+import { playTapSound } from '../utils/sounds';
 
 // Due righe del carrello sono lo stesso articolo se hanno lo stesso prodotto e la stessa nota.
 const sameLine = (a, b) => a.id === b.id && (a.note || '') === (b.note || '');
@@ -7,7 +8,7 @@ const sameLine = (a, b) => a.id === b.id && (a.note || '') === (b.note || '');
 // Il carrello della cassa: vive solo nel browser (sessionStorage, così sopravvive a un ricaricamento)
 // finché l'ordine non viene inviato. `total` è sempre quello reale da incassare, già al netto
 // di sconti e omaggi.
-export function useCart({ showToast, playSound }) {
+export function useCart({ showToast }) {
   const [cart, setCart] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('cart') || '[]'); }
     catch { return []; }
@@ -26,7 +27,6 @@ export function useCart({ showToast, playSound }) {
       }
     }
 
-    playSound('product_select_sound');
     setCart(prev => {
       if (prev.some(i => sameLine(i, product))) {
         return prev.map(i => sameLine(i, product) ? { ...i, quantity: i.quantity + requestedQty } : i);
@@ -61,7 +61,7 @@ export function useCart({ showToast, playSound }) {
     }));
   };
 
-  const clearCart = (isManual = false) => { if (isManual) playSound('empty_cart_sound'); setCart([]); };
+  const clearCart = (isManual = false) => { if (isManual) playTapSound('clear'); setCart([]); };
   const removeFromCart = (product) => setCart(prev => prev.filter(i => !sameLine(i, product)));
   const removeLastItem = (product) => setCart(prev => prev
     .map(i => sameLine(i, product) ? { ...i, quantity: i.quantity - 1 } : i)

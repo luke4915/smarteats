@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useToast } from '../../context/useToast';
-import { useSound } from '../../hooks/useSound';
 import { useTheme } from '../../hooks/useTheme';
 import { useCart } from '../../hooks/useCart';
 import { useProducts } from '../../hooks/useProducts';
@@ -19,15 +18,13 @@ export function useFestivalData(user) {
 
   // Preferenze del dispositivo
   const [theme, setTheme, resolvedTheme] = useTheme();
-  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
   const [orderMode, setOrderMode] = useState('simple');
-  const playSound = useSound(isSoundEnabled);
 
   // Catalogo, serata, carrello
   useDevicePairing();
   const { products, setProducts, loadProducts } = useProducts(true);
   const { activeSession, applySession, startSession, endSession } = useWorkSession(true);
-  const cartState = useCart({ showToast, playSound });
+  const cartState = useCart({ showToast });
 
   // Aggiornamenti in tempo reale
   const [event, setEvent] = useState(null);
@@ -54,7 +51,7 @@ export function useFestivalData(user) {
   const inbox = useInbox({ bookings: false, takeaway: hasTakeaway, inventory: hasInventory, event });
 
   return {
-    theme, setTheme, resolvedTheme, isSoundEnabled, setIsSoundEnabled, orderMode, setOrderMode, playSound,
+    theme, setTheme, resolvedTheme, orderMode, setOrderMode,
     products, setProducts, activeSession, startSession, endSession, cartState,
     event, connected, inbox: hasTakeaway || hasInventory ? inbox : null,
   };

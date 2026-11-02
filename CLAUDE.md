@@ -77,7 +77,7 @@ frontend/           React 19 + Vite 7 + Tailwind v4 + react-router-dom 7 + PWA (
                     va nella cartella del suo modulo; se serve a più moduli è un componente condiviso.
   src/components/shell/  guscio comune a SmartEats e sagre: SideNav (da tablet), TabBar (telefono: barra come quella di iOS, oltre cinque voci le ultime vanno sotto «Altro»), AppHeader (titolo, servizio, notifiche, AccountMenu con aspetto Auto/Chiaro/Scuro e uscita), PageCard (la scheda di una pagina: sul telefono niente riquadro), ServiceControl (apre e chiude il servizio o la serata, parole da `utils/terms.js`)
   src/components/   shared/ (**l'interfaccia comune**: styles.js (stili), Segmented, PanelFrame, Modal, Switch, SearchField, ProductPicker…), cart/, setup/, master/, public/, layout/
-  src/hooks/        useCart, useProducts, useWorkSession (serata), useSound, useLiveUpdates (WebSocket), useBreakpoint
+  src/hooks/        useCart, useProducts, useWorkSession (serata), useLiveUpdates (WebSocket), useBreakpoint
   src/pages/        pagine pubbliche/di livello alto (Login, Menu, KDS, Master; BookingPage su `/book`, OrderPage su `/order`)
   src/context/      AuthProvider + useAuth (login, refresh), ToastProvider + useToast
   src/config/api.js API_URL / WS_URL derivati dal sottodominio corrente

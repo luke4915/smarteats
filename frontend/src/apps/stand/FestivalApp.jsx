@@ -55,7 +55,7 @@ const FestivalApp = () => {
   const onCashPage = pathname === '/dashboard';
   const handleSendOrder = (isTakeaway = false) => sendOrder({
     cart: cartState.cart, isTakeaway, activeSession, orderMode: data.orderMode, clearCart: cartState.clearCart,
-    playSound: data.playSound, showToast, confirmForce: force.askForce, onSent: () => { if (isMobile) setIsMobileCartOpen(false); },
+    showToast, confirmForce: force.askForce, onSent: () => { if (isMobile) setIsMobileCartOpen(false); },
   });
   const performLogout = async () => {
     try { await logout(); setShowLogoutConfirm(false); showToast('Sessione chiusa', 'info'); navigate('/login'); }
@@ -80,7 +80,7 @@ const FestivalApp = () => {
         <div className="flex-1 min-h-0 flex gap-4 px-4 pt-1 pb-3 md:p-4">
           <PageCard key={pathname} className="motion-page">
             <FestivalRoutes user={user} home={home} products={products} setProducts={setProducts} cart={cartState.cart} cartState={cartState} event={data.event}
-              setup={{ theme: data.theme, setTheme: data.setTheme, isSoundEnabled: data.isSoundEnabled, setIsSoundEnabled: data.setIsSoundEnabled, orderMode: data.orderMode, setOrderMode: data.setOrderMode }} />
+              setup={{ theme: data.theme, setTheme: data.setTheme, orderMode: data.orderMode, setOrderMode: data.setOrderMode }} />
           </PageCard>
           {onCashPage && (
             <div className="w-[340px] xl:w-[420px] hidden md:flex flex-col shrink-0"><Cart {...cartProps} /></div>
