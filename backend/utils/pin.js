@@ -39,7 +39,7 @@ export async function listOperators(db) {
 // Non lancia errori per un PIN sbagliato: il conteggio degli errori deve restare salvato (un errore annullerebbe la transazione).
 export async function checkPin(client, userId, pin, now = Date.now()) {
   return inTransaction(client, async (db) => {
-    const { rows } = await db.query(`SELECT id, username, role, tenant_id, must_change_password, pin_hash, pin_length, pin_failed, pin_locked_until FROM users WHERE id = $1 AND ${IN_TENANT} FOR UPDATE`, [userId]);
+    const { rows } = await db.query(`SELECT id, username, role, tenant_id, must_change_password, pin_hash, pin_length, pin_set_at, pin_failed, pin_locked_until FROM users WHERE id = $1 AND ${IN_TENANT} FOR UPDATE`, [userId]);
     const user = rows[0];
     if (!user?.pin_hash) { await bcrypt.compare(String(pin), DUMMY_HASH); return { result: 'none', user: user ?? null }; }    // stesso tempo di un PIN errato
     if (isLocked(user.pin_locked_until, now)) return { result: 'locked', minutes: minutesLeft(user.pin_locked_until, now), user };

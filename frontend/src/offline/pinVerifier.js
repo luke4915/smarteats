@@ -36,13 +36,21 @@ export const minutesLeft = (lockedUntil, now = Date.now()) => Math.max(1, Math.c
 
 const all = () => recall(KEY) ?? {};
 
-export function saveVerifier(userId, verifier) {
-  remember(KEY, { ...all(), [userId]: { ...verifier, failed: 0, lockedUntil: null } });
+// `pinSetAt`: quando il server ha impostato quel PIN. Serve a riconoscere un'impronta vecchia (PIN cambiato o tolto altrove).
+export function saveVerifier(userId, verifier, pinSetAt = null) {
+  remember(KEY, { ...all(), [userId]: { ...verifier, pinSetAt, failed: 0, lockedUntil: null } });
 }
 export const hasVerifier = (userId) => !!all()[userId];
 export function forgetVerifier(userId) {
   const { [userId]: _gone, ...rest } = all();
   remember(KEY, rest);
+}
+
+// Il server dice com'è il PIN adesso (`hasPin`, `pinSetAt`): se l'impronta locale è di un PIN diverso o non c'è più, si butta,
+// così un vecchio PIN non sblocca più nemmeno senza rete. Si ricrea al primo sblocco con il PIN fatto online.
+export function dropStaleVerifier(userId, { hasPin, pinSetAt }) {
+  const entry = all()[userId];
+  if (entry && (!hasPin || entry.pinSetAt !== pinSetAt)) forgetVerifier(userId);
 }
 
 // Controlla un PIN senza rete. Risponde { result: 'ok' | 'wrong' | 'locked' | 'none', minutes?, attemptsLeft? }.

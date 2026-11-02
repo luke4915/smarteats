@@ -66,7 +66,7 @@ router.post('/unlock', authenticate, validate({ body: unlockSchema }), tenantSco
       return res.json({ ok: true });
     }
     const check = await checkPin(req.db, req.user.id, req.body.pin);
-    if (check.result === 'ok') return res.json({ ok: true });
+    if (check.result === 'ok') return res.json({ ok: true, pinSetAt: check.user.pin_set_at });   // l'app lo lega all'impronta locale del PIN
     if (check.justLocked) await logAudit(req.db, req.user.id, 'PIN_LOCKED_OUT', { via: 'unlock' });
     pinFailure(res, check);
   } catch (err) {

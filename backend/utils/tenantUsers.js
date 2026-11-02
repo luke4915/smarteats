@@ -2,6 +2,7 @@ import { inTransaction } from '../db.js';
 import { HttpError } from './httpError.js';
 import { hashPassword } from './password.js';
 import { invalidateUserStatus } from './userStatus.js';
+import { PRIVILEGED_ROLES, PRIVILEGED_PIN_LENGTH } from './pinRules.js';
 
 // Gestione degli utenti di un tenant, condivisa dall'admin del tenant (routes/auth.js) e dal master (routes/master.js).
 // `db` è sempre una connessione già legata al tenant (app.tenant_id impostato): la RLS isola i dati.
@@ -26,7 +27,7 @@ async function lockAdmins(db) {
 }
 
 async function loadUser(db, userId) {
-  const { rows } = await db.query(`SELECT id, username, role FROM users WHERE id = $1 AND ${IN_TENANT} FOR UPDATE`, [userId]);
+  const { rows } = await db.query(`SELECT id, username, role, pin_length FROM users WHERE id = $1 AND ${IN_TENANT} FOR UPDATE`, [userId]);
   if (!rows.length) throw new HttpError(404, 'Utente non trovato');
   return rows[0];
 }
@@ -52,10 +53,15 @@ export async function updateUser(client, tenantId, userId, { role, username }) {
     const current = await loadUser(db, userId);
     if (role && role !== current.role && current.role === 'admin' && admins.length === 1)
       throw new HttpError(409, 'Deve restare almeno un amministratore', 'LAST_ADMIN');
+    // Chi diventa admin o responsabile perde un PIN che non è di 6 cifre: per questi ruoli il PIN corto non è ammesso (pinRules.js)
+    const dropPin = !!role && role !== current.role && PRIVILEGED_ROLES.includes(role) && current.pin_length !== PRIVILEGED_PIN_LENGTH;
     try {
       const { rows } = await db.query(
-        `UPDATE users SET role = COALESCE($2, role), username = COALESCE($3, username) WHERE id = $1 AND ${IN_TENANT} RETURNING ${USER_COLUMNS}`,
-        [userId, role ?? null, username ?? null]
+        `UPDATE users SET role = COALESCE($2, role), username = COALESCE($3, username),
+           pin_hash = CASE WHEN $4 THEN NULL ELSE pin_hash END, pin_length = CASE WHEN $4 THEN NULL ELSE pin_length END,
+           pin_set_at = CASE WHEN $4 THEN NULL ELSE pin_set_at END, pin_failed = CASE WHEN $4 THEN 0 ELSE pin_failed END, pin_locked_until = CASE WHEN $4 THEN NULL ELSE pin_locked_until END
+         WHERE id = $1 AND ${IN_TENANT} RETURNING ${USER_COLUMNS}`,
+        [userId, role ?? null, username ?? null, dropPin]
       );
       return { ...rows[0], previous: { role: current.role, username: current.username } };
     } catch (err) {
@@ -81,9 +87,10 @@ export async function deleteUser(client, tenantId, userId) {
 }
 
 // Password temporanea: l'utente deve cambiarla al primo accesso, anche se è già collegato (vedi authenticate). Serve anche a sbloccare gli account senza password.
+// Reimpostare la password vuol dire che l'accesso non è più sicuro (dimenticata o compromessa): anche il PIN viene tolto, l'admin ne imposta uno nuovo.
 export async function resetUserPassword(db, tenantId, userId, password) {
   const { rows } = await db.query(
-    `UPDATE users SET password_hash = $1, must_change_password = true WHERE id = $2 AND ${IN_TENANT} RETURNING id, username`,
+    `UPDATE users SET password_hash = $1, must_change_password = true, pin_hash = NULL, pin_length = NULL, pin_set_at = NULL, pin_failed = 0, pin_locked_until = NULL WHERE id = $2 AND ${IN_TENANT} RETURNING id, username`,
     [await hashPassword(password), userId]
   );
   if (!rows.length) throw new HttpError(404, 'Utente non trovato');

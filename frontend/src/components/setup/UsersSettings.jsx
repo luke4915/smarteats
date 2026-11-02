@@ -4,6 +4,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useAuth } from '../../context/useAuth';
 import UsersPanel from '../shared/UsersPanel';
 import ProfileForm from '../shared/ProfileForm';
+import { forgetVerifier } from '../../offline/pinVerifier';
 
 // Utenti del proprio tenant (solo admin), con il proprio profilo nella riga «Tu».
 const UsersSettings = () => {
@@ -15,8 +16,8 @@ const UsersSettings = () => {
     remove: (id) => fetchWithAuth(`/auth/admin/users/${id}`, { method: 'DELETE' }),
     resetPassword: (id, password) => fetchWithAuth(`/auth/admin/users/${id}/reset-password`, { method: 'POST', body: { password } }),
     // Se l'amministratore cambia il proprio PIN, «Blocca schermo» compare (o sparisce) subito nel suo menu
-    setPin: async (id, pin) => { await fetchWithAuth(`/pin/users/${id}`, { method: 'PUT', body: { pin } }); if (id === user.id) login({ ...user, hasPin: true, pinLength: pin.length }); },
-    clearPin: async (id) => { await fetchWithAuth(`/pin/users/${id}`, { method: 'DELETE' }); if (id === user.id) login({ ...user, hasPin: false, pinLength: null }); },
+    setPin: async (id, pin) => { await fetchWithAuth(`/pin/users/${id}`, { method: 'PUT', body: { pin } }); if (id === user.id) { forgetVerifier(id); login({ ...user, hasPin: true, pinLength: pin.length, pinSetAt: undefined }); } },
+    clearPin: async (id) => { await fetchWithAuth(`/pin/users/${id}`, { method: 'DELETE' }); if (id === user.id) { forgetVerifier(id); login({ ...user, hasPin: false, pinLength: null, pinSetAt: undefined }); } },
   }), [user, login]);
 
   return (

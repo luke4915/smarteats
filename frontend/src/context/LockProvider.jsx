@@ -3,7 +3,7 @@ import { LockContext } from './useLock';
 import { useAuth } from './useAuth';
 import { useToast } from './useToast';
 import { recall, remember } from '../offline/lastKnown';
-import { hasVerifier } from '../offline/pinVerifier';
+import { hasVerifier, dropStaleVerifier } from '../offline/pinVerifier';
 import { isAutoLockChoice, shouldAutoLock } from '../utils/idleLock';
 import { isPublicPath } from '../utils/publicPaths';
 import LockScreen from '../components/layout/LockScreen';
@@ -30,6 +30,11 @@ export const LockProvider = ({ children }) => {
   useEffect(() => {
     if (!loading && !user && lockedFor != null) { setLockedFor(null); remember('locked', null); }
   }, [loading, user, lockedFor]);
+
+  // Un PIN cambiato o tolto altrove (lo dice il server) non deve restare valido senza rete
+  useEffect(() => {
+    if (user && user.pinSetAt !== undefined) dropStaleVerifier(user.id, user);
+  }, [user]);
 
   const unlock = useCallback(() => { setLockedFor(null); remember('locked', null); lastActivity.current = Date.now(); }, []);
 

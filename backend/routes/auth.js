@@ -221,10 +221,11 @@ router.get('/me', authenticateAllowingPasswordChange, async (req, res) => {
   try {
     const tenant = await getTenantModules(req.user.tenantId);
     const { rows: [lic] } = await pool.query('SELECT expires_at FROM tenants WHERE id = $1', [req.user.tenantId]);
-    const pin = await withTenantClient(req.user.tenantId, async (db) => (await db.query('SELECT pin_hash IS NOT NULL AS has_pin, pin_length FROM users WHERE id = $1', [req.user.id])).rows[0]);
+    const pin = await withTenantClient(req.user.tenantId, async (db) => (await db.query('SELECT pin_hash IS NOT NULL AS has_pin, pin_length, pin_set_at FROM users WHERE id = $1', [req.user.id])).rows[0]);
     res.json({
       hasPin: pin?.has_pin ?? false,
       pinLength: pin?.pin_length ?? null,
+      pinSetAt: pin?.pin_set_at ?? null,
       id: req.user.id,
       username: req.user.username,
       role: req.user.role,
