@@ -140,3 +140,19 @@ test('l\'archivio tiene gli ultimi 100 ordini ma non scarta quelli con ristampe 
   await discardPrintJobs();
   assert.equal(await countPrintJobs(), 0);
 });
+
+test('un documento che la stampante non capisce non si riprova e non blocca i lavori dietro di lui', async () => {
+  await queueOrder('A7');
+  printer.failWith = 'SchemaError';
+  const first = await flushPrintQueue();
+  assert.equal(first.length, 1);
+  assert.equal((await db.printJobs.toArray())[0].status, 'rejected');
+
+  printer.failWith = null;
+  await queueOrder('A8');
+  await flushPrintQueue();
+  assert.equal(printer.jobs.length, 1, 'stampa solo il lavoro nuovo');
+  assert.match(printer.jobs[0].receipt, /ORD0000A8/);
+  assert.equal(await countPrintJobs(), 1, 'il rifiutato resta visibile in coda');
+  assert.equal((await db.printJobs.toArray())[0].attempts, 1, 'e non viene riprovato');
+});

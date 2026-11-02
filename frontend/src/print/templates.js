@@ -21,6 +21,9 @@ export const DEFAULT_BRANDING = {
 };
 
 const LINE_WIDTH = 42;
+
+// Importi come si scrivono in Italia: virgola dei decimali (la stampante non ha il separatore del browser).
+export const money = (n) => `€ ${Number(n).toFixed(2).replace('.', ',')}`;
 const DIVIDER = '='.repeat(LINE_WIDTH);
 const DIVIDER_THIN = '-'.repeat(LINE_WIDTH);
 
@@ -117,11 +120,12 @@ async function renderHeader(printer, ctx, { title, subtitle = '', pickupStatus =
   }
 
   const { name, taxCode } = ctx.branding;
-  if (name) printer.align('CT').style('B').text(name);
-  if (taxCode) printer.align('CT').style('NORMAL').text(taxCode);
+  if (name) wrapText(name, LINE_WIDTH).forEach(line => printer.align('CT').style('B').text(line));
+  if (taxCode) wrapText(taxCode, LINE_WIDTH).forEach(line => printer.align('CT').style('NORMAL').text(line));
   if (name || taxCode) printer.align('CT').text(DIVIDER_THIN);
 
-  printer.align('CT').style('B').text(title).style('NORMAL');
+  wrapText(title, LINE_WIDTH).forEach(line => printer.align('CT').style('B').text(line));
+  printer.style('NORMAL');
   printer.align('CT').text(DIVIDER_THIN);
 
   if (subtitle && !pickupStatus) {
@@ -141,13 +145,12 @@ function renderItems(printer, ctx, items, layoutType = 'standard', bigFont = fal
     const maxTextWidth = LINE_WIDTH - 8 - 4 - 2;
     items.forEach((item) => {
       const qty = String(item.quantity).trim();
-      const rowTotal = `€ ${Number(item.line_total ?? parseFloat(item.price || 0) * item.quantity).toFixed(2)}`;
+      const rowTotal = money(item.line_total ?? parseFloat(item.price || 0) * item.quantity);
       wrapText(item.name.toUpperCase(), maxTextWidth).forEach((line, i) => {
         if (i === 0) printer.align('LT').text(rowThreeColumns(line, qty, rowTotal));
         else printer.align('LT').text(line);
       });
-      if (item.modifiers?.length) printer.align('LT').text(`  + ${item.modifiers.map(m => m.name).join(', ')}`);
-      if (item.note) printer.align('LT').text(`  >> ${item.note}`);
+      renderDetails(printer, item);
     });
   } else {
     if (!bigFont) {
@@ -160,10 +163,12 @@ function renderItems(printer, ctx, items, layoutType = 'standard', bigFont = fal
     items.forEach((item) => {
       const qty = String(item.quantity).trim();
       if (bigFont) {
+        // Carattere doppio: metà colonne. Un nome lungo va a capo (il ritiro non deve perdere pezzi del nome)
         const maxW = Math.floor((LINE_WIDTH - qty.length - 2) / 2);
-        printer.align('LT').size(2, 2).style('B').text(`${qty}x ${item.name.toUpperCase().slice(0, maxW)}`).size(1, 1).style('NORMAL');
-        if (item.modifiers?.length) printer.align('LT').text(`  + ${item.modifiers.map(m => m.name).join(', ')}`);
-        if (item.note) printer.align('LT').text(`  >> ${item.note}`);
+        wrapText(item.name.toUpperCase(), maxW).forEach((line, i) => {
+          printer.align('LT').size(2, 2).style('B').text(i === 0 ? `${qty}x ${line}` : `${' '.repeat(qty.length + 2)}${line}`).size(1, 1).style('NORMAL');
+        });
+        renderDetails(printer, item);
         printer.align('CT').text(DIVIDER_THIN);
         return;
       }
@@ -175,11 +180,18 @@ function renderItems(printer, ctx, items, layoutType = 'standard', bigFont = fal
           printer.align('LT').text('  ' + line);
         }
       });
-      if (item.modifiers?.length) printer.align('LT').text(`  + ${item.modifiers.map(m => m.name).join(', ')}`);
-      if (item.note) printer.align('LT').text(`  >> ${item.note}`);
+      renderDetails(printer, item);
     });
   }
   printer.align('CT').text(DIVIDER_THIN);
+}
+
+// Opzioni e nota di una riga, a capo nella larghezza dello scontrino (il rientro resta allineato)
+function renderDetails(printer, item) {
+  const lines = [];
+  if (item.modifiers?.length) lines.push(...wrapText(`+ ${item.modifiers.map(m => m.name).join(', ')}`, LINE_WIDTH - 2).map(l => `  ${l}`));
+  if (item.note) lines.push(...wrapText(`>> ${item.note}`, LINE_WIDTH - 2).map(l => `  ${l}`));
+  lines.forEach(l => printer.align('LT').text(l));
 }
 
 function printPickupBanner(printer, status, subtitle = '') {
@@ -197,7 +209,7 @@ function renderFooter(printer, ctx, { total, pickupId, showTotal = false }) {
   const { totalLabel, legalText } = ctx.branding;
   if (showTotal && total !== null && total !== undefined) {
     printer.align('CT').style('B').text(totalLabel).style('NORMAL');
-    printer.align('CT').style('B').size(2, 2).text(`€ ${parseFloat(total).toFixed(2)}`).size(1, 1).style('NORMAL');
+    printer.align('CT').style('B').size(2, 2).text(money(total)).size(1, 1).style('NORMAL');
     printer.align('CT').text(DIVIDER_THIN);
 
     const legalLines = legalText.split('\n').map(l => l.trim()).filter(Boolean).flatMap(l => wrapText(l, LINE_WIDTH));
@@ -273,7 +285,7 @@ async function renderBar(printer, order, ctx) {
   renderFooter(printer, ctx, { pickupId: encodeOrderId(order.id, new Date(order.created_at || Date.now())) });
 }
 
-const euro = (n) => `€ ${Number(n).toFixed(2)}`;
+const euro = money;
 const METHOD_LABELS = { cash: 'Contanti', card: 'Carta', other: 'Altro' };
 
 // Ricevuta NON fiscale di un conto di un tavolo (dati di GET /checks/:id/receipt): tutto il conto, oppure la quota

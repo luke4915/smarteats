@@ -2,8 +2,21 @@
 // interfaccia (text, align, style, size, feed, cut, qrcode, image): per un'altra marca
 // basta un builder con gli stessi metodi. Nessuna dipendenza dal browser: si testa in Node.
 
+// Virgolette e trattini «tipografici» (da copia e incolla) che le stampanti non hanno nella loro tabella di caratteri: diventano quelli semplici.
+const LOOKALIKES = { '’': "'", '‘': "'", '“': '"', '”': '"', '«': '"', '»': '"', '–': '-', '—': '-', '…': '...', '\u00A0': ' ' };
+
+// Un carattere di controllo (o uno non valido in XML) in un nome o in una nota renderebbe il documento illeggibile per la stampante,
+// che lo rifiuterebbe per sempre: la coda lo riproverebbe all'infinito. Qui si tolgono prima.
+export function printable(s) {
+  return String(s)
+    .replace(/[‘’“”«»–—…\u00A0]/g, (c) => LOOKALIKES[c])
+    // eslint-disable-next-line no-control-regex -- sono proprio i caratteri da togliere
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '')
+    .replace(/[\uD800-\uDFFF]/g, '');   // emoji e simili: la stampante stamperebbe «?»
+}
+
 function escapeXml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return printable(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function mapAlign(pos) {

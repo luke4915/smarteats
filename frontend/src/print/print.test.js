@@ -1,6 +1,6 @@
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { EposBuilder } from './eposBuilder.js';
+import { EposBuilder, printable } from './eposBuilder.js';
 import { TEMPLATES, DEFAULT_BRANDING, wrapText, encodeOrderId, filterItems, tableLabel, renderCheckReceipt } from './templates.js';
 import { brandingFromSettings, imagesFromSettings } from './branding.js';
 import { buildCopyPreviews } from './copyPreviews.js';
@@ -34,7 +34,7 @@ test('il builder protegge i caratteri speciali nell\'XML', () => {
 
 test('copia cliente: intestazione, righe, totale e identificativo di ritiro', async () => {
   const xml = await render('Cliente');
-  for (const part of ['ASSOCIAZIONE PROVA', 'C.F. 123', 'PANINO', '€ 10.00', '€ 23.50', 'ID RITIRO: ORD000A12140509']) {
+  for (const part of ['ASSOCIAZIONE PROVA', 'C.F. 123', 'PANINO', '€ 10,00', '€ 23,50', 'ID RITIRO: ORD000A12140509']) {
     assert.ok(xml.includes(part), `manca: ${part}`);
   }
 });
@@ -205,7 +205,7 @@ test('ricevuta del conto: righe, totale, pagamenti e residuo; non fiscale', asyn
   const b = new EposBuilder();
   await renderCheckReceipt(b, receipt, ctx);
   const xml = b.buildXml();
-  for (const part of ['CONTO', 'Tavolo T5 - 2 coperti - Conto n. 3', 'PANINO', '€ 14.50', 'Contanti', 'Carta', '€ 6.50', 'DOCUMENTO NON FISCALE'])
+  for (const part of ['CONTO', 'Tavolo T5 - 2 coperti - Conto n. 3', 'PANINO', '€ 14,50', 'Contanti', 'Carta', '€ 6,50', 'DOCUMENTO NON FISCALE'])
     assert.ok(xml.includes(part), `manca: ${part}`);
 });
 
@@ -219,7 +219,7 @@ test('ricevuta di un pagamento per voce: solo la quota pagata e il residuo del c
   const b = new EposBuilder();
   await renderCheckReceipt(b, receipt, ctx);
   const xml = b.buildXml();
-  for (const part of ['RICEVUTA DI PAGAMENTO', '1 coperto', 'PAGATO Contanti', 'Residuo del conto: € 9.50'])
+  for (const part of ['RICEVUTA DI PAGAMENTO', '1 coperto', 'PAGATO Contanti', 'Residuo del conto: € 9,50'])
     assert.ok(xml.includes(part), `manca: ${part}`);
   assert.ok(!xml.includes('BIRRA'));
 });
@@ -241,4 +241,21 @@ test('la ricevuta va alla stampante della copia Cliente, altrimenti alla prima a
   assert.deepEqual([job.host, job.port], ['10.0.0.1', 9443]);
   assert.ok(job.builder.buildXml().includes('PANINO'));
   assert.equal(await buildReceiptJob({ settings: [], branding: DEFAULT_BRANDING }, receipt, NO_IMAGES), null);
+});
+
+test('il testo è sempre stampabile: virgolette semplici, niente caratteri che rompono l\'XML o emoji', () => {
+  assert.equal(printable('Panino “della casa” – l’ultimo…'), 'Panino "della casa" - l\'ultimo...');
+  assert.equal(printable('con\u0008 nota\u0000 🍕'), 'con nota ');
+  const xml = new EposBuilder().text('a\u0007b <c> & d').buildXml();
+  assert.match(xml, /ab &lt;c&gt; &amp; d/);
+});
+
+test('nomi lunghi: nei ritiri grandi vanno a capo senza perdere parole; opzioni e note vanno a capo', async () => {
+  const { printer, xml } = await (async () => { const p = new EposBuilder(); return { printer: p, xml: () => p.buildXml() }; })();
+  const order = { id: 7, display_code: 'A7', created_at: '2026-11-02T10:00:00Z', total: 12, items: [{ name: 'Panino con porchetta di Ariccia e cipolla caramellata', quantity: 2, price: 6, line_total: 12, modifiers: [{ name: 'senza maionese' }, { name: 'salsa piccante extra forte' }, { name: 'doppia porchetta' }], note: 'servire separato dal resto per favore e grazie mille' }] };
+  await TEMPLATES['Ritiro Gastronomia'](printer, order, { branding: DEFAULT_BRANDING, images: { logo: async () => null, numberBanner: async () => null }, showLogo: false });
+  const out = xml();
+  for (const word of ['PORCHETTA', 'ARICCIA', 'CARAMELLATA']) assert.ok(out.includes(word), `${word} non deve sparire dal ritiro`);
+  const rows = [...out.matchAll(/<text [^>]*>([^<]*?)&#10;<\/text>/g)].map(m => m[1].replace(/&gt;/g, '>').replace(/&lt;/g, '<').replace(/&amp;/g, '&'));
+  assert.ok(rows.every(r => r.length <= 42), 'nessuna riga oltre la larghezza dello scontrino (nei caratteri grandi, metà)');
 });

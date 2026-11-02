@@ -48,13 +48,15 @@ async function flushOnce() {
   const blocked = new Set(); // una stampante che non risponde non si interroga di nuovo in questo giro
   for (const job of jobs) {
     const printer = `${job.host}:${job.port}`;
-    if (blocked.has(printer)) continue;
+    if (blocked.has(printer) || job.status === 'rejected') continue;
     try {
       await getDriver(job.driver).send({ buildXml: () => job.xml }, { host: job.host, port: job.port });
       await db.printJobs.delete(job.id);
     } catch (err) {
-      blocked.add(printer);
-      await db.printJobs.update(job.id, { attempts: job.attempts + 1, lastError: err.message });
+      // Un documento che la stampante rifiuta in sé non si riprova e non ferma gli altri lavori: resta in coda, visibile, da scartare
+      const rejected = err.retryable === false;
+      if (!rejected) blocked.add(printer);
+      await db.printJobs.update(job.id, { attempts: job.attempts + 1, lastError: err.message, ...(rejected && { status: 'rejected' }) });
       if (job.attempts === 0) newlyFailed.push({ ...job, error: err.message });
     }
   }
@@ -62,7 +64,7 @@ async function flushOnce() {
 }
 
 // Invia i lavori in coda nell'ordine in cui sono nati. Un lavoro rifiutato resta in coda
-// (si riprova al giro successivo) e non blocca le altre stampanti. Se arrivano nuovi lavori
+// (si riprova al giro successivo, salvo un documento rifiutato in sé: `rejected`) e non blocca le altre stampanti. Se arrivano nuovi lavori
 // mentre un giro è in corso, ne parte subito un altro.
 // Ritorna i lavori che falliscono per la prima volta, per avvisare una sola volta l'operatore.
 export function flushPrintQueue() {
