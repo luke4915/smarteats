@@ -1,6 +1,7 @@
 import express from 'express';
 import { inTransaction } from '../db.js';
-import { authenticate, authorizeAdmin } from '../middleware/authenticate.js';
+import { authenticate, authorizeAdmin, MANAGER_ROLES } from '../middleware/authenticate.js';
+import { maskReserved } from '../utils/reservedData.js';
 import { tenantScope } from '../middleware/tenantScope.js';
 import logger from '../logger.js';
 import { logAudit } from '../utils/auditLogger.js';
@@ -16,20 +17,27 @@ const router = express.Router();
 
 export default function (broadcast) {
 
-  router.get('/', authenticate, tenantScope, async (req, res) => {
+  // I contanti di una serata (attesi e contati) li vedono solo admin e responsabile, e il blocco dei dati riservati li copre
+  const forRole = (user, session) => {
+    if (!session || MANAGER_ROLES.includes(user.role)) return session;
+    const { expected_cash: _expected, declared_cash: _declared, ...rest } = session;
+    return rest;
+  };
+
+  router.get('/', authenticate, tenantScope, maskReserved, async (req, res) => {
     try {
       const { rows } = await req.db.query('SELECT * FROM sessions ORDER BY start_time DESC');
-      res.json(rows);
+      res.json(rows.map(s => forRole(req.user, s)));
     } catch (err) {
       logger.error({ err }, 'Errore GET /api/sessions');
       res.status(500).json({ error: 'Errore caricamento sessioni' });
     }
   });
 
-  router.get('/latest', authenticate, tenantScope, async (req, res) => {
+  router.get('/latest', authenticate, tenantScope, maskReserved, async (req, res) => {
     try {
       const { rows } = await req.db.query('SELECT * FROM sessions ORDER BY start_time DESC LIMIT 1');
-      res.json(rows[0] || null);
+      res.json(forRole(req.user, rows[0]) || null);
     } catch (err) {
       logger.error({ err }, 'Errore GET /api/sessions/latest');
       res.status(500).json({ error: 'Errore caricamento sessione' });
@@ -38,7 +46,7 @@ export default function (broadcast) {
 
   // GET /expected-cash — totale atteso (solo contanti) della sessione aperta, con gli ordini ancora aperti
   // (non contano nel totale: alla chiusura l'admin decide se completarli)
-  router.get('/expected-cash', authenticate, tenantScope, async (req, res) => {
+  router.get('/expected-cash', authenticate, authorizeAdmin, tenantScope, async (req, res) => {
     try {
       const { rows } = await req.db.query('SELECT id FROM sessions WHERE end_time IS NULL');
       if (!rows.length) return res.json({ expected: 0, openOrders: 0, openOrdersTotal: 0, openChecks: 0, openChecksTotal: 0 });
