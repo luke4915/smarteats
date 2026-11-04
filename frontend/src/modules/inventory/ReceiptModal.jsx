@@ -4,7 +4,7 @@ import Modal from '../../components/shared/Modal';
 import ModalActions from '../../components/shared/ModalActions';
 import ReceiptLineRow from './ReceiptLineRow';
 import DocumentPicker from './DocumentPicker';
-import { btn, btnPrimary, input, label } from '../../components/shared/styles';
+import { btn, btnPrimary, input, label, select } from '../../components/shared/styles';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { blankReceiptRow, summarize, receiptProblem, receiptPayload, rowsForSupplier, arrivedRows, todayText, centsToEuroText } from './receipt';
@@ -53,7 +53,7 @@ const ReceiptModal = ({ suppliers, ingredients, onClose, onSaved }) => {
       <div className="space-y-5">
         <div className="grid sm:grid-cols-3 gap-3">
           <label className="block"><span className={`${label} block mb-1`}>Fornitore</span>
-            <select className={input} aria-label="Fornitore" value={form.supplier_id} onChange={e => chooseSupplier(e.target.value)}>
+            <select className={select} aria-label="Fornitore" value={form.supplier_id} onChange={e => chooseSupplier(e.target.value)}>
               <option value="">Scegli…</option>
               {suppliers.filter(s => s.active).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select></label>

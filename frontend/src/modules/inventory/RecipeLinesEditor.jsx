@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react';
-import { btn, iconBtnField, input } from '../../components/shared/styles';
+import { btn, iconBtnField, select } from '../../components/shared/styles';
 import Segmented from '../../components/shared/Segmented';
 import QuantityInput from './QuantityInput';
 import { blankRow, resolveRef, unitAfterChoosing } from './recipeLines';
@@ -21,7 +21,7 @@ const RecipeLinesEditor = ({ rows, onChange, ingredients, preparations = [], sig
             {signed && (
               <Segmented label="Aggiunge o toglie" className="shrink-0" value={row.sign ?? 1} onChange={sign => update(row.key, { sign })} options={[{ id: 1, label: 'Aggiunge' }, { id: -1, label: 'Toglie' }]} />
             )}
-            <select className={`${input} sm:flex-1`} aria-label="Ingrediente" value={row.ref} onChange={e => choose(row, e.target.value)}>
+            <select className={`${select} sm:flex-1`} aria-label="Ingrediente" value={row.ref} onChange={e => choose(row, e.target.value)}>
               <option value="">Scegli…</option>
               <optgroup label="Ingredienti">{usable(ingredients).map(i => <option key={`i${i.id}`} value={`i${i.id}`}>{i.name}</option>)}</optgroup>
               {preparations.length > 0 && <optgroup label="Preparazioni">{usable(preparations).map(p => <option key={`p${p.id}`} value={`p${p.id}`}>{p.name}</option>)}</optgroup>}

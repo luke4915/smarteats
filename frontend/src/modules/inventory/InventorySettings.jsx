@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import { input } from '../../components/shared/styles';
+import { select } from '../../components/shared/styles';
 
 const RATES = ['4', '5', '10', '22', '0'];
 
@@ -31,7 +31,7 @@ const InventorySettings = () => {
       <h2 className="text-sm font-semibold text-[var(--text-main)] mb-1">IVA predefinita</h2>
       <p className="text-xs text-[var(--text-muted)] mb-4">Serve a calcolare i margini sul ricavo senza IVA. Un piatto può avere la sua aliquota dalla scheda del prodotto.</p>
       <div className="flex gap-2 max-w-xs">
-        <select className={input} aria-label="IVA predefinita" value={value} onChange={e => setValue(e.target.value)} disabled={saved === null}>
+        <select className={select} aria-label="IVA predefinita" value={value} onChange={e => setValue(e.target.value)} disabled={saved === null}>
           {RATES.map(rate => <option key={rate} value={rate}>{rate}%</option>)}
         </select>
         <button className="px-4 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-medium text-sm disabled:opacity-40" disabled={saved === null || value === saved} onClick={save}>Salva</button>

@@ -3,7 +3,7 @@ import { Phone, Clock, StickyNote, X, Banknote, CreditCard, Wallet } from 'lucid
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import PanelFrame from '../../components/shared/PanelFrame';
-import { btn, btnPrimary, btnDanger, input } from '../../components/shared/styles';
+import { btn, btnPrimary, btnDanger, input, select } from '../../components/shared/styles';
 import { formatEuro } from '../../utils/format';
 import { STATUS, SOURCE, shownStatus } from './rules';
 import { formatDay } from '../bookings/rules';
@@ -51,7 +51,7 @@ const OrderPanel = ({ order, slots, onBack, onChanged }) => {
       <div className="space-y-2">
         {slots.length > 0 && (
           <label className="flex items-center gap-2 text-sm text-[var(--text-muted)]">Ritiro alle
-            <select className={`${input} !w-28 !h-10`} value={time} onChange={e => setTime(e.target.value)} aria-label="Orario di ritiro">
+            <select className={`${select} !w-28 !h-10`} value={time} onChange={e => setTime(e.target.value)} aria-label="Orario di ritiro">
               {[...new Set([order.time, ...slots.map(s => s.time)])].sort().map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </label>

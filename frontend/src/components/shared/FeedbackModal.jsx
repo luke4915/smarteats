@@ -4,7 +4,7 @@ import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import Modal from './Modal';
 import ModalActions from './ModalActions';
-import { btnPrimary, input, label } from './styles';
+import { btnPrimary, input, label, select } from './styles';
 
 // «Dicci cosa migliorare»: un suggerimento o una segnalazione, per modulo, che arriva a chi sviluppa l'app. Si apre dal menu
 // dell'account (non sono impostazioni). `modules`: gli argomenti da offrire (la cassa delle sagre ne ha meno del ristorante).
@@ -35,7 +35,7 @@ const FeedbackModal = ({ businessType, onClose }) => {
       <div className="space-y-3">
         <p className="text-sm text-[var(--text-muted)]">Un'idea, qualcosa che non funziona o che non si capisce: lo leggiamo noi, di persona.</p>
         <label className="block"><span className={`${label} block mb-1`}>Di cosa parla</span>
-          <select value={module} onChange={e => setModule(e.target.value)} className={input}>
+          <select value={module} onChange={e => setModule(e.target.value)} className={select}>
             {options.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </select></label>
         <label className="block"><span className={`${label} block mb-1`}>Il tuo messaggio</span>

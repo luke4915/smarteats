@@ -240,3 +240,25 @@ test('listino della sagra: trascinando una categoria, al rilascio non c\'è ness
   await dialog.getByRole('button', { name: 'Annulla' }).click();
 });
 
+
+// Le tendine del modulo prodotto: categoria e nome si scelgono anche da tastiera; Esc chiude l'elenco, non la finestra.
+test('modulo prodotto: la categoria si sceglie da tastiera, una nuova si propone, Esc non chiude la finestra', async ({ page }) => {
+  const { restaurant: r } = seed();
+  await login(page, r.host, r.admin);
+  await page.getByRole('link', { name: 'Carta' }).click();
+  await page.getByRole('button', { name: 'Nuovo piatto' }).click();
+  const category = page.locator('input[name="category"]');
+  await category.click();
+  await expect(page.getByRole('listbox')).toBeVisible();
+  await category.press('ArrowDown');
+  await category.press('Enter');
+  await expect(category).not.toHaveValue('');
+  await expect(page.getByRole('dialog', { name: 'Nuovo piatto' })).toBeVisible();     // Invio ha scelto la voce, non ha inviato il modulo
+
+  await category.fill('Dolci di prova');
+  await expect(page.getByRole('option', { name: /Nuovo: «Dolci di prova»/ })).toBeVisible();
+  await category.press('Escape');
+  await expect(page.getByRole('listbox')).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Nuovo piatto' })).toBeVisible();     // Esc ha chiuso l'elenco, non la finestra
+  await page.getByRole('button', { name: 'Annulla', exact: true }).click();
+});

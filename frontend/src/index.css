@@ -115,6 +115,12 @@ body {
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--fade));
   mask-image: linear-gradient(to right, transparent 0, #000 var(--fade));
 }
+/* Freccia delle tendine: il colore è quello del testo secondario, leggibile sia sul chiaro che sullo scuro. */
+.select-field {
+  appearance: none; -webkit-appearance: none; padding-right: 2.25rem;
+  background-repeat: no-repeat; background-position: right 0.75rem center; background-size: 1rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8f98' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
 @keyframes motion-fade { from { opacity: 0; } }
 @keyframes motion-rise { from { opacity: 0; transform: translateY(6px); } }
 @keyframes motion-slide-in { from { transform: translateX(12px); } }

@@ -2,7 +2,7 @@ import Modal from '../../../components/shared/Modal';
 import ModalActions from '../../../components/shared/ModalActions';
 import Switch from '../../../components/shared/Switch';
 import Segmented from '../../../components/shared/Segmented';
-import { btn, btnPrimary, input, label } from '../../../components/shared/styles';
+import { btn, btnPrimary, input, label, select } from '../../../components/shared/styles';
 import Combobox from './Combobox';
 import PortionsField from './PortionsField';
 import AllergenPicker from './AllergenPicker';
@@ -107,7 +107,7 @@ const ProductFormModal = ({ noun = 'prodotto', conflict = null, onUseLatest, for
           <div className="grid sm:grid-cols-2 gap-x-4 gap-y-4">
             {courses && (
               <Field title="Portata" htmlFor="course" className="sm:col-span-2">
-                <select id="course" value={form.course_id ?? ''} onChange={e => patch({ course_id: e.target.value ? Number(e.target.value) : null })} className={input}>
+                <select id="course" value={form.course_id ?? ''} onChange={e => patch({ course_id: e.target.value ? Number(e.target.value) : null })} className={select}>
                   <option value="">Nessuna (esce subito: bevande, pane…)</option>
                   {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -121,7 +121,7 @@ const ProductFormModal = ({ noun = 'prodotto', conflict = null, onUseLatest, for
             )}
             {vatEnabled && (
               <Field title="IVA (per i margini)" htmlFor="vat_rate">
-                <select id="vat_rate" value={form.vat_rate ?? ''} onChange={e => patch({ vat_rate: e.target.value })} className={input}>
+                <select id="vat_rate" value={form.vat_rate ?? ''} onChange={e => patch({ vat_rate: e.target.value })} className={select}>
                   <option value="">Quella predefinita del locale</option>
                   {VAT_RATES.map(rate => <option key={rate} value={rate}>{rate}%</option>)}
                 </select>

@@ -8,7 +8,7 @@ import PrinterCheck from './PrinterCheck';
 import PaperWidthChoice from './PaperWidthChoice';
 import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
-import { btnPrimary, btnDanger, input, label as uiLabel } from '../shared/styles';
+import { btnPrimary, btnDanger, input, label as uiLabel, select } from '../shared/styles';
 import Loading from '../shared/Loading';
 const BACKEND_TEMPLATES = ['Cliente', 'Associazione', 'Cucina', 'Ritiro Bar', 'Ritiro Gastronomia', 'Numeretto'];
 
@@ -420,7 +420,7 @@ const CopyTypeModal = ({ initial, templatesOptions, onSave, onClose }) => {
         </ModalActions>
       )}>
       <div className="flex flex-col gap-4">
-        <select aria-label="Template" className={input} value={name} onChange={e => setName(e.target.value)} disabled={!!initial}>
+        <select aria-label="Template" className={select} value={name} onChange={e => setName(e.target.value)} disabled={!!initial}>
           <option value="">Seleziona template...</option>
           {templatesOptions.map(t => <option key={t} value={t}>{t}</option>)}
         </select>

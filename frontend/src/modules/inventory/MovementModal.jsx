@@ -3,7 +3,7 @@ import Modal from '../../components/shared/Modal';
 import ModalActions from '../../components/shared/ModalActions';
 import Segmented from '../../components/shared/Segmented';
 import QuantityInput from './QuantityInput';
-import { btnPrimary, input, label } from '../../components/shared/styles';
+import { btnPrimary, input, label, select } from '../../components/shared/styles';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { WASTE_REASONS, blankEntry, movementProblem, movementPayload } from './controls';
@@ -39,7 +39,7 @@ const MovementModal = ({ type, ingredientId = '', ingredients, onClose, onSaved 
         </ModalActions>)}>
       <div className="space-y-4">
         <label className="block"><span className={`${label} block mb-1`}>Ingrediente</span>
-          <select className={input} aria-label="Ingrediente" value={form.ingredient_id}
+          <select className={select} aria-label="Ingrediente" value={form.ingredient_id}
             onChange={e => { const next = ingredients.find(i => i.id === Number(e.target.value)); patch({ ingredient_id: e.target.value, ...(next && { unit: blankEntry(next).unit }) }); }}>
             <option value="">Scegli…</option>
             {ingredients.filter(i => i.active).map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
@@ -49,7 +49,7 @@ const MovementModal = ({ type, ingredientId = '', ingredients, onClose, onSaved 
           <QuantityInput label="Quantità" baseUnit={ingredient?.base_unit ?? 'g'} text={form.text} unit={form.unit} onChange={v => patch(v)} /></div>
         {type === 'waste' && (
           <label className="block"><span className={`${label} block mb-1`}>Motivo</span>
-            <select className={input} aria-label="Motivo" value={form.reason} onChange={e => patch({ reason: e.target.value })}>
+            <select className={select} aria-label="Motivo" value={form.reason} onChange={e => patch({ reason: e.target.value })}>
               {WASTE_REASONS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}
             </select></label>)}
         <label className="block"><span className={`${label} block mb-1`}>{type === 'waste' ? 'Nota' : 'Perché correggi'}</span>

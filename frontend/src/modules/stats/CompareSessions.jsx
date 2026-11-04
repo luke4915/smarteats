@@ -5,7 +5,7 @@ import { useToast } from '../../context/useToast';
 import { useAuth } from '../../context/useAuth';
 import { termsFor } from '../../utils/terms';
 import { formatEuro, formatMin } from '../../utils/format';
-import { input, iconBtnField } from '../../components/shared/styles';
+import { iconBtnField, select } from '../../components/shared/styles';
 import Segmented from '../../components/shared/Segmented';
 import StatCard from '../../components/shared/statistics/StatCard';
 import ChartCard from '../../components/shared/statistics/ChartCard';
@@ -76,10 +76,10 @@ const CompareSessions = () => {
       <ChartCard title={`Quali ${terms.unit === 'serata' ? 'serate' : 'servizi'}`}>
         <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-end">
           <label className="block"><span className="block text-xs text-[var(--text-muted)] mb-1">Di riferimento (A)</span>
-            <select className={input} value={a} onChange={e => setA(e.target.value)}>{sessions.map(s => <option key={s.id} value={s.id}>{label(s)}</option>)}</select></label>
+            <select className={select} value={a} onChange={e => setA(e.target.value)}>{sessions.map(s => <option key={s.id} value={s.id}>{label(s)}</option>)}</select></label>
           <button type="button" className={`${iconBtnField} justify-self-center`} aria-label="Scambia A e B" title="Scambia" onClick={() => { setA(b); setB(a); }}><ArrowLeftRight size={18} /></button>
           <label className="block"><span className="block text-xs text-[var(--text-muted)] mb-1">Confrontata (B)</span>
-            <select className={input} value={b} onChange={e => setB(e.target.value)}>{sessions.map(s => <option key={s.id} value={s.id}>{label(s)}</option>)}</select></label>
+            <select className={select} value={b} onChange={e => setB(e.target.value)}>{sessions.map(s => <option key={s.id} value={s.id}>{label(s)}</option>)}</select></label>
         </div>
         {a === b && <p className="mt-3 text-sm text-[var(--text-muted)]">Scegli due {terms.unit === 'serata' ? 'serate' : 'servizi'} diversi.</p>}
       </ChartCard>

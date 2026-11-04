@@ -3,7 +3,7 @@ import { Copy, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import { btn, btnPrimary, iconBtn, input, label } from '../../components/shared/styles';
+import { btn, btnPrimary, iconBtn, input, label, select } from '../../components/shared/styles';
 import Switch from '../../components/shared/Switch';
 import Loading from '../../components/shared/Loading';
 
@@ -62,7 +62,7 @@ const TakeawaySettings = () => {
           </div>
           <div className="grid sm:grid-cols-3 gap-3">
             <div><label className={label} htmlFor="tk-slot">Durata di una fascia</label>
-              <select id="tk-slot" className={`${input} mt-1`} value={s.slotMinutes} onChange={e => { setS(x => ({ ...x, slotMinutes: Number(e.target.value) })); save('takeaway_slot_minutes', e.target.value, 'Fasce aggiornate'); }}>
+              <select id="tk-slot" className={`${select} mt-1`} value={s.slotMinutes} onChange={e => { setS(x => ({ ...x, slotMinutes: Number(e.target.value) })); save('takeaway_slot_minutes', e.target.value, 'Fasce aggiornate'); }}>
                 {SLOT_OPTIONS.map(m => <option key={m} value={m}>{m} minuti</option>)}
               </select></div>
             <div><label className={label} htmlFor="tk-cap">Minuti di lavoro per fascia</label>
@@ -80,7 +80,7 @@ const TakeawaySettings = () => {
             <label className={label} htmlFor="tk-pay">Pagamento con carta sul sito</label>
             {s.paymentsAvailable ? (
               <>
-                <select id="tk-pay" className={`${input} mt-1`} value={s.paymentMode} onChange={e => { setS(x => ({ ...x, paymentMode: e.target.value })); save('takeaway_payment_mode', e.target.value, 'Pagamento aggiornato'); }}>
+                <select id="tk-pay" className={`${select} mt-1`} value={s.paymentMode} onChange={e => { setS(x => ({ ...x, paymentMode: e.target.value })); save('takeaway_payment_mode', e.target.value, 'Pagamento aggiornato'); }}>
                   <option value="off">Spento: si paga al ritiro</option>
                   <option value="optional">Facoltativo: il cliente sceglie</option>
                   <option value="required">Obbligatorio: si paga sempre online</option>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, ChevronDown } from 'lucide-react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import { btn, btnPrimary, btnDanger, iconBtn, input, label } from '../../components/shared/styles';
+import { btn, btnPrimary, btnDanger, iconBtn, input, label, select } from '../../components/shared/styles';
 import { groupHint } from '../tables/floor/modifierRules';
 import { formatEuro } from '../../utils/format';
 
@@ -23,7 +23,7 @@ const GroupEditor = ({ draft, setDraft, onSave, onCancel, onDelete, saving }) =>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={label} htmlFor="group-min">Da scegliere</label>
-          <select id="group-min" className={`${input} mt-1`} value={draft.min_select} onChange={e => setDraft(d => ({ ...d, min_select: Number(e.target.value) }))}>
+          <select id="group-min" className={`${select} mt-1`} value={draft.min_select} onChange={e => setDraft(d => ({ ...d, min_select: Number(e.target.value) }))}>
             <option value={0}>Facoltativo</option>
             <option value={1}>Almeno una</option>
             <option value={2}>Almeno due</option>
@@ -31,7 +31,7 @@ const GroupEditor = ({ draft, setDraft, onSave, onCancel, onDelete, saving }) =>
         </div>
         <div>
           <label className={label} htmlFor="group-max">Al massimo</label>
-          <select id="group-max" className={`${input} mt-1`} value={draft.max_select ?? ''} onChange={e => setDraft(d => ({ ...d, max_select: e.target.value ? Number(e.target.value) : null }))}>
+          <select id="group-max" className={`${select} mt-1`} value={draft.max_select ?? ''} onChange={e => setDraft(d => ({ ...d, max_select: e.target.value ? Number(e.target.value) : null }))}>
             <option value="">Nessun limite</option>
             {[1, 2, 3, 4, 5].map(n => <option key={n} value={n}>{n === 1 ? 'Una sola' : `${n}`}</option>)}
           </select>
