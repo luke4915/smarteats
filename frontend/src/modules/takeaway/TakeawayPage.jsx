@@ -29,7 +29,7 @@ const TakeawayPage = ({ event }) => {
   const location = useLocation();
   const narrow = useIsMobile(900);
   const [date, setDate] = useState(() => location.state?.date ?? todayLocal());
-  const { settings, orders, slots, capacity, loading, reload } = useTakeaway(date, event);
+  const { settings, overdue, orders, slots, capacity, loading, reload } = useTakeaway(date, event);
   const [panel, setPanel] = useState(null);        // { kind: 'detail', id } | { kind: 'new' }
   const [cart, setCart] = useState([]);
   const products = useProducts(panel?.kind === 'new', event);
@@ -67,8 +67,15 @@ const TakeawayPage = ({ event }) => {
           <button className={iconBtn} aria-label="Giorno successivo" onClick={() => go(1)}><ChevronRight size={20} /></button>
         </div>
         {date !== todayLocal() && <button className={`${btn} !h-10`} onClick={() => { setDate(todayLocal()); setPanel(null); }}>Oggi</button>}
-        <button className={`${btnPrimary} !h-10 ml-auto`} onClick={() => { setPanel({ kind: 'new' }); }}><Plus size={16} /> Nuovo ordine</button>
+        <button className={`${btnPrimary} !h-10 ml-auto`} aria-label="Nuovo ordine" onClick={() => { setPanel({ kind: 'new' }); }}><Plus size={16} /><span className="hidden sm:inline">Nuovo ordine</span></button>
       </header>
+
+      {overdue.count > 0 && overdue.oldest !== date && (
+        <div role="status" className="flex flex-wrap items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 mb-3 text-sm text-[var(--text-main)] shrink-0">
+          <span className="flex-1 min-w-0">{overdue.count === 1 ? '1 ordine' : `${overdue.count} ordini`} con il ritiro passato, ancora da consegnare o annullare.</span>
+          <button className={btn} onClick={() => { setDate(overdue.oldest); setPanel(null); }}>Apri</button>
+        </div>
+      )}
 
       {busySlots.length > 0 && (
         <ScrollRow className="flex gap-2 pb-3 shrink-0" aria-label="Lavoro già preso per fascia">

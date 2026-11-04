@@ -65,18 +65,20 @@ const ReservationsPage = ({ event }) => {
 
   const list = (
     <div className="flex flex-col h-full min-h-0">
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 pb-3 shrink-0">
+      {/* Su schermo largo senza andare a capo: mentre il riquadro si stringe per far posto al pannello le voci restano sulla stessa riga e
+          scivolano soltanto, invece di saltare giù. Sul telefono il pannello è a tutto schermo, quindi la testata è a due righe fisse: data e azioni, poi la vista. */}
+      <header className={`flex items-center gap-x-4 pb-3 shrink-0 min-w-0 ${narrow ? 'flex-wrap gap-y-2' : ''}`}>
         {view === 'month'
           ? <PeriodNav label={formatMonth(month)} prevLabel="Mese precedente" nextLabel="Mese successivo" onPrev={() => setMonth(m => addMonths(m, -1))} onNext={() => setMonth(m => addMonths(m, 1))}
               isCurrent={month === monthOf(todayLocal())} onToday={() => setMonth(monthOf(todayLocal()))} todayLabel="Mese corrente" pickerType="month" pickerValue={month} onPick={setMonth} />
           : <PeriodNav label={formatDay(date)} hint={`${total} ${total === 1 ? 'persona' : 'persone'}${pending > 0 ? ` · ${pending} da confermare` : ''}`} prevLabel="Giorno precedente" nextLabel="Giorno successivo"
               onPrev={() => go(-1)} onNext={() => go(1)} isCurrent={date === todayLocal()} onToday={() => { setDate(todayLocal()); setPanel(null); }}
               pickerValue={date} onPick={(d) => { setDate(d); setPanel(null); }} />}
-        <Segmented label="Vista" value={view} onChange={(v) => { if (v === 'month') setMonth(monthOf(date)); setView(v); }} className="w-72"
+        <Segmented label="Vista" value={view} onChange={(v) => { if (v === 'month') setMonth(monthOf(date)); setView(v); }} className={narrow ? 'order-3 w-full' : 'w-72 min-w-[13rem] shrink'}
           options={[{ id: 'timeline', label: 'Timeline' }, { id: 'list', label: 'Elenco' }, { id: 'month', label: 'Mensile' }]} />
-        <div className="flex items-center gap-2 ml-auto">
-          {date === todayLocal() && view !== 'month' && <button className={`${btn} !h-10`} onClick={() => setPanel({ kind: 'walkin' })}><UserPlus size={16} /> Walk-in</button>}
-          <button className={`${btnPrimary} !h-10`} disabled={!activeShifts.length} onClick={() => setPanel({ kind: 'new' })}><Plus size={16} /> Prenotazione</button>
+        <div className="flex items-center gap-2 ml-auto shrink-0 order-2">
+          {date === todayLocal() && view !== 'month' && <button className={`${btn} !h-10`} aria-label="Walk-in" onClick={() => setPanel({ kind: 'walkin' })}><UserPlus size={16} />{!panel && <span className="hidden sm:inline">Walk-in</span>}</button>}
+          <button className={`${btnPrimary} !h-10`} aria-label="Prenotazione" disabled={!activeShifts.length} onClick={() => setPanel({ kind: 'new' })}><Plus size={16} />{!panel && <span className="hidden sm:inline">Prenotazione</span>}</button>
         </div>
       </header>
 

@@ -17,7 +17,7 @@ import { loadSettings, loadHours, loadUsedByTime, loadWorkMinutes, assignPickupC
 import { verifyOrderItems } from '../utils/orderLines.js';
 import { expireTakeaway } from '../utils/caseExpiry.js';
 import { enqueue } from '../utils/whatsapp/outbox.js';
-import { snapshotItems } from '../utils/takeawayDb.js';
+import { snapshotItems, loadOverdueTakeaway } from '../utils/takeawayDb.js';
 
 // Asporto (modulo `takeaway`): gli ordini con orario di ritiro. Si leggono e si gestiscono con i ruoli di sala e cassa;
 // orari e impostazioni li scrive l'admin. Disegno e regole: docs/design-asporto.md.
@@ -98,6 +98,15 @@ export default function (broadcast) {
     } catch (err) {
       logger.error({ err }, 'Errore GET /api/takeaway/orders');
       res.status(500).json({ error: 'Errore caricamento ordini' });
+    }
+  });
+
+  // GET /overdue — gli ordini accettati con il ritiro passato da tempo e mai chiusi (consegnati o annullati): { count, oldest }
+  router.get('/overdue', ...guard, tenantScope, async (req, res) => {
+    try { res.json(await loadOverdueTakeaway(req.db, PORTAL_TZ)); }
+    catch (err) {
+      logger.error({ err }, 'Errore GET /api/takeaway/overdue');
+      res.status(500).json({ error: 'Errore caricamento ordini da chiudere' });
     }
   });
 

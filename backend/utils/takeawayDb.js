@@ -4,7 +4,7 @@ import { writeOrderItems } from './orderItemsWrite.js';
 import { sumQuantitiesByProduct, lockAndFindShortages, applyStockChange } from './stock.js';
 import { orderNumber } from './orderNumber.js';
 import { PORTAL_TZ, localNow } from './bookingPortal.js';
-import { DEFAULTS, slotsOn, orderWorkMinutes, newPickupCode, pickupIsDue, pickupIsStale } from './takeaway.js';
+import { DEFAULTS, STALE_PICKUP_MINUTES, slotsOn, orderWorkMinutes, newPickupCode, pickupIsDue, pickupIsStale } from './takeaway.js';
 import { inTransaction } from '../db.js';
 import logger from '../logger.js';
 import { assertIngredientsAvailable, sellIngredients, returnIngredientsOfOrder, defaultDisposition } from './inventory/orderStock.js';
@@ -13,6 +13,15 @@ import { assertIngredientsAvailable, sellIngredients, returnIngredientsOfOrder, 
 // Va chiamato con la connessione del locale (RLS).
 
 const KEYS = ['takeaway_portal_enabled', 'takeaway_slot_minutes', 'takeaway_slot_capacity', 'takeaway_min_lead_minutes', 'takeaway_phone', 'takeaway_welcome', 'takeaway_payment_mode'];
+
+// Gli ordini accettati il cui ritiro è passato da più di STALE_PICKUP_MINUTES: non vanno più in cucina da soli e restano
+// «da preparare» finché il locale non li consegna o li annulla. Ritorna { count, oldest } con `oldest` = giorno (YYYY-MM-DD) del più vecchio.
+export async function loadOverdueTakeaway(db, tz) {
+  const { rows: [row] } = await db.query(
+    `SELECT count(*)::int AS count, min(to_char(pickup_at AT TIME ZONE $1, 'YYYY-MM-DD')) AS oldest
+     FROM takeaway_orders WHERE status = 'accepted' AND pickup_at < now() - make_interval(mins => $2)`, [tz, STALE_PICKUP_MINUTES]);
+  return { count: row.count, oldest: row.oldest };
+}
 
 export async function loadSettings(db) {
   const { rows } = await db.query('SELECT key, value FROM settings WHERE key = ANY($1)', [KEYS]);

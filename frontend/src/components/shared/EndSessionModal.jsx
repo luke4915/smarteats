@@ -6,7 +6,7 @@ import { formatEuro } from '../../utils/format';
 
 // Conferma della chiusura serata o servizio. Se ci sono ordini ancora aperti (in attesa o in preparazione) chi chiude
 // sceglie: completarli (entrano nei conti) o lasciarli fuori da totale atteso e statistiche.
-const EndSessionModal = ({ title, sessionName, openOrders, openOrdersTotal, onCancel, onConfirm }) => {
+const EndSessionModal = ({ title, sessionName, openOrders, openOrdersTotal, overdueTakeaway = 0, onCancel, onConfirm }) => {
   const [choice, setChoice] = useState(null);
   const needsChoice = openOrders > 0;
 
@@ -32,6 +32,11 @@ const EndSessionModal = ({ title, sessionName, openOrders, openOrdersTotal, onCa
           {option('complete', 'Completali', 'Entrano nel totale atteso e nelle statistiche.')}
           {option('leave', 'Lasciali fuori', 'Restano come sono, fuori da totale atteso e statistiche.')}
         </div>
+      )}
+      {overdueTakeaway > 0 && (
+        <p className="mt-4 text-xs text-amber-500">
+          {overdueTakeaway === 1 ? 'C\'è un ordine d\'asporto' : `Ci sono ${overdueTakeaway} ordini d'asporto`} con il ritiro passato da tempo, ancora da consegnare o annullare: li trovi in Asporto.
+        </p>
       )}
     </Modal>
   );

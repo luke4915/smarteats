@@ -149,3 +149,43 @@ test('mese: il calendario riassume i giorni e un tocco porta alla Timeline di qu
   await page.getByRole('button', { name: /pieno$/ }).first().click();
   await expect(page.getByRole('region', { name: /Timeline dei tavoli/ })).toBeVisible();
 });
+
+// Aprendo il pannello il riquadro si stringe: i pulsanti della testata scivolano di lato ma non saltano mai su un'altra riga.
+test('prenotazioni: aprendo il pannello i pulsanti della testata restano sulla stessa riga', async ({ page }) => {
+  const { restaurant: r } = seed();
+  await page.setViewportSize({ width: 1180, height: 800 });
+  await login(page, r.host, r.admin);
+  await page.getByRole('link', { name: 'Prenotazioni' }).click();
+  await page.getByRole('tab', { name: 'Elenco' }).click();
+  const add = page.getByRole('button', { name: 'Prenotazione', exact: true });
+  await expect(add).toBeVisible();
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    const b = [...document.querySelectorAll('button')].find(x => x.getAttribute('aria-label') === 'Prenotazione' || x.textContent.trim() === 'Prenotazione');
+    window.__ys = new Set();
+    const t0 = performance.now();
+    const tick = () => { window.__ys.add(Math.round(b.getBoundingClientRect().y)); if (performance.now() - t0 < 800) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  });
+  await add.click();
+  await page.waitForTimeout(1000);
+  expect(await page.evaluate(() => [...window.__ys])).toHaveLength(1);
+});
+
+// Sul telefono e sul tablet stretto la testata non si sovrappone: data, vista e azioni stanno ognuna al suo posto.
+for (const width of [390, 820]) {
+  test(`prenotazioni: la testata non si sovrappone a ${width} px`, async ({ page }) => {
+    const { restaurant: r } = seed();
+    await page.setViewportSize({ width, height: 844 });
+    await login(page, r.host, r.admin);
+    await page.getByRole('link', { name: 'Prenotazioni' }).click().catch(async () => { await page.getByRole('button', { name: 'Prenotazioni' }).click(); });
+    const tabs = page.getByRole('tablist', { name: 'Vista' });
+    await expect(tabs).toBeVisible();
+    const boxes = await Promise.all([
+      page.getByRole('button', { name: 'Giorno precedente' }), page.getByRole('button', { name: 'Giorno successivo' }), tabs, page.getByRole('button', { name: 'Prenotazione', exact: true }),
+    ].map(l => l.boundingBox()));
+    const overlap = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) expect(overlap(boxes[i], boxes[j]), `${i} e ${j} si sovrappongono`).toBe(false);
+    await shot(page, `reservations-12-testata-${width}`);
+  });
+}

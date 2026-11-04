@@ -12,6 +12,8 @@ import { computeExpectedCash, countOpenOrders, countOpenChecks } from '../utils/
 import { fireDueTakeaway, announceKitchenOrder } from '../utils/takeawayDb.js';
 import { applyServiceStartPortions } from '../utils/inventory/portionsDb.js';
 import { getTenantModules } from '../utils/tenantModules.js';
+import { loadOverdueTakeaway } from '../utils/takeawayDb.js';
+import { PORTAL_TZ } from '../utils/bookingPortal.js';
 
 const router = express.Router();
 
@@ -52,7 +54,7 @@ export default function (broadcast) {
       if (!rows.length) return res.json({ expected: 0, openOrders: 0, openOrdersTotal: 0, openChecks: 0, openChecksTotal: 0 });
       const open = await countOpenOrders(req.db, rows[0].id);
       const checks = await countOpenChecks(req.db, rows[0].id);
-      res.json({ expected: await computeExpectedCash(req.db, rows[0].id), openOrders: open.count, openOrdersTotal: open.total, openChecks: checks.count, openChecksTotal: checks.total });
+      res.json({ expected: await computeExpectedCash(req.db, rows[0].id), openOrders: open.count, openOrdersTotal: open.total, openChecks: checks.count, openChecksTotal: checks.total, overdueTakeaway: (await loadOverdueTakeaway(req.db, PORTAL_TZ)).count });
     } catch (err) {
       logger.error({ err }, 'Errore GET /api/sessions/expected-cash');
       res.status(500).json({ error: 'Errore calcolo del totale atteso' });
