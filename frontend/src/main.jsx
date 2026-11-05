@@ -9,6 +9,7 @@ import { ToastProvider } from './context/ToastProvider';
 import { ReservedDataProvider } from './context/ReservedDataProvider';
 import { LockProvider } from './context/LockProvider';
 import UpdateBanner from './components/shell/UpdateBanner';
+import LicenseNotice from './components/shell/LicenseNotice';
 import WhatsNew from './components/shell/WhatsNew';
 
 const root = createRoot(document.getElementById('root'));
@@ -23,6 +24,7 @@ root.render(
                                 <AppRouter />
                                 <WhatsNew />
                                 <UpdateBanner />
+                                <LicenseNotice />
                             </LockProvider>
                         </ErrorBoundary>
                     </ReservedDataProvider>

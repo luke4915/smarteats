@@ -2,9 +2,11 @@ import { useState, useMemo, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Plus, ShoppingBag } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../../hooks/useBreakpoint';
-import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { useTakeaway } from './useTakeaway';
+import { acceptOrder } from './acceptOrder';
+import { useForceSale } from '../../hooks/useForceSale';
+import ForceSaleDialog from '../../components/shared/ForceSaleDialog';
 import { todayLocal, addDays, formatDay } from '../bookings/rules';
 import { STATUS, SOURCE, groupOrders, itemsSummary, shownStatus, addToCart } from './rules';
 import OrderPanel from './OrderPanel';
@@ -25,6 +27,7 @@ const TONES = {
 // d'occhio. A destra un solo pannello (dettaglio o nuovo ordine), come la Sala; su schermo stretto è a tutto schermo.
 const TakeawayPage = ({ event }) => {
   const { showToast } = useToast();
+  const force = useForceSale();
   const navigate = useNavigate();
   const location = useLocation();
   const narrow = useIsMobile(900);
@@ -51,7 +54,7 @@ const TakeawayPage = ({ event }) => {
 
   const quickAccept = async (e, order) => {
     e.stopPropagation();
-    try { await fetchWithAuth(`/takeaway/orders/${order.id}/accept`, { method: 'POST', body: {} }); showToast('Ordine accettato: va in cucina', 'success'); await reload(); }
+    try { await acceptOrder(order.id, {}, force.askForce); showToast('Ordine accettato: va in cucina', 'success'); await reload(); }
     catch (err) { showToast(err.message, 'error'); }
   };
 
@@ -136,14 +139,16 @@ const TakeawayPage = ({ event }) => {
         </div>
       );
 
+  const forceDialog = force.pending && <ForceSaleDialog message={force.pending} onAnswer={force.answer} />;
+
   // Nuovo ordine: la carta occupa la colonna grande, il riepilogo sta a destra
   if (panel?.kind === 'new') {
     const picker = <div className={`${card} flex-1 min-h-0 overflow-hidden`}><ProductPicker products={products} cart={cart} onAdd={(p) => setCart(c => addToCart(c, p, 1))} /></div>;
-    if (narrow) return <div className="flex-1 min-h-0 flex flex-col gap-3 w-full"><div className="h-[45%] min-h-0 flex">{picker}</div><div className="flex-1 min-h-0">{side}</div></div>;
-    return <>{picker}<div className="w-[400px] xl:w-[440px] shrink-0 h-full">{side}</div></>;
+    if (narrow) return <div className="flex-1 min-h-0 flex flex-col gap-3 w-full"><div className="h-[45%] min-h-0 flex">{picker}</div><div className="flex-1 min-h-0">{side}</div>{forceDialog}</div>;
+    return <>{picker}<div className="w-[400px] xl:w-[440px] shrink-0 h-full">{side}</div>{forceDialog}</>;
   }
-  if (!narrow) return <><div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div><div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div></>;
-  return <div className="flex-1 min-h-0 w-full">{panel ? side : <div className={`${card} h-full overflow-hidden`}>{list}</div>}</div>;
+  if (!narrow) return <><div className={`${card} flex-1 min-h-0 overflow-hidden`}>{list}</div><div className="w-[380px] xl:w-[420px] shrink-0 h-full">{side}</div>{forceDialog}</>;
+  return <div className="flex-1 min-h-0 w-full">{panel ? side : <div className={`${card} h-full overflow-hidden`}>{list}</div>}{forceDialog}</div>;
 };
 
 export default TakeawayPage;

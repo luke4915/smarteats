@@ -66,7 +66,7 @@ export { slotsOn };
 
 // L'ordine di cucina di un ordine da asporto accettato: sulla sessione aperta, con righe e stock. Ritorna i dati per
 // avvisare la cucina. Lancia HttpError (409 NO_ACTIVE_SESSION, 409 OUT_OF_STOCK, 400 prodotto non valido).
-export async function createKitchenOrder(db, { tenantId, userId, takeaway, role = 'cashier' }) {
+export async function createKitchenOrder(db, { tenantId, userId, takeaway, role = 'cashier', forceStock = false }) {
   const { rows: sessions } = await db.query(
     'UPDATE sessions SET order_counter = order_counter + 1 WHERE end_time IS NULL RETURNING id, order_counter');
   if (!sessions.length) throw new HttpError(409, 'Nessun servizio aperto: aprilo prima di accettare ordini', 'NO_ACTIVE_SESSION');
@@ -77,7 +77,7 @@ export async function createKitchenOrder(db, { tenantId, userId, takeaway, role 
   const totals = sumQuantitiesByProduct(items);
   const shortages = await lockAndFindShortages(db, totals);
   if (shortages.length) throw new HttpError(409, `Prodotto esaurito o insufficiente: ${shortages.map(p => p.name).join(', ')}`, 'OUT_OF_STOCK');
-  await assertIngredientsAvailable(db, { tenantId, items, role });
+  await assertIngredientsAvailable(db, { tenantId, items, role, force: forceStock });   // «Vendi comunque»: solo admin e responsabile, lo decide assertIngredientsAvailable
 
   const { number, code } = orderNumber({ counter: session.order_counter });
   const { rows: [order] } = await db.query(

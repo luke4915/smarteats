@@ -42,7 +42,7 @@ export const portalOrderSchema = z.object({
   pay_online: z.boolean().default(false),
 });
 
-export const acceptSchema = z.object({ time: time.optional(), ignore_capacity: z.boolean().default(false) });
+export const acceptSchema = z.object({ time: time.optional(), ignore_capacity: z.boolean().default(false), force_stock: z.boolean().default(false) });
 export const rejectSchema = z.object({ reason: z.string().trim().max(200).default('') });
 // Il metodo si sceglie alla consegna; un ordine già pagato online non lo richiede (è carta)
 export const pickedUpSchema = z.object({ method: z.enum(['cash', 'card', 'other']).optional() });

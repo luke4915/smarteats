@@ -5,15 +5,15 @@ import { settingsSections } from './sections.js';
 const ids = (user) => settingsSections(user).map(s => s.id);
 
 test('l\'admin di un ristorante completo vede tutte le sezioni, l\'account per ultimo', () => {
-  assert.deepEqual(ids({ role: 'admin', modules: ['tables', 'bookings', 'takeaway'] }), ['service', 'rooms', 'bookings', 'takeaway', 'printing', 'notifications', 'reserved', 'account']);
+  assert.deepEqual(ids({ role: 'admin', modules: ['tables', 'bookings', 'takeaway'] }), ['service', 'rooms', 'bookings', 'takeaway', 'printing', 'notifications', 'reserved', 'account', 'about']);
 });
 
 test('chi gestisce un locale di solo asporto non vede sala né prenotazioni', () => {
-  assert.deepEqual(ids({ role: 'admin', modules: ['takeaway'] }), ['takeaway', 'printing', 'notifications', 'reserved', 'account']);
+  assert.deepEqual(ids({ role: 'admin', modules: ['takeaway'] }), ['takeaway', 'printing', 'notifications', 'reserved', 'account', 'about']);
 });
 
 test('il responsabile ha le notifiche e l\'account, non la configurazione del locale', () => {
-  assert.deepEqual(ids({ role: 'manager', modules: ['tables', 'bookings'] }), ['notifications', 'account']);
+  assert.deepEqual(ids({ role: 'manager', modules: ['tables', 'bookings'] }), ['notifications', 'account', 'about']);
 });
 
 test('cameriere e cassa hanno solo le notifiche del dispositivo, e solo se servono', () => {

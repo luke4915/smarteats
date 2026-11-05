@@ -8,6 +8,8 @@ import Loading from '../../components/shared/Loading';
 import PrinterCheck from '../../components/setup/PrinterCheck';
 import PaperWidthChoice from '../../components/setup/PaperWidthChoice';
 import { input } from '../../components/shared/styles';
+import AutoPrintSwitches from '../../components/setup/AutoPrintSwitches';
+import { useAuth } from '../../context/useAuth';
 import { PRINTERS, settingFor, isReady } from './printers';
 
 // Dove stampa il ristorante: una riga per la cucina, una per il bar, una per il conto. Ogni riga ha l'indirizzo della stampante (si
@@ -45,6 +47,7 @@ const PrinterRow = ({ printer, setting, saving, onSave }) => {
 
 const PrintersSettings = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(null);
 
@@ -72,6 +75,7 @@ const PrintersSettings = () => {
 
   if (!settings) return <Loading />;
   return (
+    <div className="space-y-4">
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)]">
       <div className="p-5 pb-3">
         <h2 className="text-sm font-semibold text-[var(--text-main)] mb-1">Stampanti</h2>
@@ -80,6 +84,8 @@ const PrintersSettings = () => {
       <ul className="divide-y divide-[var(--border)] border-t border-[var(--border)]">
         {PRINTERS.map(p => <PrinterRow key={p.id} printer={p} setting={settingFor(p, settings)} saving={saving === p.id} onSave={save} />)}
       </ul>
+    </div>
+    <AutoPrintSwitches receipt={!!user.modules?.includes('tables')} takeaway={!!user.modules?.includes('takeaway')} />
     </div>
   );
 };

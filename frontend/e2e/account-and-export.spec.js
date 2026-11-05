@@ -148,3 +148,14 @@ test('menu pubblico da telefono: senza accesso, scorre, il pulsante dell\'ordine
     await page.keyboard.press('Escape');
   }
 });
+
+// Impostazioni → Informazioni: versione e stato della licenza.
+test('informazioni: si vedono la versione e lo stato della licenza', async ({ page }) => {
+  const { restaurant: r } = seed();
+  await login(page, r.host, r.admin);
+  await page.getByRole('link', { name: 'Impostazioni' }).click();
+  await page.getByRole('tab', { name: 'Informazioni' }).click();
+  await expect(page.getByText('Versione di SmartEats', { exact: true })).toBeVisible();
+  await expect(page.getByText(/^Licenza /).first()).toBeVisible();
+  await shot(page, 'settings-05-informazioni');
+});

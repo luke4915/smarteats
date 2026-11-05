@@ -12,6 +12,7 @@ const ALL = [
   { id: 'notifications', label: 'Notifiche', hint: 'Avvisi e suono su questo dispositivo.', anyModule: ['bookings', 'takeaway'], notFor: ['kitchen'] },
   { id: 'reserved', label: 'Dati riservati', hint: 'Nascondi costi, margini e statistiche: si sbloccano con la password di un amministratore.', admin: true },
   { id: 'account', label: 'Account', hint: 'Il tuo profilo e chi può accedere al locale.', roles: ['admin', 'manager'] },
+  { id: 'about', label: 'Informazioni', hint: 'La versione di SmartEats e lo stato della licenza.', roles: ['admin', 'manager'] },
 ];
 
 export const settingsSections = (user) => ALL.filter(s => {

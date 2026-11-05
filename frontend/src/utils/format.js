@@ -10,6 +10,9 @@ export const RESERVED_TEXT = '•••';
 export const formatEuro = (euro) => EURO.format(Number(euro) || 0);
 
 // Centesimi → «12,50 €»; `null` (dato riservato) → puntini.
+// Data e ora come si leggono in Italia: «5 novembre 2026, 12:00»
+export const formatDateTime = (iso) => new Intl.DateTimeFormat('it-IT', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(iso));
+
 export const formatCents = (cents) => (cents === null || cents === undefined ? RESERVED_TEXT : EURO.format(cents / 100));
 
 // Minuti con un decimale: «36,5 min».

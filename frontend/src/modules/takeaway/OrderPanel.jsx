@@ -8,6 +8,9 @@ import { formatEuro } from '../../utils/format';
 import { STATUS, SOURCE, shownStatus } from './rules';
 import { formatDay } from '../bookings/rules';
 import WhatsAppStatus from '../notifications/WhatsAppStatus';
+import { useForceSale } from '../../hooks/useForceSale';
+import ForceSaleDialog from '../../components/shared/ForceSaleDialog';
+import { acceptOrder } from './acceptOrder';
 
 const METHODS = [['cash', 'Contanti', Banknote], ['card', 'Carta', CreditCard], ['other', 'Altro', Wallet]];
 const TONES = {
@@ -23,11 +26,12 @@ const OrderPanel = ({ order, slots, onBack, onChanged }) => {
   const [mode, setMode] = useState(null);          // 'reject' | 'pay' | 'cancel'
   const [reason, setReason] = useState('');
   const [time, setTime] = useState(order.time);
+  const force = useForceSale();
 
   const act = async (path, body = {}, message) => {
     setBusy(true);
     try {
-      const res = await fetchWithAuth(`/takeaway/orders/${order.id}/${path}`, { method: 'POST', body });
+      const res = path === 'accept' ? await acceptOrder(order.id, body, force.askForce) : await fetchWithAuth(`/takeaway/orders/${order.id}/${path}`, { method: 'POST', body });
       showToast(message, 'success');
       setMode(null);
       await onChanged(res);
@@ -131,6 +135,7 @@ const OrderPanel = ({ order, slots, onBack, onChanged }) => {
         <WhatsAppStatus refType="takeaway" refId={order.id} version={order.status + (order.ready ? 'r' : '')} />
         {!open && order.status === 'picked_up' && <p className="text-sm text-[var(--text-muted)]">Ordine concluso.</p>}
       </div>
+      {force.pending && <ForceSaleDialog message={force.pending} onAnswer={force.answer} />}
     </PanelFrame>
   );
 };

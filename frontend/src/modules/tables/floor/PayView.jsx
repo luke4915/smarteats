@@ -5,6 +5,7 @@ import { useToast } from '../../../context/useToast';
 import PanelFrame from '../../../components/shared/PanelFrame';
 import { payableLines, estimateSelection, splitEqually, toCents } from './checkMath';
 import { formatEuro } from '../../../utils/format';
+import { autoPrintOn } from '../../../print/autoPrint';
 import { btn, btnPrimary, input, label, row, segment, segmentBox, iconBtn } from '../../../components/shared/styles';
 
 const METHODS = [['cash', 'Contanti', Banknote], ['card', 'Carta', CreditCard], ['other', 'Altro', CircleEllipsis]];
@@ -46,6 +47,7 @@ const PayView = ({ detail, onBack, onClosed, onPaid, onPrint }) => {
       else body.amount = Number(amountValue.toFixed(2));
       if (method === 'cash' && tenderedValue !== null) body.tendered = tenderedValue;
       const res = await fetchWithAuth(`/checks/${detail.id}/payments`, { method: 'POST', body });
+      if (autoPrintOn('receipt')) onPrint(res.payment.id);    // ricevuta automatica, se questo dispositivo la vuole
       if (res.change > 0) setDone(res);
       else if (res.check.status === 'paid') { showToast(`Conto chiuso · ${formatEuro(res.payment.amount)} incassati`, 'success'); onClosed(); }
       else {

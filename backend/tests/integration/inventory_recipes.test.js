@@ -3,6 +3,7 @@ import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import bcrypt from 'bcrypt';
 import { startServer, createTenant, deleteTenants, closePools, apiClient, adminDb, connectWs, sleep, PASSWORD } from './helpers.js';
+const { invalidateTenantModules } = await import('../../utils/tenantModules.js');   // dopo helpers: la configurazione di prova va caricata prima
 
 describe('magazzino: ingredienti e ricette', () => {
   let server, t, portionsOnly, api, kitchen, cashier, portionsApi;
@@ -144,6 +145,33 @@ describe('magazzino: ingredienti e ricette', () => {
     const forced = await sell(api, 2, { body: { force_stock: true } });
     assert.equal(forced.status, 200, JSON.stringify(forced.body));
     assert.equal(await onHand(ids.mozzarella), before - 200, 'la dispensa va in negativo, ed è tracciato');
+  });
+
+  it('asporto: accettare con un ingrediente finito è 409; solo admin e responsabile accettano comunque', async () => {
+    await adminDb.query(`UPDATE tenants SET modules = array_append(modules, 'takeaway') WHERE id = $1`, [t.id]);
+    invalidateTenantModules(t.id);
+    await api.put('/takeaway/hours', { hours: [0, 1, 2, 3, 4, 5, 6].map(weekday => ({ weekday, open_time: '12:00', close_time: '23:00' })) });
+    await api.put('/settings/takeaway_min_lead_minutes', { value: '0' });
+    await api.put('/settings/takeaway_portal_enabled', { value: '1' });
+    await adminDb.query('UPDATE ingredients SET quantity_on_hand = 5000 WHERE id = $1', [ids.mozzarella]);
+    const guest = apiClient(server.port, t.host);
+    const tomorrow = new Date(Date.now() + 36 * 3600 * 1000).toISOString().slice(0, 10);
+    const requested = async (n) => {
+      const res = await guest.post('/public/takeaway/orders', { date: tomorrow, time: '19:00', items: [{ id: ids.pizza, quantity: 1 }], customer_name: `Cliente ${n}`, phone: `33920000${n}0`, email: '', notes: '', consent: true, website: '' });
+      assert.equal(res.status, 201, JSON.stringify(res.body));
+      const id = (await api.get(`/takeaway/orders?date=${tomorrow}`)).body.find(o => o.customer_name === `Cliente ${n}`).id;
+      await adminDb.query(`UPDATE takeaway_orders SET pickup_at = pickup_at - interval '1 day' WHERE id = $1`, [id]);   // per oggi: va subito in cucina
+      return id;
+    };
+    const id = await requested(1);
+    await adminDb.query('UPDATE ingredients SET quantity_on_hand = 0 WHERE id = $1', [ids.mozzarella]);
+    const refused = await api.post(`/takeaway/orders/${id}/accept`, {});
+    assert.deepEqual([refused.status, refused.body.code], [409, 'INGREDIENT_SHORTAGE']);
+    const cashierForcing = await cashier.post(`/takeaway/orders/${id}/accept`, { force_stock: true });
+    assert.equal(cashierForcing.status, 409, 'la cassa non forza');
+    const forced = await api.post(`/takeaway/orders/${id}/accept`, { force_stock: true });
+    assert.equal(forced.status, 200, JSON.stringify(forced.body));
+    assert.equal(forced.body.status, 'accepted');
   });
 
   it('un ingrediente segnato esaurito dalla cucina blocca i piatti che lo usano; si rimette con un tocco', async () => {
