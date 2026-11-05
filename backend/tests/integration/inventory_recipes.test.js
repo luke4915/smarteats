@@ -3,7 +3,8 @@ import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import bcrypt from 'bcrypt';
 import { startServer, createTenant, deleteTenants, closePools, apiClient, adminDb, connectWs, sleep, PASSWORD } from './helpers.js';
-const { invalidateTenantModules } = await import('../../utils/tenantModules.js');   // dopo helpers: la configurazione di prova va caricata prima
+const { invalidateTenantModules } = await import('../../utils/tenantModules.js');
+const { localNow, addDays } = await import('../../utils/bookingPortal.js');   // dopo helpers: la configurazione di prova va caricata prima
 
 describe('magazzino: ingredienti e ricette', () => {
   let server, t, portionsOnly, api, kitchen, cashier, portionsApi;
@@ -155,7 +156,7 @@ describe('magazzino: ingredienti e ricette', () => {
     await api.put('/settings/takeaway_portal_enabled', { value: '1' });
     await adminDb.query('UPDATE ingredients SET quantity_on_hand = 5000 WHERE id = $1', [ids.mozzarella]);
     const guest = apiClient(server.port, t.host);
-    const tomorrow = new Date(Date.now() + 36 * 3600 * 1000).toISOString().slice(0, 10);
+    const tomorrow = addDays(localNow().date, 1);   // il giorno dell'Italia, non quello UTC: la sera i due non coincidono
     const requested = async (n) => {
       const res = await guest.post('/public/takeaway/orders', { date: tomorrow, time: '19:00', items: [{ id: ids.pizza, quantity: 1 }], customer_name: `Cliente ${n}`, phone: `33920000${n}0`, email: '', notes: '', consent: true, website: '' });
       assert.equal(res.status, 201, JSON.stringify(res.body));
