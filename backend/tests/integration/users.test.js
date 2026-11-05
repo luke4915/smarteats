@@ -148,7 +148,7 @@ describe('gestione utenti', () => {
   });
 
   it('profilo: il cambio username aggiorna anche la sessione e si registra', async () => {
-    await api1.post('/auth/admin/createUser', { username: 'vecchio', role: 'cashier', password: 'Temp-Pass-1' });
+    await api1.post('/auth/admin/createUser', { username: 'vecchio', role: 'manager', password: 'Temp-Pass-1' });
     const user = apiClient(server.port, t1.host);
     await user.login('vecchio', 'Temp-Pass-1');
     await user.post('/auth/change-password', { oldPassword: 'Temp-Pass-1', newPassword: 'Mia-Pass-123' });

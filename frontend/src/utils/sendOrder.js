@@ -3,6 +3,7 @@ import { nextOrderNumber } from '../offline/device';
 import { printOrderTickets } from '../print/printOrder';
 import { fetchWithAuth, NetworkError } from './apiClient';
 import { SHORTAGE_CODE } from '../hooks/useForceSale';
+import { playTapSound } from './sounds';
 
 // Invio di un ordine dalla cassa. In ordine:
 // 1. la cassa dà il numero all'ordine (A13), anche senza rete;
@@ -10,7 +11,7 @@ import { SHORTAGE_CODE } from '../hooks/useForceSale';
 // 3. stampa le comande dalla cassa, solo dopo che il server l'ha accettato o messo in coda;
 // 4. svuota il carrello e chiama `onSent`.
 // Se un ingrediente non basta (409) e `confirmForce` risponde sì (solo amministratore e responsabile), l'ordine si rimanda forzato.
-export async function sendOrder({ cart, isTakeaway = false, activeSession, orderMode, clearCart, playSound, showToast, onSent, confirmForce }) {
+export async function sendOrder({ cart, isTakeaway = false, activeSession, orderMode, clearCart, showToast, onSent, confirmForce }) {
   if (!activeSession) return showToast('Nessuna sessione attiva!', 'error');
   if (cart.length === 0) return showToast('Carrello vuoto!', 'error');
 
@@ -32,7 +33,7 @@ export async function sendOrder({ cart, isTakeaway = false, activeSession, order
   };
 
   const confirmOrder = (message, type) => {
-    playSound('order_confirm_sound');
+    playTapSound('confirm');
     clearCart();
     showToast(message, type);
     onSent?.();

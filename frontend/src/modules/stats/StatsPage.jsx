@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { formatEuro } from '../../utils/format';
-import { input } from '../../components/shared/styles';
+import { select } from '../../components/shared/styles';
 import Segmented from '../../components/shared/Segmented';
 import { HBars, HourBars, HourTable } from './Bars';
 import { Columns } from '../../components/shared/charts';
@@ -59,7 +59,7 @@ const StatsPage = () => {
   return (
     <PageBody>
       <PageHeader title="Statistiche" subtitle="Contano i conti pagati.">
-        <select className={`${input} !w-64`} aria-label="Servizio" value={sessionId ?? ''} onChange={e => setSessionId(e.target.value ? Number(e.target.value) : null)}>
+        <select className={`${select} !w-64`} aria-label="Servizio" value={sessionId ?? ''} onChange={e => setSessionId(e.target.value ? Number(e.target.value) : null)}>
           <option value="">Tutti i servizi</option>
           {sessions.map(s => <option key={s.id} value={s.id}>{s.name} · {dateLabel(s.start_time)}</option>)}
         </select>

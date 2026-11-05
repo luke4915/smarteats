@@ -14,9 +14,10 @@ export function addDays(date, n) {
   return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
 }
 
-export function formatDay(date, { short = false } = {}) {
+// `lang`: la lingua della pagina; dove il testo è in inglese anche la data lo è (le lingue senza traduzione leggono l'inglese)
+export function formatDay(date, { short = false, lang = 'it' } = {}) {
   const [y, m, d] = date.split('-').map(Number);
-  return new Intl.DateTimeFormat('it-IT', short
+  return new Intl.DateTimeFormat(lang === 'it' ? 'it-IT' : 'en-GB', short
     ? { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }
     : { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d)));
 }

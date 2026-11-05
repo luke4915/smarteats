@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
 import { formatCents } from '../../utils/format';
-import { input } from '../../components/shared/styles';
+import { select } from '../../components/shared/styles';
 import Segmented from '../../components/shared/Segmented';
 import ChartCard from '../../components/shared/statistics/ChartCard';
 import Loading from '../../components/shared/Loading';
@@ -33,7 +33,7 @@ const MenuMatrix = () => {
   return (
     <PageBody>
       <PageHeader title="Matrice del menu" subtitle="Cosa vale la pena tenere in evidenza e cosa rivedere.">
-        <select className={`${input} !w-64`} aria-label="Periodo" value={sessionId} onChange={e => setSessionId(e.target.value)}>
+        <select className={`${select} !w-64`} aria-label="Periodo" value={sessionId} onChange={e => setSessionId(e.target.value)}>
           <option value="">Tutte le serate</option>
           {sessions.map(s => <option key={s.id} value={s.id}>{s.name || 'Senza nome'} · {dateLabel(s.start_time)}</option>)}
         </select>

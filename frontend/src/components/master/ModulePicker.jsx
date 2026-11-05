@@ -5,7 +5,7 @@
 import Segmented from '../shared/Segmented';
 
 const labelClass = 'block text-sm font-medium text-[var(--text-main)] mb-1.5';
-const selectClass = 'w-full h-10 px-3 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm focus:ring-2 focus:ring-[var(--accent)] outline-none';
+const selectClass = 'select-field w-full h-10 px-3 rounded-lg bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm focus:ring-2 focus:ring-[var(--accent)] outline-none';
 
 const ModulePicker = ({ catalog, value, onChange, typeLocked = false }) => {
   const { businessType, modules } = value;

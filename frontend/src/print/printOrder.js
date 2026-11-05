@@ -25,7 +25,7 @@ export async function printOrderTickets({ cart, displayCode, clientOrderId, sess
     items: cart.map(i => ({ ...i, price: getEffectivePrice(i), line_total: getLineTotal(i) })),
   };
 
-  const ctx = { branding: config.branding, images: createBrowserImages(config.images), showLogo: true };
+  const ctx = { branding: config.branding, images: createBrowserImages(config.images), showLogo: true };   // la larghezza la aggiunge buildPrintJobs per stampante
   const jobs = await buildPrintJobs(config.settings, order, ctx);
   await saveLocalOrder(clientOrderId, sessionId, order); // per la ristampa offline
   await enqueuePrintJobs(jobs, clientOrderId, displayCode);

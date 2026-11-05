@@ -53,10 +53,10 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end, terms }) 
   return (
     <>
       <button onClick={canManage ? begin : undefined} disabled={!canManage} aria-label={label}
-        className={`flex shrink-0 items-center justify-center gap-2 h-9 coarse:h-11 w-9 coarse:w-11 sm:w-auto sm:px-3.5 rounded-full border whitespace-nowrap text-sm font-medium transition-colors
-          ${service ? 'bg-green-500/10 border-green-500/30 text-green-500' : 'bg-red-500/10 border-red-500/30 text-red-500'}
-          ${canManage ? 'cursor-pointer enabled:hover:opacity-80' : 'cursor-default'}`}>
-        <Power size={16} className="pointer-events-none" />
+        className={`flex shrink-0 items-center justify-center gap-2 h-9 coarse:h-11 w-9 coarse:w-11 sm:w-auto sm:px-3.5 rounded-full border border-[var(--border)] whitespace-nowrap text-sm font-medium text-[var(--text-main)] transition active:scale-95
+          ${canManage ? 'cursor-pointer enabled:hover:bg-[var(--bg-card-2)]' : 'cursor-default'}`}>
+        {/* Come le altre azioni della testata: neutro, con solo l'icona a dire lo stato (verde = servizio aperto, rosso = chiuso) */}
+        <Power size={16} className={`pointer-events-none ${service ? 'text-emerald-500' : 'text-red-500'}`} />
         <span className="hidden sm:inline truncate max-w-[16rem]">{label}</span>
       </button>
 
@@ -68,7 +68,7 @@ const ServiceControl = ({ service, canManage, start, closingInfo, end, terms }) 
         </Modal>
       )}
       {step === 'end' && (
-        <EndSessionModal title={terms.endTitle} sessionName={service.name} openOrders={info.openOrders || 0} openOrdersTotal={info.openOrdersTotal || 0}
+        <EndSessionModal title={terms.endTitle} sessionName={service.name} openOrders={info.openOrders || 0} openOrdersTotal={info.openOrdersTotal || 0} overdueTakeaway={info.overdueTakeaway || 0}
           onCancel={() => setStep(null)} onConfirm={(choice) => { setOpenOrdersAction(choice); setStep('cash'); }} />
       )}
       {step === 'cash' && (

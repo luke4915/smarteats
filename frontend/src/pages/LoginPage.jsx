@@ -24,8 +24,7 @@ const Login = ({ onLogin }) => {
       // apiFetch e non fetchWithAuth: qui un 401 significa credenziali errate, non sessione scaduta.
       const data = await apiFetch('/auth/login', { method: 'POST', body: { username, password } });
 
-      // ✅ Login effettuato con successo
-      showToast("Login effettuato!", "success");
+      showToast('Login effettuato!', 'success');
 
       // Passiamo i dati al chiamante (App.jsx) che aggiornerà l'AuthContext
       // Tutto ciò che risponde il server (ruolo, tenant, tipo di attività, moduli…): niente elenco di campi da tenere allineato.

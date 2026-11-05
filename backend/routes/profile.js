@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middleware/authenticate.js';
+import { authenticate, authorizeManager } from '../middleware/authenticate.js';
 import { tenantScope } from '../middleware/tenantScope.js';
 import { validate } from '../middleware/validate.js';
 import { changeUsernameSchema } from '../schemas/authSchema.js';
@@ -9,7 +9,8 @@ import logger from '../logger.js';
 
 const router = express.Router();
 
-router.patch('/username', authenticate, validate({ body: changeUsernameSchema }), tenantScope, async (req, res) => {
+// Solo admin e responsabile cambiano il proprio username; gli altri lo fa l'admin (vedi CLAUDE.md, Account)
+router.patch('/username', authenticate, authorizeManager, validate({ body: changeUsernameSchema }), tenantScope, async (req, res) => {
   const { newUsername } = req.body;
   try {
     const { rows } = await req.db.query('UPDATE users SET username=$1 WHERE id=$2 RETURNING username', [newUsername, req.user.id]);

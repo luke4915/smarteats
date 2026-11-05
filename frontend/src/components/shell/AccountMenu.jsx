@@ -2,17 +2,16 @@ import { useState } from 'react';
 import { LogOut, MessageSquarePlus, LockKeyhole } from 'lucide-react';
 import { usePopover } from '../../hooks/usePopover';
 import { roleLabel } from '../shared/roles';
-import ThemeChoice from './ThemeChoice';
 import FeedbackModal from '../shared/FeedbackModal';
 import Segmented from '../shared/Segmented';
 import { useLock } from '../../context/useLock';
 import { AUTO_LOCK_CHOICES, autoLockLabel } from '../../utils/idleLock';
 import { label, popover } from '../shared/styles';
 
-// L'account in testata: un solo pulsante (le iniziali) che apre chi è collegato, la scelta dell'aspetto, i suggerimenti (per chi gestisce
+// L'account in testata: un solo pulsante (le iniziali) che apre chi è collegato, i suggerimenti (per chi gestisce
 // il locale: admin e responsabile), «Blocca schermo» (per chi ha un PIN, con il blocco automatico di questo dispositivo) e l'uscita. Profilo e utenti si gestiscono da Impostazioni → Account, non da qui.
 const CAN_SUGGEST = ['admin', 'manager'];
-const AccountMenu = ({ user, theme, onThemeChange, onLogout }) => {
+const AccountMenu = ({ user, onLogout }) => {
   const { open, ref, toggle, close } = usePopover();
   const [feedback, setFeedback] = useState(false);
   const { canLock, lock, autoLockMinutes, setAutoLockMinutes } = useLock();
@@ -28,10 +27,6 @@ const AccountMenu = ({ user, theme, onThemeChange, onLogout }) => {
           <div className="px-4 pt-3.5 pb-3">
             <p className="text-sm font-semibold text-[var(--text-main)] truncate">{user.username}</p>
             <p className="text-xs text-[var(--text-muted)] truncate">{roleLabel(user.role)} · {user.tenantName}</p>
-          </div>
-          <div className="px-4 pb-3.5 space-y-1.5">
-            <p className={label}>Aspetto</p>
-            <ThemeChoice value={theme} onChange={onThemeChange} />
           </div>
           {canLock && (
             <div className="px-4 pb-3.5 space-y-1.5">

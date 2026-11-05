@@ -6,7 +6,10 @@ import { useToast } from '../../context/useToast';
 import Switch from '../../components/shared/Switch';
 import Loading from '../../components/shared/Loading';
 import PrinterCheck from '../../components/setup/PrinterCheck';
+import PaperWidthChoice from '../../components/setup/PaperWidthChoice';
 import { input } from '../../components/shared/styles';
+import AutoPrintSwitches from '../../components/setup/AutoPrintSwitches';
+import { useAuth } from '../../context/useAuth';
 import { PRINTERS, settingFor, isReady } from './printers';
 
 // Dove stampa il ristorante: una riga per la cucina, una per il bar, una per il conto. Ogni riga ha l'indirizzo della stampante (si
@@ -34,6 +37,8 @@ const PrinterRow = ({ printer, setting, saving, onSave }) => {
         <input className={input} aria-label={`Indirizzo della stampante: ${printer.label}`} placeholder="Indirizzo della stampante (es. 192.168.1.100)" inputMode="url" autoCapitalize="none" autoCorrect="off"
           value={address} disabled={saving} onChange={e => setAddress(e.target.value)}
           onBlur={() => address.trim() !== (setting?.printer_address ?? '') && onSave(printer, { enabled: !!setting?.enabled && !!address.trim(), printer_address: address.trim() })} />
+        {setting?.printer_address && <PaperWidthChoice value={setting.paper_mm} disabled={saving} label={`Carta della stampante: ${printer.label}`}
+          onChange={(mm) => onSave(printer, { enabled: !!setting.enabled, printer_address: setting.printer_address, paper_mm: mm })} />}
         {isReady(setting) && <PrinterCheck address={setting.printer_address} />}
       </div>
     </li>
@@ -42,6 +47,7 @@ const PrinterRow = ({ printer, setting, saving, onSave }) => {
 
 const PrintersSettings = () => {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(null);
 
@@ -69,14 +75,17 @@ const PrintersSettings = () => {
 
   if (!settings) return <Loading />;
   return (
+    <div className="space-y-4">
     <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)]">
       <div className="p-5 pb-3">
         <h2 className="text-sm font-semibold text-[var(--text-main)] mb-1">Stampanti</h2>
-        <p className="text-xs text-[var(--text-muted)] max-w-xl">Scrivi l'indirizzo di ogni stampante e accendila. La prima volta, su ogni dispositivo, tocca «Autorizza» e poi «Stampa di prova». Chi non ha stampanti può lasciare tutto spento.</p>
+        <p className="text-xs text-[var(--text-muted)] max-w-xl">Scrivi l'indirizzo di ogni stampante, scegli la carta (58 o 80 mm) e accendila. La prima volta, su ogni dispositivo, tocca «Autorizza» e poi «Stampa di prova». Chi non ha stampanti può lasciare tutto spento.</p>
       </div>
       <ul className="divide-y divide-[var(--border)] border-t border-[var(--border)]">
         {PRINTERS.map(p => <PrinterRow key={p.id} printer={p} setting={settingFor(p, settings)} saving={saving === p.id} onSave={save} />)}
       </ul>
+    </div>
+    <AutoPrintSwitches receipt={!!user.modules?.includes('tables')} takeaway={!!user.modules?.includes('takeaway')} />
     </div>
   );
 };

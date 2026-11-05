@@ -1,6 +1,7 @@
 import { Moon, Volume2, Zap } from 'lucide-react';
 import Switch from '../../components/shared/Switch';
 import ThemeChoice from '../../components/shell/ThemeChoice';
+import TapSoundSwitch from '../../components/shell/TapSoundSwitch';
 
 const Row = ({ icon, title, hint, children }) => {
   const Icon = icon;
@@ -17,13 +18,13 @@ const Row = ({ icon, title, hint, children }) => {
 };
 
 // Le preferenze di questo dispositivo: tema, suono al tocco e modalità degli ordini (valgono solo qui, non per le altre casse).
-const DeviceSettings = ({ theme, setTheme, isSoundEnabled, setIsSoundEnabled, orderMode, setOrderMode }) => (
+const DeviceSettings = ({ theme, setTheme, orderMode, setOrderMode }) => (
   <div className="space-y-2">
     <Row icon={Moon} title="Aspetto" hint="Auto segue il tema del dispositivo. Scuro si legge meglio con le luci della sagra la sera.">
       <ThemeChoice className="shrink-0 w-full sm:w-56" value={theme} onChange={setTheme} />
     </Row>
     <Row icon={Volume2} title="Suono al tocco" hint="Un breve suono quando aggiungi un prodotto e quando invii l'ordine.">
-      <Switch checked={isSoundEnabled} onChange={setIsSoundEnabled} label="Suono al tocco" />
+      <TapSoundSwitch />
     </Row>
     <Row icon={Zap} title="Ordini avanzati" hint="Spenta: l'ordine è completato subito. Accesa: va in cucina e si completa a mano.">
       <Switch checked={orderMode === 'advanced'} onChange={(on) => setOrderMode(on ? 'advanced' : 'simple')} label="Ordini avanzati" />

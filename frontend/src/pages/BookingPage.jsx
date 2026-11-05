@@ -7,23 +7,19 @@ import { btnPrimary, btn, input } from '../components/shared/styles';
 import { PublicShell, StepSection } from '../components/public/PublicShell';
 import StepProgress from '../components/public/StepProgress';
 import Loading from '../components/shared/Loading';
+import { useT, useEffectiveLanguage } from '../i18n/useLanguage';
 
 // Pagina pubblica di prenotazione (`/book`): il cliente sceglie quanti siete, il giorno e il turno, lascia i suoi
 // dati e invia una *richiesta*: il locale la conferma. `/book/<codice>` è la pagina di stato con l'annullo.
 // Nessun accesso, nessun menu: pensata per il telefono. Le regole (posti, anticipo, tetti) le applica il server.
 
-const STATUS_TEXT = {
-  requested: { title: 'Richiesta ricevuta', body: 'Il locale la conferma a breve. Finché non è confermata non è ancora una prenotazione.' },
-  confirmed: { title: 'Prenotazione confermata', body: 'Vi aspettiamo. Se cambiano i programmi, potete chiedere l\'annullo da qui fino a un\'ora prima del turno; dopo, chiamateci.' },
-  declined: { title: 'Richiesta non accettata', body: 'Purtroppo non è stato possibile accettarla. Potete provare un altro giorno o chiamarci.' },
-  cancelled: { title: 'Prenotazione annullata', body: 'Il posto è stato liberato.' },
-  expired: { title: 'Richiesta scaduta', body: 'Il locale non ha risposto in tempo e il posto è stato liberato. Potete inviarne una nuova o chiamarci.' },
-  seated: { title: 'Siete al tavolo', body: 'Buon appetito!' },
-  completed: { title: 'Grazie della visita', body: 'A presto!' },
-  no_show: { title: 'Non siete riusciti a venire da noi?', body: 'Fateci sapere, se è un errore, chiamateci.' },
-};
+const STATUS_KEYS = ['requested', 'confirmed', 'declined', 'cancelled', 'expired', 'seated', 'completed', 'no_show'];
 
-const Shell = ({ info, children }) => <PublicShell info={info} kicker="Prenota un tavolo">{children}</PublicShell>;
+// Tradotta in italiano e inglese; chi ha scelto un'altra lingua legge l'inglese
+const Shell = ({ info, children }) => {
+  const t = useT();
+  return <PublicShell translated={['it', 'en']} info={info} kicker={t('bk.kicker')}>{children}</PublicShell>;
+};
 const Section = StepSection;
 
 // Come si presenta l'esito: spunta se va bene, X se non è andato a buon fine, orologio in attesa del locale.
@@ -31,14 +27,16 @@ const TONE = { requested: 'waiting', confirmed: 'good', seated: 'good', complete
 
 // Pagina di stato di una richiesta, dal link personale
 const Status = ({ token, info }) => {
+  const t = useT();
+  const lang = useEffectiveLanguage();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    apiFetch(`/public/booking/requests/${token}`).then(setData).catch(err => setError(err.status === 404 ? 'Non troviamo questa richiesta: controllate il link.' : err.message));
-  }, [token]);
+    apiFetch(`/public/booking/requests/${token}`).then(setData).catch(err => setError(err.status === 404 ? t('bk.notFound') : err.message));
+  }, [token, t]);
 
   const cancel = async () => {
     setBusy(true); setError('');
@@ -49,7 +47,8 @@ const Status = ({ token, info }) => {
 
   if (error && !data) return <p className="text-sm text-red-500" role="alert">{error}</p>;
   if (!data) return <Loading />;
-  const text = STATUS_TEXT[data.status] ?? STATUS_TEXT.requested;
+  const key = STATUS_KEYS.includes(data.status) ? data.status : 'requested';
+  const text = { title: t(`bk.status.${key}.title`), body: t(`bk.status.${key}.body`) };
   const phone = data.restaurant.phone || info?.phone;
   return (
     <div className="space-y-5">
@@ -61,46 +60,48 @@ const Status = ({ token, info }) => {
         <p className="text-sm text-[var(--text-muted)]">{text.body}</p>
         {data.status === 'declined' && data.decline_reason && <p className="text-sm">«{data.decline_reason}»</p>}
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm pt-2 border-t border-[var(--border)]">
-          <dt className="text-[var(--text-muted)]">Quando</dt><dd className="font-medium">{formatDay(data.date)} · {data.start_time}</dd>
-          <dt className="text-[var(--text-muted)]">Persone</dt><dd className="font-medium">{data.party_size}</dd>
-          <dt className="text-[var(--text-muted)]">A nome</dt><dd className="font-medium">{data.customer_name}</dd>
+          <dt className="text-[var(--text-muted)]">{t('pub.when')}</dt><dd className="font-medium">{formatDay(data.date, { lang })} · {data.start_time}</dd>
+          <dt className="text-[var(--text-muted)]">{t('pub.people')}</dt><dd className="font-medium">{data.party_size}</dd>
+          <dt className="text-[var(--text-muted)]">{t('pub.underName')}</dt><dd className="font-medium">{data.customer_name}</dd>
         </dl>
       </div>
       {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
       {data.cancel === 'withdraw' && (asking ? (
         <div className="rounded-xl border border-red-500/40 p-4 space-y-3">
-          <p className="text-sm">Ritirare la richiesta? Il posto tornerà libero.</p>
+          <p className="text-sm">{t('bk.withdrawAsk')}</p>
           <div className="grid grid-cols-2 gap-2">
-            <button className={btn} onClick={() => setAsking(false)}>No, tienila</button>
-            <button className="inline-flex items-center justify-center h-11 rounded-lg bg-red-500 text-white text-sm font-medium cursor-pointer disabled:opacity-50" disabled={busy} onClick={cancel}>Sì, ritira</button>
+            <button className={btn} onClick={() => setAsking(false)}>{t('pub.keep')}</button>
+            <button className="inline-flex items-center justify-center h-11 rounded-lg bg-red-500 text-white text-sm font-medium cursor-pointer disabled:opacity-50" disabled={busy} onClick={cancel}>{t('pub.yesWithdraw')}</button>
           </div>
         </div>
-      ) : <button className={`${btn} w-full`} onClick={() => setAsking(true)}>Ritira la richiesta</button>)}
+      ) : <button className={`${btn} w-full`} onClick={() => setAsking(true)}>{t('pub.withdraw')}</button>)}
       {data.cancel === 'request' && (asking ? (
         <div className="rounded-xl border border-[var(--border)] p-4 space-y-3">
-          <p className="text-sm">La prenotazione è già confermata! Procedi per inviare una richiesta di annullamento prenotazione al locale.</p>
+          <p className="text-sm">{t('bk.confirmedAsk')}</p>
           <div className="grid grid-cols-2 gap-2">
-            <button className={btn} onClick={() => setAsking(false)}>Indietro</button>
-            <button className={btnPrimary} disabled={busy} onClick={cancel}>Invia la richiesta</button>
+            <button className={btn} onClick={() => setAsking(false)}>{t('pub.back')}</button>
+            <button className={btnPrimary} disabled={busy} onClick={cancel}>{t('bk.sendRequest')}</button>
           </div>
         </div>
-      ) : <button className={`${btn} w-full`} onClick={() => setAsking(true)}>Chiedi di annullare</button>)}
+      ) : <button className={`${btn} w-full`} onClick={() => setAsking(true)}>{t('bk.askCancel')}</button>)}
       {data.cancel === 'requested' && (
         <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm" role="status">
-          Hai chiesto di annullare. La prenotazione resta valida finché il locale non conferma: ti avviserà.
+          {t('bk.cancelRequested')}
         </p>
       )}
       {data.cancel === 'call' && (
         <p className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-4 text-sm" role="status">
-          Manca meno di un'ora al turno: per annullare o cambiare, chiama il locale.
+          {t('bk.cancelCall')}
         </p>
       )}
-      {phone && <a href={`tel:${phone.replace(/[^\d+]/g, '')}`} className={`${btn} w-full`}><Phone size={16} /> Chiama il locale</a>}
+      {phone && <a href={`tel:${phone.replace(/[^\d+]/g, '')}`} className={`${btn} w-full`}><Phone size={16} /> {t('pub.callVenue')}</a>}
     </div>
   );
 };
 
 const BookingPage = () => {
+  const t = useT();
+  const lang = useEffectiveLanguage();
   const token = window.location.pathname.split('/').filter(Boolean)[1] ?? null;   // /book/<codice>
   const [info, setInfo] = useState(null);
   const [error, setError] = useState('');
@@ -116,8 +117,8 @@ const BookingPage = () => {
 
   useEffect(() => {
     apiFetch('/public/booking/info').then(setInfo).catch(err => setError(err.code === 'PORTAL_OFF' || err.status === 404 || err.status === 403
-      ? 'Le prenotazioni online non sono attive. Per prenotare, chiamate direttamente il locale.' : err.message));
-  }, []);
+      ? t('bk.off') : err.message));
+  }, [t]);
 
   // Il calendario si rilegge quando cambia il numero di persone: un giorno può non avere posto per sei ma sì per due
   useEffect(() => {
@@ -143,10 +144,10 @@ const BookingPage = () => {
   const valid = shift && detailsDone;
   // I pallini in cima si riempiono mentre si compila
   const steps = [
-    { id: 'party', label: 'Quanti siete?', done: partyTouched || !!date },
-    { id: 'day', label: 'Che giorno?', done: !!date },
-    { id: 'time', label: 'A che ora?', done: !!shiftId },
-    { id: 'details', label: 'I vostri dati', done: !!shiftId && detailsDone },
+    { id: 'party', label: t('bk.step.party'), done: partyTouched || !!date },
+    { id: 'day', label: t('bk.step.day'), done: !!date },
+    { id: 'time', label: t('bk.step.time'), done: !!shiftId },
+    { id: 'details', label: t('bk.step.details'), done: !!shiftId && detailsDone },
   ];
   const setField = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
 
@@ -163,7 +164,7 @@ const BookingPage = () => {
     } finally { setSending(false); }
   };
 
-  const weekdays = useMemo(() => (days ?? []).map(d => ({ ...d, label: formatDay(d.date, { short: true }) })), [days]);
+  const weekdays = useMemo(() => (days ?? []).map(d => ({ ...d, label: formatDay(d.date, { short: true, lang }) })), [days, lang]);
 
   if (error && !info) return <Shell><p className="text-sm text-[var(--text-muted)] text-center py-10" role="alert">{error}</p></Shell>;
   if (!info) return <Shell><Loading /></Shell>;
@@ -174,19 +175,19 @@ const BookingPage = () => {
       <StepProgress steps={steps} />
       <form className="space-y-7 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-x-10 sm:items-start" onSubmit={send} noValidate>
         <div className="space-y-7">
-        <Section id="party" n={1} title="Quanti siete?" done={steps[0].done}>
+        <Section id="party" n={1} title={t('bk.step.party')} done={steps[0].done}>
           <div className="flex items-center gap-4">
-            <button type="button" className={`${btn} !w-12 !px-0`} aria-label="Una persona in meno" disabled={party <= 1} onClick={() => { setParty(p => p - 1); setPartyTouched(true); }}><Minus size={18} /></button>
+            <button type="button" className={`${btn} !w-12 !px-0`} aria-label={t('bk.lessPerson')} disabled={party <= 1} onClick={() => { setParty(p => p - 1); setPartyTouched(true); }}><Minus size={18} /></button>
             <span className="text-3xl font-semibold tabular-nums w-12 text-center" aria-live="polite">{party}</span>
-            <button type="button" className={`${btn} !w-12 !px-0`} aria-label="Una persona in più" disabled={party >= info.max_party} onClick={() => { setParty(p => p + 1); setPartyTouched(true); }}><Plus size={18} /></button>
-            <span className="text-sm text-[var(--text-muted)]"><Users size={14} className="inline mr-1" />{party === 1 ? 'persona' : 'persone'}</span>
+            <button type="button" className={`${btn} !w-12 !px-0`} aria-label={t('bk.morePerson')} disabled={party >= info.max_party} onClick={() => { setParty(p => p + 1); setPartyTouched(true); }}><Plus size={18} /></button>
+            <span className="text-sm text-[var(--text-muted)]"><Users size={14} className="inline mr-1" />{t('bk.personWord', { count: party })}</span>
           </div>
-          {party >= info.max_party && <p className="text-sm text-[var(--text-muted)]">Per gruppi più grandi di {info.max_party} persone chiamateci{info.phone ? `: ${info.phone}` : ''}.</p>}
+          {party >= info.max_party && <p className="text-sm text-[var(--text-muted)]">{info.phone ? t('bk.groupBigPhone', { max: info.max_party, phone: info.phone }) : t('bk.groupBig', { max: info.max_party })}</p>}
         </Section>
 
-        <Section id="day" n={2} title="Che giorno?" done={steps[1].done}>
+        <Section id="day" n={2} title={t('bk.step.day')} done={steps[1].done}>
           {!days ? <Loading /> : (
-            <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Giorno">
+            <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label={t('pub.day')}>
               {weekdays.map(d => (
                 <button key={d.date} type="button" role="radio" aria-checked={date === d.date} disabled={!d.available} onClick={() => setDate(d.date)}
                   className={`h-14 rounded-lg border text-sm leading-tight cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed ${date === d.date ? 'bg-[var(--accent)] border-[var(--accent)] text-white font-semibold' : 'border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--accent)]'}`}>
@@ -196,18 +197,18 @@ const BookingPage = () => {
               ))}
             </div>
           )}
-          {days && !days.some(d => d.available) && <p className="text-sm text-[var(--text-muted)]">Per {party} {party === 1 ? 'persona' : 'persone'} non c'è disponibilità nei prossimi {info.max_days} giorni. Provate con meno persone o chiamateci.</p>}
+          {days && !days.some(d => d.available) && <p className="text-sm text-[var(--text-muted)]">{t('bk.noAvail', { count: party, days: info.max_days })}</p>}
         </Section>
 
         {date && (
-          <Section id="time" n={3} title="A che ora?" done={steps[2].done}>
+          <Section id="time" n={3} title={t('bk.step.time')} done={steps[2].done}>
             {!shifts ? <Loading /> : (
-              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Turno">
+              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t('bk.shift')}>
                 {shifts.map(s => (
                   <button key={s.id} type="button" role="radio" aria-checked={shiftId === s.id} disabled={!s.available} onClick={() => setShiftId(s.id)}
                     className={`h-14 rounded-lg border text-sm cursor-pointer disabled:opacity-35 disabled:cursor-not-allowed ${shiftId === s.id ? 'bg-[var(--accent)] border-[var(--accent)] text-white font-semibold' : 'border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--accent)]'}`}>
                     <span className="block text-base tabular-nums"><Clock size={14} className="inline mr-1 -mt-0.5" />{s.start_time}</span>
-                    <span className="block text-xs opacity-80">{s.available ? s.name : 'non disponibile'}</span>
+                    <span className="block text-xs opacity-80">{s.available ? s.name : t('bk.unavailable')}</span>
                   </button>
                 ))}
               </div>
@@ -218,17 +219,17 @@ const BookingPage = () => {
         </div>
 
         <div className="mt-7 sm:mt-0 space-y-7">
-        {!shiftId && <p className="hidden sm:block text-sm text-[var(--text-muted)] rounded-xl border border-dashed border-[var(--border)] p-5">Scegliete giorno e ora: qui compaiono i campi per i vostri dati.</p>}
+        {!shiftId && <p className="hidden sm:block text-sm text-[var(--text-muted)] rounded-xl border border-dashed border-[var(--border)] p-5">{t('bk.pickHint')}</p>}
         {shiftId && (
-          <Section id="details" n={4} title="I vostri dati" done={steps[3].done}>
+          <Section id="details" n={4} title={t('bk.step.details')} done={steps[3].done}>
             <div className="space-y-3">
-              <label className="block"><span className="text-sm font-medium">Nome</span>
+              <label className="block"><span className="text-sm font-medium">{t('pub.name')}</span>
                 <input className={`${input} !text-base !h-12 mt-1`} autoComplete="name" value={form.customer_name} onChange={setField('customer_name')} maxLength={80} required /></label>
-              <label className="block"><span className="text-sm font-medium">Telefono</span>
+              <label className="block"><span className="text-sm font-medium">{t('pub.phone')}</span>
                 <input className={`${input} !text-base !h-12 mt-1`} type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={setField('phone')} maxLength={40} required /></label>
-              <label className="block"><span className="text-sm font-medium">Email <span className="text-[var(--text-muted)] font-normal">(facoltativa)</span></span>
+              <label className="block"><span className="text-sm font-medium">{t('pub.email')} <span className="text-[var(--text-muted)] font-normal">{t('pub.optionalF')}</span></span>
                 <input className={`${input} !text-base !h-12 mt-1`} type="email" inputMode="email" autoComplete="email" value={form.email} onChange={setField('email')} maxLength={120} /></label>
-              <label className="block"><span className="text-sm font-medium">Note <span className="text-[var(--text-muted)] font-normal">(allergie, seggiolone…)</span></span>
+              <label className="block"><span className="text-sm font-medium">{t('pub.notes')} <span className="text-[var(--text-muted)] font-normal">{t('bk.notesHint')}</span></span>
                 <textarea className={`${input} !text-base mt-1 !h-24 py-2`} value={form.notes} onChange={setField('notes')} maxLength={500} /></label>
               {/* Campo trappola: le persone non lo vedono */}
               <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, overflow: 'hidden' }}>
@@ -236,23 +237,23 @@ const BookingPage = () => {
               </div>
               <label className="flex items-start gap-3 text-sm cursor-pointer">
                 <input type="checkbox" className="mt-1 w-4 h-4 accent-[var(--accent)]" checked={form.consent} onChange={setField('consent')} />
-                <span className="text-[var(--text-muted)]">Acconsento al trattamento di nome, telefono ed email solo per gestire questa prenotazione, e a ricevere gli aggiornamenti su WhatsApp. I dati si cancellano dopo 90 giorni.</span>
+                <span className="text-[var(--text-muted)]">{t('bk.consent')}</span>
               </label>
               <label className="flex items-start gap-3 text-sm cursor-pointer">
                 <input type="checkbox" className="mt-1 w-4 h-4 accent-[var(--accent)]" checked={form.marketing} onChange={e => setForm(f => ({ ...f, marketing: e.target.checked }))} />
-                <span className="text-[var(--text-muted)]">Facoltativo: voglio ricevere su WhatsApp un ringraziamento dopo la visita e le novità del locale.</span>
+                <span className="text-[var(--text-muted)]">{t('bk.marketing')}</span>
               </label>
             </div>
 
             <div className="rounded-lg bg-[var(--bg-card-2)] border border-[var(--border)] p-3 text-sm flex items-center gap-2">
               <CalendarDays size={16} className="text-[var(--accent)] shrink-0" />
-              <span><b>{formatDay(date)}</b> · {shift?.start_time} · {party} {party === 1 ? 'persona' : 'persone'}</span>
+              <span><b>{formatDay(date, { lang })}</b> · {shift?.start_time} · {party} {t('bk.personWord', { count: party })}</span>
             </div>
             {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
             {/* Il pulsante resta sempre a portata di pollice, anche scorrendo il modulo */}
             <div className="sticky bottom-0 -mx-4 px-4 pt-3 bg-[var(--bg-main)] border-t border-[var(--border)] space-y-2" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
-              <button type="submit" className={`${btnPrimary} w-full !h-12 !text-base`} disabled={!valid || sending}>{sending ? 'Invio…' : 'Invia richiesta'}</button>
-              <p className="text-xs text-[var(--text-muted)] text-center">Non è ancora una prenotazione: il locale la conferma a breve.</p>
+              <button type="submit" className={`${btnPrimary} w-full !h-12 !text-base`} disabled={!valid || sending}>{sending ? t('pub.sending') : t('bk.submit')}</button>
+              <p className="text-xs text-[var(--text-muted)] text-center">{t('bk.notYet')}</p>
             </div>
           </Section>
         )}

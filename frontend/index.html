@@ -14,15 +14,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>SmartEats</title>
   <!-- Tema scelto prima del primo disegno (niente lampo chiaro→scuro). Le pagine dei clienti seguono il sistema, finché il cliente non ne sceglie uno. -->
-  <script>
-    try {
-      var t = localStorage.getItem('theme');
-      var system = matchMedia('(prefers-color-scheme: dark)').matches;
-      var isPublic = /^\/(book|order|menu|privacy|terms|s)(\/|$)/.test(location.pathname);
-      var dark = t === 'auto' ? system : t === 'light' ? false : t === 'dark' ? true : (isPublic ? system : true);
-      if (dark) document.documentElement.classList.add('dark');
-    } catch (e) { /* senza archivio locale: resta il chiaro */ }
-  </script>
+  <script src="/theme-init.js"></script>
 </head>
 
 <body>

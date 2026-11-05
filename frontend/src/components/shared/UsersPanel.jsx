@@ -114,7 +114,7 @@ const UsersPanel = ({ api, currentUserId = null, renderProfile = null, canManage
                     <label><span className={label}>Username</span>
                       <input className={input} maxLength={50} value={editing.username} onChange={e => setEditing(v => ({ ...v, username: e.target.value }))} /></label>
                     <label><span className={label}>Ruolo</span>
-                      <select className={input} value={editing.role} disabled={isLastAdmin} title={isLastAdmin ? 'Deve restare almeno un amministratore' : undefined}
+                      <select className={`${input} select-field`} value={editing.role} disabled={isLastAdmin} title={isLastAdmin ? 'Deve restare almeno un amministratore' : undefined}
                         onChange={e => setEditing(v => ({ ...v, role: e.target.value }))}>
                         {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
                       </select></label>
@@ -151,7 +151,7 @@ const UsersPanel = ({ api, currentUserId = null, renderProfile = null, canManage
             <label><span className={label}>Username</span><input className={input} maxLength={50} value={newUser.username} onChange={e => setNewUser(v => ({ ...v, username: e.target.value }))} /></label>
             <label><span className={label}>Password temporanea</span><TempPasswordField className={input} value={newUser.password} onChange={password => setNewUser(v => ({ ...v, password }))} /></label>
             <label><span className={label}>Ruolo</span>
-              <select className={input} value={newUser.role} onChange={e => setNewUser(v => ({ ...v, role: e.target.value }))}>
+              <select className={`${input} select-field`} value={newUser.role} onChange={e => setNewUser(v => ({ ...v, role: e.target.value }))}>
                 {ROLE_OPTIONS.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select></label>
           </div>

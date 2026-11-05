@@ -9,6 +9,7 @@ const ALL = [
   { id: 'printing', label: 'Stampa', hint: 'Stampanti e copie degli scontrini.', notFor: ['kitchen'] },
   { id: 'reserved', label: 'Dati riservati', hint: 'Nascondi incassi e statistiche: si sbloccano con la password di un amministratore.', admin: true, notFor: ['kitchen'] },
   { id: 'account', label: 'Account', hint: 'Il tuo profilo e chi può accedere al locale.', roles: ['admin', 'manager'] },
+  { id: 'about', label: 'Informazioni', hint: 'La versione di SmartEats e lo stato della licenza.', roles: ['admin', 'manager'] },
 ];
 
 export const festivalSections = (user) => ALL.filter(s => {

@@ -15,6 +15,8 @@ const devDomain = process.env.VITE_DEV_DOMAIN
 
 export default defineConfig({
   define: { __APP_VERSION__: JSON.stringify(version) },
+  // I suoni restano file veri: sotto i 4 KB Vite li scriverebbe dentro il codice (data:), e la CSP non permette di leggerli
+  build: { assetsInlineLimit: (file) => (file.endsWith('.mp3') ? false : undefined) },
   plugins: [
     react(),
     tailwindcss(),
@@ -25,6 +27,7 @@ export default defineConfig({
       // Icone in public/: il simbolo occupa il 56% del lato, quindi la 512 vale anche
       // come icona "maskable" (resta dentro la zona sicura quando il sistema la ritaglia).
       includeAssets: ['apple-touch-icon.png'],
+      workbox: { globPatterns: ['**/*.{js,css,html,mp3}'] },   // anche i suoni, così suonano senza rete
       manifest: {
         name: 'SmartEats',
         short_name: 'SmartEats',

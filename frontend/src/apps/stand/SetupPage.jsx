@@ -1,6 +1,8 @@
 import SectionsPage from '../../components/shell/SectionsPage';
 import PrintProfiles from '../../components/setup/PrintProfiles';
 import MenuSettings from '../../components/setup/MenuSettings';
+import AutoPrintSwitches from '../../components/setup/AutoPrintSwitches';
+import AboutSection from '../../components/setup/AboutSection';
 import AccountSection from '../../components/setup/AccountSection';
 import TakeawaySettings from '../../modules/takeaway/TakeawaySettings';
 import ReservedDataSettings from '../../components/setup/ReservedDataSettings';
@@ -15,9 +17,10 @@ const SetupPage = ({ user, ...device }) => {
     takeaway: () => <TakeawaySettings />,
     inventory: () => <InventorySettings />,
     menu: () => <MenuSettings />,
-    printing: () => <PrintProfiles />,
+    printing: () => <><PrintProfiles />{user.modules?.includes('takeaway') && <div className="mt-4"><AutoPrintSwitches takeaway /></div>}</>,
     reserved: () => <ReservedDataSettings />,
     account: () => <AccountSection user={user} />,
+    about: () => <AboutSection />,
   };
   return <SectionsPage title="Impostazioni" sections={festivalSections(user)} content={content} />;
 };

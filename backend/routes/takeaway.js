@@ -17,7 +17,7 @@ import { loadSettings, loadHours, loadUsedByTime, loadWorkMinutes, assignPickupC
 import { verifyOrderItems } from '../utils/orderLines.js';
 import { expireTakeaway } from '../utils/caseExpiry.js';
 import { enqueue } from '../utils/whatsapp/outbox.js';
-import { snapshotItems } from '../utils/takeawayDb.js';
+import { snapshotItems, loadOverdueTakeaway } from '../utils/takeawayDb.js';
 
 // Asporto (modulo `takeaway`): gli ordini con orario di ritiro. Si leggono e si gestiscono con i ruoli di sala e cassa;
 // orari e impostazioni li scrive l'admin. Disegno e regole: docs/design-asporto.md.
@@ -101,6 +101,15 @@ export default function (broadcast) {
     }
   });
 
+  // GET /overdue — gli ordini accettati con il ritiro passato da tempo e mai chiusi (consegnati o annullati): { count, oldest }
+  router.get('/overdue', ...guard, tenantScope, async (req, res) => {
+    try { res.json(await loadOverdueTakeaway(req.db, PORTAL_TZ)); }
+    catch (err) {
+      logger.error({ err }, 'Errore GET /api/takeaway/overdue');
+      res.status(500).json({ error: 'Errore caricamento ordini da chiudere' });
+    }
+  });
+
   // GET /inbox — le richieste da approvare (alimenta la campanella)
   router.get('/inbox', ...guard, tenantScope, async (req, res) => {
     try {
@@ -120,12 +129,12 @@ export default function (broadcast) {
   // quel giorno, così non compare in cucina con un giorno d'anticipo né sporca la serata di oggi (incassi, stock).
   // `date` è il giorno del ritiro. Dentro una transazione già aperta. Ritorna i dati dell'ordine di cucina, o `null` se non
   // è ancora nato.
-  async function accept(db, req, row, { time, date } = {}) {
+  async function accept(db, req, row, { time, date, forceStock = false } = {}) {
     const stamp = time && date
       ? (await db.query(`SELECT (($1::date + $2::time) AT TIME ZONE $3) AS at`, [date, time, PORTAL_TZ])).rows[0].at
       : row.pickup_at;
     const created = pickupIsDue(date, localNow())
-      ? await createKitchenOrder(db, { tenantId: req.user.tenantId, userId: req.user.id, takeaway: row })
+      ? await createKitchenOrder(db, { tenantId: req.user.tenantId, userId: req.user.id, takeaway: row, role: req.user.role, forceStock })
       : null;
     await db.query(
       `UPDATE takeaway_orders SET status = 'accepted', order_id = $2, pickup_at = $3, total = $4, decided_by = $5, decided_at = now() WHERE id = $1`,
@@ -201,7 +210,7 @@ export default function (broadcast) {
           if (!req.body.ignore_capacity && taken + row.work_minutes > settings.capacity) throw new HttpError(409, `La fascia delle ${req.body.time} è piena`, 'SLOT_FULL');
           time = req.body.time;
         }
-        const created = await accept(db, req, { ...row, items: row.items }, { time, date });
+        const created = await accept(db, req, { ...row, items: row.items }, { time, date, forceStock: req.body.force_stock });
         await enqueue(db, 'takeaway', row.id, 'accepted');
         return { created, row, time };
       });
@@ -209,7 +218,8 @@ export default function (broadcast) {
       const order = present(await loadOne(req.db, req.params.id));
       if (result.created) announce(req, result.created, { ...result.row, pickup_code: order.pickup_code }, order.pickup_at);
       notify(req.user.tenantId, order);
-      res.json(order);
+      // Le righe dell'ordine di cucina (con la destinazione di stampa) servono al dispositivo che accetta, se stampa da sé la comanda
+      res.json({ ...order, kitchen_ticket: result.created ? { items: result.created.items } : null });
     } catch (err) {
       if (sendHttpError(res, err)) return;
       logger.error({ err }, 'Errore POST /api/takeaway/orders/:id/accept');

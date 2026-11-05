@@ -35,7 +35,7 @@ const LockScreen = () => {
 
   // Il PIN può essere stato cambiato (o allungato) da un altro dispositivo: si riallinea la lunghezza mostrata
   useEffect(() => {
-    fetchWithAuth('/auth/me').then(me => { if (me.pinLength !== user.pinLength || me.hasPin !== user.hasPin) login({ ...user, hasPin: me.hasPin, pinLength: me.pinLength }); }).catch(() => {});
+    fetchWithAuth('/auth/me').then(me => { if (me.pinLength !== user.pinLength || me.hasPin !== user.hasPin || me.pinSetAt !== user.pinSetAt) login({ ...user, hasPin: me.hasPin, pinLength: me.pinLength, pinSetAt: me.pinSetAt }); }).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps -- una volta, all'apertura della schermata
   }, []);
 
@@ -48,13 +48,13 @@ const LockScreen = () => {
     return () => { alive = false; };
   }, [mode, user.id]);
 
-  const learnPin = async (userId, pin) => saveVerifier(userId, await makeVerifier(pin));
+  const learnPin = async (userId, pin, pinSetAt) => saveVerifier(userId, await makeVerifier(pin), pinSetAt);
 
   const unlockWithPin = async (pin) => {
     setError('');
     try {
-      await fetchWithAuth('/pin/unlock', { method: 'POST', body: { pin } });
-      await learnPin(user.id, pin);
+      const { pinSetAt } = await fetchWithAuth('/pin/unlock', { method: 'POST', body: { pin } });
+      await learnPin(user.id, pin, pinSetAt);
       unlock();
     } catch (err) {
       if (!(err instanceof NetworkError)) return setError(err.message);
@@ -76,7 +76,7 @@ const LockScreen = () => {
     setError('');
     try {
       const session = await fetchWithAuth('/pin/switch', { method: 'POST', body: { userId: target.id, pin } });
-      await learnPin(session.id, pin);
+      await learnPin(session.id, pin, session.pinSetAt);
       unlock();
       login(session);
     } catch (err) { setError(err instanceof NetworkError ? 'Serve la rete per cambiare utente.' : err.message); }

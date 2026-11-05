@@ -1,6 +1,6 @@
 import { Trash2 } from 'lucide-react';
 import QuantityInput from './QuantityInput';
-import { iconBtnField, input, label } from '../../components/shared/styles';
+import { iconBtnField, input, label, select } from '../../components/shared/styles';
 import { VAT_RATES, rowAmounts, rowForIngredient, centsToEuroText } from './receipt';
 
 const Field = ({ title, children, className = '' }) => (
@@ -16,7 +16,7 @@ const ReceiptLineRow = ({ row, ingredients, supplierItems = [], showQuantity = t
     <div className="p-3 rounded-lg border border-[var(--border)] bg-[var(--bg-card-2)] space-y-3">
       <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
         <Field title="Ingrediente" className="col-span-2 sm:col-span-1">
-          <select className={input} aria-label="Ingrediente" value={row.ingredient_id} onChange={e => onChange(rowForIngredient(row, e.target.value, ingredients, supplierItems))}>
+          <select className={select} aria-label="Ingrediente" value={row.ingredient_id} onChange={e => onChange(rowForIngredient(row, e.target.value, ingredients, supplierItems))}>
             <option value="">Scegli…</option>
             {ingredients.filter(i => i.active).map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
           </select>
@@ -34,7 +34,7 @@ const ReceiptLineRow = ({ row, ingredients, supplierItems = [], showQuantity = t
         </Field>
         <Field title="Prezzo a confezione (€, senza IVA)"><input className={`${input} tabular-nums`} inputMode="decimal" aria-label="Prezzo a confezione" placeholder="0,00" value={row.price_text} onChange={e => onChange({ ...row, price_text: e.target.value })} /></Field>
         <Field title="IVA">
-          <select className={input} aria-label="IVA" value={row.vat} onChange={e => onChange({ ...row, vat: e.target.value })}>
+          <select className={select} aria-label="IVA" value={row.vat} onChange={e => onChange({ ...row, vat: e.target.value })}>
             <option value="">—</option>
             {VAT_RATES.map(v => <option key={v} value={v}>{v}%</option>)}
           </select>

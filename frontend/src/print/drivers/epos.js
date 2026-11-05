@@ -7,6 +7,7 @@ export const DEFAULT_PORT = 443;
 const DEVICE_ID = 'local_printer';
 const PRINTER_TIMEOUT_MS = 10000;
 const REQUEST_TIMEOUT_MS = 15000;
+const REJECTED_CODES = ['SchemaError'];   // la stampante non capisce il documento
 
 export const eposDriver = {
   id: 'epos',
@@ -29,8 +30,9 @@ export const eposDriver = {
     const body = await res.text();
     if (/success="true"/.test(body)) return;
     const code = body.match(/code="([^"]*)"/)?.[1] ?? 'sconosciuto';
-    // Errori della stampante (carta finita, coperchio aperto): si può riprovare dopo averli risolti
-    throw new PrintError(`La stampante ha rifiutato il lavoro (codice ${code})`, { retryable: true });
+    // Errori della stampante (carta finita, coperchio aperto): si può riprovare dopo averli risolti. Se invece rifiuta il documento
+    // stesso (XML non valido) riprovare è inutile e bloccherebbe per sempre i lavori dietro a questo.
+    throw new PrintError(`La stampante ha rifiutato il lavoro (codice ${code})`, { retryable: !REJECTED_CODES.includes(code) });
   },
 };
 

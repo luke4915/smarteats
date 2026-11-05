@@ -130,6 +130,12 @@ test('menu pubblico da telefono: senza accesso, scorre, il pulsante dell\'ordine
     await expect(page).toHaveURL(/\/menu\/?$/);
     await page.getByRole('tab', { name: 'Panini' }).click();
     await page.getByRole('button', { name: 'Aggiungi Panino con salsiccia' }).click();
+    // il cliente cambia l'aspetto con il sole/luna in alto: la scelta si applica subito
+    const html = page.locator('html');
+    const wasDark = ((await html.getAttribute('class')) ?? '').includes('dark');
+    await page.getByRole('button', { name: wasDark ? "Passa all'aspetto chiaro" : "Passa all'aspetto scuro" }).click();
+    await expect(html).toHaveClass(wasDark ? /^(?!.*dark)/ : /dark/);
+    await page.getByRole('button', { name: wasDark ? "Passa all'aspetto scuro" : "Passa all'aspetto chiaro" }).click();
     const order = page.getByRole('button', { name: /Mostra il QR/ });
     await expect(order).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -141,4 +147,15 @@ test('menu pubblico da telefono: senza accesso, scorre, il pulsante dell\'ordine
     await expect(page.getByRole('dialog', { name: 'Il tuo ordine' }).locator('canvas')).toBeVisible();
     await page.keyboard.press('Escape');
   }
+});
+
+// Impostazioni → Informazioni: versione e stato della licenza.
+test('informazioni: si vedono la versione e lo stato della licenza', async ({ page }) => {
+  const { restaurant: r } = seed();
+  await login(page, r.host, r.admin);
+  await page.getByRole('link', { name: 'Impostazioni' }).click();
+  await page.getByRole('tab', { name: 'Informazioni' }).click();
+  await expect(page.getByText('Versione di SmartEats', { exact: true })).toBeVisible();
+  await expect(page.getByText(/^Licenza /).first()).toBeVisible();
+  await shot(page, 'settings-05-informazioni');
 });

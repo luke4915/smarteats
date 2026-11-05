@@ -42,7 +42,7 @@ test('sagra: allergeni dichiarati, segnalati a chi li evita e letti in inglese',
   await expect(client.getByText('Sausage sandwich')).toBeVisible();                              // il nome nella lingua del cliente
   await client.getByRole('button', { name: 'Add Sausage sandwich' }).click();
   await expect(client.getByRole('button', { name: /Show the QR code/ })).toBeVisible();
-  await expect(client.getByRole('tablist', { name: 'Appearance' })).toBeVisible();
+  await expect(client.getByRole('button', { name: /Switch to (dark|light) mode/ })).toBeVisible();
   expect(await client.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await shot(client, 'allergens-03-inglese');
   await phone.close();

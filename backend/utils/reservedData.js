@@ -14,6 +14,7 @@ const RESERVED_KEYS = new Set([
   'line_cost_cents', 'total_cost_cents', 'totalCostCents',   // righe e totale di un carico di merce
   'difference_value_cents',  // valore delle differenze di un controllo di magazzino
   'cost_cents_per_portion',  // costo di una porzione (ricette)
+  'expected_cash', 'declared_cash',   // contanti attesi e contati di una serata
 ]);
 
 // Lo stato del blocco per una richiesta: `enabled` = il locale lo ha acceso, `unlocked` = questa sessione è sbloccata ora,

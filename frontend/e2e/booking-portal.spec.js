@@ -112,3 +112,19 @@ for (const [name, viewport] of [['verticale', { width: 390, height: 664 }], ['or
     await shot(phone, `portale-04-${name}`);
   });
 }
+
+// Chi ha il telefono in inglese (o in tedesco, francese, spagnolo: leggono l'inglese) trova la pagina di prenotazione in inglese, con la scelta italiano/inglese.
+test('portale: la pagina di prenotazione si legge in inglese', async ({ browser }) => {
+  const { restaurant: r } = seed();
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'de-DE', ignoreHTTPSErrors: true });
+  const page = await context.newPage();
+  await page.goto(`${urlOf(r.host)}/book`);
+  await expect(page.getByRole('heading', { name: 'How many of you?' })).toBeVisible();
+  await expect(page.getByText('Book a table')).toBeVisible();
+  await expect(page.getByLabel('Language')).toHaveValue('en');                        // il tedesco non c'è: si legge l'inglese
+  await expect(page.getByRole('button', { name: 'One guest more' })).toBeVisible();
+  await shot(page, 'booking-portal-05-inglese');
+  await page.getByLabel('Language').selectOption('it');
+  await expect(page.getByRole('heading', { name: 'Quanti siete?' })).toBeVisible();
+  await context.close();
+});

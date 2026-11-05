@@ -230,7 +230,13 @@ describe('asporto', () => {
     assert.equal(await fireDueTakeawayAllTenants(() => {}), 0, 'cinque ore di ritardo: non si cucina');
     const row = (await adminDb.query('SELECT status, order_id FROM takeaway_orders WHERE id = $1', [old.body.id])).rows[0];
     assert.deepEqual([row.status, row.order_id], ['accepted', null]);
+    const late = (await cashier.get('/takeaway/overdue')).body;
+    assert.equal(late.count >= 1, true, 'compare tra gli ordini da chiudere');
+    assert.match(late.oldest, /^\d{4}-\d{2}-\d{2}$/);
+    assert.equal((await cashier.get('/sessions/expected-cash')).status, 403, 'il totale atteso è dell\'admin');
+    assert.equal((await admin.get('/sessions/expected-cash')).body.overdueTakeaway >= 1, true, 'e alla chiusura serata se ne parla');
     assert.equal((await cashier.post(`/takeaway/orders/${old.body.id}/cancel`, {})).body.status, 'cancelled', 'il locale lo può annullare');
+    assert.equal((await cashier.get('/takeaway/overdue')).body.count, late.count - 1, 'annullato, non c\'è più');
   });
 
   it('senza servizio aperto il giro asporti non fa nulla', async () => {

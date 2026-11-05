@@ -4,7 +4,7 @@ import { writeOrderItems } from './orderItemsWrite.js';
 import { sumQuantitiesByProduct, lockAndFindShortages, applyStockChange } from './stock.js';
 import { orderNumber } from './orderNumber.js';
 import { PORTAL_TZ, localNow } from './bookingPortal.js';
-import { DEFAULTS, slotsOn, orderWorkMinutes, newPickupCode, pickupIsDue, pickupIsStale } from './takeaway.js';
+import { DEFAULTS, STALE_PICKUP_MINUTES, slotsOn, orderWorkMinutes, newPickupCode, pickupIsDue, pickupIsStale } from './takeaway.js';
 import { inTransaction } from '../db.js';
 import logger from '../logger.js';
 import { assertIngredientsAvailable, sellIngredients, returnIngredientsOfOrder, defaultDisposition } from './inventory/orderStock.js';
@@ -13,6 +13,15 @@ import { assertIngredientsAvailable, sellIngredients, returnIngredientsOfOrder, 
 // Va chiamato con la connessione del locale (RLS).
 
 const KEYS = ['takeaway_portal_enabled', 'takeaway_slot_minutes', 'takeaway_slot_capacity', 'takeaway_min_lead_minutes', 'takeaway_phone', 'takeaway_welcome', 'takeaway_payment_mode'];
+
+// Gli ordini accettati il cui ritiro è passato da più di STALE_PICKUP_MINUTES: non vanno più in cucina da soli e restano
+// «da preparare» finché il locale non li consegna o li annulla. Ritorna { count, oldest } con `oldest` = giorno (YYYY-MM-DD) del più vecchio.
+export async function loadOverdueTakeaway(db, tz) {
+  const { rows: [row] } = await db.query(
+    `SELECT count(*)::int AS count, min(to_char(pickup_at AT TIME ZONE $1, 'YYYY-MM-DD')) AS oldest
+     FROM takeaway_orders WHERE status = 'accepted' AND pickup_at < now() - make_interval(mins => $2)`, [tz, STALE_PICKUP_MINUTES]);
+  return { count: row.count, oldest: row.oldest };
+}
 
 export async function loadSettings(db) {
   const { rows } = await db.query('SELECT key, value FROM settings WHERE key = ANY($1)', [KEYS]);
@@ -57,7 +66,7 @@ export { slotsOn };
 
 // L'ordine di cucina di un ordine da asporto accettato: sulla sessione aperta, con righe e stock. Ritorna i dati per
 // avvisare la cucina. Lancia HttpError (409 NO_ACTIVE_SESSION, 409 OUT_OF_STOCK, 400 prodotto non valido).
-export async function createKitchenOrder(db, { tenantId, userId, takeaway, role = 'cashier' }) {
+export async function createKitchenOrder(db, { tenantId, userId, takeaway, role = 'cashier', forceStock = false }) {
   const { rows: sessions } = await db.query(
     'UPDATE sessions SET order_counter = order_counter + 1 WHERE end_time IS NULL RETURNING id, order_counter');
   if (!sessions.length) throw new HttpError(409, 'Nessun servizio aperto: aprilo prima di accettare ordini', 'NO_ACTIVE_SESSION');
@@ -68,7 +77,7 @@ export async function createKitchenOrder(db, { tenantId, userId, takeaway, role 
   const totals = sumQuantitiesByProduct(items);
   const shortages = await lockAndFindShortages(db, totals);
   if (shortages.length) throw new HttpError(409, `Prodotto esaurito o insufficiente: ${shortages.map(p => p.name).join(', ')}`, 'OUT_OF_STOCK');
-  await assertIngredientsAvailable(db, { tenantId, items, role });
+  await assertIngredientsAvailable(db, { tenantId, items, role, force: forceStock });   // «Vendi comunque»: solo admin e responsabile, lo decide assertIngredientsAvailable
 
   const { number, code } = orderNumber({ counter: session.order_counter });
   const { rows: [order] } = await db.query(

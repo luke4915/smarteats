@@ -4,9 +4,10 @@ import { MESSAGES } from './messages.js';
 
 const placeholders = (text) => [...text.matchAll(/\{(\w+)\}/g)].map(m => m[1]).sort().join(',');
 
-test('ogni lingua ha tutte le chiavi dell\'italiano, e nessuna in più', () => {
+test('italiano e inglese hanno le stesse chiavi; le altre lingue non ne hanno di sconosciute (le frasi che mancano si leggono in inglese)', () => {
   const keys = Object.keys(MESSAGES.it).sort();
-  for (const [lang, messages] of Object.entries(MESSAGES)) assert.deepEqual(Object.keys(messages).sort(), keys, lang);
+  assert.deepEqual(Object.keys(MESSAGES.en).sort(), keys);
+  for (const lang of ['de', 'fr', 'es']) assert.deepEqual(Object.keys(MESSAGES[lang]).filter(k => !keys.includes(k)), [], lang);
 });
 
 test('i segnaposto sono gli stessi in ogni lingua (altrimenti manca un nome o un numero)', () => {

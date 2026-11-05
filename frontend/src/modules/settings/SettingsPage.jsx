@@ -8,6 +8,7 @@ import NotificationSettings from '../notifications/NotificationSettings';
 import TakeawaySettings from '../takeaway/TakeawaySettings';
 import InventorySettings from '../inventory/InventorySettings';
 import ReservedDataSettings from '../../components/setup/ReservedDataSettings';
+import AboutSection from '../../components/setup/AboutSection';
 import PrintersSettings from './PrintersSettings';
 import { settingsSections } from './sections';
 
@@ -22,6 +23,7 @@ const content = (user) => ({
   notifications: () => <NotificationSettings />,
   reserved: () => <ReservedDataSettings />,
   account: () => <AccountSection user={user} />,
+  about: () => <AboutSection />,
 });
 
 // Impostazioni di SmartEats: le tile delle sezioni e la sezione scelta sono in `SectionsPage`, condivisa con la cassa delle sagre.

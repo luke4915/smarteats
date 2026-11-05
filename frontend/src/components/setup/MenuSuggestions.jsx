@@ -3,7 +3,7 @@ import { Plus, X } from 'lucide-react';
 import { useToast } from '../../context/useToast';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { categoriesInOrder } from '../../utils/categoryOrder';
-import { btn, btnPrimary, input } from '../shared/styles';
+import { btn, btnPrimary, select } from '../shared/styles';
 
 // I suggerimenti del menu pubblico: «quando il cliente sceglie [categoria o prodotto], proponi [prodotto]». Compaiono come una riga discreta
 // sopra il pulsante dell'ordine, uno alla volta, e il cliente li scarta con una X. Funzione facoltativa e a sé: senza regole il menu non cambia.
@@ -57,13 +57,13 @@ const MenuSuggestions = () => {
       )}
       <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] items-end">
         <label className="block"><span className="block text-xs font-medium text-[var(--text-muted)] mb-1">Quando sceglie</span>
-          <select className={input} value={draft.when} onChange={e => setDraft(d => ({ ...d, when: e.target.value }))}>
+          <select className={select} value={draft.when} onChange={e => setDraft(d => ({ ...d, when: e.target.value }))}>
             <option value="">Scegli…</option>
             <optgroup label="Una categoria">{categories.map(c => <option key={c} value={`c:${c}`}>{c}</option>)}</optgroup>
             <optgroup label="Un prodotto">{visible.map(p => <option key={p.id} value={`p:${p.id}`}>{p.name}</option>)}</optgroup>
           </select></label>
         <label className="block"><span className="block text-xs font-medium text-[var(--text-muted)] mb-1">Proponi</span>
-          <select className={input} value={draft.suggest} onChange={e => setDraft(d => ({ ...d, suggest: e.target.value }))}>
+          <select className={select} value={draft.suggest} onChange={e => setDraft(d => ({ ...d, suggest: e.target.value }))}>
             <option value="">Scegli…</option>
             {visible.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select></label>

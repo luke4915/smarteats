@@ -3,7 +3,7 @@ import { Trash2, Plus, Copy, ExternalLink } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { useToast } from '../../context/useToast';
-import { btn, btnPrimary, iconBtn, input, label } from '../../components/shared/styles';
+import { btn, btnPrimary, iconBtn, input, label, select } from '../../components/shared/styles';
 import { formatDay } from './rules';
 import Switch from '../../components/shared/Switch';
 import Loading from '../../components/shared/Loading';
@@ -155,7 +155,7 @@ const BookingSettings = () => {
           <div><label className={label} htmlFor="c-from">Dal</label><input id="c-from" type="date" className={`${input} mt-1`} value={closure.date_from} onChange={e => setClosure(c => ({ ...c, date_from: e.target.value }))} /></div>
           <div><label className={label} htmlFor="c-to">Al</label><input id="c-to" type="date" className={`${input} mt-1`} value={closure.date_to} onChange={e => setClosure(c => ({ ...c, date_to: e.target.value }))} /></div>
           <div><label className={label} htmlFor="c-shift">Turno</label>
-            <select id="c-shift" className={`${input} mt-1`} value={closure.shift_id} onChange={e => setClosure(c => ({ ...c, shift_id: e.target.value }))}>
+            <select id="c-shift" className={`${select} mt-1`} value={closure.shift_id} onChange={e => setClosure(c => ({ ...c, shift_id: e.target.value }))}>
               <option value="">Tutto il giorno</option>{(shifts ?? []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select></div>
           <div><label className={label} htmlFor="c-why">Motivo</label><input id="c-why" className={`${input} mt-1`} value={closure.reason} maxLength={200} onChange={e => setClosure(c => ({ ...c, reason: e.target.value }))} /></div>

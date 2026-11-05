@@ -11,6 +11,7 @@ import { canForceSale, ingredientPortionsLeft, tighterLimit } from '../../module
 import { normalizeText } from '../../modules/tables/floor/checkMath';
 import { formatEuro } from '../../utils/format';
 import Loading from './Loading';
+import { playTapSound } from '../../utils/sounds';
 
 // La carta per fare un ordine: ricerca, categorie e tessere dei prodotti. È una sola in tutta l'app: la cassa delle sagre, la Sala
 // (comanda al tavolo) e l'Asporto. Ogni tessera ha il pallino del colore della categoria (e una tinta appena accennata), la quantità
@@ -26,6 +27,7 @@ const ProductPicker = ({ products, cart, onAdd, onRemove, onLongPress, lowStockA
   const { user } = useAuth();
   const portions = useAvailability();       // quante porzioni permettono gli ingredienti (vuoto senza magazzino con ricette)
   const canForce = canForceSale(user?.role);
+  const tapByDefault = user?.businessType === 'street_food';   // il suono al tocco è acceso di partenza solo nelle sagre
   const hint = useOnceHint('availability', !!onLongPress);
   const press = useLongPress((product) => { hint.dismiss(); onLongPress?.(product); });
   const [category, setCategory] = useState('Tutti');
@@ -65,7 +67,7 @@ const ProductPicker = ({ products, cart, onAdd, onRemove, onLongPress, lowStockA
             return (
               <div key={p.id} className="relative">
                 <button {...(onLongPress ? { 'aria-disabled': blocked || undefined, ...press.bind(p.id, p) } : { disabled: blocked })}
-                  onClick={() => { if (onLongPress && press.blocksClick(p.id)) return; if (blocked) return; onAdd(p); }}
+                  onClick={() => { if (onLongPress && press.blocksClick(p.id)) return; if (blocked) return; if (onAdd(p) !== false) playTapSound('tap', tapByDefault); }}
                   style={{ backgroundColor: `color-mix(in srgb, ${color} 7%, var(--bg-card-2))` }}
                   className={`relative overflow-hidden w-full h-full min-h-[5.5rem] flex flex-col justify-between rounded-xl p-3 border border-[var(--border)] text-left select-none transition ${out ? `opacity-50 grayscale ${blocked ? 'cursor-not-allowed' : 'cursor-pointer'}` : 'hover:border-[var(--border-hover)] active:scale-[0.97] cursor-pointer'}`}>
                   {pressed > 0 && <span aria-hidden="true" className="absolute inset-y-0 left-0 pointer-events-none" style={{ width: `${pressed}%`, backgroundColor: color, opacity: 0.22 }} />}

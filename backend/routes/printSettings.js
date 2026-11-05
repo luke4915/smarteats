@@ -83,7 +83,7 @@ router.get('/', authenticate, tenantScope, async (req, res) => {
   try {
     const { rows } = await req.db.query(`
       SELECT ps.id, ps.copy_type_id, ct.name AS copy_type_name, ct.label AS copy_type_label,
-             ps.printer_type, ps.printer_address, ps.enabled, ps.sort_order
+             ps.printer_type, ps.printer_address, ps.enabled, ps.paper_mm, ps.sort_order
       FROM print_settings ps
       JOIN copy_types ct ON ct.id = ps.copy_type_id
       ORDER BY ps.sort_order ASC, ct.id ASC
@@ -116,13 +116,13 @@ router.post('/reorder', authenticate, authorizeAdmin, validate({ body: reorderSc
 
 // PUT /api/print-settings/:id — solo admin
 router.put('/:id', authenticate, authorizeAdmin, validate({ params: idParamsSchema, body: printSettingSchema }), tenantScope, async (req, res) => {
-  const { printer_type, printer_address, enabled } = req.body;
+  const { printer_type, printer_address, enabled, paper_mm } = req.body;
   try {
     const { rows } = await req.db.query(
       `UPDATE print_settings
-       SET printer_type=$1, printer_address=$2, enabled=$3
-       WHERE id=$4 RETURNING *`,
-      [printer_type, printer_address, enabled, req.params.id]
+       SET printer_type=$1, printer_address=$2, enabled=$3, paper_mm=COALESCE($4, paper_mm)
+       WHERE id=$5 RETURNING *`,
+      [printer_type, printer_address, enabled, paper_mm ?? null, req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Impostazione non trovata' });
     res.json(rows[0]);

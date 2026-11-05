@@ -31,6 +31,7 @@ export const printSettingSchema = z.object({
   printer_type: z.enum(['network', 'usb']),
   printer_address: z.string().trim().max(100).nullish().transform(a => a || null),
   enabled: z.boolean(),
+  paper_mm: z.union([z.literal(58), z.literal(80)]).optional(),   // assente = non si cambia
 }).refine(
   s => s.printer_type !== 'network' || !s.printer_address || isValidPrinterAddress(s.printer_address),
   { message: 'Indirizzo di rete non valido. Esempi: 192.168.1.100, epson.local, localhost:9443', path: ['printer_address'] }

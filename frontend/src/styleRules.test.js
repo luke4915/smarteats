@@ -20,7 +20,7 @@ const rel = (f) => path.relative(root, f).split(path.sep).join('/');
 const text = (f) => fs.readFileSync(f, 'utf8');
 
 // File che superano il limite per scelta (nel backlog): non devono crescere. Stampa e pianta si riordinano a parte.
-const LONG_FILES_ALLOWED = { 'components/setup/PrintProfiles.jsx': 450, 'modules/tables/floorplan/FloorEditor.jsx': 350, 'print/templates.js': 350 };
+const LONG_FILES_ALLOWED = { 'components/setup/PrintProfiles.jsx': 450, 'modules/tables/floorplan/FloorEditor.jsx': 350, 'print/templates.js': 310 };
 const MAX_LINES = 300;
 
 test(`un file, un compito: al massimo ${MAX_LINES} righe (salvo quelli in elenco, che non devono crescere)`, () => {

@@ -1,6 +1,6 @@
 export default {
   'shell.privacy': 'Datenschutz', 'shell.terms': 'Nutzungsbedingungen', 'shell.theme': 'Darstellung', 'shell.language': 'Sprache',
-  'theme.auto': 'Auto', 'theme.light': 'Hell', 'theme.dark': 'Dunkel',
+  'theme.auto': 'Auto', 'theme.light': 'Hell', 'theme.dark': 'Dunkel', 'theme.toLight': 'Zum hellen Design wechseln', 'theme.toDark': 'Zum dunklen Design wechseln',
   'menu.title': 'Speisekarte', 'menu.unavailable': 'Die Speisekarte ist im Moment nicht verfügbar.', 'menu.search': 'Gericht suchen',
   'menu.noMatch': 'Keine Treffer für „{query}“.', 'menu.empty': 'Im Moment gibt es nichts zur Auswahl.', 'menu.category': 'Kategorie',
   'menu.add': 'Hinzufügen', 'menu.addNamed': '{name} hinzufügen', 'menu.less': 'Eins weniger: {name}', 'menu.more': 'Eins mehr: {name}',

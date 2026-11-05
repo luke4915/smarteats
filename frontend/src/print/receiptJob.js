@@ -1,5 +1,6 @@
 import { getDriver, parseAddress } from './print.js';
 import { renderCheckReceipt } from './templates.js';
+import { columnsForPaper } from './paper.js';
 
 // Parte pura della stampa della ricevuta di un conto: quale stampante e come si costruisce il lavoro.
 
@@ -15,7 +16,7 @@ export async function buildReceiptJob(config, receipt, images) {
   if (!setting) return null;
   const driver = getDriver(setting.driver || 'epos');
   const builder = driver.createBuilder();
-  await renderCheckReceipt(builder, receipt, { branding: config.branding, images, showLogo: true });
+  await renderCheckReceipt(builder, receipt, { branding: config.branding, images, showLogo: true, columns: columnsForPaper(setting.paper_mm) });
   const { host, port } = parseAddress(setting.printer_address);
   return { key: `${driver.id}:${host}:${port}`, driver, host, port, builder, copies: ['Ricevuta conto'] };
 }

@@ -8,6 +8,7 @@ export function useTakeaway(date, event) {
   const { showToast } = useToast();
   const [settings, setSettings] = useState(null);
   const [day, setDay] = useState({ date: null, orders: [], slots: [], capacity: 0 });
+  const [overdue, setOverdue] = useState({ count: 0, oldest: null });   // ordini accettati e mai chiusi, di qualsiasi giorno
   const latest = useRef(0);
 
   useEffect(() => {
@@ -17,8 +18,8 @@ export function useTakeaway(date, event) {
   const reload = useCallback(async () => {
     const mine = ++latest.current;
     try {
-      const [orders, slots] = await Promise.all([fetchWithAuth(`/takeaway/orders?date=${date}`), fetchWithAuth(`/takeaway/slots?date=${date}`)]);
-      if (mine === latest.current) setDay({ date, orders, slots: slots.slots, capacity: slots.capacity });
+      const [orders, slots, late] = await Promise.all([fetchWithAuth(`/takeaway/orders?date=${date}`), fetchWithAuth(`/takeaway/slots?date=${date}`), fetchWithAuth('/takeaway/overdue')]);
+      if (mine === latest.current) { setDay({ date, orders, slots: slots.slots, capacity: slots.capacity }); setOverdue(late); }
     } catch (err) { showToast(err.message || 'Errore caricamento asporto', 'error'); }
   }, [date, showToast]);
 
@@ -27,5 +28,5 @@ export function useTakeaway(date, event) {
     if (event && ['takeaway_updated', 'order_updated', 'order_created'].includes(event.type)) reload();
   }, [event, reload]);
 
-  return { settings, orders: day.orders, slots: day.slots, capacity: day.capacity, loading: day.date !== date, reload };
+  return { settings, overdue, orders: day.orders, slots: day.slots, capacity: day.capacity, loading: day.date !== date, reload };
 }

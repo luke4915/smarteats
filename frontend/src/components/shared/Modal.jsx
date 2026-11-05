@@ -55,7 +55,7 @@ const Modal = ({ title, onClose, footer, onSubmit, size = 'max-w-sm', dismissOnB
 
   const Layout = onSubmit ? 'form' : 'div';
   return createPortal(
-    <div className="fixed inset-0 z-[2500] flex items-end sm:items-center justify-center sm:p-6 bg-black/40 backdrop-blur-xs"
+    <div className="fixed inset-0 z-[2500] flex items-end sm:items-center justify-center sm:p-6 bg-black/40 sm:backdrop-blur-xs"
       onMouseDown={dismissOnBackdrop ? (e) => { if (e.target === e.currentTarget) onClose(); } : undefined}>
       <div ref={sheet} role="dialog" aria-modal="true" aria-label={title}
         className={`modal-sheet w-full ${WIDTHS[size] ?? WIDTHS['max-w-sm']} max-h-[calc(100dvh-env(safe-area-inset-top)-2rem)] sm:max-h-[calc(100dvh-3rem)] flex flex-col overflow-hidden bg-[var(--bg-card)] rounded-t-3xl sm:rounded-2xl ring-1 ring-black/5 dark:ring-white/10 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.55)]`}>

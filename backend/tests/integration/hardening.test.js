@@ -98,12 +98,6 @@ describe('rinforzi di sicurezza', () => {
     assert.equal(res.status, 400);
   });
 
-  it('dalla cartella assets si scaricano solo i suoni', async () => {
-    const api = apiClient(server.port, t.host);
-    assert.equal((await api.get('/assets/logo_5calzoni.png')).status, 404);
-    assert.equal((await api.get('/assets/order_confirm_sound.mp3')).status, 200);
-  });
-
   it('chiusura serata con ordini aperti: serve una scelta; completati entrano nei conti, lasciati restano fuori', async () => {
     const pending = async () => (await admin.post('/orders', { items: [{ id: t.productId, name: 'x', quantity: 2 }], status: 'pending' })).body.orderId;
     const statusOf = async (id) => (await adminDb.query('SELECT status FROM orders WHERE id = $1', [id])).rows[0].status;

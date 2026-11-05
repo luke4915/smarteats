@@ -1034,6 +1034,8 @@ CREATE TABLE public.print_settings (
     enabled boolean DEFAULT false NOT NULL,
     sort_order integer DEFAULT 0,
     tenant_id integer DEFAULT (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::integer NOT NULL,
+    paper_mm smallint DEFAULT 80 NOT NULL,
+    CONSTRAINT print_settings_paper_mm_check CHECK ((paper_mm = ANY (ARRAY[58, 80]))),
     CONSTRAINT print_settings_printer_type_check CHECK (((printer_type)::text = ANY (ARRAY[('network'::character varying)::text, ('usb'::character varying)::text])))
 );
 

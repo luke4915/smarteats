@@ -1,6 +1,9 @@
+import { en as orders } from './orders.js';
+
 export default {
+  ...orders,
   'shell.privacy': 'Privacy', 'shell.terms': 'Terms of use', 'shell.theme': 'Appearance', 'shell.language': 'Language',
-  'theme.auto': 'Auto', 'theme.light': 'Light', 'theme.dark': 'Dark',
+  'theme.auto': 'Auto', 'theme.light': 'Light', 'theme.dark': 'Dark', 'theme.toLight': 'Switch to light mode', 'theme.toDark': 'Switch to dark mode',
   'menu.title': 'Menu', 'menu.unavailable': 'The menu is not available right now.', 'menu.search': 'Search for an item',
   'menu.noMatch': 'No items match “{query}”.', 'menu.empty': 'There is nothing to choose from right now.', 'menu.category': 'Category',
   'menu.add': 'Add', 'menu.addNamed': 'Add {name}', 'menu.less': 'One less: {name}', 'menu.more': 'One more: {name}',

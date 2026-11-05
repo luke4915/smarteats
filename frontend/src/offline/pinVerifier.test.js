@@ -8,7 +8,7 @@ globalThis.localStorage = {
   getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k),
   key: i => [...store.keys()][i] ?? null, get length() { return store.size; },
 };
-const { makeVerifier, matchesVerifier, afterLocalFailure, saveVerifier, checkOffline, hasVerifier, LOCK_MS } = await import('./pinVerifier.js');
+const { makeVerifier, matchesVerifier, afterLocalFailure, saveVerifier, checkOffline, hasVerifier, dropStaleVerifier, LOCK_MS } = await import('./pinVerifier.js');
 
 describe('impronta del PIN', () => {
   it('riconosce il PIN giusto e non quello sbagliato; il PIN non è scritto in chiaro', async () => {
@@ -39,5 +39,20 @@ describe('tentativi senza rete', () => {
     for (let i = 0; i < 4; i++) await checkOffline(7, '0000');
     assert.equal((await checkOffline(7, '0000')).result, 'locked');
     assert.equal((await checkOffline(7, '4815')).result, 'locked', 'bloccato anche col PIN giusto');
+  });
+});
+
+describe('impronta vecchia', () => {
+  it('si butta se il PIN è stato cambiato o tolto, si tiene se è lo stesso', async () => {
+    store.clear();
+    saveVerifier(3, await makeVerifier('4815'), '2026-11-01T10:00:00Z');
+    dropStaleVerifier(3, { hasPin: true, pinSetAt: '2026-11-01T10:00:00Z' });
+    assert.equal(hasVerifier(3), true, 'stesso PIN: resta');
+    dropStaleVerifier(3, { hasPin: true, pinSetAt: '2026-11-02T09:00:00Z' });
+    assert.equal(hasVerifier(3), false, 'PIN cambiato: il vecchio non sblocca più');
+    saveVerifier(3, await makeVerifier('4815'), '2026-11-01T10:00:00Z');
+    dropStaleVerifier(3, { hasPin: false, pinSetAt: null });
+    assert.equal(hasVerifier(3), false, 'PIN tolto');
+    assert.equal((await checkOffline(3, '4815')).result, 'none');
   });
 });

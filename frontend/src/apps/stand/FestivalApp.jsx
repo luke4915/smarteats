@@ -55,7 +55,7 @@ const FestivalApp = () => {
   const onCashPage = pathname === '/dashboard';
   const handleSendOrder = (isTakeaway = false) => sendOrder({
     cart: cartState.cart, isTakeaway, activeSession, orderMode: data.orderMode, clearCart: cartState.clearCart,
-    playSound: data.playSound, showToast, confirmForce: force.askForce, onSent: () => { if (isMobile) setIsMobileCartOpen(false); },
+    showToast, confirmForce: force.askForce, onSent: () => { if (isMobile) setIsMobileCartOpen(false); },
   });
   const performLogout = async () => {
     try { await logout(); setShowLogoutConfirm(false); showToast('Sessione chiusa', 'info'); navigate('/login'); }
@@ -75,12 +75,12 @@ const FestivalApp = () => {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <AppHeader user={user} title={views.find(v => pathname === `/${v.id}`)?.label} serviceControl={serviceControl} status={<SyncStatus connected={data.connected} />}
           inbox={data.inbox} onOpenNotification={(i) => (i.kind === 'low_stock' ? navigate('/inventory') : navigate('/takeaway', { state: { orderId: i.id, date: i.date } }))}
-          theme={data.theme} onThemeChange={data.setTheme} onLogout={() => setShowLogoutConfirm(true)} />
+          dark={data.resolvedTheme === 'dark'} onThemeChange={data.setTheme} onLogout={() => setShowLogoutConfirm(true)} />
 
         <div className="flex-1 min-h-0 flex gap-4 px-4 pt-1 pb-3 md:p-4">
           <PageCard key={pathname} className="motion-page">
             <FestivalRoutes user={user} home={home} products={products} setProducts={setProducts} cart={cartState.cart} cartState={cartState} event={data.event}
-              setup={{ theme: data.theme, setTheme: data.setTheme, isSoundEnabled: data.isSoundEnabled, setIsSoundEnabled: data.setIsSoundEnabled, orderMode: data.orderMode, setOrderMode: data.setOrderMode }} />
+              setup={{ theme: data.theme, setTheme: data.setTheme, orderMode: data.orderMode, setOrderMode: data.setOrderMode }} />
           </PageCard>
           {onCashPage && (
             <div className="w-[340px] xl:w-[420px] hidden md:flex flex-col shrink-0"><Cart {...cartProps} /></div>

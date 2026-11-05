@@ -77,7 +77,7 @@ frontend/           React 19 + Vite 7 + Tailwind v4 + react-router-dom 7 + PWA (
                     va nella cartella del suo modulo; se serve a più moduli è un componente condiviso.
   src/components/shell/  guscio comune a SmartEats e sagre: SideNav (da tablet), TabBar (telefono: barra come quella di iOS, oltre cinque voci le ultime vanno sotto «Altro»), AppHeader (titolo, servizio, notifiche, AccountMenu con aspetto Auto/Chiaro/Scuro e uscita), PageCard (la scheda di una pagina: sul telefono niente riquadro), ServiceControl (apre e chiude il servizio o la serata, parole da `utils/terms.js`)
   src/components/   shared/ (**l'interfaccia comune**: styles.js (stili), Segmented, PanelFrame, Modal, Switch, SearchField, ProductPicker…), cart/, setup/, master/, public/, layout/
-  src/hooks/        useCart, useProducts, useWorkSession (serata), useSound, useLiveUpdates (WebSocket), useBreakpoint
+  src/hooks/        useCart, useProducts, useWorkSession (serata), useLiveUpdates (WebSocket), useBreakpoint
   src/pages/        pagine pubbliche/di livello alto (Login, Menu, KDS, Master; BookingPage su `/book`, OrderPage su `/order`)
   src/context/      AuthProvider + useAuth (login, refresh), ToastProvider + useToast
   src/config/api.js API_URL / WS_URL derivati dal sottodominio corrente
@@ -199,7 +199,7 @@ L'isolamento tra tenant si basa sulla Row-Level Security di PostgreSQL con la va
 
 ## 6. Database e migrazioni
 
-- Ogni modifica di schema è una nuova migrazione `backend/migrations/NNN_descrizione.sql`, numerata dopo l'ultima esistente (oggi 060; il numero 012 è saltato, non riusarlo).
+- Ogni modifica di schema è una nuova migrazione `backend/migrations/NNN_descrizione.sql`, numerata dopo l'ultima esistente (oggi 063; il numero 012 è saltato, non riusarlo).
 - **Non modificare mai una migrazione già applicata.** Per correggerla, scrivine una nuova.
 - Le migrazioni devono essere idempotenti dove possibile (`IF NOT EXISTS`, `DROP POLICY IF EXISTS`). `run.js` esegue ogni file in una transazione insieme alla riga in `_migrations`: non scrivere `BEGIN;`/`COMMIT;` nelle migrazioni nuove (quelle storiche vengono tolte da `utils/migrationSql.js`).
 - L'utente applicativo ha solo SELECT/INSERT/UPDATE/DELETE (niente TRUNCATE, TRIGGER, REFERENCES; `audit_logs` non si aggiorna): nelle migrazioni non concedergli altro.

@@ -82,9 +82,6 @@ export function createApp({ broadcast, rateLimit = true, logRequests = true }) {
   if (logRequests) app.use('/api', requestLogger);
   // Il webhook di Meta è firmato sul corpo grezzo: lo si conserva solo per quel percorso
   app.use(express.json({ limit: '1mb', verify: (req, _res, buf) => { if (req.originalUrl.startsWith('/api/webhooks/')) req.rawBody = buf; } }));
-  // Dalla cartella assets si servono solo i suoni: lì stanno anche loghi che non devono essere pubblici.
-  app.use('/api/assets', (req, res, next) => (req.path.endsWith('.mp3') ? next() : res.status(404).json({ error: 'Non trovato' })),
-    express.static(path.join(__dirname, 'assets'), { index: false, dotfiles: 'deny' }));
 
   if (rateLimit) {
     app.use('/api', apiLimiter);

@@ -5,9 +5,10 @@ import { useAuth } from '../../context/useAuth';
 import { fetchWithAuth } from '../../utils/apiClient';
 import { refreshPrintConfig } from '../../print/config';
 import PrinterCheck from './PrinterCheck';
+import PaperWidthChoice from './PaperWidthChoice';
 import Modal from '../shared/Modal';
 import ModalActions from '../shared/ModalActions';
-import { btnPrimary, btnDanger, input, label as uiLabel } from '../shared/styles';
+import { btnPrimary, btnDanger, input, label as uiLabel, select } from '../shared/styles';
 import Loading from '../shared/Loading';
 const BACKEND_TEMPLATES = ['Cliente', 'Associazione', 'Cucina', 'Ritiro Bar', 'Ritiro Gastronomia', 'Numeretto'];
 
@@ -63,7 +64,7 @@ const PrintProfiles = () => {
     try {
       const saved = await fetchWithAuth(`/print-settings/${id}`, {
         method: 'PUT',
-        body: { printer_type: 'network', printer_address: updated.printer_address, enabled: updated.enabled },
+        body: { printer_type: 'network', printer_address: updated.printer_address, enabled: updated.enabled, paper_mm: updated.paper_mm },
       });
       setSettings(prev => prev.map(s => s.id === id ? { ...s, ...saved } : s));
       refreshPrintConfig().catch(() => { /* offline: si aggiorna al ritorno della rete */ });
@@ -336,6 +337,7 @@ const PrintProfiles = () => {
                     onBlur={e => updateSetting(s.id, { printer_address: e.target.value })}
                     className="flex-1 min-w-[150px] px-3 py-1.5 rounded-xl bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text-main)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:cursor-not-allowed"
                   />
+                  <PaperWidthChoice value={s.paper_mm} disabled={!isAdmin || saving === s.id} label={`Carta della stampante: ${s.copy_type_label}`} onChange={(mm) => updateSetting(s.id, { paper_mm: mm })} />
                   <PrinterCheck address={s.printer_address} />
                 </div>
 
@@ -418,7 +420,7 @@ const CopyTypeModal = ({ initial, templatesOptions, onSave, onClose }) => {
         </ModalActions>
       )}>
       <div className="flex flex-col gap-4">
-        <select aria-label="Template" className={input} value={name} onChange={e => setName(e.target.value)} disabled={!!initial}>
+        <select aria-label="Template" className={select} value={name} onChange={e => setName(e.target.value)} disabled={!!initial}>
           <option value="">Seleziona template...</option>
           {templatesOptions.map(t => <option key={t} value={t}>{t}</option>)}
         </select>

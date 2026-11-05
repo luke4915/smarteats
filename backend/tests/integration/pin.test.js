@@ -127,6 +127,33 @@ describe('PIN: sblocco e cambio utente', () => {
     assert.equal(toAdmin.body.role, 'admin', 'anche all\'amministratore, con il suo PIN a 6 cifre');
   });
 
+  it('sblocco e /auth/me dicono quando è stato impostato il PIN; chi diventa admin o responsabile perde un PIN corto', async () => {
+    const unlocked = await cashier.post('/pin/unlock', { pin: '4829' });
+    assert.ok(unlocked.body.pinSetAt, 'serve all\'app per riconoscere un\'impronta locale vecchia');
+    assert.equal((await cashier.get('/auth/me')).body.pinSetAt, unlocked.body.pinSetAt);
+    const promote = (role) => admin.request('PATCH', `/auth/admin/users/${ids.cash}`, { role });
+    assert.equal((await promote('manager')).status, 200);
+    const afterShort = (await adminDb.query('SELECT pin_hash, pin_length, pin_set_at FROM users WHERE id = $1', [ids.cash])).rows[0];
+    assert.deepEqual([afterShort.pin_hash, afterShort.pin_length, afterShort.pin_set_at], [null, null, null], 'PIN di 4 cifre: tolto');
+    assert.equal((await promote('cashier')).status, 200);
+    assert.equal((await setPin(ids.cash, '4829')).status, 200);
+    assert.equal((await promote('waiter')).status, 200);
+    assert.equal((await adminDb.query('SELECT pin_length FROM users WHERE id = $1', [ids.cash])).rows[0].pin_length, 4, 'tra ruoli operativi il PIN resta');
+    await promote('cashier');
+    assert.equal((await setPin(ids.waiter, '2468')).status, 200);
+    assert.equal((await admin.request('PATCH', `/auth/admin/users/${ids.waiter}`, { role: 'manager' })).status, 200);
+    assert.equal((await adminDb.query('SELECT pin_hash FROM users WHERE id = $1', [ids.waiter])).rows[0].pin_hash, null);
+    await admin.request('PATCH', `/auth/admin/users/${ids.waiter}`, { role: 'waiter' });
+    await setPin(ids.waiter, '2468');
+  });
+
+  it('reimpostare la password di un utente ne toglie il PIN', async () => {
+    assert.equal((await setPin(ids.cash, '4829')).status, 200);
+    assert.equal((await admin.post(`/auth/admin/users/${ids.cash}/reset-password`, { password: 'temporanea-1' })).status, 200);
+    const row = (await adminDb.query('SELECT pin_hash, pin_length, pin_set_at FROM users WHERE id = $1', [ids.cash])).rows[0];
+    assert.deepEqual([row.pin_hash, row.pin_length, row.pin_set_at], [null, null, null]);
+  });
+
   it('togliere il PIN lo rende inutilizzabile', async () => {
     assert.equal((await admin.request('DELETE', `/pin/users/${ids.waiter}`)).status, 200);
     const station = apiClient(server.port, t.host); await station.login(t.username);

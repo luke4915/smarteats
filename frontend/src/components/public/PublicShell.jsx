@@ -1,24 +1,36 @@
 import { Check } from 'lucide-react';
 import { useSystemTheme } from '../../hooks/useSystemTheme';
-import ThemeChoice from '../shell/ThemeChoice';
+import ThemeToggle from '../shell/ThemeToggle';
 import LanguageChoice from './LanguageChoice';
-import { ForcedLanguage, useT } from '../../i18n/useLanguage';
+import { ForcedLanguage, useT, useLanguage } from '../../i18n/useLanguage';
 
 // Le pagine che aprono i clienti (prenotazioni, ordini da asporto): niente menu né login, pensate per il telefono.
 // Il body dell'app è bloccato (`overflow: hidden`): la pagina scorre dentro un proprio contenitore (CLAUDE.md §7).
-// Il tema del dispositivo lo applica `useSystemTheme` (hooks/useSystemTheme.js). `translated`: la pagina è tradotta nelle lingue dell'app e in fondo c'è
-// la scelta della lingua; senza, tutto ciò che contiene resta in italiano (vedi `ForcedLanguage`).
+// Il tema del dispositivo lo applica `useSystemTheme` (hooks/useSystemTheme.js). `translated`: la pagina è tradotta e in alto c'è la scelta della
+// lingua. `true` = in tutte le lingue dell'app; un elenco (es. `['it', 'en']`) = solo in quelle, e chi ha scelto un'altra lingua legge l'inglese;
+// senza, tutto ciò che contiene resta in italiano (vedi `ForcedLanguage`).
 
-export const PublicShell = ({ info, kicker, children, footer = null, translated = false }) => (
-  <ForcedLanguage.Provider value={translated ? null : 'it'}><ShellBody info={info} kicker={kicker} footer={footer} translated={translated}>{children}</ShellBody></ForcedLanguage.Provider>
-);
+export const PublicShell = ({ info, kicker, children, footer = null, translated = false }) => {
+  const [chosen] = useLanguage();
+  const languages = Array.isArray(translated) ? translated : null;
+  const shown = languages && !languages.includes(chosen) ? (languages.includes('en') ? 'en' : 'it') : chosen;
+  return (
+    <ForcedLanguage.Provider value={translated ? (languages ? shown : null) : 'it'}>
+      <ShellBody info={info} kicker={kicker} footer={footer} languages={translated ? (languages ?? true) : null} shown={shown}>{children}</ShellBody>
+    </ForcedLanguage.Provider>
+  );
+};
 
-const ShellBody = ({ info, kicker, children, footer, translated }) => {
-  const [theme, setTheme] = useSystemTheme();
+const ShellBody = ({ info, kicker, children, footer, languages, shown }) => {
+  const [, setTheme, resolvedTheme] = useSystemTheme();
   const t = useT();
   return (
   <div className="fixed inset-0 overflow-y-auto overscroll-contain bg-[var(--bg-main)] text-[var(--text-main)]" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
     <main className="max-w-md sm:max-w-3xl mx-auto px-4 pt-6 sm:pt-8 space-y-6" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left))', paddingRight: 'max(1rem, env(safe-area-inset-right))' }}>
+      <div className="flex items-center justify-end gap-1.5 -mb-3">
+        {languages && <LanguageChoice only={languages === true ? null : languages} value={shown} />}
+        <ThemeToggle dark={resolvedTheme === 'dark'} onChange={setTheme} labels={{ toLight: t('theme.toLight'), toDark: t('theme.toDark') }} />
+      </div>
       {info && (
         <header className="space-y-1">
           <p className="text-sm text-[var(--text-muted)]">{kicker}</p>
@@ -33,10 +45,6 @@ const ShellBody = ({ info, kicker, children, footer, translated }) => {
         </p>
       )}
       {footer}
-      <div className="flex flex-wrap items-center justify-center gap-2">
-        <ThemeChoice value={theme} onChange={setTheme} t={t} />
-        {translated && <LanguageChoice />}
-      </div>
       <p className="text-xs text-[var(--text-muted)] text-center pb-4">
         <a className="hover:underline" href="/privacy">{t('shell.privacy')}</a> · <a className="hover:underline" href="/terms">{t('shell.terms')}</a>
       </p>

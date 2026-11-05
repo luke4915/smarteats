@@ -1,6 +1,7 @@
 // Dalle impostazioni di stampa e da un ordine ai documenti da inviare. Pura: la rete sta nei driver.
 import { TEMPLATES } from './templates.js';
 import { eposDriver, DEFAULT_PORT } from './drivers/epos.js';
+import { columnsForPaper } from './paper.js';
 
 // Per ora esiste solo Epson; altre marche si aggiungono qui con un driver che espone
 // { id, createBuilder(), send(builder, target) }.
@@ -30,13 +31,14 @@ export async function buildPrintJobs(settings, order, ctx) {
     if (!target) continue;
     const key = `${target.driver.id}:${target.host}:${target.port}`;
     if (!groups.has(key)) groups.set(key, { key, driver: target.driver, host: target.host, port: target.port, targets: [] });
-    groups.get(key).targets.push({ template: target.template, showLogo: setting.show_logo ?? true, copyType: target.copyType });
+    groups.get(key).targets.push({ template: target.template, showLogo: setting.show_logo ?? true, copyType: target.copyType, columns: columnsForPaper(setting.paper_mm) });
   }
 
   const jobs = [];
   for (const group of groups.values()) {
     const builder = group.driver.createBuilder();
-    for (const t of group.targets) await t.template(builder, order, { ...ctx, showLogo: t.showLogo });
+    const columns = Math.min(...group.targets.map(t => t.columns));   // una sola stampante, una sola carta: vale la più stretta
+    for (const t of group.targets) await t.template(builder, order, { ...ctx, showLogo: t.showLogo, columns });
     if (builder.isEmpty) continue; // es. copia cucina di un ordine di soli prodotti bar
     jobs.push({ key: group.key, driver: group.driver, host: group.host, port: group.port, builder, copies: group.targets.map(t => t.copyType) });
   }
